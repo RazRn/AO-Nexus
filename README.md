@@ -8,8 +8,6 @@ Based on [AOQuickLauncher](https://gitlab.com/never-knows-best/aoquicklauncher) 
 
 [Download a release](https://github.com/RazRn/AO-Nexus/releases) · [Source repository](https://github.com/RazRn/AO-Nexus) · [Player guide](dist/README.txt)
 
-> The repository and release downloads are initially private while upstream redistribution permission is clarified. See [License and attribution](#license-and-attribution).
-
 ![AO Nexus dashboard with a saved squad, accounts grouped by server, account details and server news](docs/images/launcher-overview.png)
 
 Screenshots show the actual v1.0.11 interface with example accounts and offline news fixtures. They contain no personal accounts or passwords.
@@ -375,7 +373,7 @@ The earlier AO Launcher and AOSharp projects are separate from this repository. 
 
 AO Nexus is based on **AOQuickLauncher by never-knows-best and contributors**. Its backend and native LoginHandler made this project possible. The Nexus interface, integration and customizations are credited to **Luckyspawn**.
 
-The upstream checkout used for this project does not contain a separate license granting redistribution. No new license is asserted for that upstream code. The repository and release downloads are initially private while permission is clarified; private availability is not a grant of redistribution rights. See [LICENSE-NOTICE.txt](LICENSE-NOTICE.txt).
+The upstream checkout used for this project does not contain a separate license granting redistribution. No new license is asserted for that upstream code, and upstream licensing remains unresolved. Public availability of this repository is not itself a grant of redistribution rights. See [LICENSE-NOTICE.txt](LICENSE-NOTICE.txt).
 
 Dependencies retain their respective terms. Read [CREDITS.txt](dist/CREDITS.txt), [third-party notices](dist/Licenses) and [artwork provenance](assets/ARTWORK.txt).
 

@@ -6,11 +6,10 @@ https://gitlab.com/never-knows-best/aoquicklauncher
 The upstream checkout used for this project does not contain a separate license
 file granting redistribution of its source or derived binaries. This repository
 does not assign a new license to that upstream code or claim permission on its
-authors' behalf. Upstream redistribution permission must be clarified before
-making the repository or its release downloads public.
+authors' behalf. Upstream licensing remains unresolved.
 
-The initial GitHub repository and release are intended to remain private while
-that permission is unresolved. This notice is not a grant of redistribution rights.
+The repository and release downloads are publicly available. Public availability
+and this notice are not grants of redistribution rights.
 
 Original attribution is preserved in dist/CREDITS.txt. Included dependencies
 retain their respective terms and notices in dist/Licenses. Artwork provenance
