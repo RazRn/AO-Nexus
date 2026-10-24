@@ -1,0 +1,62 @@
+AO NEXUS
+Based on AOQuickLauncher by never-knows-best and contributors
+Customized by Luckyspawn
+
+Original AOQuickLauncher backend: never-knows-best and contributors
+https://gitlab.com/never-knows-best/aoquicklauncher
+Thank you to the original authors and contributors whose work made this
+launcher possible. The backend and LoginHandler.dll are derived from this project.
+The upstream checkout used for this package does not contain a separate LICENSE file.
+
+AO Nexus: separate launcher design, original generated backdrop, original portal icon, official server news, and independent profile storage.
+
+Luckyspawn: launcher interface, account/character selection, local preferences
+import, presets, shared login-server management, account-specific game folders,
+connections, and launcher integration and
+customisations.
+
+The Luckyspawn signature does not attribute the original backend or third-party
+libraries to Luckyspawn and does not replace their copyright or license terms.
+
+Included dependencies and upstream source projects:
+
+.NET runtime - Microsoft and .NET contributors
+https://github.com/dotnet/runtime
+The included runtime license and third-party notices are preserved in Licenses.
+
+CommandLineParser - CommandLineParser contributors
+https://github.com/commandlineparser/commandline
+
+Reloaded.Injector - Sewer56 and Reloaded Project contributors
+https://github.com/Reloaded-Project/Reloaded.Injector
+
+Reloaded.Assembler - Sewer56 and Reloaded Project contributors
+https://github.com/Reloaded-Project/Reloaded.Assembler
+
+Reloaded.Memory - Sewer56 and Reloaded Project contributors
+https://github.com/Reloaded-Project/Reloaded.Memory
+
+Reloaded.Memory.Buffers - Sewer56 and Reloaded Project contributors
+https://github.com/Reloaded-Project/Reloaded.Memory.Buffers
+
+PeNet - Stefan Hausotte and contributors
+https://github.com/secana/PeNet
+Package metadata identifies the Apache License 2.0:
+https://www.apache.org/licenses/LICENSE-2.0
+
+PeNet.Asn1 - Sergey Savchuk, Jan Jansen, Stefan Hausotte and contributors
+https://github.com/secana/asn1
+License location recorded by the package:
+https://raw.githubusercontent.com/secana/asn1/master/LICENCE
+
+Microsoft Research Detours 4.0.1 - Microsoft Corporation
+https://github.com/microsoft/Detours
+Used by LoginHandler.dll. Its restored package has no separate license file.
+
+flat assembler - Tomasz Grysztar
+FASM-LICENSE.TXT is preserved in the embedded backend and in Licenses.
+
+Existing license documents from restored dependency packages are copied into
+Licenses, grouped by package name and version. No new license is asserted for
+the original AOQuickLauncher code.
+

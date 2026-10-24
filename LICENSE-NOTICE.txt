@@ -1,0 +1,21 @@
+AO NEXUS — SOURCE AND DISTRIBUTION NOTICE
+
+AO Nexus is based on AOQuickLauncher by never-knows-best and contributors:
+https://gitlab.com/never-knows-best/aoquicklauncher
+
+The upstream checkout used for this project does not contain a separate license
+file granting redistribution of its source or derived binaries. This repository
+does not assign a new license to that upstream code or claim permission on its
+authors' behalf. Upstream redistribution permission must be clarified before
+making the repository or its release downloads public.
+
+The initial GitHub repository and release are intended to remain private while
+that permission is unresolved. This notice is not a grant of redistribution rights.
+
+Original attribution is preserved in dist/CREDITS.txt. Included dependencies
+retain their respective terms and notices in dist/Licenses. Artwork provenance
+is documented in assets/ARTWORK.txt.
+
+Customized by Luckyspawn.
+AO Nexus is an independent community project and is not an official Funcom,
+Project Rubi-Ka or AO Rebirth product.

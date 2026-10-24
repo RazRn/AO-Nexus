@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{F6D9842E-CA75-45A4-BAC2-B076A8A8F19E}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>AOLauncher</RootNamespace>
+    <AssemblyName>AONexus</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <PlatformTarget>x86</PlatformTarget>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <LangVersion>7.3</LangVersion>
+    <ApplicationIcon>Assets\Launcher.ico</ApplicationIcon>
+    <EmbeddedBackendDirectory Condition=" '$(EmbeddedBackendDirectory)' == '' ">$(MSBuildProjectDirectory)\obj\EmbeddedBackend</EmbeddedBackendDirectory>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="LauncherBootstrap.cs" />
+    <Compile Include="NexusControls.cs" />
+    <Compile Include="NexusMessageBox.cs" />
+    <Compile Include="NexusTreeView.cs" />
+    <Compile Include="NexusToolTips.cs" />
+    <Compile Include="SlimScrolling.cs" />
+    <Compile Include="NexusStrings.cs" />
+    <Compile Include="ServerNews.cs" />
+    <Compile Include="NewsPanel.cs" />
+    <Compile Include="Models.cs" />
+    <Compile Include="Presets.cs" />
+    <Compile Include="..\Common\Texts.cs"><Link>Texts.cs</Link></Compile>
+    <Compile Include="..\Common\ServerAccountPolicy.cs"><Link>ServerAccountPolicy.cs</Link></Compile>
+    <Compile Include="GuiStrings.cs" />
+    <Compile Include="AppArtwork.cs" />
+    <Compile Include="Dialogs.cs" />
+    <Compile Include="MainForm.cs" />
+    <Compile Include="CredentialStore.cs" />
+    <Compile Include="AccountPasswords.cs" />
+    <Compile Include="BackendRunner.cs" />
+    <Compile Include="GameLogFilter.cs" />
+    <Compile Include="EmbeddedBackend.cs" />
+    <Compile Include="PrefsImporter.cs" />
+    <Compile Include="PrefsDiscovery.cs" />
+    <Compile Include="PrefsPickerDialog.cs" />
+    <Compile Include="PrefsTargetResolver.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\NexusBackdrop.png"><LogicalName>AOLauncher.Assets.NexusBackdrop.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Assets\Launcher.ico">
+      <LogicalName>AOLauncher.Assets.Launcher.ico</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Assets\Launcher.png">
+      <LogicalName>AOLauncher.Assets.Launcher.png</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(EmbeddedBackendDirectory)\Backend.zip">
+      <LogicalName>AOLauncher.Backend.zip</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(EmbeddedBackendDirectory)\Backend.manifest.json">
+      <LogicalName>AOLauncher.Backend.manifest.json</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+  <Target Name="ValidateEmbeddedBackend" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('$(EmbeddedBackendDirectory)\Backend.zip') Or !Exists('$(EmbeddedBackendDirectory)\Backend.manifest.json')" Text="The compressed launcher backend is missing. Run build/Build.ps1 to prepare the bundled login engine." />
+  </Target>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

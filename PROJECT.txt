@@ -1,0 +1,55 @@
+AO NEXUS
+Separate launcher project created 24 October 2026.
+
+Start: dist\AONexus.exe
+Share: AO-Nexus-Luckyspawn.zip
+
+PROJECT MAP
+src\Launcher           WinForms interface, settings, encrypted credentials,
+                       import/discovery, news reader and portable-runtime loader
+src\Common             Localization and shared server account policy
+src\Backend            AOQuickLauncher managed backend and native LoginHandler
+runtime\AOQuickLauncher  Self-contained Windows x86 login engine for embedding
+assets                 Original artwork provenance, SVG and icon builder
+tests                  Isolated regression fixtures; no real game logins
+logs                   Build/test reports and synthetic UI previews
+dist                   Runnable release, documentation and dependency licenses
+build\Build.ps1        Build the portable executable; -RebuildBackend and -Package
+build\Verify.ps1       Run all automated checks; -LiveNews checks official sources
+build\Package.ps1      Build a verified, allowlisted share ZIP
+
+DESIGN
+Classic Anarchy Online-inspired dark panels, cyan details, amber launch action,
+an original sci-fi panorama and original portal icon. Team setups and account
+groups stay alongside official news, with account details and the activity log
+visible on the same screen. All existing launcher behavior is carried forward.
+Credits recognize never-knows-best and contributors before Luckyspawn.
+
+INDEPENDENCE
+The original project and executables are preserved. AO Nexus uses its own
+%LocalAppData%\AONexus profile. First-run import copies the original settings
+and Windows-encrypted credential files; it never moves or edits them.
+Account IDs and credential binding remain intact during import.
+The session registry/login queue mutex intentionally remain shared with the
+original backend to enforce account limits if both launchers are used together.
+
+BUILD REQUIREMENTS
+Windows, Visual Studio desktop C++ and .NET Framework 4.8 build tools, .NET 10 SDK.
+Build.ps1 defaults to the installed v145 C++ toolset; supply -PlatformToolset for
+another compatible installation. Build.ps1 restores the pinned Detours 4.0.1
+package from NuGet and verifies its SHA-256 before extraction. Other packages
+restore from NuGet when rebuilding the backend. Generated packages and runtime
+files are not stored in Git; a clean checkout needs -RebuildBackend.
+Internal AOLauncher namespaces/resource identifiers remain for compatibility;
+the product, executable and data directory are named AO Nexus / AONexus.
+
+TEST SCOPE
+Automated checks cover models/migrations, private stdin, DPAPI, presets,
+server caps, character creation requests, cancellation, runtime integrity,
+cross-instance extraction, HTML/Atom parsing, news cache fallback and UI layout
+in English/Danish at minimum size and simulated 150% scaling.
+Real HTTPS news fetches and article links were checked on 24 October 2026.
+Actual game logins and the in-game character creation screen were not exercised
+as part of this isolated test pass; the existing login workflow is reused.
+
+See dist\README.txt for usage and dist\CREDITS.txt / dist\Licenses for attribution.

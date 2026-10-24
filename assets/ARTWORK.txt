@@ -1,0 +1,19 @@
+AO NEXUS ARTWORK
+
+NexusBackdrop.png is original generated artwork made with the built-in imagegen tool.
+It does not reuse Anarchy Online game artwork, logos or screenshots.
+The selected generated file is copied into src/Launcher/Assets/NexusBackdrop.png.
+
+Prompt:
+Use case: stylized-concept
+Asset type: panoramic hero background for a desktop science-fiction game launcher called AO Nexus; no interface, just the background artwork.
+Primary request: Original atmospheric alien desert outpost at dusk, invoking the industrial, mysterious far-future mood of classic early-2000s science-fiction MMO launchers without reproducing any game artwork.
+Scene: layered rocky desert valley and a distant monumental brutalist futuristic city/outpost, antennas, a few cyan window lights, a huge pale distant planet and a small moon in the dusky sky. Subtle dust haze catches faint amber horizon light. No people, creatures, spacecraft or weapons.
+Style: high-quality cinematic digital matte painting; convincing texture, elegant restrained detail, calm atmospheric depth, premium game launcher key art.
+Composition: extra-wide panorama, approximately 3:1 aspect ratio. Distant skyline mostly in the right half and lower middle. Left third remains especially dark and uncluttered with soft sky and distant terrain, suitable for white title text added later by the app. Keep main architecture and planet within central safe area for cropping to a low hero banner.
+Color palette: very dark midnight navy and charcoal, muted steel blue, small cyan highlights, understated warm amber horizon. Low overall brightness so UI text on top remains readable; avoid vibrant neon.
+Constraints: no lettering, no text, no logos, no border, no UI, no watermark, no copied Anarchy Online imagery. Original landscape only.
+
+Launcher.ico and Launcher.png are rendered from original code-native geometry.
+The editable vector is NexusIcon.svg. Build-NexusIcon.ps1 renders the PNG and
+seven-resolution ICO deterministically using System.Drawing. No stock icons are used.

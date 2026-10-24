@@ -1,0 +1,82 @@
+using System;
+using System.Collections.Generic;
+using System.Windows.Forms;
+using AOLauncher.Localization;
+
+namespace AOLauncher
+{
+    internal static class NexusStrings
+    {
+        private static readonly Dictionary<string, string> Danish = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            { "Show details", "Vis detaljer" },
+            { "Hide details", "Skjul detaljer" },
+            { "Saved passwords", "Gemte adgangskoder" },
+            { "Clear saved passwords for all AO Nexus accounts immediately. You will be asked again at the next login.", "Ryd gemte adgangskoder til alle AO Nexus-konti med det samme. Du bliver spurgt igen ved næste login." },
+            { "Saved passwords cleared. Accounts and presets are unchanged.", "Gemte adgangskoder er ryddet. Konti og presets er uændrede." },
+            { "Passwords could not be cleared. Try again.", "Adgangskoderne kunne ikke ryddes. Prøv igen." },
+            { "AO Nexus uses this password to log this account in to its selected game server.", "AO Nexus bruger adgangskoden til at logge denne konto ind på den valgte spilserver." },
+            { "Remember password for this account", "Husk adgangskoden til denne konto" },
+            { "Update saved password — {0}", "Opdatér gemt adgangskode — {0}" },
+            { "Update saved password", "Opdatér gemt adgangskode" },
+            { "Saved password updated for {0}.", "Den gemte adgangskode til {0} er opdateret." },
+            { "Saved passwords were kept. If a password is incorrect, select its account and choose “Update saved password” before trying again.", "Gemte adgangskoder blev bevaret. Hvis en adgangskode er forkert, skal du vælge kontoen og derefter “Opdatér gemt adgangskode”, før du prøver igen." },
+            { "The saved password could not be updated. Try again.", "Den gemte adgangskode kunne ikke opdateres. Prøv igen." },
+            { "The password was not kept because the account setting could not be saved. Try again.", "Adgangskoden blev ikke gemt, fordi kontoindstillingen ikke kunne gemmes. Prøv igen." },
+            { "The account setting could not be saved, and the new saved password could not be removed. Use Settings → Forget passwords to clear saved passwords.", "Kontoindstillingen kunne ikke gemmes, og den nye gemte adgangskode kunne ikke fjernes. Brug Indstillinger → Glem adgangskoder for at rydde gemte adgangskoder." },
+            { "Login server: {0}", "Loginserver: {0}" },
+            { "New password", "Ny adgangskode" },
+            { "Confirm new password", "Bekræft ny adgangskode" },
+            { "Save password", "Gem adgangskode" },
+            { "Change your password with the game server first. This updates only the copy saved in AO Nexus, for all chars on this account.", "Skift først din adgangskode hos spilserveren. Dette opdaterer kun kopien gemt i AO Nexus, som bruges til alle chars på denne konto." },
+            { "The password is saved encrypted for your Windows user. To remove it, uncheck Remember password for this account under Edit account, or use Settings → Forget passwords to remove all saved passwords.", "Adgangskoden gemmes krypteret til din Windows-bruger. Fjern den ved at slå Husk adgangskoden til denne konto fra under Redigér konto, eller brug Indstillinger → Glem adgangskoder for at fjerne alle gemte adgangskoder." },
+            { "Saving here also enables Remember password for this account. Future logins will use the saved password.", "Når du gemmer her, slås Husk adgangskoden til denne konto også til. Fremtidige login bruger den gemte adgangskode." },
+            { "Enter the new password for this account.", "Indtast den nye adgangskode til denne konto." },
+            { "The passwords do not match. Enter the same password in both fields.", "Adgangskoderne er ikke ens. Indtast den samme adgangskode i begge felter." },
+            { "The password could not be saved securely. Try again.", "Adgangskoden kunne ikke gemmes sikkert. Prøv igen." },
+            { "Remembered passwords are encrypted for your Windows user. If unchecked, you enter it once per login action; all selected chars on this account use it.", "Gemte adgangskoder krypteres til din Windows-bruger. Uden flueben indtaster du den én gang ved hver loginstart; alle valgte chars på kontoen bruger den." },
+            { "Uncheck and save this account to remove its saved password.", "Fjern fluebenet og gem kontoen for at fjerne dens gemte adgangskode." },
+            { "Change this under Edit account. Uncheck and save to remove this account's saved password, or use Settings → Forget passwords to clear them all.", "Du kan ændre valget under Redigér konto. Fjern fluebenet og gem for at fjerne kontoens gemte adgangskode, eller brug Indstillinger → Glem adgangskoder for at rydde dem alle." },
+            { "It is saved encrypted for your Windows user and reused after restarting AO Nexus.", "Den gemmes krypteret til din Windows-bruger og genbruges, når du starter AO Nexus igen." },
+            { "To remove saved passwords for all AO Nexus accounts, open Settings → Forget passwords. Your accounts and presets stay unchanged.", "Fjern gemte adgangskoder til alle AO Nexus-konti under Indstillinger → Glem adgangskoder. Dine konti og presets bliver bevaret." },
+            { "YOUR GATEWAY TO RUBI-KA", "DIN INDGANG TIL RUBI-KA" },
+            { "One launcher. Every world. Your team.", "Én launcher. Alle verdener. Dit hold." },
+            { "TEAM SETUP", "HOLDSAMMENSÆTNING" },
+            { "YOUR SQUADS", "DINE HOLD" },
+            { "{0}  ·  {1}/{2} accounts", "{0}  ·  {1}/{2} konti" },
+            { "DETAILS", "DETALJER" },
+            { "ACTIVITY", "AKTIVITET" },
+            { "AO Nexus — preview", "AO Nexus — forhåndsvisning" },
+            { "Choose your chars, then launch your team.", "Vælg dine chars, og start dit hold." },
+            { "Add an account to begin. Import your characters from its Prefs folder, or enter their IDs manually.", "Tilføj en konto for at begynde. Importér dine chars fra dens Prefs-mappe, eller indtast deres ID'er manuelt." },
+            { "Account settings, game folders and server limits are managed in Settings and Edit account.", "Kontoindstillinger, spilmapper og servergrænser ændres i Indstillinger og Redigér konto." },
+            { "Select an account or char to see its details. Double-click a char to edit it.", "Vælg en konto eller char for at se detaljer. Dobbeltklik på en char for at redigere." },
+            { "Preview · sample accounts", "Forhåndsvisning · eksempler på konti" },
+            { "Copied your AO Launcher profile. AO Nexus now saves changes separately.", "Din AO Launcher-profil er kopieret. AO Nexus gemmer nu ændringer separat." },
+            { "Keep AO Nexus open while you create the char. Once it enters the game, its ID and name are added here automatically. It starts unchecked and is not added to your saved squads.", "Hold AO Nexus åben, mens du opretter din char. Når den kommer ind i spillet, tilføjes dens ID og navn automatisk her. Den starter uden flueben og føjes ikke til dine gemte hold." },
+            { "Keep AO Nexus open. The new char will be added automatically after entering the game. You can continue using the launcher meanwhile.", "Hold AO Nexus åben. Den nye char tilføjes automatisk, når den kommer ind i spillet. Du kan bruge launcheren imens." },
+            { "STATUS · Waiting for the new char in game", "STATUS · Venter på den nye char i spillet" },
+            { "STATUS · Char detected", "STATUS · Char fundet" },
+            { "STATUS · Automatic char detection ended", "STATUS · Automatisk registrering af char afsluttet" },
+            { "Automatic char detection ended. You can import the char from the account's Prefs folder or add its ID manually.", "Automatisk registrering af char er afsluttet. Du kan importere charen fra kontoens Prefs-mappe eller tilføje dens ID manuelt." },
+            { "Character creation finished. The detected char is available in the account list.", "Oprettelse af char er afsluttet. Den fundne char vises under kontoen." },
+            { "{0} (ID {1}) is now in the account list. Your saved squads are unchanged.", "{0} (ID {1}) vises nu under kontoen. Dine gemte hold er uændrede." },
+            { "The detected char could not be matched to its original account. Check whether the account or server settings changed; you can add the char manually.", "Den fundne char kunne ikke matches med den oprindelige konto. Kontrollér, om konto- eller serverindstillingerne er ændret; du kan tilføje charen manuelt." }
+        };
+
+        internal static void Register() => Texts.AddTranslations(Danish);
+
+        internal static void Retranslate(Control control)
+        {
+            if (!(control is TextBoxBase) && !(control is TreeView) && !(control is ComboBox))
+            {
+                string key = Danish.ContainsKey(control.Text) ? control.Text : null;
+                if (key == null)
+                    foreach (var pair in Danish)
+                        if (string.Equals(pair.Value, control.Text, StringComparison.Ordinal)) { key = pair.Key; break; }
+                if (key != null) control.Text = Texts.T(key);
+            }
+            foreach (Control child in control.Controls) Retranslate(child);
+        }
+    }
+}
