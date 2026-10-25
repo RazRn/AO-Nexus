@@ -29,14 +29,22 @@ try {
     $watch = [Diagnostics.Stopwatch]::StartNew()
     do { Start-Sleep -Milliseconds 50; $process.Refresh() } while ($process.MainWindowTitle -ne 'Anarchy Online - Fixture' -and $watch.Elapsed.TotalSeconds -lt 5)
     if (!$type.GetMethod('IsSameProcess', $flags).Invoke($null, @($client))) { throw 'Fixture identity validation failed' }
+    # An old bridge must never be treated as /quit-capable, even with a valid token.
+    $legacyToken = [Guid]::NewGuid().ToString('N')
+    $legacy = [Threading.EventWaitHandle]::new($false, [Threading.EventResetMode]::AutoReset, ('Local\AONexus.Camp.v1.' + $process.Id + '.' + $legacyToken + '.request'))
+    try {
+        $client.CampToken = $legacyToken
+        $canQuit = $client.GetType().GetProperty('CanCamp', [Reflection.BindingFlags]'Instance,NonPublic')
+        if ($canQuit.GetValue($client)) { throw 'Legacy camp bridge must require a restart for /quit' }
+    } finally { $legacy.Dispose(); $client.CampToken = $token }
     $client.StartTimeUtcTicks++
     if ($type.GetMethod('SendCamp', $flags).Invoke($null, @($client)) -notlike 'Client changed*') { throw 'PID reuse guard failed' }
     $client.StartTimeUtcTicks--
     $result = $type.GetMethod('SendCamp', $flags).Invoke($null, @($client))
-    if ($result -notlike '/camp accepted*') { throw "Native bridge rejected valid fixture: $result" }
+    if ($result -notlike '/quit accepted*') { throw "Native bridge rejected valid fixture: $result" }
     $result = $type.GetMethod('SendCamp', $flags).Invoke($null, @($client))
     if ($result -notlike 'The client declined*') { throw 'Native repeat guard failed' }
-    Write-Host 'PASS: end-to-end managed identity check -> named events -> native UI-thread camp -> acknowledgement; stale identity and repeat rejection.'
+    Write-Host 'PASS: managed identity -> named events -> native UI-thread timed quit -> acknowledgement; legacy camp bridge, stale identity and repeat rejection.'
 } finally {
     if ($process) {
         if (!$process.HasExited) { [void]$process.CloseMainWindow(); [void]$process.WaitForExit(20000) }

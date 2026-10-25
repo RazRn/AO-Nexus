@@ -273,7 +273,7 @@ namespace AOLauncher
             body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 358));
             layout.Controls.Add(body, 0, 1);
             var workspace = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 4, Margin = new Padding(0, 0, 18, 0) };
-            workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 145));
+            workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 181));
             workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
             workspace.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 102));
@@ -295,7 +295,8 @@ namespace AOLauncher
             }
             workspace.Controls.Add(toolbar, 0, 1);
 
-            var presets = new TableLayoutPanel { Dock = DockStyle.Fill, Margin = Padding.Empty, Padding = Padding.Empty, ColumnCount = 5, RowCount = 4 };
+            var presetFrame = new NexusPanel { Name = "presetSection", Dock = DockStyle.Fill, Margin = new Padding(0, 0, 0, 12), Padding = new Padding(12) };
+            var presets = new TableLayoutPanel { Dock = DockStyle.Fill, Margin = Padding.Empty, Padding = Padding.Empty, BackColor = Theme.Surface, ColumnCount = 5, RowCount = 4 };
             presets.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             for (int index = 0; index < 4; index++) presets.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             presets.RowStyles.Add(new RowStyle(SizeType.Absolute, 20));
@@ -311,7 +312,7 @@ namespace AOLauncher
             presetPicker.ForeColor = Theme.Foreground;
             Theme.StyleCombo(presetPicker);
             presetPicker.Dock = DockStyle.Fill;
-            presetPicker.Margin = new Padding(0, 3, 8, 0);
+            presetPicker.Margin = new Padding(0, 1, 8, 0);
             presetPicker.SelectionChangeCommitted += ApplySelectedPreset;
             presets.Controls.Add(presetPicker, 0, 1);
             editingControls.Add(presetPicker);
@@ -333,6 +334,7 @@ namespace AOLauncher
                 presets.Controls.Add(presetButtons[index], index + 1, 1);
                 editingControls.Add(presetButtons[index]);
             }
+            ((NexusComboBox)presetPicker).MatchHeight(savePresetButton);
             presetStatus.Dock = DockStyle.Fill;
             presetStatus.Font = new Font("Segoe UI", 8.5F);
             presetStatus.ForeColor = Theme.Muted;
@@ -343,7 +345,8 @@ namespace AOLauncher
             var shortcuts = BuildPresetHotkeys();
             presets.Controls.Add(shortcuts, 0, 3);
             presets.SetColumnSpan(shortcuts, 5);
-            workspace.Controls.Add(presets, 0, 0);
+            presetFrame.Controls.Add(presets);
+            workspace.Controls.Add(presetFrame, 0, 0);
 
             var content = new TableLayoutPanel { Dock = DockStyle.Fill, Margin = Padding.Empty, ColumnCount = 2, RowCount = 1 };
             content.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
@@ -351,18 +354,19 @@ namespace AOLauncher
             content.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             var leftFrame = new NexusPanel { Dock = DockStyle.Fill, Margin = Padding.Empty, Padding = new Padding(12), Name = "accountsByServer" };
             var left = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Margin = Padding.Empty, BackColor = Theme.Surface };
-            left.RowStyles.Add(new RowStyle(SizeType.Absolute, 58));
+            left.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
             left.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             leftFrame.Controls.Add(left);
-            var accountHeader = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 2, Margin = Padding.Empty };
+            var accountHeader = new TableLayoutPanel { Name = "accountsHeader", Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 1, Margin = Padding.Empty };
             accountHeader.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             accountHeader.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             accountHeader.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            accountHeader.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
-            accountHeader.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
+            accountHeader.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
             var accountCaption = Caption(T("ACCOUNTS BY SERVER"));
+            accountCaption.Dock = DockStyle.Fill;
+            accountCaption.TextAlign = ContentAlignment.MiddleLeft;
+            accountCaption.Margin = Padding.Empty;
             accountHeader.Controls.Add(accountCaption, 0, 0);
-            accountHeader.SetColumnSpan(accountCaption, 3);
             expandAccountsButton = Theme.Button(T("Expand all"));
             collapseAccountsButton = Theme.Button(T("Collapse all"));
             expandAccountsButton.Click += (sender, e) => SetAccountsCollapsed(false);
@@ -374,7 +378,7 @@ namespace AOLauncher
                 accountButtons[index].MinimumSize = new Size(76, 26);
                 accountButtons[index].Padding = new Padding(6, 1, 6, 1);
                 accountButtons[index].Margin = new Padding(4, 0, 0, 4);
-                accountHeader.Controls.Add(accountButtons[index], index + 1, 1);
+                accountHeader.Controls.Add(accountButtons[index], index + 1, 0);
                 editingControls.Add(accountButtons[index]);
             }
             left.Controls.Add(accountHeader, 0, 0);

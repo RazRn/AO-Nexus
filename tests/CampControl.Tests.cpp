@@ -30,7 +30,7 @@ int main(int argc, char** argv)
         // Inert end-to-end fixture: named like a game only inside a temporary test folder.
         std::string token(argv[1]); Check(token.size() == 32, "fixture token");
         std::wstring wide(token.begin(), token.end());
-        std::wstring prefix = L"Local\\AONexus.Camp.v1." + std::to_wstring(GetCurrentProcessId()) + L"." + wide + L".";
+        std::wstring prefix = L"Local\\AONexus.Quit.v1." + std::to_wstring(GetCurrentProcessId()) + L"." + wide + L".";
         campRequest = CreateEventW(nullptr, FALSE, FALSE, (prefix + L"request").c_str());
         campAccepted = CreateEventW(nullptr, FALSE, FALSE, (prefix + L"accepted").c_str());
         campRejected = CreateEventW(nullptr, FALSE, FALSE, (prefix + L"rejected").c_str());
@@ -50,7 +50,7 @@ int main(int argc, char** argv)
     characterId = 17; zoning = true; Check(!ExecuteNormalCamp() && calls == 0, "zoning must not camp");
     zoning = false; engineAvailable = false; Check(!ExecuteNormalCamp() && calls == 0, "no engine must not camp");
     engineAvailable = true; allowCamp = false; Check(!ExecuteNormalCamp() && logoutCalls == 0, "rejected camp must not set logout");
-    allowCamp = true; Check(ExecuteNormalCamp() && logoutCalls == 1 && logoutStatus == 2, "normal delayed camp");
+    allowCamp = true; Check(ExecuteNormalCamp() && logoutCalls == 1 && logoutStatus == 1, "normal delayed quit to desktop");
     campRequest = CreateEventW(nullptr, FALSE, FALSE, nullptr);
     campAccepted = CreateEventW(nullptr, FALSE, FALSE, nullptr);
     campRejected = CreateEventW(nullptr, FALSE, FALSE, nullptr);

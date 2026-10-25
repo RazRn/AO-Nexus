@@ -55,7 +55,7 @@ namespace AOLauncher
             startHotkeyField.RefreshText(); campHotkeyField.RefreshText();
             string error;
             bool failed = preset != null && hotkeyFailures.TryGetValue(preset.Id, out error);
-            hotkeyHelp.Text = failed ? hotkeyFailures[preset.Id] : T("Saved per preset · Ctrl/Alt + key · Delete clears · Esc cancels · Logout uses /camp.");
+            hotkeyHelp.Text = failed ? hotkeyFailures[preset.Id] : T("Saved per preset · Ctrl/Alt + key · Delete clears · Esc cancels · Logout uses /quit.");
             hotkeyHelp.ForeColor = failed ? Theme.Amber : Theme.Muted;
         }
 
@@ -156,9 +156,9 @@ namespace AOLauncher
             { ShowInfo(T("No running clients could be matched safely to this preset. Start its characters with Nexus first.")); return; }
             var supported = clients.Where(client => client.CanCamp).ToList();
             string names = string.Join("\r\n", clients.Select(client => "• " + client.CharacterName + " — " + client.Server + ":" + client.Port
-                + (client.CanCamp ? "" : " — " + T("restart with this Nexus version to enable /camp"))));
+                + (client.CanCamp ? "" : " — " + T("restart with this Nexus version to enable /quit"))));
             if (supported.Count == 0) { ShowInfo(names); return; }
-            string question = F("Send /camp to {0} clients from preset “{1}”?", supported.Count, preset.Name)
+            string question = F("Send /quit to {0} clients from preset “{1}”?", supported.Count, preset.Name)
                 + "\r\n\r\n" + names + "\r\n\r\n" + T("The game handles the normal logout countdown. Combat, movement or cancellation may prevent logout. Clients are never forcibly closed.");
             if (NexusMessageBox.Show(this, question, T("Log out preset"), MessageBoxButtons.OKCancel,
                 MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.OK) return;

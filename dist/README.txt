@@ -1,4 +1,4 @@
-AO NEXUS 1.0.14
+AO NEXUS 1.0.15
 Based on AOQuickLauncher by never-knows-best and contributors.
 Customized by Luckyspawn.
 
@@ -31,10 +31,10 @@ Click a field and press Delete/Backspace to clear it, or Esc to cancel recording
 Shortcuts are unassigned by default and work while Nexus runs, including in the
 tray. Duplicate or unavailable combinations are reported. F12 and Windows-key
 combinations are reserved. Start shows the usual launch confirmation.
-Logout asks before sending normal /camp to the matched preset clients. Combat,
+Logout asks before sending normal /quit to the matched preset clients. Combat,
 movement or cancellation may prevent logout. Nexus never forces a game closed.
-Older running clients need a normal restart through v1.0.14 or later to enable
-camp control. Newly created chars also need one normal launch after being saved.
+Older running clients need a normal restart through v1.0.15 or later to enable
+quit control. Newly created chars also need one normal launch after being saved.
 AOSharp is not required. Closing Nexus itself leaves all game clients open.
 
 FIRST START

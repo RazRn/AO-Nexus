@@ -29,7 +29,7 @@ namespace AOLauncher
             internal bool CanCamp => ValidToken(CampToken) && EventExists(EventName(this, "request"));
         }
         internal static bool ValidToken(string token) => token != null && token.Length == 32 && token.All(c => c >= '0' && c <= '9' || c >= 'a' && c <= 'f');
-        internal static string EventName(Client client, string kind) => @"Local\AONexus.Camp.v1." + client.ProcessId + "." + client.CampToken + "." + kind;
+        internal static string EventName(Client client, string kind) => @"Local\AONexus.Quit.v1." + client.ProcessId + "." + client.CampToken + "." + kind;
         private static bool EventExists(string name)
         {
             try { using (var handle = EventWaitHandle.OpenExisting(name, EventWaitHandleRights.Synchronize)) return true; }
@@ -86,7 +86,7 @@ namespace AOLauncher
         }
         internal static string SendCamp(Client client)
         {
-            if (!IsSameProcess(client) || !ValidToken(client.CampToken)) return "Client changed or exited; /camp was not sent.";
+            if (!IsSameProcess(client) || !ValidToken(client.CampToken)) return "Client changed or exited; /quit was not sent.";
             try
             {
                 using (var request = EventWaitHandle.OpenExisting(EventName(client, "request"), EventWaitHandleRights.Modify))
@@ -94,16 +94,16 @@ namespace AOLauncher
                 using (var rejected = EventWaitHandle.OpenExisting(EventName(client, "rejected"), EventWaitHandleRights.Modify | EventWaitHandleRights.Synchronize))
                 {
                     accepted.Reset(); rejected.Reset();
-                    if (!IsSameProcess(client)) return "Client changed or exited; /camp was not sent.";
+                    if (!IsSameProcess(client)) return "Client changed or exited; /quit was not sent.";
                     request.Set();
                     int reply = WaitHandle.WaitAny(new WaitHandle[] { accepted, rejected }, 3000);
-                    if (reply == 0) return "/camp accepted by the client. Waiting for the game's normal logout; no forced close.";
-                    if (reply == 1) return "The client declined /camp. Check combat, zoning or its current character.";
+                    if (reply == 0) return "/quit accepted by the client. Waiting for the game's normal logout; no forced close.";
+                    if (reply == 1) return "The client declined /quit. Check combat, zoning or its current character.";
                     request.Reset();
-                    return "No /camp acknowledgement. Check the game window; no forced close or automatic retry.";
+                    return "No /quit acknowledgement. Check the game window; no forced close or automatic retry.";
                 }
             }
-            catch { return "/camp is unavailable. Restart this character using the updated Nexus."; }
+            catch { return "/quit is unavailable. Restart this character using the updated Nexus."; }
         }
     }
 }

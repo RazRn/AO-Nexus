@@ -99,6 +99,8 @@ namespace AOLauncher
 
     internal sealed class NexusComboBox : ComboBox
     {
+        private Control heightReference;
+        private bool matchingHeight;
         internal NexusComboBox()
         {
             BackColor = Theme.SurfaceRaised;
@@ -107,7 +109,38 @@ namespace AOLauncher
             DrawMode = DrawMode.OwnerDrawFixed;
             UpdateItemHeight();
         }
-        private void UpdateItemHeight() { ItemHeight = Math.Max(Font.Height + NexusChrome.Scale(this, 4), NexusChrome.Scale(this, 20)); }
+        private void UpdateItemHeight()
+        {
+            ItemHeight = Math.Max(Font.Height + NexusChrome.Scale(this, 4), NexusChrome.Scale(this, 20));
+            MatchReferenceHeight();
+        }
+        internal void MatchHeight(Control reference)
+        {
+            if (heightReference != null) heightReference.SizeChanged -= ReferenceSizeChanged;
+            heightReference = reference;
+            if (heightReference != null) heightReference.SizeChanged += ReferenceSizeChanged;
+            MatchReferenceHeight();
+        }
+        private void ReferenceSizeChanged(object sender, EventArgs e) => MatchReferenceHeight();
+        private void MatchReferenceHeight()
+        {
+            if (matchingHeight || heightReference == null || !IsHandleCreated) return;
+            matchingHeight = true;
+            try
+            {
+                // Native ComboBox ignores Height. Adjust its owner-drawn selection area,
+                // preserving the adjacent button's measured height and the native border.
+                int desired = Math.Max(Font.Height + NexusChrome.Scale(this, 4), ItemHeight + heightReference.Height - Height);
+                if (ItemHeight != desired) ItemHeight = desired;
+            }
+            finally { matchingHeight = false; }
+        }
+        protected override void OnDpiChangedAfterParent(EventArgs e) { base.OnDpiChangedAfterParent(e); UpdateItemHeight(); }
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && heightReference != null) heightReference.SizeChanged -= ReferenceSizeChanged;
+            base.Dispose(disposing);
+        }
         protected override void OnFontChanged(EventArgs e) { base.OnFontChanged(e); UpdateItemHeight(); }
         protected override void OnHandleCreated(EventArgs e) { base.OnHandleCreated(e); UpdateItemHeight(); }
         protected override void OnGotFocus(EventArgs e) { base.OnGotFocus(e); Invalidate(); }

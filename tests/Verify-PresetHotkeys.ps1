@@ -86,12 +86,19 @@ try {
         $settings.Language = $language; Call 'ApplyLanguage'; [Windows.Forms.Application]::DoEvents()
         $field = Field 'campHotkeyField'
         Assert ($field.Visible -and $field.Width -gt 80 -and $field.Height -ge 25) 'Fields must be usable in both languages'
+        $section = $form.Controls.Find('presetSection', $true)[0]
+        Assert ($null -ne $section -and $section.Contains($field)) 'Preset controls belong to their own section'
+        Assert ($section.Padding.Left -eq 12 -and $section.Margin.Bottom -ge 10) 'Preset section has inset controls and separation from account actions'
+        $picker = Field 'presetPicker'; $update = Field 'updatePresetButton'
+        Assert ($picker.Height -eq $update.Height -and $picker.Top -eq $update.Top) ('Inline dropdown and buttons align: ' + $picker.Bounds + ' / ' + $update.Bounds)
+        $header = $form.Controls.Find('accountsHeader', $true)[0]
+        Assert ($header.GetPositionFromControl((Field 'expandAccountsButton')).Row -eq 0) 'Section actions share the heading row'
         if ($language -eq 'en') {
             $out = Join-Path $PSScriptRoot '../logs/preset-shortcuts-preview.png'
             $bitmap = [Drawing.Bitmap]::new($form.Width, $form.Height)
             try { $form.DrawToBitmap($bitmap, [Drawing.Rectangle]::new(0,0,$form.Width,$form.Height)); $bitmap.Save($out, [Drawing.Imaging.ImageFormat]::Png) }
             finally { $bitmap.Dispose() }
-            $panel = (Field 'startHotkeyField').Parent.Parent
+            $panel = $section
             $bitmap = [Drawing.Bitmap]::new($panel.Width, $panel.Height)
             try { $panel.DrawToBitmap($bitmap, [Drawing.Rectangle]::new(0,0,$panel.Width,$panel.Height)); $bitmap.Save((Join-Path $PSScriptRoot '../logs/preset-shortcuts.png'), [Drawing.Imaging.ImageFormat]::Png) }
             finally { $bitmap.Dispose() }

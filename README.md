@@ -2,7 +2,7 @@
 
 **A launcher for your accounts, characters and squads across Anarchy Online servers.**
 
-AO Nexus **v1.0.14** brings separate game installations, login servers, saved character selections and server news into one Windows app. It includes presets for Funcom AO, Project Rubi-Ka and AO Rebirth, and lets you add your own server entries.
+AO Nexus **v1.0.15** brings separate game installations, login servers, saved character selections and server news into one Windows app. It includes presets for Funcom AO, Project Rubi-Ka and AO Rebirth, and lets you add your own server entries.
 
 Based on [AOQuickLauncher](https://gitlab.com/never-knows-best/aoquicklauncher) by **never-knows-best and contributors**. Customized by **Luckyspawn**.
 
@@ -10,7 +10,7 @@ Based on [AOQuickLauncher](https://gitlab.com/never-knows-best/aoquicklauncher) 
 
 ![AO Nexus dashboard with a saved squad, accounts grouped by server, account details and server news](docs/images/launcher-overview.png)
 
-Screenshots use example accounts and offline news fixtures, with no personal accounts or passwords. The main guide images show v1.0.11; the shortcut example shows v1.0.14.
+Screenshots use example accounts and offline news fixtures, with no personal accounts or passwords. The main guide images show v1.0.11; the shortcut example shows v1.0.15.
 
 ## What it does
 
@@ -26,7 +26,7 @@ Screenshots use example accounts and offline news fixtures, with no personal acc
 - Supports English and Danish, with an automatic Windows-language default.
 - Minimizes to the Windows system tray, keeping the launcher out of the taskbar and Alt+Tab while logins continue.
 - Optionally starts in the tray with Windows and restores the existing window when launched again.
-- Saves separate global start and logout shortcuts for each squad. Logout requests normal `/camp`, without forcing clients closed.
+- Saves separate global start and logout shortcuts for each squad. Logout requests normal `/quit`, without forcing clients closed.
 
 AO Nexus launches supported Windows AO clients. It does not install or patch the game, provide AOSharp plugins, or automatically support a replacement client with a different login protocol.
 
@@ -203,13 +203,13 @@ The shortcuts work while Nexus is running, including when it is hidden in the sy
 
 **Start** applies the saved squad and opens the usual launch confirmation. Account limits, game-folder checks and password preferences still apply. Characters already recognized as running are skipped.
 
-**Logout** lists the safely matched running characters and asks before sending `/camp`. A shared character in two presets can appear in either preset's logout list; always review the names. Matching includes the account, server, character ID, game installation, process ID, process start time and game-window title. It is checked again after confirmation.
+**Logout** lists the safely matched running characters and asks before sending `/quit`. A shared character in two presets can appear in either preset's logout list; always review the names. Matching includes the account, server, character ID, game installation, process ID, process start time and game-window title. It is checked again after confirmation.
 
-The game handles its normal logout countdown. Combat, zoning, movement or cancellation may prevent logout; Nexus never kills the game, uses instant quit, or repeatedly retries. An acknowledgement means the client accepted the camp request, not that the server has completed logout.
+The game handles its normal logout countdown. Combat, zoning, movement or cancellation may prevent logout; Nexus never kills the game, uses instant quit, or repeatedly retries. An acknowledgement means the client accepted the quit request, not that the server has completed logout.
 
-**Existing game windows need one normal restart through v1.0.14 or later** to enable camp control. The same applies to a client opened through **Create new char**: save/import the character and start it normally once. Unsupported or untracked clients are skipped with an explanation. AOSharp is not required. Closing Nexus itself still leaves all game windows open.
+**Existing game windows need one normal restart through v1.0.15 or later** to enable quit control. The same applies to a client opened through **Create new char**: save/import the character and start it normally once. Unsupported or untracked clients are skipped with an explanation. AOSharp is not required. Closing Nexus itself still leaves all game windows open.
 
-For implementation details and test coverage, see [Camp control](docs/Camp-Control.md). See [What's new in v1.0.14](docs/Whats-New-1.0.14.md) for the English feature list.
+For implementation details and test coverage, see [Quit control](docs/Camp-Control.md). See [What's new in v1.0.15](docs/Whats-New-1.0.15.md) for the English feature list.
 
 ## Create a new character
 

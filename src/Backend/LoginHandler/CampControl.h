@@ -1,6 +1,6 @@
 #pragma once
 
-// Fixed /camp operation on the game's window thread. This does not require AOSharp,
+// Fixed timed /quit operation on the game's window thread. This does not require AOSharp,
 // synthesize keystrokes, execute arbitrary text, or force the game to exit.
 typedef void* (__cdecl* CampGetEngine)();
 typedef bool (__thiscall* CampStart)(void*);
@@ -21,8 +21,9 @@ static bool ExecuteNormalCamp()
         if (campCharacter() != campExpectedCharacter || *campTeleporting) return false;
         void* engine = campEngine();
         if (!engine || !campStart(engine)) return false;
-        // Normal timed logout, as used by AOSharp Game.Camp(false). Never ActivateGameClosing.
-        campLogout(2);
+        // QuitStatus 1 exits to desktop after the normal countdown; 2 returns to login.
+        // Matches StartQuitToSystemMessage's successful StartCamping path. Never instant quit.
+        campLogout(1);
         return true;
     }
     __except (EXCEPTION_EXECUTE_HANDLER) { return false; }
@@ -83,7 +84,8 @@ static bool InstallCampControl()
         if (!window) Sleep(500);
     }
     if (!window) return false;
-    std::wstring prefix = L"Local\\AONexus.Camp.v1." + std::to_wstring(GetCurrentProcessId()) + L"." + token + L".";
+    // Separate from the old camp bridge: never acknowledge /quit while only returning to login.
+    std::wstring prefix = L"Local\\AONexus.Quit.v1." + std::to_wstring(GetCurrentProcessId()) + L"." + token + L".";
     // Default process-token DACL: local user/session; random per-process capability.
     campRequest = CreateEventW(nullptr, FALSE, FALSE, (prefix + L"request").c_str());
     campAccepted = CreateEventW(nullptr, FALSE, FALSE, (prefix + L"accepted").c_str());
