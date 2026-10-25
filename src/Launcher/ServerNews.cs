@@ -102,6 +102,9 @@ namespace AOLauncher
             return Task.WhenAll(Sources.Select(source => FetchAsync(source, cacheDirectory, cancellationToken)));
         }
 
+        /// <summary>Receives a description of each failed refresh. Kept as a hook so this file builds on its own in tests.</summary>
+        internal static Action<string> FailureObserved;
+
         internal static Task<NewsSnapshot> FetchAsync(NewsSource source, string cacheDirectory, CancellationToken cancellationToken)
         {
             return FetchAsync(source, cacheDirectory, cancellationToken, DownloadAsync);
@@ -127,6 +130,8 @@ namespace AOLauncher
             catch (Exception error) when (error is HttpRequestException || error is IOException || error is InvalidDataException || error is XmlException || error is RegexMatchTimeoutException || error is OperationCanceledException || error is InvalidOperationException)
             {
                 cancellationToken.ThrowIfCancellationRequested();
+                FailureObserved?.Invoke("News source " + source.Id + " unavailable" + (cached.Articles.Count != 0 ? " (showing cache)" : "") + ": "
+                    + error.GetType().Name + ": " + error.Message);
                 cached.IsCached = cached.Articles.Count != 0;
                 cached.Unavailable = true;
                 return cached;

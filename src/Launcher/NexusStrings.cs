@@ -10,6 +10,9 @@ namespace AOLauncher
         private static readonly Dictionary<string, string> Danish = new Dictionary<string, string>(StringComparer.Ordinal)
         {
             { "Game GUI…", "Spil-GUI…" },
+            { "Report a problem…", "Rapportér et problem…" },
+            { "Report a problem", "Rapportér et problem" },
+            { "AO Nexus stopped unexpectedly last time. An anonymised report was saved on this PC.\r\n\r\nReport the problem now? You can review everything before it is shared.", "AO Nexus stoppede uventet sidste gang. En anonymiseret rapport er gemt på denne pc.\r\n\r\nVil du rapportere problemet nu? Du kan gennemse alt, før det deles." },
             { "Use as startup default", "Brug som standard ved opstart" },
             { "Startup default", "Standard ved opstart" },
             { "No preset selected", "Intet preset valgt" },

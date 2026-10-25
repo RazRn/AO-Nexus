@@ -1,7 +1,7 @@
-• Førstegangsopsætning guider dig gennem sprog, servere, appindstillinger og valgfrie konti. Guiden starter ikke spillet. Adgangskoder indtastes ved login.
+• Rapportér et problem: Indstillinger → Generelt → Rapportér et problem… (også i aktivitetsvinduet) laver en anonymiseret rapport og åbner en udfyldt GitHub-sag. Du gennemser alt først; intet sendes, før du selv indsender det. Kopiér eller gem rapporten, hvis du ikke bruger GitHub.
 
-• Nyheder, statustjek og GitHub-forbindelser venter, indtil ny opsætning afsluttes. Spring over lader valgfrie onlinefunktioner være slået fra. Eksisterende profiler bevares; Indstillinger → Generelt → Kør opsætning igen åbner guiden.
+• Logins, konto- og char-navne, char-ID'er, holdnavne, egne servere og personlige mapper erstattes af koder som Char-3fa2c1. Adgangskoder registreres aldrig.
 
-• Skin-destinationen hedder nu Målinstallation og står over handlingsknapperne. De viste konti deler installationen; valget styrer også download og import af skins.
+• En lokal diagnostiklog registrerer nu login-trin pr. char, lukkede klienter, timeouts og fejl, så problemer som at én char i et hold ikke kan logge ind kan spores. Den fylder højst 2 MB og kan slås fra eller slettes under Indstillinger → Opdateringer.
 
-• Sektionsoverskrifter bruger ensartet typografi. Baggrunde ved sektionskanter og afstand mellem indstillingsknapper er rettet. Spillervejledningen og de markerede billeder er opdateret.
+• Lukker Nexus uventet, gemmes en anonymiseret nedbrudsrapport, og du tilbydes at rapportere den ved næste start.

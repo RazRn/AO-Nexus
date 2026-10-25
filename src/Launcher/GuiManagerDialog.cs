@@ -131,7 +131,7 @@ namespace AOLauncher
                     SaveDefaultTemplate?.Invoke(value); DefaultTemplateId = value;
                     Status(L("Default changed for future chars. Existing layouts are unchanged.", "Standard ændret for fremtidige chars. Eksisterende layouts er uændrede."));
                 }
-                catch (Exception error) { Status(error.Message, true); }
+                catch (Exception error) { Fail(error); }
                 UpdateSelection();
             };
             var components = GuiComponentChoices.Create(componentChecks, "applyGuiComponent", () => { if (!updating) UpdateSelection(); }); left.Controls.Add(components, 0, 4);
@@ -238,7 +238,7 @@ namespace AOLauncher
         {
             if (busy) return;
             try { if (preview) { Status(L("Preview: no game files are changed.", "Forhåndsvisning: spilfiler ændres ikke.")); return; } await action(); }
-            catch (Exception error) { Status(error.Message, true); }
+            catch (Exception error) { Fail(error); }
         }
         private void SetBusy(bool value)
         {
@@ -263,7 +263,16 @@ namespace AOLauncher
             foreach (Control child in parent.Controls) { yield return child; foreach (var descendant in ChildControls(child)) yield return descendant; }
         }
         private void CancelOperation() { downloadCancellation?.Cancel(); RequestCancelOperation?.Invoke(); Status(L("Cancellation requested. Waiting for the current safe step.", "Annullering anmodet. Afventer det aktuelle sikre trin.")); }
-        private void Status(string message, bool error = false) { ErrorLabel.Text = message; ErrorLabel.ForeColor = error ? Theme.Warning : Theme.Muted; }
+        private void Status(string message, bool error = false)
+        {
+            ErrorLabel.Text = message; ErrorLabel.ForeColor = error ? Theme.Warning : Theme.Muted;
+            if (error) DiagnosticJournal.Record("gui", "Game GUI dialog: " + message);
+        }
+        private void Fail(Exception error)
+        {
+            DiagnosticJournal.Exception("gui", "Game GUI dialog", error);
+            ErrorLabel.Text = error.Message; ErrorLabel.ForeColor = Theme.Warning;
+        }
         private async Task<bool> Run(string description, List<GuiCharacterChoice> choices, bool installationWide, Action action)
         {
             if (ExecuteOperation == null) { Status(L("This operation is unavailable in preview.", "Handlingen er ikke tilgængelig i forhåndsvisning.")); return false; }
@@ -424,7 +433,7 @@ namespace AOLauncher
                 RefreshSkins(); RefreshBackups(); UpdateSelection();
                 if (preview) Status(L("Preview uses example accounts. No game files will be changed.", "Forhåndsvisning bruger eksempelkontoer. Spilfiler ændres ikke."));
             }
-            catch (Exception error) { Status(error.Message, true); }
+            catch (Exception error) { Fail(error); }
         }
         private void RefreshSkins(string selectedName = null)
         {

@@ -29,6 +29,7 @@ Requires Windows 10/11, **.NET Framework 4.8 or 4.8.1**, and an installed game c
 | Password choices | Remember a password per account, encrypted for your Windows user, or enter it each time. Update or remove saved copies. | [Passwords](docs/Player-Guide.md#passwords) |
 | News and server health | Choose news sources and connection checks; optionally monitor in the background and receive tray notifications. | [News and health](docs/Player-Guide.md#server-news-and-health) |
 | Tray, updates and logs | Keep Nexus out of Alt+Tab, opt into update checks, and search the activity log. Update installation always requires confirmation. | [Everyday settings](docs/Player-Guide.md#settings-tray-and-updates) |
+| Problem reports | Anonymised diagnostics and crash reports, shared as a prefilled GitHub issue only when you choose to. | [Report a problem](docs/Player-Guide.md#report-a-problem) |
 | Game GUI · Experimental | Capture selected layout components, apply them to characters, manage skins and restore backups. | [Layouts, skins and recovery](docs/Game-GUI.md) |
 
 The interface supports English and Danish. It initially follows Windows' language, with a manual override in Settings.
@@ -37,7 +38,7 @@ The interface supports English and Danish. It initially follows Windows' languag
 
 Nexus launches supported Windows AO clients. It does not install or patch the game, include AOSharp, or automatically support replacement clients with a different login protocol. The server controls which logins are allowed; configurable launcher limits help prevent invalid selections. Same-account parallel login is not included in the public build.
 
-Accounts, settings, saved passwords and GUI templates stay on your PC. The app connects to your chosen game servers, enabled news/health sources, GitHub for requested update checks/downloads, and skin sources when you request a download. It has no analytics or cloud account sync. Read [Privacy and security](docs/Privacy-and-Security.md) for storage, connections, retention and update verification.
+Accounts, settings, saved passwords and GUI templates stay on your PC. The app connects to your chosen game servers, enabled news/health sources, GitHub for requested update checks/downloads, and skin sources when you request a download. It has no analytics or cloud account sync, and problem reports are only shared when you submit them yourself. Read [Privacy and security](docs/Privacy-and-Security.md) for storage, connections, retention and update verification.
 
 ## Need help?
 
@@ -47,8 +48,9 @@ Accounts, settings, saved passwords and GUI templates stay on your PC. The app c
 | A team does not retain checkbox changes | Select the preset and choose **Update** after changing its members. [Preset behavior](docs/Player-Guide.md#team-presets). |
 | A saved game password changed | Select the account and choose **Update saved password** in Details. [Password options](docs/Player-Guide.md#passwords). |
 | A game will not launch, update or close as expected | [Troubleshooting](docs/Player-Guide.md#troubleshooting). |
+| Something else is broken or Nexus crashed | **Settings → General → Report a problem…** builds an anonymised report and opens a prefilled GitHub issue. [How it works](docs/Player-Guide.md#report-a-problem). |
 
-For a bug report, include the Nexus version, server/client type and steps to reproduce it. Remove passwords, usernames and personal paths from shared logs or screenshots.
+Reports from Nexus replace logins, account and character names, IDs and personal paths with codes. Nothing is sent until you submit the issue yourself. If you write an issue by hand, leave out passwords, usernames and personal paths.
 
 ## More documentation
 

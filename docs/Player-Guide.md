@@ -16,6 +16,7 @@ Set up your accounts once, choose the characters you want to play, and save reus
 - [Settings, tray and updates](#settings-tray-and-updates)
 - [Activity log](#activity-log)
 - [Layouts, skins and local data](#layouts-skins-and-local-data)
+- [Report a problem](#report-a-problem)
 - [Troubleshooting](#troubleshooting)
 
 ## Install and first launch
@@ -257,7 +258,7 @@ Search is literal and case-insensitive. **Ctrl+F** focuses it; clearing the sear
 
 The activity log is held in memory. **Clear log** also clears the main-window preview, but does not delete the separate saved update history. New activity continues to appear afterward.
 
-**Settings → Updates** sets a default **5 MB per-log text limit**, adjustable from 1–100 MB. Oldest text is trimmed as needed. This limits retained UTF-8 text, not the application's total memory usage. Review account names and paths before sharing logs.
+**Settings → Updates** sets a default **5 MB per-log text limit**, adjustable from 1–100 MB. Oldest text is trimmed as needed. This limits retained UTF-8 text, not the application's total memory usage. The activity log shows real account and character names; to share what happened, use **Report a problem…** in the activity window instead of copying the log.
 
 ## Layouts, skins and local data
 
@@ -271,6 +272,20 @@ To back up your setup, close Nexus and privately copy its profile folder. Window
 
 Nexus has no analytics or automatic log uploads. It contacts your chosen game servers, enabled news/health sources, GitHub for requested update checks/downloads, and skin sources when you request them. See **Settings → General → Privacy & security…** or the [privacy guide](Privacy-and-Security.md) for destinations and storage details.
 
+## Report a problem
+
+When something does not work as expected — a character that never gets past the loading screen, a GUI change that fails, a crash — choose **Settings → General → Report a problem…**, or **Report a problem…** at the bottom of the activity window.
+
+1. Pick the **Area**, write a short summary and describe what you did, what you expected and what happened. Steps to reproduce help most.
+2. Review the **preview**. It contains Nexus and Windows versions, a summary of your setup (counts, servers, game client versions and folder types), saved crash reports and the recent diagnostics log.
+3. Choose **Open GitHub issue…**. Your browser opens a prefilled issue on `RazRn/AO-Nexus`; review it and choose **Submit new issue** (a free GitHub account is required). Long reports do not fit in a link: the full report is also copied to your clipboard, so paste it into the **Diagnostics** box. Without a GitHub account, use **Copy report** or **Save report…** and send it to the developer another way.
+
+Nothing is sent until you submit it yourself. In the report, logins, account and character names, character IDs, team names, custom server addresses and personal folders are replaced with codes such as `Char-3fa2c1` or `GameFolder-8e01b4`. The same character always gets the same code on your PC, so a report still shows that, for example, the third character on one login timed out at the character-selection screen while the others entered the game. Passwords are never recorded. Messages printed by game clients can mention names Nexus does not know, such as other players — check the preview and remove anything you do not want to share.
+
+If Nexus closes unexpectedly, it saves an anonymised crash report and offers to report it the next time it starts.
+
+The diagnostics log is stored in `%LOCALAPPDATA%\AONexus\Diagnostics` (at most 2 MB, plus the 20 newest crash reports). Turn it off, or delete it immediately, under **Settings → Updates → Diagnostics**. See [Privacy and security](Privacy-and-Security.md#diagnostics-and-problem-reports).
+
 ## Troubleshooting
 
 | Problem | What to check |
@@ -279,7 +294,7 @@ Nexus has no analytics or automatic log uploads. It contacts your chosen game se
 | Several Prefs candidates | Match the account and installation; the hash directory alone is not a server name. |
 | Placeholder character names | Verify the ID, then launch successfully once so Nexus can detect the name. |
 | Game folder is missing | Select the correct folder containing `AnarchyOnline.exe`, or reinstall that server's game client. |
-| Login queue stops | Read the activity log and game window. Check username, password, character ID and selected server. |
+| Login queue stops | Read the activity log and game window. Check username, password, character ID and selected server. If it keeps happening, [report it](#report-a-problem): the report shows whether the client closed, timed out or never reached the character. |
 | Password changed | Update the local saved copy after changing it on the game server. |
 | Selection exceeds a limit | Distinguish simultaneous accounts/chars from stored character slots; already open clients count. |
 | Create new char is absent/not detected | Check slot capacity; keep Nexus open through creation, or import the resulting Prefs/ID manually. |
@@ -290,4 +305,4 @@ Nexus has no analytics or automatic log uploads. It contacts your chosen game se
 
 Nexus expects compatible AO client/login behavior. Choosing a new endpoint alone cannot make an unrelated replacement client compatible.
 
-When reporting a problem, include the Nexus version from its header, Windows version, server type, steps to reproduce, and a relevant log excerpt or screenshot. Remove passwords, personal account names and private paths first. For source builds, see [Building and testing](Building.md).
+To report a problem, use [Report a problem](#report-a-problem): it collects the version, Windows, setup and diagnostics for you, without account data. Screenshots help too; hide account and character names first. For source builds, see [Building and testing](Building.md).

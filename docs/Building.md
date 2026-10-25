@@ -58,7 +58,7 @@ To include live checks of the official news endpoints:
 .\build\Verify.ps1 -LiveNews
 ```
 
-The fixtures cover settings and migrations, server limits, presets, password preferences and updates, Windows encryption, character creation and discovery, launch requests and cancellation, runtime integrity, news parsing and English/Danish UI layout. Reports are written to `logs/`.
+The fixtures cover settings and migrations, server limits, presets, password preferences and updates, Windows encryption, character creation and discovery, launch requests and cancellation, runtime integrity, news parsing, diagnostics anonymisation and crash reports, and English/Danish UI layout. Reports are written to `logs/`.
 
 Tests use synthetic accounts, isolated stores and inert game fixtures. They do not perform real game logins or injection. UI tests require an interactive Windows desktop. Passing them verifies the launcher behavior covered by those fixtures; it does not establish compatibility with every server or game client.
 
@@ -76,12 +76,13 @@ The inherited backend `Login.bat` is an upstream demonstration, not the Nexus st
 
 | Directory or file | Contents |
 | --- | --- |
-| [`src/Launcher`](../src/Launcher) | WinForms interface, settings, passwords, news, Prefs discovery and runtime loader. |
+| [`src/Launcher`](../src/Launcher) | WinForms interface, settings, passwords, news, Prefs discovery, runtime loader, and anonymised diagnostics and problem reports (`Diagnostics.cs`, `ReportProblemDialog.cs`). |
 | [`src/Common`](../src/Common) | Shared localization and server-account policy. |
 | [`src/Backend/AOQuickLauncher`](../src/Backend/AOQuickLauncher) | Modified managed login backend, account queues and client tracking. |
 | [`src/Backend/LoginHandler`](../src/Backend/LoginHandler) | Native client login handler. |
 | [`build`](../build) | Build, pinned dependency restore, payload verification and packaging scripts. |
 | [`tests`](../tests) | Regression fixtures and synthetic UI checks. |
+| [`.github/ISSUE_TEMPLATE`](../.github/ISSUE_TEMPLATE) | Bug report form that **Report a problem** fills in. |
 | [`docs/images`](images) | Example-account screenshots, captured by [`Capture-GuideScreenshots.ps1`](../tests/Capture-GuideScreenshots.ps1). |
 | [`assets`](../assets) | Artwork provenance, editable icon and icon build script. |
 | [`dist/README.txt`](../dist/README.txt) | Offline quick guide included in releases. |

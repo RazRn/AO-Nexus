@@ -19,6 +19,7 @@ namespace AOLauncher
         public bool SkipTrayConfirmation { get; set; }
         public bool SkipQuitConfirmation { get; set; }
         public int MaxLogSizeMb { get; set; } = 5;
+        public bool KeepDiagnostics { get; set; } = true;
         public string GamePath { get; set; } = string.Empty;
         public string Server { get; set; } = "2.24.96.30";
         public int Port { get; set; } = 7500;

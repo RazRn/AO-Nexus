@@ -1,0 +1,50 @@
+name: Bug report
+description: Something in AO Nexus does not work as expected. In Nexus, Settings → General → Report a problem… fills this in for you.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! **Do not post passwords, game usernames, character names or personal folder paths.**
+        Reports created by AO Nexus are already anonymised (for example `Char-3fa2c1`, `Login-8e01b4`); please keep it that way when you add details.
+  - type: input
+    id: version
+    attributes:
+      label: AO Nexus version
+      description: Shown as "Installed version" under Settings → Updates → Check for updates…
+      placeholder: "1.1.7"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Login and characters
+        - Game GUI and skins
+        - Team presets and shortcuts
+        - News and server health
+        - Updates
+        - Crash or freeze
+        - Other
+    validations:
+      required: false
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What did you do, what did you expect, and what happened instead? How often does it happen?
+      placeholder: |
+        1. Select a team with 3 characters on one account
+        2. Choose Log in selected
+        3. The second character stays on the loading screen
+    validations:
+      required: false
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: Filled in by Report a problem in AO Nexus. If the text was shortened, paste the full report from your clipboard or attach the saved report file.
+    validations:
+      required: false

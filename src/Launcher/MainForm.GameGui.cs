@@ -123,6 +123,7 @@ namespace AOLauncher
             }
             catch (Exception error)
             {
+                DiagnosticJournal.Exception("gui", "GUI operation failed", error);
                 AppendLog(L("GUI operation: ", "GUI-handling: ") + error.Message);
                 if (!closing) NexusMessageBox.Show(owner, error.Message, L("Game GUI", "Spil-GUI"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return changed;

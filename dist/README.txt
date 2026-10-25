@@ -116,6 +116,14 @@ Profiles, encrypted passwords, news, templates and runtimes live under
 Nexus has no analytics or automatic log uploads. Review logs before sharing them.
 Share the release ZIP, not your personal AppData folders. Back up profiles privately.
 
+REPORT A PROBLEM
+Settings > General > Report a problem... builds an anonymised report with
+versions, Windows, a setup summary and recent diagnostics. Logins, names, IDs
+and personal folders become codes such as Char-3fa2c1; passwords are never
+logged. Review it, then open a prefilled GitHub issue, copy it or save it.
+Nothing is sent until you submit it. Turn the diagnostics log off or delete it
+under Settings > Updates.
+
 FULL GUIDES AND SOURCE
 Player guide: https://github.com/RazRn/AO-Nexus/blob/main/docs/Player-Guide.md
 Game GUI: https://github.com/RazRn/AO-Nexus/blob/main/docs/Game-GUI.md

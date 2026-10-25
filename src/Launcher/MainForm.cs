@@ -141,6 +141,16 @@ namespace AOLauncher
             Texts.SetLanguage(settings.Language);
             GuiStrings.Register();
             NexusStrings.Register();
+            if (!smoke)
+            {
+                // Configure before the redactor, so the anonymisation key is stored with the journal.
+                DiagnosticJournal.Configure(settings.KeepDiagnostics);
+                DiagnosticRedactor.Update(settings);
+                CrashReporter.SettingsProvider = () => settings;
+                ServerNews.FailureObserved = message => DiagnosticJournal.Record("news", message);
+                DiagnosticJournal.Record("session", "AO Nexus " + AppUpdates.CurrentVersion.ToString(3) + " started"
+                    + (startupError != null ? "; settings could not be read: " + startupError : "") + Environment.NewLine + DiagnosticSnapshot.Build(settings, false));
+            }
             if (startupError != null) startupError = F("Could not read settings: {0}\r\n\r\nThe existing file is preserved. Changes will not be saved in this session.\r\n{1}", startupError, startupSettingsPath);
             Text = smoke ? T("AO Nexus — preview") : "AO Nexus";
             AppArtwork.ApplyIcon(this);
@@ -186,6 +196,7 @@ namespace AOLauncher
                     SaveSettings();
                 }
                 if (!smoke && !storageBlocked && settings.HasCompletedSetup && settings.CheckForUpdatesOnStartup) CheckStartupUpdate();
+                if (!smoke && CrashReporter.HasPending) BeginInvoke((Action)OfferCrashReport);
             };
             FormClosing += OnFormClosing;
         }
@@ -1229,9 +1240,11 @@ namespace AOLauncher
         private void SaveSettings()
         {
             if (smoke || storageBlocked) return;
-            try { SettingsStore.Save(settings); saveErrorShown = false; }
+            try { SettingsStore.Save(settings); saveErrorShown = false; DiagnosticRedactor.Update(settings); }
             catch (Exception ex)
             {
+                DiagnosticRedactor.Update(settings);
+                DiagnosticJournal.Exception("settings", "Saving settings failed", ex);
                 AppendLog(F("Could not save settings: {0}", ex.Message));
                 if (!saveErrorShown)
                 {
@@ -1379,6 +1392,8 @@ namespace AOLauncher
                 };
                 dialog.ForgetPasswordsAction = () => ForgetPasswords(null, EventArgs.Empty);
                 dialog.CheckUpdatesAction = () => { if (smoke) return; OpenUpdates(dialog); };
+                dialog.ReportProblemAction = () => OpenReportProblem(dialog, ProblemArea.Other);
+                dialog.ClearDiagnosticsAction = () => smoke || DiagnosticJournal.Clear();
                 var settingsResult = dialog.ShowDialog(this);
                 if (settingsResult == DialogResult.Retry) { RunSetup(); return; }
                 if (settingsResult != DialogResult.OK) return;
@@ -1395,6 +1410,9 @@ namespace AOLauncher
                 settings.SkipTrayConfirmation = dialog.SkipTrayConfirmation;
                 settings.SkipQuitConfirmation = dialog.SkipQuitConfirmation;
                 settings.MaxLogSizeMb = dialog.MaxLogSizeMb;
+                if (settings.KeepDiagnostics && !dialog.KeepDiagnostics && !smoke) DiagnosticJournal.Clear();
+                settings.KeepDiagnostics = dialog.KeepDiagnostics;
+                if (!smoke) DiagnosticJournal.Configure(settings.KeepDiagnostics);
                 if (!smoke) UpdateJournal.Configure(settings.MaxLogSizeMb);
                 string retained = LogRetention.Tail(activityLog.ToString(), settings.MaxLogSizeMb * 1024 * 1024);
                 activityLog = new StringBuilder(retained);
@@ -1505,6 +1523,8 @@ namespace AOLauncher
             progressRequest = request;
             completedLogins.Clear();
             header.BeginActivity(creation ? 0 : request.Characters.Count);
+            var elapsed = Stopwatch.StartNew();
+            DiagnosticJournal.Record("login", DescribeLaunch(request, accounts, creation));
             try
             {
                 using (runner)
@@ -1538,7 +1558,10 @@ namespace AOLauncher
                     // Credentials travel only through this child process's private standard-input pipe.
                     int exitCode = await runner.RunAsync(startInfo, new JavaScriptSerializer().Serialize(request),
                         line => { string visible = gameLog.Filter(line); if (visible != null) HandleOperationLine(visible, request, runner, creation); },
-                        line => { string visible = gameLog.Filter(line); if (visible != null) AppendLog(visible); });
+                        line => { string visible = gameLog.Filter(line); if (visible != null) WriteLog(visible, "backend-error"); });
+                    DiagnosticJournal.Record("login", "Login run ended after " + elapsed.Elapsed.TotalSeconds.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)
+                        + " s with exit code " + DescribeExitCode(exitCode) + (stopRequested ? " (stop requested)" : "") + "; " + completedLogins.Count + " of " + request.Characters.Count + " confirmed in game"
+                        + "; AnarchyOnline.exe clients now running: " + DiagnosticSnapshot.CountProcesses("AnarchyOnline"));
                     if (closing) return;
                     // A creation client is monitored independently after its window opens.
                     // Finishing that observer must not reset a newer foreground login.
@@ -1575,6 +1598,7 @@ namespace AOLauncher
             }
             catch (Exception ex)
             {
+                DiagnosticJournal.Exception("login", "Login run failed after " + elapsed.Elapsed.TotalSeconds.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " s", ex);
                 if (closing) return;
                 if (ReferenceEquals(backendRunner, runner)) StatusText = T("STATUS · Could not start login");
                 AppendLog(F("Could not complete login: {0}", ex.Message));
@@ -1768,9 +1792,14 @@ namespace AOLauncher
                 catch (InvalidOperationException) { }
                 return;
             }
+            if (line.StartsWith(BackendDiagnosticPrefix, StringComparison.Ordinal))
+            {
+                DiagnosticJournal.Record("login", line.Substring(BackendDiagnosticPrefix.Length));
+                return;
+            }
             if (!line.StartsWith("AOQL_CHARACTER", StringComparison.Ordinal))
             {
-                AppendLog(line);
+                WriteLog(line, "backend");
                 return;
             }
             CharacterConfig updated;
@@ -1784,6 +1813,8 @@ namespace AOLauncher
                 return;
             }
             SaveSettings();
+            DiagnosticJournal.Record("login", "Character confirmed in game: ID " + updated.CharacterId + " as " + updated.Name
+                + (request.Characters.Any(character => character.CreateCharacter) ? " (new character)" : ""));
             RefreshTree();
             if (ReferenceEquals(request, progressRequest) && completedLogins.Add(updated)) header.ReportActivity(completedLogins.Count);
             if (request.Characters.Count == 1 && request.Characters[0].CreateCharacter)
@@ -1896,6 +1927,7 @@ namespace AOLauncher
             {
                 logViewer = new LogViewer();
                 logViewer.ClearLogRequested = ClearActivityLog;
+                logViewer.ReportProblemRequested = () => OpenReportProblem(logViewer, ProblemArea.Other);
                 logViewer.SetLogText(activityLog.ToString());
                 logViewer.Show(this);
             }
@@ -1910,15 +1942,18 @@ namespace AOLauncher
             if (logViewer != null && !logViewer.IsDisposed) logViewer.SetLogText("");
         }
 
-        private void AppendLog(string message)
+        private void AppendLog(string message) => WriteLog(message, "app");
+
+        private void WriteLog(string message, string area)
         {
             if (IsDisposed || Disposing) return;
             if (InvokeRequired)
             {
-                try { BeginInvoke((Action)(() => AppendLog(message))); }
+                try { BeginInvoke((Action)(() => WriteLog(message, area))); }
                 catch (InvalidOperationException) { }
                 return;
             }
+            DiagnosticJournal.Record(area, message);
             string entry = "[" + DateTime.Now.ToString("HH:mm:ss") + "] " + message + Environment.NewLine;
             int limit = LogRetention.NormalizeMb(settings.MaxLogSizeMb) * 1024 * 1024;
             int entryBytes = Encoding.UTF8.GetByteCount(entry);
@@ -1960,6 +1995,51 @@ namespace AOLauncher
             backendRunner?.Stop();
             foreach (var monitor in creationMonitors.ToArray()) monitor.Stop();
             passwords.Clear();
+        }
+
+        internal const string BackendDiagnosticPrefix = "AOQL_DIAG ";
+
+        internal static string DescribeLaunch(LaunchRequest request, IEnumerable<AccountConfig> accounts, bool creation)
+        {
+            var text = new StringBuilder();
+            var selected = request?.Characters ?? new List<LaunchCharacter>();
+            var accountList = (accounts ?? Enumerable.Empty<AccountConfig>()).ToList();
+            text.Append(creation ? "Character creation started" : "Login run started").Append(": ").Append(selected.Count).Append(" character(s) on ")
+                .Append(selected.Select(character => (character.Server ?? "") + ":" + character.Port + "/" + (character.Account ?? "").Trim().ToLowerInvariant()).Distinct().Count())
+                .Append(" login(s); ready timeout ").Append(request?.ReadyTimeoutSeconds ?? 0).Append(" s; AnarchyOnline.exe clients already running: ")
+                .Append(DiagnosticSnapshot.CountProcesses("AnarchyOnline"));
+            foreach (var account in accountList)
+            {
+                var characters = selected.Where(character => string.Equals(character.AccountId, account.Id, StringComparison.OrdinalIgnoreCase)).ToList();
+                text.AppendLine().Append("  ").Append(account.Label).Append(" → ").Append(characters.FirstOrDefault()?.ServerName ?? "?")
+                    .Append(" (").Append(AccountTargets.Endpoint(account)).Append("), game ").Append(account.GamePath)
+                    .Append(", password ").Append(account.RememberPassword ? "remembered" : "entered")
+                    .Append(", queue order: ").Append(characters.Count == 0 ? "none" : string.Join(", ", characters.Select(character => character.CreateCharacter ? "new character" : "ID " + character.CharacterId)));
+            }
+            return text.ToString();
+        }
+
+        internal static string DescribeExitCode(int exitCode)
+        {
+            if (exitCode == BackendRunner.StoppedExitCode) return exitCode + " (stopped)";
+            if (exitCode == 0) return "0 (success)";
+            if (exitCode == 2) return "2 (a login queue reported an error)";
+            if (exitCode == 1) return "1 (backend error)";
+            return exitCode + " (0x" + exitCode.ToString("X8", System.Globalization.CultureInfo.InvariantCulture) + ", unexpected — possible backend crash)";
+        }
+
+        private void OpenReportProblem(IWin32Window owner, ProblemArea area)
+        {
+            using (var dialog = new ReportProblemDialog(settings, area, !smoke)) dialog.ShowDialog(owner ?? this);
+        }
+
+        private void OfferCrashReport()
+        {
+            if (closing || IsDisposed || !CrashReporter.HasPending) return;
+            var answer = NexusMessageBox.Show(this, T("AO Nexus stopped unexpectedly last time. An anonymised report was saved on this PC.\r\n\r\nReport the problem now? You can review everything before it is shared."),
+                T("Report a problem"), MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1);
+            CrashReporter.AcknowledgePending();
+            if (answer == DialogResult.Yes) OpenReportProblem(this, ProblemArea.Crash);
         }
 
         private void ShowInfo(string message)

@@ -9,6 +9,8 @@ namespace AOLauncher
         [STAThread]
         private static void Main(string[] args)
         {
+            // Synthetic previews and tests keep the default exception behaviour, so failures stay visible.
+            if (!args.Any(arg => arg == "--preview-ui" || arg == "--smoke" || arg == "--check-ui")) CrashReporter.Install();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             if (args.Length == 2 && args[0] == "--apply-update") { UpdateInstaller.Apply(args[1]); return; }

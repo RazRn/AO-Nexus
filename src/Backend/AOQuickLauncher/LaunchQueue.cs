@@ -305,6 +305,8 @@ namespace AOQuickLauncher
         {
             if (!request.Characters.Any(entry => entry.CreateCharacter))
                 Console.WriteLine(Texts.T("Accounts start in parallel; characters on the same account log in one at a time."));
+            var queueSizes = request.Characters.GroupBy(AccountQueueKey, StringComparer.OrdinalIgnoreCase).Select(group => group.Count()).ToArray();
+            Diagnostic("queues", null, new { ParallelQueues = queueSizes.Length, CharactersPerQueue = queueSizes, request.ReadyTimeoutSeconds });
             int result = await RunAccountQueuesAsync(request.Characters, async entry =>
             {
                 var target = entry.ResolvedTarget;
@@ -325,17 +327,36 @@ namespace AOQuickLauncher
                     return true;
                 }
                 Console.WriteLine(Texts.F("Starting {0} (ID {1})...", entry.CharacterName, entry.CharacterId));
-                using (var client = Program.SpawnAOProcess(new Program.Options {
-                    Username = entry.Account, Password = entry.Password, CharacterId = entry.CharacterId,
-                    CampToken = Guid.NewGuid().ToString("N")
-                }, target))
+                var spawnTimer = Stopwatch.StartNew();
+                Process spawned;
+                try
                 {
+                    spawned = Program.SpawnAOProcess(new Program.Options {
+                        Username = entry.Account, Password = entry.Password, CharacterId = entry.CharacterId,
+                        CampToken = Guid.NewGuid().ToString("N")
+                    }, target);
+                }
+                catch (Exception error)
+                {
+                    // Type and system error codes only: exception text may contain request data.
+                    Diagnostic("start-failed", entry, new { Stage = "start or LoginHandler injection", ElapsedMs = spawnTimer.ElapsedMilliseconds,
+                        Type = error.GetType().FullName, HResult = "0x" + error.HResult.ToString("X8"),
+                        Win32Error = (error as System.ComponentModel.Win32Exception)?.NativeErrorCode,
+                        Inner = error.InnerException?.GetType().FullName, GameExecutableExists = File.Exists(Path.Combine(target.GamePath, "AnarchyOnline.exe")) });
+                    throw;
+                }
+                using (var client = spawned)
+                {
+                    Diagnostic("started", entry, new { ElapsedMs = spawnTimer.ElapsedMilliseconds, ProcessId = SafeProcessId(client) });
                     bool trackingRequired = request.Characters.Any(selected =>
                         (selected.ResolvedTarget.EndpointKey == target.EndpointKey && AccountLimit(selected) > 0)
                         || (CharacterScope(selected) == CharacterScope(entry) && CharacterLimit(selected) > 0));
                     ClientSessions.RecordPending(entry, target, client, trackingRequired);
                     Console.WriteLine(Texts.F("Waiting for the game window for ID {0}...", entry.CharacterId));
-                    string actualName = await WaitForCharacterAsync(client, request.ReadyTimeoutSeconds);
+                    var wait = new CharacterWait();
+                    string actualName = await WaitForCharacterAsync(client, request.ReadyTimeoutSeconds, wait);
+                    Diagnostic(actualName != null ? "in-game" : "not-detected", entry, new { wait.Outcome, wait.Seconds, wait.ExitCode,
+                        wait.WindowState, wait.TitleChanges, RunningClients = SafeRunningClients() });
                     if (actualName == null)
                     {
                         Console.Error.WriteLine(Texts.F("This account's queue stopped: ID {0} was not detected in game. Check the game window, account details and character ID. Other accounts continue; existing game windows stay open.", entry.CharacterId));
@@ -430,25 +451,82 @@ namespace AOQuickLauncher
                 string.Equals(actualName, characterName?.Trim(), StringComparison.OrdinalIgnoreCase);
         }
 
-        private static async Task<string> WaitForCharacterAsync(Process client, int timeoutSeconds)
+        /// <summary>How waiting for a character ended, without the window title itself (it can contain names).</summary>
+        internal sealed class CharacterWait
+        {
+            public string Outcome { get; set; } = "timeout";
+            public double Seconds { get; set; }
+            public int? ExitCode { get; set; }
+            public string WindowState { get; set; } = "no window";
+            public int TitleChanges { get; set; }
+        }
+
+        private static async Task<string> WaitForCharacterAsync(Process client, int timeoutSeconds, CharacterWait wait = null)
         {
             var timer = Stopwatch.StartNew();
             int stableSamples = 0;
             string previousName = null;
-            while (timer.Elapsed.TotalSeconds < timeoutSeconds)
+            string previousTitle = null;
+            wait = wait ?? new CharacterWait();
+            try
             {
-                client.Refresh();
-                if (client.HasExited) return null;
-                if (TryGetCharacterName(client.MainWindowTitle, out string actualName))
+                while (timer.Elapsed.TotalSeconds < timeoutSeconds)
                 {
-                    stableSamples = string.Equals(actualName, previousName, StringComparison.Ordinal) ? stableSamples + 1 : 1;
-                    previousName = actualName;
-                    if (stableSamples >= 3) return actualName;
+                    client.Refresh();
+                    if (client.HasExited)
+                    {
+                        wait.Outcome = "client exited";
+                        try { wait.ExitCode = client.ExitCode; } catch (InvalidOperationException) { }
+                        return null;
+                    }
+                    string title = client.MainWindowTitle;
+                    if (!string.Equals(title, previousTitle, StringComparison.Ordinal)) { wait.TitleChanges++; previousTitle = title; }
+                    wait.WindowState = DescribeWindow(client, title);
+                    if (TryGetCharacterName(title, out string actualName))
+                    {
+                        stableSamples = string.Equals(actualName, previousName, StringComparison.Ordinal) ? stableSamples + 1 : 1;
+                        previousName = actualName;
+                        if (stableSamples >= 3) { wait.Outcome = "in game"; return actualName; }
+                    }
+                    else { stableSamples = 0; previousName = null; }
+                    await Task.Delay(500);
                 }
-                else { stableSamples = 0; previousName = null; }
-                await Task.Delay(500);
+                return null;
             }
-            return null;
+            finally { wait.Seconds = Math.Round(timer.Elapsed.TotalSeconds, 1); }
+        }
+
+        private static string DescribeWindow(Process client, string title)
+        {
+            if (client.MainWindowHandle == IntPtr.Zero) return "no window";
+            if (string.IsNullOrEmpty(title)) return "window without title";
+            if (TryGetCharacterName(title, out _)) return "character window";
+            if (title.StartsWith("Anarchy Online", StringComparison.OrdinalIgnoreCase)) return "game window (login, character selection or loading)";
+            return "other window title";
+        }
+
+        internal static void Diagnostic(string name, CharacterLaunch entry, object details)
+        {
+            // Read by AO Nexus into its anonymised diagnostics log; never shown in the activity log.
+            try { Console.WriteLine("AOQL_DIAG " + name + (entry != null ? " ID " + entry.CharacterId : "") + " " + JsonSerializer.Serialize(details)); }
+            catch (Exception) { }
+        }
+
+        private static int? SafeProcessId(Process client)
+        {
+            try { return client.Id; }
+            catch (InvalidOperationException) { return null; }
+        }
+
+        private static int SafeRunningClients()
+        {
+            try
+            {
+                var clients = Process.GetProcessesByName("AnarchyOnline");
+                foreach (var item in clients) item.Dispose();
+                return clients.Length;
+            }
+            catch (Exception) { return -1; }
         }
     }
 }

@@ -97,7 +97,7 @@ namespace AOLauncher
                     await StartSelectedCore();
                 }
             }
-            catch (Exception ex) { if (!closing) ShowInfo(ex.Message); }
+            catch (Exception ex) { DiagnosticJournal.Exception("presets", "Preset shortcut failed", ex); if (!closing) ShowInfo(ex.Message); }
             finally { shortcutActionBusy = false; }
         }
         private async Task CampPreset(LaunchPreset preset)

@@ -22,6 +22,8 @@ namespace AOLauncher
         private string lastSearch = "";
         private readonly Button clearLog = Theme.Button(T("Clear log…"));
         internal Action ClearLogRequested;
+        internal Action ReportProblemRequested;
+        private readonly Button reportProblem = Theme.Button(T("Report a problem…"));
         internal Func<bool> ConfirmClearLog;
 
         internal LogViewer()
@@ -51,12 +53,14 @@ namespace AOLauncher
             var frame = new NexusPanel { Dock = DockStyle.Fill, Padding = new Padding(10), Margin = Padding.Empty, BackColor = TerminalBackground };
             output.AccessibleName = T("Activity log");
             frame.Controls.Add(SlimScrolling.Wrap(output));
-            var footer = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 1, Margin = Padding.Empty };
-            footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); footer.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); footer.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            var footer = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 4, RowCount = 1, Margin = Padding.Empty };
+            footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); footer.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); footer.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); footer.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             follow.Text = T("Follow new entries"); follow.Margin = new Padding(8, 6, 0, 0);
             footer.Controls.Add(count, 0, 0); footer.Controls.Add(follow, 1, 0);
             clearLog.Name = "clearActivityLog"; clearLog.Margin = new Padding(12, 6, 0, 0); clearLog.Enabled = false;
             clearLog.Click += (sender, e) => ClearActivity(); footer.Controls.Add(clearLog, 2, 0);
+            reportProblem.Name = "reportProblemFromLog"; reportProblem.Margin = new Padding(8, 6, 0, 0); reportProblem.UseMnemonic = false;
+            reportProblem.Click += (sender, e) => ReportProblemRequested?.Invoke(); footer.Controls.Add(reportProblem, 3, 0);
             layout.Controls.Add(toolbar, 0, 0); layout.Controls.Add(frame, 0, 1); layout.Controls.Add(footer, 0, 2);
             Controls.Add(layout);
             search.TextChanged += (sender, e) => QueueRefresh();

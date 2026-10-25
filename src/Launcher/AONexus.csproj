@@ -37,6 +37,7 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Net.Http" />
+    <Reference Include="System.Management" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
@@ -75,6 +76,8 @@
     <Compile Include="LogViewer.cs" />
     <Compile Include="AppUpdates.cs" />
     <Compile Include="LocalMaintenance.cs" />
+    <Compile Include="Diagnostics.cs" />
+    <Compile Include="ReportProblemDialog.cs" />
     <Compile Include="PrivacyDialog.cs" />
     <Compile Include="UpdateDialog.cs" />
     <Compile Include="MainForm.cs" />

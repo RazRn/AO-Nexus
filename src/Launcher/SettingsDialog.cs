@@ -13,7 +13,10 @@ namespace AOLauncher
         private readonly ComboBox languageInput;
         private readonly NumericUpDown logSizeInput;
         public int MaxLogSizeMb => (int)logSizeInput.Value;
-        private readonly CheckBox startWithWindowsInput, checkUpdatesInput, confirmTrayInput, confirmQuitInput;
+        private readonly CheckBox startWithWindowsInput, checkUpdatesInput, confirmTrayInput, confirmQuitInput, keepDiagnosticsInput;
+        public bool KeepDiagnostics => keepDiagnosticsInput.Checked;
+        public Action ReportProblemAction { private get; set; }
+        public Func<bool> ClearDiagnosticsAction { private get; set; }
         internal readonly SidebarOptions sidebarOptions;
         internal readonly NexusTabControl settingsTabs;
         public bool SkipTrayConfirmation => !confirmTrayInput.Checked;
@@ -66,6 +69,11 @@ namespace AOLauncher
             var setup = Theme.Button(L("Run setup again…", "Kør opsætning igen…")); setup.Name = "runSetupAgain";
             setup.Click += (sender, e) => { DialogResult = DialogResult.Retry; };
             Fields.Controls.Add(setup);
+            var report = Theme.Button(L("Report a problem…", "Rapportér et problem…")); report.Name = "reportProblem";
+            report.Click += (sender, e) => ReportProblemAction?.Invoke();
+            Fields.Controls.Add(report);
+            Note(Fields, L("Creates an anonymised report you can review, then share as a GitHub issue or a file. Nothing is sent automatically.",
+                "Laver en anonymiseret rapport, du kan gennemse og dele som en GitHub-sag eller en fil. Intet sendes automatisk."));
 
             Note(serverFields, T("Set the game folder and login server under each account: Edit → Game and server."));
             var serversButton = Theme.Button(T("Manage login servers…")); serversButton.Name = "manageLoginServers";
@@ -115,6 +123,26 @@ namespace AOLauncher
             updateFields.Controls.Add(logSizeInput);
             Note(updateFields, L("Default: 5 MB per log. Oldest entries are removed first. The activity log lasts only for this session; update history is saved on this PC. Update downloads are cleaned up automatically; one previous executable is kept for recovery.",
                 "Standard: 5 MB pr. log. Ældste poster fjernes først. Aktivitetsloggen findes kun i denne session; opdateringshistorikken gemmes på denne pc. Opdateringsfiler ryddes automatisk op; én tidligere programfil beholdes til gendannelse."));
+            var diagnosticsHeading = Note(updateFields, L("Diagnostics", "Diagnostik"));
+            diagnosticsHeading.Font = new Font(settingsTabs.Font, FontStyle.Bold);
+            diagnosticsHeading.Margin = new Padding(0, 16, 0, 8);
+            keepDiagnosticsInput = new NexusCheckBox { Name = "keepDiagnostics", Text = L("Keep an anonymised diagnostics log on this PC", "Gem en anonymiseret diagnostiklog på denne pc"),
+                Checked = settings.KeepDiagnostics, AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 0, 0, 8) };
+            updateFields.Controls.Add(keepDiagnosticsInput);
+            Note(updateFields, L("Records errors, login steps and crashes in %LOCALAPPDATA%\\AONexus\\Diagnostics (max 2 MB, plus the 20 newest crash reports). Logins, account and character names, IDs and personal folders are replaced with codes; passwords are never logged. It is only shared when you use Report a problem. Turning it off deletes the saved diagnostics.",
+                "Registrerer fejl, login-trin og nedbrud i %LOCALAPPDATA%\\AONexus\\Diagnostics (højst 2 MB samt de 20 nyeste nedbrudsrapporter). Logins, konto- og char-navne, ID'er og personlige mapper erstattes af koder; adgangskoder logges aldrig. Den deles kun, når du bruger Rapportér et problem. Slås den fra, slettes den gemte diagnostik."));
+            var clearDiagnostics = Theme.Button(L("Delete diagnostics now", "Slet diagnostik nu")); clearDiagnostics.Name = "clearDiagnostics";
+            updateFields.Controls.Add(clearDiagnostics);
+            var diagnosticsStatus = Note(updateFields, ""); diagnosticsStatus.Name = "diagnosticsActionStatus"; diagnosticsStatus.Visible = false;
+            diagnosticsStatus.TextChanged += (sender, e) => diagnosticsStatus.Visible = !string.IsNullOrEmpty(diagnosticsStatus.Text);
+            clearDiagnostics.Click += (sender, e) =>
+            {
+                if (ClearDiagnosticsAction == null) return;
+                bool cleared = ClearDiagnosticsAction();
+                diagnosticsStatus.Text = cleared ? L("Saved diagnostics and crash reports were deleted.", "Gemt diagnostik og nedbrudsrapporter er slettet.")
+                    : L("Some diagnostics files could not be deleted. Try again.", "Nogle diagnostikfiler kunne ikke slettes. Prøv igen.");
+                diagnosticsStatus.ForeColor = cleared ? Theme.Accent : Theme.Warning;
+            };
             foreach (var fields in new[] { Fields, serverFields, updateFields })
                 foreach (var button in fields.Controls.OfType<Button>())
                 {

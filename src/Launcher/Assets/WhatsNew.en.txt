@@ -1,7 +1,7 @@
-• First-run setup now guides you through language, servers, app preferences and optional accounts. No game is started by setup. Passwords are requested at login.
+• Report a problem: Settings → General → Report a problem… (also in the activity window) builds an anonymised report and opens a prefilled GitHub issue. You review everything first; nothing is sent until you submit it. Copy or save the report if you do not use GitHub.
 
-• News, health and GitHub connections wait until fresh setup finishes. Skip leaves optional online features off. Existing profiles keep their settings; Settings → General → Run setup again revisits the wizard.
+• Logins, account and character names, character IDs, team names, custom servers and personal folders are replaced with codes such as Char-3fa2c1. Passwords are never recorded.
 
-• The skin destination is now labelled Target installation and sits above the apply buttons. The listed accounts share that installation; the selection also controls skin downloads and imports.
+• A local diagnostics log now records login steps per character, client exits, timeouts and errors, so problems such as one character in a team failing to log in can be traced. It is capped at 2 MB and can be turned off or deleted under Settings → Updates.
 
-• Section headings use consistent typography. Legend backgrounds and Settings button spacing have been corrected. The player guide and annotated screenshots are refreshed.
+• If Nexus closes unexpectedly, it saves an anonymised crash report and offers to report it at the next start.
