@@ -20,6 +20,8 @@ namespace AOLauncher
         public bool SkipQuitConfirmation { get; set; }
         public int MaxLogSizeMb { get; set; } = 5;
         public bool KeepDiagnostics { get; set; } = true;
+        // Experimental: the login handler skips drawing the login and character screens.
+        public bool QuietLaunch { get; set; }
         public string GamePath { get; set; } = string.Empty;
         public string Server { get; set; } = "2.24.96.30";
         public int Port { get; set; } = 7500;
@@ -130,6 +132,7 @@ namespace AOLauncher
         public string Server { get; set; }
         public int Port { get; set; }
         public int ReadyTimeoutSeconds { get; set; } = 120;
+        public bool QuietLaunch { get; set; }
         public List<LaunchCharacter> Characters { get; set; } = new List<LaunchCharacter>();
     }
 

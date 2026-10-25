@@ -67,6 +67,10 @@ namespace AOQuickLauncher
         public int Port { get; set; }
         public List<CharacterLaunch> Characters { get; set; }
         public int ReadyTimeoutSeconds { get; set; } = 120;
+        // Minimum gap between client starts in the same game folder (AO locks files while starting).
+        public int StartSpacingMs { get; set; } = 1500;
+        // Experimental: LoginHandler skips drawing the login and character screens.
+        public bool QuietLaunch { get; set; }
     }
 
     internal static class LaunchQueue
@@ -153,6 +157,8 @@ namespace AOQuickLauncher
                 throw new ArgumentException(Texts.T("Select no more than 100 characters at a time."));
             if (request.ReadyTimeoutSeconds < 10 || request.ReadyTimeoutSeconds > 600)
                 throw new ArgumentException(Texts.T("The timeout must be between 10 and 600 seconds."));
+            if (request.StartSpacingMs < 0 || request.StartSpacingMs > 10000)
+                throw new ArgumentException(Texts.T("The start spacing must be between 0 and 10000 milliseconds."));
             if (request.Characters.Any(entry => entry != null && entry.CreateCharacter) && request.Characters.Count != 1)
                 throw new ArgumentException(Texts.T("Open character creation for one account at a time, separately from character login."));
             var ids = new HashSet<(string Endpoint, int CharacterId)>();
@@ -306,7 +312,7 @@ namespace AOQuickLauncher
             if (!request.Characters.Any(entry => entry.CreateCharacter))
                 Console.WriteLine(Texts.T("Accounts start in parallel; characters on the same account log in one at a time."));
             var queueSizes = request.Characters.GroupBy(AccountQueueKey, StringComparer.OrdinalIgnoreCase).Select(group => group.Count()).ToArray();
-            Diagnostic("queues", null, new { ParallelQueues = queueSizes.Length, CharactersPerQueue = queueSizes, request.ReadyTimeoutSeconds });
+            Diagnostic("queues", null, new { ParallelQueues = queueSizes.Length, CharactersPerQueue = queueSizes, request.ReadyTimeoutSeconds, request.StartSpacingMs, request.QuietLaunch });
             int result = await RunAccountQueuesAsync(request.Characters, async entry =>
             {
                 var target = entry.ResolvedTarget;
@@ -326,14 +332,17 @@ namespace AOQuickLauncher
                     Console.WriteLine(Texts.F("ID {0}: a tracked game client is still logging in; skipped. Check its game window.", entry.CharacterId));
                     return true;
                 }
+                long spacingWaitMs = await StartSpacing.WaitTurnAsync(target.GamePath, request.StartSpacingMs);
                 Console.WriteLine(Texts.F("Starting {0} (ID {1})...", entry.CharacterName, entry.CharacterId));
                 var spawnTimer = Stopwatch.StartNew();
+                using var status = LoginStatusChannel.TryStart(spawnTimer,
+                    (stage, ms) => Diagnostic("stage", entry, new { Stage = stage, Ms = ms }));
                 Process spawned;
                 try
                 {
                     spawned = Program.SpawnAOProcess(new Program.Options {
                         Username = entry.Account, Password = entry.Password, CharacterId = entry.CharacterId,
-                        CampToken = Guid.NewGuid().ToString("N")
+                        CampToken = Guid.NewGuid().ToString("N"), StatusPipe = status?.PipeName, Quiet = request.QuietLaunch
                     }, target);
                 }
                 catch (Exception error)
@@ -347,7 +356,7 @@ namespace AOQuickLauncher
                 }
                 using (var client = spawned)
                 {
-                    Diagnostic("started", entry, new { ElapsedMs = spawnTimer.ElapsedMilliseconds, ProcessId = SafeProcessId(client) });
+                    Diagnostic("started", entry, new { ElapsedMs = spawnTimer.ElapsedMilliseconds, SpacingWaitMs = spacingWaitMs, ProcessId = SafeProcessId(client) });
                     bool trackingRequired = request.Characters.Any(selected =>
                         (selected.ResolvedTarget.EndpointKey == target.EndpointKey && AccountLimit(selected) > 0)
                         || (CharacterScope(selected) == CharacterScope(entry) && CharacterLimit(selected) > 0));
@@ -355,8 +364,8 @@ namespace AOQuickLauncher
                     Console.WriteLine(Texts.F("Waiting for the game window for ID {0}...", entry.CharacterId));
                     var wait = new CharacterWait();
                     string actualName = await WaitForCharacterAsync(client, request.ReadyTimeoutSeconds, wait);
-                    Diagnostic(actualName != null ? "in-game" : "not-detected", entry, new { wait.Outcome, wait.Seconds, wait.ExitCode,
-                        wait.WindowState, wait.TitleChanges, RunningClients = SafeRunningClients() });
+                    Diagnostic(actualName != null ? "in-game" : "not-detected", entry, new { wait.Outcome, wait.Seconds, wait.NameFirstSeenSeconds, wait.ExitCode,
+                        wait.WindowState, wait.TitleChanges, Stages = status?.Summary() ?? "unavailable", Dialogs = wait.Dialogs, RunningClients = SafeRunningClients() });
                     if (actualName == null)
                     {
                         Console.Error.WriteLine(Texts.F("This account's queue stopped: ID {0} was not detected in game. Check the game window, account details and character ID. Other accounts continue; existing game windows stay open.", entry.CharacterId));
@@ -459,6 +468,9 @@ namespace AOQuickLauncher
             public int? ExitCode { get; set; }
             public string WindowState { get; set; } = "no window";
             public int TitleChanges { get; set; }
+            public double? NameFirstSeenSeconds { get; set; }
+            // Texts of Windows dialogs the client showed, e.g. "No write access to the main AO folder".
+            public List<string> Dialogs { get; } = new List<string>();
         }
 
         private static async Task<string> WaitForCharacterAsync(Process client, int timeoutSeconds, CharacterWait wait = null)
@@ -468,11 +480,18 @@ namespace AOQuickLauncher
             string previousName = null;
             string previousTitle = null;
             wait = wait ?? new CharacterWait();
+            long nextDialogCheck = 0;
             try
             {
                 while (timer.Elapsed.TotalSeconds < timeoutSeconds)
                 {
                     client.Refresh();
+                    if (timer.ElapsedMilliseconds >= nextDialogCheck && wait.Dialogs.Count < 3)
+                    {
+                        nextDialogCheck = timer.ElapsedMilliseconds + 1000;
+                        foreach (string text in ClientDialogs.Read(client.Id))
+                            if (!wait.Dialogs.Contains(text) && wait.Dialogs.Count < 3) wait.Dialogs.Add(text);
+                    }
                     if (client.HasExited)
                     {
                         wait.Outcome = "client exited";
@@ -484,6 +503,7 @@ namespace AOQuickLauncher
                     wait.WindowState = DescribeWindow(client, title);
                     if (TryGetCharacterName(title, out string actualName))
                     {
+                        if (wait.NameFirstSeenSeconds == null) wait.NameFirstSeenSeconds = Math.Round(timer.Elapsed.TotalSeconds, 1);
                         stableSamples = string.Equals(actualName, previousName, StringComparison.Ordinal) ? stableSamples + 1 : 1;
                         previousName = actualName;
                         if (stableSamples >= 3) { wait.Outcome = "in game"; return actualName; }

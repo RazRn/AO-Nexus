@@ -13,7 +13,8 @@ namespace AOLauncher
         private readonly ComboBox languageInput;
         private readonly NumericUpDown logSizeInput;
         public int MaxLogSizeMb => (int)logSizeInput.Value;
-        private readonly CheckBox startWithWindowsInput, checkUpdatesInput, confirmTrayInput, confirmQuitInput, keepDiagnosticsInput;
+        private readonly CheckBox startWithWindowsInput, checkUpdatesInput, confirmTrayInput, confirmQuitInput, keepDiagnosticsInput, quietLaunchInput;
+        public bool QuietLaunch => quietLaunchInput.Checked;
         public bool KeepDiagnostics => keepDiagnosticsInput.Checked;
         public Action ReportProblemAction { private get; set; }
         public Func<bool> ClearDiagnosticsAction { private get; set; }
@@ -95,6 +96,11 @@ namespace AOLauncher
                     if (dialog.ShowDialog(this) == DialogResult.OK) HealthCheckEndpoints = dialog.Endpoints;
             };
             serverFields.Controls.Add(healthEndpoints);
+            quietLaunchInput = new NexusCheckBox { Name = "quietLaunch", Text = L("Skip drawing the login screens (experimental)", "Spring tegning af login-skærmene over (eksperimentel)"),
+                Checked = settings.QuietLaunch, AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 12, 0, 8) };
+            serverFields.Controls.Add(quietLaunchInput);
+            Note(serverFields, L("The game client goes straight from start to the selected character without showing the login and character list. It may load slightly faster. Login errors are then not visible in the game window; use the activity log or Report a problem.",
+                "Spilklienten går direkte fra start til den valgte char uden at vise login og char-liste. Det kan indlæse lidt hurtigere. Login-fejl ses så ikke i spilvinduet; brug aktivitetsloggen eller Rapportér et problem."));
             var passwordsHeading = Note(serverFields, T("Saved passwords"));
             passwordsHeading.Font = new Font(settingsTabs.Font, FontStyle.Bold);
             passwordsHeading.Margin = new Padding(0, 16, 0, 8);

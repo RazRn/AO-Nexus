@@ -1412,6 +1412,7 @@ namespace AOLauncher
                 settings.MaxLogSizeMb = dialog.MaxLogSizeMb;
                 if (settings.KeepDiagnostics && !dialog.KeepDiagnostics && !smoke) DiagnosticJournal.Clear();
                 settings.KeepDiagnostics = dialog.KeepDiagnostics;
+                settings.QuietLaunch = dialog.QuietLaunch;
                 if (!smoke) DiagnosticJournal.Configure(settings.KeepDiagnostics);
                 if (!smoke) UpdateJournal.Configure(settings.MaxLogSizeMb);
                 string retained = LogRetention.Tail(activityLog.ToString(), settings.MaxLogSizeMb * 1024 * 1024);
@@ -1666,7 +1667,7 @@ namespace AOLauncher
 
         internal static LaunchRequest CreateLaunchRequest(LauncherSettings value, IDictionary<string, string> credentials)
         {
-            var request = new LaunchRequest { Language = Texts.CurrentLanguage };
+            var request = new LaunchRequest { Language = Texts.CurrentLanguage, QuietLaunch = value.QuietLaunch };
             foreach (var account in value.Accounts)
                 foreach (var character in account.Characters.Where(item => item.Selected))
                     request.Characters.Add(new LaunchCharacter { AccountId = account.Id, Account = account.Username, Password = credentials[account.Id], GamePath = account.GamePath, Server = account.Server, ServerName = AccountTargets.ServerName(value, account), Port = account.Port, MaxAccounts = AccountTargets.AccountLimit(value, AccountTargets.Endpoint(account)), MaxCharactersPerAccount = AccountTargets.CharacterLimit(value, AccountTargets.Endpoint(account)), CharacterId = character.CharacterId, CharacterName = character.NamePending ? F("Character {0}", character.CharacterId) : character.Name });

@@ -46,6 +46,8 @@ bool EnvironmentIs(const char* name, const char* expected)
 typedef void* (__thiscall* Utils_Assign_t) (std::string* string, const char* newString);
 Utils_Assign_t Utils_Assign;
 
+#include "StatusReport.h"
+
 void NopCall(PVOID address) {
     DWORD d, ds;
     VirtualProtect(address, 5, PAGE_EXECUTE_READWRITE, &d);
@@ -55,14 +57,17 @@ void NopCall(PVOID address) {
 void __fastcall LoginModule_Initialize_Hook(void* pLoginModule, int edx, bool loginAccount)
 {
     LoginModule_Initialize(pLoginModule, loginAccount);
+    StatusSend("login-screen");
 
     Utils_Assign(Client_GetPlayerName(), std::getenv("AOUser"));
     Utils_Assign(Client_GetPassword(), std::getenv("AOPass"));
-    Client_ConnectToLH(Client_GetInstanceIfAny());
+    int connected = Client_ConnectToLH(Client_GetInstanceIfAny());
+    StatusSend("connect rc=%d", connected);
 }
 
 void __fastcall LoginModule_Show_Hook(void* pLoginModule, int edx, int state)
 {
+    StatusScreen(state);
     if (CreateCharacterMode)
     {
         // Keep the game's normal login/error/selection UI visible. ID 0 is never
@@ -81,8 +86,10 @@ void __fastcall LoginModule_Show_Hook(void* pLoginModule, int edx, int state)
     }
     if (state == 3)
     {
+        StatusSend("character-list");
         Client_SetCharID(atoi(std::getenv("AOCharId")));
         Client_LoginCharacter(Client_GetInstanceIfAny());
+        StatusSend("character-requested");
         LoggedIn = true;
     }
 
@@ -319,17 +326,24 @@ void ReportCreatedCharacter()
 
 void ThreadMain(HMODULE hModule)
 {
+    StatusOpen();
     LoadAddresses();
     CreateCharacterMode = EnvironmentIs("AOCreateCharacter", "True");
+    // Which client exports were found: an unexpected client version shows up here
+    // instead of as a silent wait at the login screen.
+    StatusSend("exports instance=%d name=%d password=%d charid=%d connect=%d login=%d assign=%d",
+        Client_GetInstanceIfAny != nullptr, Client_GetPlayerName != nullptr, Client_GetPassword != nullptr,
+        Client_SetCharID != nullptr, Client_ConnectToLH != nullptr, Client_LoginCharacter != nullptr, Utils_Assign != nullptr);
 
     if (EnvironmentIs("NoChat", "True"))
         PatchChat();
 
     DetourTransactionBegin();
     DetourUpdateThread(GetCurrentThread());
-    FindAndAttach("GUI.dll", "?SlotInitialize@LoginModule_c@@AAEX_N@Z", (void**)&LoginModule_Initialize, LoginModule_Initialize_Hook);
-    FindAndAttach("GUI.dll", "?Show@LoginModule_c@@AAEXW4State_e@1@@Z", (void**)&LoginModule_Show, LoginModule_Show_Hook);
-    DetourTransactionCommit();
+    int initializeHook = FindAndAttach("GUI.dll", "?SlotInitialize@LoginModule_c@@AAEX_N@Z", (void**)&LoginModule_Initialize, LoginModule_Initialize_Hook);
+    int showHook = FindAndAttach("GUI.dll", "?Show@LoginModule_c@@AAEXW4State_e@1@@Z", (void**)&LoginModule_Show, LoginModule_Show_Hook);
+    LONG committed = DetourTransactionCommit();
+    StatusSend("hooks initialize=%d show=%d commit=%ld", initializeHook, showHook, committed);
 
     while (!LoggedIn)
         Sleep(100);
@@ -338,6 +352,8 @@ void ThreadMain(HMODULE hModule)
     DetourDetach((PVOID*)&LoginModule_Initialize, (PVOID)LoginModule_Initialize_Hook);
     DetourDetach((PVOID*)&LoginModule_Show, (PVOID)LoginModule_Show_Hook);
     DetourTransactionCommit();
+    StatusSend("hooks-removed");
+    StatusClose();
 
     // Detection failure must never terminate an otherwise healthy game client.
     if (CreateCharacterMode)

@@ -11,6 +11,7 @@ try {
         (Join-Path $PSScriptRoot 'AccountLimits.Tests.cs'),
         (Join-Path $repo 'src\Backend\AOQuickLauncher\LaunchQueue.cs'),
         (Join-Path $repo 'src\Backend\AOQuickLauncher\ClientSessions.cs'),
+        (Join-Path $repo 'src\Backend\AOQuickLauncher\LoginStatus.cs'),
         (Join-Path $repo 'src\Backend\AOQuickLauncher\CreationMonitor.cs'),
         (Join-Path $repo 'src\Common\ServerAccountPolicy.cs'),
         (Join-Path $repo 'src\Common\Texts.cs')

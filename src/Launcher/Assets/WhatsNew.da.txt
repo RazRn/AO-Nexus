@@ -1,3 +1,9 @@
+• Login-forløb pr. char: spilklienten melder nu hvert login-trin (login-skærm, serverforbindelse, char-liste, char valgt) til diagnoseloggen med tider samt teksten i eventuelle Windows-fejldialoger. Rapportér et problem kan så vise præcis, hvor et login stoppede.
+
+• Klienter fra samme spilmappe startes nu mindst 1,5 sekund fra hinanden. AO låser kortvarigt filer ved opstart, og samtidige starter kunne fejle med "No write access to the main AO folder".
+
+• Eksperimentel: Indstillinger → Konti → Spring tegning af login-skærmene over. Klienten går direkte til den valgte char.
+
 • Rettelse: char-ID'er, der står lige før tegnsætning, som “ID 123456789...” mens der ventes på spilvinduet, anonymiseres nu også i diagnostik og fejlrapporter. Vælg Slet diagnostik nu under Indstillinger → Opdateringer for at rydde poster gemt af 1.1.7.
 
 • Rapportér et problem: Indstillinger → Generelt → Rapportér et problem… (også i aktivitetsvinduet) laver en anonymiseret rapport og åbner en udfyldt GitHub-sag. Du gennemser alt først; intet sendes, før du selv indsender det. Kopiér eller gem rapporten, hvis du ikke bruger GitHub.

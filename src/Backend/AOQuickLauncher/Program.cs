@@ -43,6 +43,9 @@ namespace AOQuickLauncher
             [Option('x', "nochat", Required = false, HelpText = "Client will not connect to chat server")]
             public bool NoChat { get; set; }
 
+            // Set by the login queue only; LoginHandler reports login stages to this pipe.
+            public string StatusPipe { get; set; }
+
             [Option('s', "rk19", Required = false, HelpText = "Connect to RK19")]
             public bool Rubika19 { get; set; }
 
@@ -121,6 +124,9 @@ namespace AOQuickLauncher
             if (options.CreateCharacter && !string.IsNullOrEmpty(options.CharacterPipe))
                 client.StartInfo.Environment["AOCharacterPipe"] = options.CharacterPipe;
             else client.StartInfo.Environment.Remove("AOCharacterPipe");
+            if (!options.CreateCharacter && options.StatusPipe != null && options.StatusPipe.StartsWith(LoginStatusChannel.PipePrefix, StringComparison.Ordinal))
+                client.StartInfo.Environment["AONexusStatusPipe"] = options.StatusPipe;
+            else client.StartInfo.Environment.Remove("AONexusStatusPipe");
             client.StartInfo.Environment["QuietLaunch"] = Convert.ToString(options.Quiet);
             client.StartInfo.Environment["NoChat"] = Convert.ToString(options.NoChat);
             client.Start();

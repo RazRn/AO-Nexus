@@ -1,3 +1,9 @@
+• Login progress per character: the game client now reports each login stage (login screen, server connection, character list, character requested) to the diagnostics log with timings, and any Windows error dialog text it shows. Report a problem can then show exactly where a login stopped.
+
+• Clients started from the same game folder are now at least 1.5 seconds apart. AO briefly locks files while starting, and simultaneous starts could fail with "No write access to the main AO folder".
+
+• Experimental: Settings → Accounts → Skip drawing the login screens. The client goes straight to the selected character.
+
 • Fix: character IDs written just before punctuation, such as “ID 123456789...” while waiting for the game window, are now anonymised in diagnostics and problem reports too. Choose Delete diagnostics now under Settings → Updates to clear entries saved by 1.1.7.
 
 • Report a problem: Settings → General → Report a problem… (also in the activity window) builds an anonymised report and opens a prefilled GitHub issue. You review everything first; nothing is sent until you submit it. Copy or save the report if you do not use GitHub.

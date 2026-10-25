@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace AOQuickLauncher
 {
@@ -19,6 +20,8 @@ namespace AOQuickLauncher
             public bool CreateCharacter { get; set; }
             internal string CharacterPipe { get; set; }
             internal string CampToken { get; set; }
+            internal string StatusPipe { get; set; }
+            internal bool Quiet { get; set; }
         }
         internal static Process SpawnAOProcess(Options options, LaunchTarget target)
         {
@@ -159,6 +162,7 @@ namespace AOQuickLauncher
             Observed("Creation flag with a positive ID is rejected", creation, false);
             creation = CreationRecord("alpha"); creation.CreateCharacter = false;
             Observed("Legacy zero-ID records are not accepted", creation, false);
+            LoginStatusChecks();
             Console.WriteLine("PASS: " + checks + " tracked-session and two-cap policy checks using synthetic records only.");
             return 0;
         }
@@ -190,6 +194,38 @@ namespace AOQuickLauncher
             var record = Record(username, 0, server, pending: true);
             record.CreateCharacter = true;
             return record;
+        }
+
+        private static void Pass(bool condition, string name)
+        {
+            if (!condition) throw new InvalidOperationException("FAIL: " + name);
+            checks++;
+            Console.WriteLine("PASS: " + name);
+        }
+
+        private static void LoginStatusChecks()
+        {
+            Pass(LoginStatusChannel.TryParse("AO_NEXUS_STATUS_V1 1234 connect rc=1", out string stage) && stage == "connect rc=1", "Status line is parsed");
+            Pass(LoginStatusChannel.TryParse("AO_NEXUS_STATUS_V1 5 screen -1", out stage) && stage == "screen -1", "Negative screen states are accepted");
+            Pass(!LoginStatusChannel.TryParse("AO_NEXUS_STATUS_V1 5 user=Alice", out _), "Uppercase text (names) is rejected");
+            Pass(!LoginStatusChannel.TryParse("AO_NEXUS_STATUS_V1 5 pass:secret!", out _), "Unexpected punctuation is rejected");
+            Pass(!LoginStatusChannel.TryParse("AO_NEXUS_STATUS_V2 5 screen 3", out _) && !LoginStatusChannel.TryParse("AO_NEXUS_STATUS_V1 x screen 3", out _), "Unknown versions and timestamps are rejected");
+            Pass(!LoginStatusChannel.TryParse("AO_NEXUS_STATUS_V1 5 " + new string('a', 200), out _), "Oversized reports are rejected");
+            Pass(ClientDialogs.Clean("No write access\r\nto   the main AO folder") == "No write access to the main AO folder", "Dialog text is flattened");
+            Pass(ClientDialogs.Clean(new string('x', 300)).Length == 201, "Dialog text is bounded");
+            var request = new LaunchRequest { Characters = new List<CharacterLaunch> { Char("alpha", 1) }, ReadyTimeoutSeconds = 10, StartSpacingMs = 20000 };
+            bool rejected = false;
+            try { LaunchQueue.ValidateRequest(request); } catch (ArgumentException) { rejected = true; }
+            Pass(rejected && new LaunchRequest().StartSpacingMs == 1500 && !new LaunchRequest().QuietLaunch, "Start spacing defaults to 1.5 s and is bounded; quiet launch is opt-in");
+            StartSpacing.Reset();
+            var watch = Stopwatch.StartNew();
+            Pass(StartSpacing.WaitTurnAsync("C:\\A", 300).GetAwaiter().GetResult() == 0, "First start in a folder does not wait");
+            var other = StartSpacing.WaitTurnAsync("C:\\B", 300).GetAwaiter().GetResult();
+            var second = StartSpacing.WaitTurnAsync("c:\\a", 300).GetAwaiter().GetResult();
+            Pass(other == 0 && second >= 250 && watch.ElapsedMilliseconds >= 250, "Starts in the same folder are spaced; other folders are not");
+            var parallel = Task.WhenAll(Enumerable.Range(0, 3).Select(_ => StartSpacing.WaitTurnAsync("C:\\C", 200))).GetAwaiter().GetResult().OrderBy(value => value).ToArray();
+            Pass(parallel[0] < 100 && parallel[1] >= 150 && parallel[2] >= 350, "Parallel queues get distinct start slots");
+            StartSpacing.Reset();
         }
 
         private static void Check(string name, CharacterLaunch[] selected, ClientSessions.ClientRecord[] records, string error = null, string language = "en")
