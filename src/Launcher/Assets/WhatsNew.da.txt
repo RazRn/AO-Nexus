@@ -2,7 +2,7 @@
 
 • Klienter fra samme spilmappe startes nu mindst 1,5 sekund fra hinanden. AO låser kortvarigt filer ved opstart, og samtidige starter kunne fejle med "No write access to the main AO folder".
 
-• Hurtigere login: spilklienten springer nu tegningen af login- og char-skærmene over og går direkte til den valgte char, ca. 1,5 sekund hurtigere pr. char i test. Det er slået til som standard; slå det fra under Indstillinger → Konti → Spring tegning af login-skærmene over.
+• Hurtigere login: spilklienten springer nu tegningen af login- og char-skærmene over og går direkte til den valgte char, ca. 1,5 sekund hurtigere pr. char i test. Det er slået til som standard; slå det fra under Indstillinger → Konti → Spring login-skærme over.
 
 • Rettelse: char-ID'er, der står lige før tegnsætning, som “ID 123456789...” mens der ventes på spilvinduet, anonymiseres nu også i diagnostik og fejlrapporter. Vælg Slet diagnostik nu under Indstillinger → Opdateringer for at rydde poster gemt af 1.1.7.
 

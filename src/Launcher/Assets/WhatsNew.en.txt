@@ -2,7 +2,7 @@
 
 • Clients started from the same game folder are now at least 1.5 seconds apart. AO briefly locks files while starting, and simultaneous starts could fail with "No write access to the main AO folder".
 
-• Faster logins: the game client now skips drawing the login and character screens and goes straight to the selected character, about 1.5 seconds faster per character in testing. It is on by default; turn it off under Settings → Accounts → Skip drawing the login screens.
+• Faster logins: the game client now skips drawing the login and character screens and goes straight to the selected character, about 1.5 seconds faster per character in testing. It is on by default; turn it off under Settings → Accounts → Skip login screens.
 
 • Fix: character IDs written just before punctuation, such as “ID 123456789...” while waiting for the game window, are now anonymised in diagnostics and problem reports too. Choose Delete diagnostics now under Settings → Updates to clear entries saved by 1.1.7.
 
