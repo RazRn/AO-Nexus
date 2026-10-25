@@ -8,7 +8,7 @@ Based on [AOQuickLauncher](https://gitlab.com/never-knows-best/aoquicklauncher) 
 
 [Download a release](https://github.com/RazRn/AO-Nexus/releases) · [Source repository](https://github.com/RazRn/AO-Nexus) · [Player guide](dist/README.txt)
 
-![AO Nexus dashboard with a saved team, accounts grouped by server, account details and server news](docs/images/launcher-overview.png)
+![AO Nexus dashboard with a saved team, accounts grouped by server, account details and server news](docs/images/launcher-overview.png?v=1c5dc4bc5a239ce86fa0aca13dadd51844d74a7161e032af310a16849ae1827a)
 
 Screenshots use example accounts and offline news fixtures, with no personal accounts or passwords. All guide screenshots were regenerated from v1.0.17.
 
@@ -79,7 +79,7 @@ Choose **Add account**. The dialog has two tabs:
 | **Account and Prefs** | A display name, the actual game login username, an optional Prefs folder, password-saving preference and any character-slot override. |
 | **Game and server** | A server preset, the game folder containing `AnarchyOnline.exe`, and the login server's IPv4 address and port. |
 
-![Account setup with display name, login username, optional Prefs folder, password preference and character-slot settings](docs/images/account-setup.png)
+![Account setup with display name, login username, optional Prefs folder, password preference and character-slot settings](docs/images/account-setup.png?v=de6013166163a75d62c6a86e7cb6c6742790e5cf84e51e9879d827e6a050e3d9)
 
 The account dialog is expanded here to show its scrollable settings. The example path is illustrative; choose your own Prefs folder. This example account has password remembering enabled; new accounts default to leaving it unchecked.
 
@@ -125,7 +125,7 @@ The number is used to log in; the display name is not a substitute for the ID. D
 
 Each account has its own installation and connection settings under **Edit → Game and server**. Different accounts can use different installations, and accounts targeting the same server can share an appropriate installation.
 
-![Game and server tab with a server preset and separate installation, IPv4 address and port fields](docs/images/game-and-server.png)
+![Game and server tab with a server preset and separate installation, IPv4 address and port fields](docs/images/game-and-server.png?v=ac3a9d7ee12fc564ed667ed75505c90f908ca977eeb4b2d8f158f16e92ed5c22)
 
 If a selected installation has moved or no longer contains `AnarchyOnline.exe`, AO Nexus asks you to choose the correct folder before proceeding. If the game was removed, cancel, reinstall the correct client, and choose its new folder.
 
@@ -133,7 +133,7 @@ If a selected installation has moved or no longer contains `AnarchyOnline.exe`, 
 
 Open **Settings → Manage login servers…** to rename servers, edit their address and port, change limits, or choose **Add login server**. Changes apply to accounts using that preset. Removing a preset leaves affected accounts with their existing connection as custom settings.
 
-![Login server editor showing connection settings, simultaneous account and character limits, and total character slots](docs/images/server-settings.png)
+![Login server editor showing connection settings, simultaneous account and character limits, and total character slots](docs/images/server-settings.png?v=515e6f4b4c4ee4216e31c9aa581c8898927f2668a533712af2bec8ec87240853)
 
 These are the defaults in the **v1.0.17 source**, rather than a live statement of each server's current rules or availability. Existing profiles can retain their saved values.
 
@@ -193,7 +193,7 @@ Serial login does not mean the first character closes when the next starts. Succ
 
 ## Preset shortcuts and logout
 
-![Separate start and logout shortcut fields for the selected team](docs/images/preset-shortcuts.png)
+![Separate start and logout shortcut fields for the selected team](docs/images/preset-shortcuts.png?v=f3fc698dcfb0b30ead4d39aa9ff1e82f429b9d2de99f950b9099d6a180afddf9)
 
 1. Select a saved team under **YOUR TEAMS**. Each preset has its own **Start shortcut** and **Logout shortcut**.
 2. Click a field, then press your combination, for example **Ctrl + Alt + F6** to start and **Ctrl + Alt + F7** to log out. Use Ctrl or Alt with a letter, number or function key. F12 and Windows-key combinations are reserved.
@@ -237,7 +237,7 @@ Closing AO Nexus ends this detection but leaves the game window open. If detecti
 
 New accounts default to asking each time. Existing profiles retain their previous remembering preference. You can mix remembered and non-remembered accounts in the same team.
 
-![Password prompt with an optional remember-password checkbox and explanation of password storage and removal](docs/images/password-options.png)
+![Password prompt with an optional remember-password checkbox and explanation of password storage and removal](docs/images/password-options.png?v=664ab0550d6d4b06804c7bf32a3875de3e22486db5de8f5ba81d68b2649a3c1c)
 
 ### Update one saved password
 
@@ -248,7 +248,7 @@ After changing the password with the game server:
 3. Enter your existing **Game account password** once.
 4. Choose **Save password**.
 
-![Update saved password dialog with a single existing game-account password field](docs/images/update-saved-password.png)
+![Update saved password dialog with a single existing game-account password field](docs/images/update-saved-password.png?v=2fcbde04eec3175e06faa6310c76c8d5e7d7bc2ed943ac154f1703a57232ebaf)
 
 This replaces only that account's encrypted copy in AO Nexus, for all its characters. It does not change the game-server password or log the account in. Saving here enables remembering for that account; other accounts are unaffected. Cancel leaves the saved password unchanged.
 

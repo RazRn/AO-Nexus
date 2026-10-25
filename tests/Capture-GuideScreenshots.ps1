@@ -146,10 +146,18 @@ foreach ($fixture in @(
     } finally { $dialog.Dispose(); [GuideScreenshotNative]::Pump() }
 }
 $version = $assembly.GetName().Version.ToString()
+$readmePath = Join-Path $PSScriptRoot '..\README.md'
+$readme = [IO.File]::ReadAllText($readmePath)
 $manifest = @("# Guide screenshot provenance", "", "Generated from AO Nexus $version using Capture-GuideScreenshots.ps1.", "", "Synthetic accounts, empty password fields and offline news. All seven README images are rendered from the actual controls.", "")
 foreach ($name in @('launcher-overview.png','preset-shortcuts.png','account-setup.png','game-and-server.png','server-settings.png','password-options.png','update-saved-password.png')) {
     $hash = (Get-FileHash -LiteralPath (Join-Path $OutputDirectory $name) -Algorithm SHA256).Hash.ToLowerInvariant()
     $manifest += ('- ' + $name + ': ' + $hash)
+    # A changed image must have a new URL, even when its filename stays the same.
+    # Otherwise a cached screenshot can outlive the README text describing it.
+    $pattern = [regex]::Escape('docs/images/' + $name) + '(?:\?v=[a-f0-9]+)?(?=\))'
+    if (-not [regex]::IsMatch($readme, $pattern)) { throw "Missing README image reference: $name" }
+    $readme = [regex]::Replace($readme, $pattern, ('docs/images/' + $name + '?v=' + $hash))
 }
+[IO.File]::WriteAllText($readmePath, $readme, [Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText((Join-Path $OutputDirectory 'SCREENSHOTS.md'), (($manifest -join "`n") + "`n"), [Text.UTF8Encoding]::new($false))
 Write-Output "PASS: all seven guide screenshots regenerated from $version using synthetic accounts, empty password fields and offline news."
