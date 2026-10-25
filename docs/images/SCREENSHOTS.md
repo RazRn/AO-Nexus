@@ -4,7 +4,7 @@ Generated from AO Nexus 1.0.18.0 using Capture-GuideScreenshots.ps1.
 
 Synthetic accounts, empty password fields, offline news and an offline update fixture. All eleven README images are rendered from the actual controls.
 
-- launcher-overview.png: aa83e6149737ede742862ec9bf7bbcb08e71b1c052cd8fcd56a1a6961b26fa80
+- launcher-overview.png: 0b87102cb279fa0a52373d78654d49645c6ddd464d2574c35a481e87cfd047b8
 - preset-shortcuts.png: 21523ea6a7a71ba2b1830b089cfc29a16e2d27ede66d6eaf63614b052d1cc2ae
 - preset-create.png: 1e0f9123cec21b0a664a826cc7f6b3085ee33b3dd6d4d6c77675cad628af45f9
 - activity-log.png: fcf7ade3596f2f4847abd39198c32350b45ccc9977f8565cb4644d5597d2d2ca

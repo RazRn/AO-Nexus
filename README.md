@@ -8,7 +8,7 @@ Based on [AOQuickLauncher](https://gitlab.com/never-knows-best/aoquicklauncher) 
 
 [Download a release](https://github.com/RazRn/AO-Nexus/releases) · [Source repository](https://github.com/RazRn/AO-Nexus) · [Player guide](dist/README.txt)
 
-![AO Nexus dashboard with a saved team, accounts grouped by server, account details and server news](docs/images/launcher-overview.png?v=aa83e6149737ede742862ec9bf7bbcb08e71b1c052cd8fcd56a1a6961b26fa80)
+![AO Nexus dashboard with a saved team, accounts grouped by server, account details and server news](docs/images/published/launcher-overview-0b87102cb279fa0a.png)
 
 Screenshots use example accounts and offline news fixtures, with no personal accounts or passwords. All guide screenshots were regenerated from v1.0.18.
 
@@ -79,7 +79,7 @@ Choose **Add account**. The dialog has two tabs:
 | **Account and Prefs** | A display name, the actual game login username, an optional Prefs folder, password-saving preference and any character-slot override. |
 | **Game and server** | A server preset, the game folder containing `AnarchyOnline.exe`, and the login server's IPv4 address and port. |
 
-![Account setup with display name, login username, optional Prefs folder, password preference and character-slot settings](docs/images/account-setup.png?v=de6013166163a75d62c6a86e7cb6c6742790e5cf84e51e9879d827e6a050e3d9)
+![Account setup with display name, login username, optional Prefs folder, password preference and character-slot settings](docs/images/published/account-setup-de6013166163a75d.png)
 
 The account dialog is expanded here to show its scrollable settings. The example path is illustrative; choose your own Prefs folder. This example account has password remembering enabled; new accounts default to leaving it unchecked.
 
@@ -125,7 +125,7 @@ The number is used to log in; the display name is not a substitute for the ID. D
 
 Each account has its own installation and connection settings under **Edit → Game and server**. Different accounts can use different installations, and accounts targeting the same server can share an appropriate installation.
 
-![Game and server tab with a server preset and separate installation, IPv4 address and port fields](docs/images/game-and-server.png?v=ac3a9d7ee12fc564ed667ed75505c90f908ca977eeb4b2d8f158f16e92ed5c22)
+![Game and server tab with a server preset and separate installation, IPv4 address and port fields](docs/images/published/game-and-server-ac3a9d7ee12fc564.png)
 
 If a selected installation has moved or no longer contains `AnarchyOnline.exe`, AO Nexus asks you to choose the correct folder before proceeding. If the game was removed, cancel, reinstall the correct client, and choose its new folder.
 
@@ -133,7 +133,7 @@ If a selected installation has moved or no longer contains `AnarchyOnline.exe`, 
 
 Open **Settings → Manage login servers…** to rename servers, edit their address and port, change limits, or choose **Add login server**. Changes apply to accounts using that preset. Removing a preset leaves affected accounts with their existing connection as custom settings.
 
-![Login server editor showing connection settings, simultaneous account and character limits, and total character slots](docs/images/server-settings.png?v=515e6f4b4c4ee4216e31c9aa581c8898927f2668a533712af2bec8ec87240853)
+![Login server editor showing connection settings, simultaneous account and character limits, and total character slots](docs/images/published/server-settings-515e6f4b4c4ee421.png)
 
 These are the defaults in the **v1.0.18 source**, rather than a live statement of each server's current rules or availability. Existing profiles can retain their saved values.
 
@@ -176,7 +176,7 @@ To save a setup:
 
 Selecting a team changes checkboxes; it does not immediately start games. If you change the checkboxes afterwards, the status shows **Modified**. Choose **Edit…**, check **Replace saved characters with current selection**, and save to update that team. Leave that box unchecked when changing only the name or shortcuts. **Save new…** keeps a separate team; **Delete** removes a preset. **Cancel** discards every change in the editor.
 
-![Create a team preset with a name and optional start and logout shortcuts](docs/images/preset-create.png?v=1e0f9123cec21b0a664a826cc7f6b3085ee33b3dd6d4d6c77675cad628af45f9)
+![Create a team preset with a name and optional start and logout shortcuts](docs/images/published/preset-create-1e0f9123cec21b0a.png)
 
 A team stores character references, not a second copy of the account settings. Account changes still apply. Missing characters are reported and skipped; newly imported or created characters do not silently join existing teams.
 
@@ -195,7 +195,7 @@ Serial login does not mean the first character closes when the next starts. Succ
 
 ## Preset shortcuts and logout
 
-![Separate start and logout shortcut fields for the selected team](docs/images/preset-shortcuts.png?v=21523ea6a7a71ba2b1830b089cfc29a16e2d27ede66d6eaf63614b052d1cc2ae)
+![Separate start and logout shortcut fields for the selected team](docs/images/published/preset-shortcuts-21523ea6a7a71ba2.png)
 
 1. Select a saved team under **Team presets** and choose **Edit…**. The same shortcut fields appear when you choose **Save new…**.
 2. Click a field, then press your combination, for example **Ctrl + Alt + F6** to start and **Ctrl + Alt + F7** to log out. Use Ctrl or Alt with a letter, number or function key. F12 and Windows-key combinations are reserved.
@@ -239,7 +239,7 @@ Closing AO Nexus ends this detection but leaves the game window open. If detecti
 
 New accounts default to asking each time. Existing profiles retain their previous remembering preference. You can mix remembered and non-remembered accounts in the same team.
 
-![Password prompt with an optional remember-password checkbox and explanation of password storage and removal](docs/images/password-options.png?v=664ab0550d6d4b06804c7bf32a3875de3e22486db5de8f5ba81d68b2649a3c1c)
+![Password prompt with an optional remember-password checkbox and explanation of password storage and removal](docs/images/published/password-options-664ab0550d6d4b06.png)
 
 ### Update one saved password
 
@@ -250,7 +250,7 @@ After changing the password with the game server:
 3. Enter your existing **Game account password** once.
 4. Choose **Save password**.
 
-![Update saved password dialog with a single existing game-account password field](docs/images/update-saved-password.png?v=2fcbde04eec3175e06faa6310c76c8d5e7d7bc2ed943ac154f1703a57232ebaf)
+![Update saved password dialog with a single existing game-account password field](docs/images/published/update-saved-password-2fcbde04eec3175e.png)
 
 This replaces only that account's encrypted copy in AO Nexus, for all its characters. It does not change the game-server password or log the account in. Saving here enables remembering for that account; other accounts are unaffected. Cancel leaves the saved password unchanged.
 
@@ -278,17 +278,17 @@ Under **Settings → Language**, choose **Automatic (system language)**, **Dansk
 
 The compact terminal-style log uses a dark background and monospace green text. **Open log…** opens a resizable window that receives new entries while you use Nexus. Type in **Search** to filter lines by literal text, ignoring case; **Clear search** restores all entries. **Ctrl+F** focuses search. Turn off **Follow new entries** to read or select existing text. The viewer is read-only and only shows this session's retained log; closing it does not stop login activity. The existing bounded log clears after roughly 100,000 characters.
 
-![Searchable activity log showing matching entries from a synthetic session](docs/images/activity-log.png?v=fcf7ade3596f2f4847abd39198c32350b45ccc9977f8565cb4644d5597d2d2ca)
+![Searchable activity log showing matching entries from a synthetic session](docs/images/published/activity-log-fcf7ade3596f2f48.png)
 
 ### GitHub updates
 
 From v1.0.18, use **Settings → Check for updates…**. You can also enable **Check for updates when Nexus starts** and save Settings. On the first launch after upgrading, Nexus asks whether to enable automatic checks and remembers your answer. Nothing is enabled until you choose Yes; you can change it later in Settings. It checks once per startup and shows an **Update available…** link when a newer stable GitHub release exists; it never installs silently.
 
-![Settings with the optional startup update check and manual update button](docs/images/settings.png?v=d6fb2ed3ce0239498b0ee916f96c7f4686bea35061ec9da4911db50eecdfd685)
+![Settings with the optional startup update check and manual update button](docs/images/published/settings-d6fb2ed3ce023949.png)
 
 Choose **Install and restart** after reviewing the version and release notes. Nexus downloads the release ZIP from `RazRn/AO-Nexus`, verifies GitHub's SHA-256 digest, the executable checksum and version, and stages the EXE. A separate staged copy waits for Nexus to close, replaces the installed executable, keeps a backup beside it, and reopens it. Active launcher logins or character detection must finish or be stopped first; existing game windows stay open. Updates require write access to the installation folder and do not request administrator privileges. Save pending Settings edits before installing.
 
-![Update dialog showing the installed version and stable release check](docs/images/app-updates.png?v=1b67178ae24bf904cb202195d9bac40e3e1eda93bf1f696bb8c92c4010e10371)
+![Update dialog showing the installed version and stable release check](docs/images/published/app-updates-1b67178ae24bf904.png)
 
 The updater uses public GitHub Releases without a GitHub login or token. It ignores prereleases and does not downgrade. Network or verification failures leave the installed executable untouched. Installation uses atomic replacement; the old EXE remains as an `AONexus.exe.previous-*` backup. Staging files and the installation result are under `%LOCALAPPDATA%\AONexus\Updates`. Profiles and credentials are not included in downloads or sent to GitHub. The SHA-256 check authenticates the download against GitHub's release metadata; it is not a separate publisher signature. Trust remains with this repository and its release permissions.
 

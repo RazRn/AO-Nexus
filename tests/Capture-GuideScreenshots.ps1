@@ -177,15 +177,30 @@ foreach ($fixture in @(
 $version = $assembly.GetName().Version.ToString()
 $readmePath = Join-Path $PSScriptRoot '..\README.md'
 $readme = [IO.File]::ReadAllText($readmePath)
+$publishedDirectory = Join-Path $OutputDirectory 'published'
+[IO.Directory]::CreateDirectory($publishedDirectory) | Out-Null
 $manifest = @("# Guide screenshot provenance", "", "Generated from AO Nexus $version using Capture-GuideScreenshots.ps1.", "", "Synthetic accounts, empty password fields, offline news and an offline update fixture. All eleven README images are rendered from the actual controls.", "")
 foreach ($name in @('launcher-overview.png','preset-shortcuts.png','preset-create.png','activity-log.png','settings.png','app-updates.png','account-setup.png','game-and-server.png','server-settings.png','password-options.png','update-saved-password.png')) {
     $hash = (Get-FileHash -LiteralPath (Join-Path $OutputDirectory $name) -Algorithm SHA256).Hash.ToLowerInvariant()
     $manifest += ('- ' + $name + ': ' + $hash)
-    # A changed image must have a new URL, even when its filename stays the same.
-    # Otherwise a cached screenshot can outlive the README text describing it.
-    $pattern = [regex]::Escape('docs/images/' + $name) + '(?:\?v=[a-f0-9]+)?(?=\))'
+    # GitHub's raw redirect can drop a query-string cache key. Give the file
+    # itself a content-specific name so every CDN hop requests the new image.
+    $stem = [IO.Path]::GetFileNameWithoutExtension($name)
+    $publishedName = $stem + '-' + $hash.Substring(0, 16) + '.png'
+    Copy-Item -LiteralPath (Join-Path $OutputDirectory $name) -Destination (Join-Path $publishedDirectory $publishedName) -Force
+    $pattern = 'docs/images/(?:' + [regex]::Escape($name) + '|published/' + [regex]::Escape($stem) + '-[a-f0-9]{16}\.png)(?:\?v=[a-f0-9]+)?(?=\))'
     if (-not [regex]::IsMatch($readme, $pattern)) { throw "Missing README image reference: $name" }
-    $readme = [regex]::Replace($readme, $pattern, ('docs/images/' + $name + '?v=' + $hash))
+    foreach ($old in [regex]::Matches($readme, $pattern)) {
+        if ($old.Value -like 'docs/images/published/*') {
+            $oldName = [IO.Path]::GetFileName(($old.Value -split '\?')[0])
+            if ($oldName -ne $publishedName) {
+                $oldPath = [IO.Path]::GetFullPath((Join-Path $publishedDirectory $oldName))
+                if (!$oldPath.StartsWith([IO.Path]::GetFullPath($publishedDirectory) + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw 'Invalid screenshot output path' }
+                if (Test-Path -LiteralPath $oldPath) { Remove-Item -LiteralPath $oldPath }
+            }
+        }
+    }
+    $readme = [regex]::Replace($readme, $pattern, ('docs/images/published/' + $publishedName))
 }
 [IO.File]::WriteAllText($readmePath, $readme, [Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText((Join-Path $OutputDirectory 'SCREENSHOTS.md'), (($manifest -join "`n") + "`n"), [Text.UTF8Encoding]::new($false))
