@@ -163,7 +163,10 @@ function Read-EmbeddedResource([string]$Executable, [string]$Name) {
             }
         } finally { $pe.Dispose(); $stream.Dispose() }
     } else {
-        $assembly = [Reflection.Assembly]::ReflectionOnlyLoad([IO.File]::ReadAllBytes($Executable))
+        # Windows PowerShell cannot reflection-load the same assembly twice in one AppDomain; reuse the first load for the whole session.
+        if (!(Get-Variable -Name AONexusInspectedAssemblies -Scope Global -ErrorAction SilentlyContinue)) { $global:AONexusInspectedAssemblies = @{} }
+        $assembly = $global:AONexusInspectedAssemblies[$Executable]
+        if (!$assembly) { $assembly = [Reflection.Assembly]::ReflectionOnlyLoad([IO.File]::ReadAllBytes($Executable)); $global:AONexusInspectedAssemblies[$Executable] = $assembly }
         $stream = $assembly.GetManifestResourceStream($Name)
         if ($null -ne $stream) {
             $memory = New-Object IO.MemoryStream

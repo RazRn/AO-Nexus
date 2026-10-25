@@ -45,7 +45,8 @@ try {
         $start.RedirectStandardInput = $true
         $start.RedirectStandardOutput = $true
         $start.RedirectStandardError = $true
-        $start.StandardInputEncoding = [Text.UTF8Encoding]::new($false)
+        # StandardInputEncoding exists only on .NET Core; Windows PowerShell writes UTF-8 through the base stream below.
+        if ($start.PSObject.Properties['StandardInputEncoding']) { $start.StandardInputEncoding = [Text.UTF8Encoding]::new($false) }
         $start.StandardOutputEncoding = [Text.UTF8Encoding]::new($false)
         $start.StandardErrorEncoding = [Text.UTF8Encoding]::new($false)
         $process = [Diagnostics.Process]::new()
@@ -54,8 +55,9 @@ try {
             if (!$process.Start()) { throw "Could not start backend validation: $Name" }
             $outputTask = $process.StandardOutput.ReadToEndAsync()
             $errorTask = $process.StandardError.ReadToEndAsync()
-            $process.StandardInput.WriteLine(($request | ConvertTo-Json -Depth 10 -Compress))
-            $process.StandardInput.Close()
+            $stdin = [IO.StreamWriter]::new($process.StandardInput.BaseStream, [Text.UTF8Encoding]::new($false))
+            $stdin.WriteLine(($request | ConvertTo-Json -Depth 10 -Compress))
+            $stdin.Close()
             if (!$process.WaitForExit(15000)) {
                 $process.Kill()
                 $process.WaitForExit()
