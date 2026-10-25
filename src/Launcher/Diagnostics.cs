@@ -145,8 +145,9 @@ namespace AOLauncher
         private static readonly object KeySync = new object();
         private static byte[] key;
         private static readonly Regex EmailPattern = new Regex(@"[\w.+-]+@[\w-]+(\.[\w-]+)+", RegexOptions.CultureInvariant);
-        // Character IDs also appear glued to text, e.g. the game's Prefs folders are named Char123456789.
-        private static readonly Regex NumberPattern = new Regex(@"(?<prefix>Char)?(?<![\d.])(?<id>\d{3,10})(?![\d.])", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+        // Character IDs also appear glued to text (Prefs folders are named Char123456789) or before
+        // punctuation ("ID 123456789..."); only digits and decimal fractions such as 1.123456 are excluded.
+        private static readonly Regex NumberPattern = new Regex(@"(?<prefix>Char)?(?<!\d|\d\.)(?<id>\d{3,10})(?!\d|\.\d)", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
         private static readonly Regex SourcePathPattern = new Regex(@" in [^\r\n]*[\\/]([^\\/\r\n]+\.cs):", RegexOptions.CultureInvariant);
 
         private readonly Dictionary<string, string> paths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);

@@ -29,6 +29,8 @@ try {
     $redacted=Redact $raw
     foreach($secret in @('Fixturespawn','123456789','987654321','Aster','fixturelogin','fixture-user','10.20.30.40','someone@example.com','Raid team','Private Test','AltLogin')){Assert ($redacted.IndexOf($secret,[StringComparison]::OrdinalIgnoreCase) -lt 0) "Redaction hides $secret"}
     Assert ($redacted.Contains('2.24.96.30:7500') -and $redacted.Contains('Exit code 2') -and $redacted.Contains('maximum')) 'Public endpoints, small numbers and ordinary words are kept'
+    $ellipsis=Redact 'Waiting for the game window for ID 123456789... and ID 987654321.'
+    Assert (!$ellipsis.Contains('123456789') -and !$ellipsis.Contains('987654321')) 'IDs followed by punctuation are hidden'
     $token=Call DiagnosticRedactor Token @('Char','123456789')
     Assert ($redacted.Contains("Starting $token (ID $token)")) 'Name and ID of one character share a stable pseudonym'
     $account.Characters.RemoveAt(0);Call DiagnosticRedactor Update @($settings)

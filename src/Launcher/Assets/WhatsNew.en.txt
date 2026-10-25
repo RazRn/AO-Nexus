@@ -1,3 +1,5 @@
+• Fix: character IDs written just before punctuation, such as “ID 123456789...” while waiting for the game window, are now anonymised in diagnostics and problem reports too. Choose Delete diagnostics now under Settings → Updates to clear entries saved by 1.1.7.
+
 • Report a problem: Settings → General → Report a problem… (also in the activity window) builds an anonymised report and opens a prefilled GitHub issue. You review everything first; nothing is sent until you submit it. Copy or save the report if you do not use GitHub.
 
 • Logins, account and character names, character IDs, team names, custom servers and personal folders are replaced with codes such as Char-3fa2c1. Passwords are never recorded.

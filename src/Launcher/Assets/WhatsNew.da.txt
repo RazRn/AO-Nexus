@@ -1,3 +1,5 @@
+• Rettelse: char-ID'er, der står lige før tegnsætning, som “ID 123456789...” mens der ventes på spilvinduet, anonymiseres nu også i diagnostik og fejlrapporter. Vælg Slet diagnostik nu under Indstillinger → Opdateringer for at rydde poster gemt af 1.1.7.
+
 • Rapportér et problem: Indstillinger → Generelt → Rapportér et problem… (også i aktivitetsvinduet) laver en anonymiseret rapport og åbner en udfyldt GitHub-sag. Du gennemser alt først; intet sendes, før du selv indsender det. Kopiér eller gem rapporten, hvis du ikke bruger GitHub.
 
 • Logins, konto- og char-navne, char-ID'er, holdnavne, egne servere og personlige mapper erstattes af koder som Char-3fa2c1. Adgangskoder registreres aldrig.
