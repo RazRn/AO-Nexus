@@ -84,7 +84,8 @@ namespace AOQuickLauncher
             lock (sync)
             {
                 if (timeline.Count >= MaximumEvents) return;
-                timeline.Add(stage + "@" + (at / 1000.0).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + "s");
+                // "1.9s character-list": no '@', which anonymisation would read as an e-mail address.
+                timeline.Add((at / 1000.0).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + "s " + stage);
             }
             try { onEvent?.Invoke(stage, at); } catch (Exception) { }
         }

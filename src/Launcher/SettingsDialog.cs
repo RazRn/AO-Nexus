@@ -96,11 +96,11 @@ namespace AOLauncher
                     if (dialog.ShowDialog(this) == DialogResult.OK) HealthCheckEndpoints = dialog.Endpoints;
             };
             serverFields.Controls.Add(healthEndpoints);
-            quietLaunchInput = new NexusCheckBox { Name = "quietLaunch", Text = L("Skip drawing the login screens (experimental)", "Spring tegning af login-skærmene over (eksperimentel)"),
+            quietLaunchInput = new NexusCheckBox { Name = "quietLaunch", Text = L("Skip drawing the login screens (faster)", "Spring tegning af login-skærmene over (hurtigere)"),
                 Checked = settings.QuietLaunch, AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 12, 0, 8) };
             serverFields.Controls.Add(quietLaunchInput);
-            Note(serverFields, L("The game client goes straight from start to the selected character without showing the login and character list. It may load slightly faster. Login errors are then not visible in the game window; use the activity log or Report a problem.",
-                "Spilklienten går direkte fra start til den valgte char uden at vise login og char-liste. Det kan indlæse lidt hurtigere. Login-fejl ses så ikke i spilvinduet; brug aktivitetsloggen eller Rapportér et problem."));
+            Note(serverFields, L("On by default. The game client goes straight to the selected character without showing the login and character list, about 1.5 seconds faster per character. Login errors are then not shown in the game window; the activity log and Report a problem show where a login stopped. Turn it off to see the game's own login screens.",
+                "Slået til som standard. Spilklienten går direkte til den valgte char uden at vise login og char-liste, ca. 1,5 sekund hurtigere pr. char. Login-fejl vises så ikke i spilvinduet; aktivitetsloggen og Rapportér et problem viser, hvor et login stoppede. Slå den fra for at se spillets egne login-skærme."));
             var passwordsHeading = Note(serverFields, T("Saved passwords"));
             passwordsHeading.Font = new Font(settingsTabs.Font, FontStyle.Bold);
             passwordsHeading.Margin = new Padding(0, 16, 0, 8);
