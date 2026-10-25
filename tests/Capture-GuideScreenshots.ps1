@@ -148,7 +148,7 @@ try {
     Show-Fixture $updatesPreview
     Save-GuideScreenshot $updatesPreview 'app-updates.png'
 } finally { $updatesPreview.Dispose() }
-$releasePreview.GetType().GetField('Version', $flags).SetValue($releasePreview, [version]'1.0.22.0')
+$releasePreview.GetType().GetField('Version', $flags).SetValue($releasePreview, [version]'1.1.3.0')
 $releasePreview.GetType().GetField('Notes', $flags).SetValue($releasePreview, "# Example release notes`n`n- **Clear headings** and readable spacing.`n- Review the changes before installing.`n`nThis screenshot uses an offline fixture, not a published update.")
 $updatesPreview = New-Dialog 'UpdateDialog' ([object[]]@([Func[bool]]{ return $false }, $releasePreview))
 try { Show-Fixture $updatesPreview; Save-GuideScreenshot $updatesPreview 'update-available.png' } finally { $updatesPreview.Dispose() }
@@ -212,13 +212,16 @@ foreach ($fixture in @(
         Save-GuideScreenshot $dialog $fixture.File
     } finally { $dialog.Dispose(); [GuideScreenshotNative]::Pump() }
 }
+$guiCaptureHost = Join-Path $env:WINDIR 'SysWOW64\WindowsPowerShell\v1.0\powershell.exe'
+& $guiCaptureHost -NoProfile -ExecutionPolicy Bypass -STA -File (Join-Path $PSScriptRoot 'Verify-GuiManager.ps1') -AssemblyPath $AssemblyPath -PublicGuideDirectory $OutputDirectory
+if ($LASTEXITCODE -ne 0) { throw 'Game GUI screenshot verification failed.' }
 $version = $assembly.GetName().Version.ToString()
 $readmePath = Join-Path $PSScriptRoot '..\README.md'
 $readme = [IO.File]::ReadAllText($readmePath)
 $publishedDirectory = Join-Path $OutputDirectory 'published'
 [IO.Directory]::CreateDirectory($publishedDirectory) | Out-Null
-$manifest = @("# Guide screenshot provenance", "", "Generated from AO Nexus $version using Capture-GuideScreenshots.ps1.", "", "Synthetic accounts, empty password fields, offline news and an offline update fixture. All twenty-one README images are rendered from the actual controls.", "")
-foreach ($name in @('health-endpoints.png','server-health.png','settings-accounts.png','settings-sidebar.png','settings-updates.png','privacy-security.png','update-available.png','launcher-overview.png','preset-shortcuts.png','preset-create.png','activity-log.png','settings.png','app-updates.png','minimize-confirmation.png','quit-confirmation.png','whats-new.png','account-setup.png','game-and-server.png','server-settings.png','password-options.png','update-saved-password.png')) {
+$manifest = @("# Guide screenshot provenance", "", "Generated from AO Nexus $version using Capture-GuideScreenshots.ps1.", "", "Synthetic accounts, empty password fields, offline news and an offline update fixture. All twenty-six README images are rendered from the actual controls.", "")
+foreach ($name in @('gui-default-layout.png','gui-layouts.png','gui-capture.png','gui-skins.png','gui-backups.png','health-endpoints.png','server-health.png','settings-accounts.png','settings-sidebar.png','settings-updates.png','privacy-security.png','update-available.png','launcher-overview.png','preset-shortcuts.png','preset-create.png','activity-log.png','settings.png','app-updates.png','minimize-confirmation.png','quit-confirmation.png','whats-new.png','account-setup.png','game-and-server.png','server-settings.png','password-options.png','update-saved-password.png')) {
     $hash = (Get-FileHash -LiteralPath (Join-Path $OutputDirectory $name) -Algorithm SHA256).Hash.ToLowerInvariant()
     $manifest += ('- ' + $name + ': ' + $hash)
     # GitHub's raw redirect can drop a query-string cache key. Give the file
@@ -242,4 +245,4 @@ foreach ($name in @('health-endpoints.png','server-health.png','settings-account
 }
 [IO.File]::WriteAllText($readmePath, $readme, [Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText((Join-Path $OutputDirectory 'SCREENSHOTS.md'), (($manifest -join "`n") + "`n"), [Text.UTF8Encoding]::new($false))
-Write-Output "PASS: all twenty-one guide screenshots regenerated from $version using synthetic accounts and offline fixtures."
+Write-Output "PASS: all twenty-six guide screenshots regenerated from $version using synthetic accounts and offline fixtures."

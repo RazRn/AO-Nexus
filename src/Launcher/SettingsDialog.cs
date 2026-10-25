@@ -28,6 +28,8 @@ namespace AOLauncher
         public Dictionary<string, HealthEndpoints> HealthCheckEndpoints { get; private set; }
         internal bool ShowServerNews => sidebarOptions.ShowNews;
         internal bool ShowServerHealth => sidebarOptions.ShowHealth;
+        internal bool BackgroundHealthChecks => sidebarOptions.BackgroundChecks;
+        internal bool HealthTrayNotifications => sidebarOptions.TrayNotifications;
         internal List<string> NewsSourceIds => sidebarOptions.NewsIds;
         internal List<string> HealthServerIds => sidebarOptions.HealthIds;
 

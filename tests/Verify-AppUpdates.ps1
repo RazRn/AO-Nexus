@@ -9,6 +9,17 @@ function Assert($value, $message) { if (!$value) { throw $message }; $script:che
 function Call($type, $method, [object[]]$arguments) { for ($i=0; $i -lt $arguments.Count; $i++) { if ($null -ne $arguments[$i]) { $arguments[$i] = $arguments[$i].psobject.BaseObject } }; $type.GetMethod($method,$flags).Invoke($null,$arguments) }
 function Must-Fail([scriptblock]$action, $message) { $failed=$false; try { & $action | Out-Null } catch { $failed=$true }; Assert $failed $message }
 $serializer = New-Object Web.Script.Serialization.JavaScriptSerializer
+$notes=[Activator]::CreateInstance($assembly.GetType('AOLauncher.ReleaseNotesBox'),$true)
+try {
+    $markdown="# Release heading`n`n- **First change**`n- Second change with ``/quit```n`nA separate paragraph."
+    $notes.GetType().GetMethod('SetMarkdown',$flags).Invoke($notes,[object[]]@($markdown)) | Out-Null
+    Assert ($notes.Text.Contains("`n`n") -and $notes.Text.Contains('• First change') -and !$notes.Text.Contains('**')) 'Update notes preserve paragraphs and display clean bullets'
+    $notes.Select(0,'Release heading'.Length)
+    Assert ($notes.SelectionFont.Bold) 'Release headings are visibly emphasized'
+    Assert ($notes.ReadOnly -and !$notes.DetectUrls) 'Remote notes remain read-only text without automatic URL activation'
+    $notes.GetType().GetMethod('SetMarkdown',$flags).Invoke($notes,[object[]]@('{\rtf1 <script>text</script>}')) | Out-Null
+    Assert ($notes.Text.Contains('<script>text</script>') -and $notes.Text.Contains('rtf1')) 'Remote HTML and RTF syntax are never interpreted'
+} finally { $notes.Dispose() }
 $settings = [Activator]::CreateInstance($assembly.GetType('AOLauncher.LauncherSettings'), $true)
 Assert (!$settings.HasChosenUpdatePreference -and !$settings.CheckForUpdatesOnStartup) 'New and migrated profiles require an explicit initial update choice'
 $settings.HasChosenUpdatePreference = $true; $settings.CheckForUpdatesOnStartup = $true

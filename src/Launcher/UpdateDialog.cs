@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -7,6 +8,36 @@ using static AOLauncher.Localization.Texts;
 
 namespace AOLauncher
 {
+    // Remote release text is displayed as text, never HTML or supplied RTF.
+    internal sealed class ReleaseNotesBox : RichTextBox
+    {
+        internal ReleaseNotesBox()
+        {
+            ReadOnly = true; DetectUrls = false; BorderStyle = BorderStyle.None;
+            Dock = DockStyle.Top; Height = 270; ScrollBars = RichTextBoxScrollBars.Vertical;
+            TabStop = false; BackColor = Theme.Surface; ForeColor = Theme.Foreground;
+            Font = new Font("Segoe UI", 10F); Name = "releaseNotes";
+        }
+        internal void SetMarkdown(string markdown)
+        {
+            markdown = (markdown ?? "").Replace("\r\n", "\n").Replace('\r', '\n');
+            if (markdown.Length > 32000) markdown = markdown.Substring(0, 32000);
+            Text = AppUpdates.FormatReleaseNotes(markdown);
+            SelectAll(); SelectionFont = Font; SelectionColor = Theme.Foreground;
+            var headings = new System.Collections.Generic.HashSet<string>(System.Text.RegularExpressions.Regex.Matches(markdown, @"(?m)^#{1,6}[ \t]+(.+)$")
+                .Cast<System.Text.RegularExpressions.Match>().Select(match => AppUpdates.FormatReleaseNotes(match.Groups[1].Value)));
+            var lines = Lines;
+            using (var headingFont = new Font(Font, FontStyle.Bold))
+            {
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    string line = lines[i]; Select(GetFirstCharIndexFromLine(i), line.Length);
+                    if (headings.Contains(line)) { SelectionFont = headingFont; SelectionColor = Theme.Accent; }
+                }
+            }
+            Select(0, 0); ScrollToCaret();
+        }
+    }
     internal sealed class WhatsNewDialog : EditorDialog
     {
         internal WhatsNewDialog() : base(F("What's new in AO Nexus {0}", AppUpdates.CurrentVersion.ToString(3)), 520)
@@ -36,7 +67,7 @@ namespace AOLauncher
     internal sealed class UpdateDialog : EditorDialog
     {
         private readonly Label status;
-        private readonly TextBox notes;
+        private readonly ReleaseNotesBox notes;
         private readonly Control notesViewport;
         private readonly CancellationTokenSource cancellation = new CancellationTokenSource();
         private readonly Func<bool> canInstall;
@@ -52,8 +83,8 @@ namespace AOLauncher
             AddWrappedNote(F("Installed version: {0}", AppUpdates.CurrentVersion.ToString(3)), "installedVersion");
             AddWrappedNote(T("Updates come from RazRn/AO-Nexus on GitHub. Installation closes and reopens Nexus. Game windows and your saved profile are kept. Save any pending settings first."), "updateGuide");
             status = AddWrappedNote(T("Checking for updates…"), "updateStatus");
-            notes = new NexusTextBox { ReadOnly = true, Multiline = true, Dock = DockStyle.Top, Height = 180, ScrollBars = ScrollBars.Vertical, TabStop = false,
-                BorderStyle = BorderStyle.None, BackColor = Theme.Surface, ForeColor = Theme.Foreground, Font = new Font("Segoe UI", 9F) };
+            ClientSize = new Size(620, 600);
+            notes = new ReleaseNotesBox();
             notesViewport = SlimScrolling.Wrap(notes);
             Fields.Controls.Add(notesViewport);
             SaveButton.Click += async (sender, e) => { if (!busy) { if (release == null) await Check(); else await Install(); } };
@@ -71,9 +102,10 @@ namespace AOLauncher
             else
             {
                 status.Text = F("Version {0} is available.", release.Version.ToString(3));
-                notes.Text = AppUpdates.FormatReleaseNotes(release.Notes); notes.Select(0, 0); SaveButton.Text = T("Install and restart");
+                notes.BorderStyle = BorderStyle.None;
+                notes.SetMarkdown(release.Notes); SaveButton.Text = T("Install and restart");
                 notesViewport.Visible = true;
-                ClientSize = new Size(ClientSize.Width, (int)(520 * DeviceDpi / 96.0));
+                ClientSize = new Size(ClientSize.Width, (int)(600 * DeviceDpi / 96.0));
             }
             SaveButton.Focus();
             Fields.AutoScrollPosition = Point.Empty;

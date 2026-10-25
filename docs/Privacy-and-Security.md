@@ -1,6 +1,6 @@
 # Privacy and security in AO Nexus
 
-This describes the v1.0.21 implementation, not a claim that software or a game server is risk-free. The same overview is available offline under **Settings → General → Privacy & security**.
+This describes the v1.1.1 implementation, not a claim that software or a game server is risk-free. The same overview is available offline under **Settings → General → Privacy & security**.
 
 ## Passwords and account data
 
@@ -17,9 +17,10 @@ This describes the v1.0.21 implementation, not a claim that software or a game s
 | --- | --- | --- |
 | Game login | The configured account address and port, through the bundled login backend and game client. Authentication belongs to the selected server. | After a user launch action and confirmation. Game clients make their own world/chat/other connections independently of Nexus. |
 | Server news | HTTPS to `www.anarchy-online.com/news`, `project-rk.com/feed.xml`, and `www.ao-rebirth.com/index.php`, restricted to the selected publishers. Standard HTTP metadata, no account credentials. | While Server news is visible, initially and every 15 minutes, or Refresh. Choose sources/disable in Settings → Sidebar; hidden/tray stops automatic requests and cancels in-flight work. |
-| Server health | TCP connect-and-close to the built-in or user-configured login/zone/chat endpoints for the currently displayed server; no login or application payload. Public HTTPS reports from `www.ao-rebirth.com/server-status.php` or `project-rk.com/api/status` when applicable. Normal DNS resolution may occur. | Visible health view only, every 60 seconds. Server switches are globally throttled to at least 15 seconds; no overlapping batches. Choose/disable servers under Settings → Sidebar; edit connection targets under Settings → Accounts → Manage health checks. Public report URLs are not editable. See [endpoints and limitations](Server-Health.md). |
+| Server health | TCP connect-and-close to the built-in or user-configured login/zone/chat endpoints for the displayed server, or all selected servers when background checks are enabled; no login or application payload. Public HTTPS reports from `www.ao-rebirth.com/server-status.php` or `project-rk.com/api/status` when applicable. Normal DNS resolution may occur. | Every 60 seconds while visible by default. Opt-in background monitoring continues across all selected servers while Nexus runs, including hidden/in the tray; enabling tray notifications also enables background monitoring. Disable background checks and hide the health panel to stop requests. Batches do not overlap and are throttled by at least 15 seconds. Choose/disable servers under Settings → Sidebar; edit connection targets under Settings → Accounts → Manage health checks. Public report URLs are not editable. See [endpoints and limitations](Server-Health.md). |
 | Update check | HTTPS to `api.github.com/repos/RazRn/AO-Nexus/releases/latest`. User-Agent includes Nexus version; no GitHub login/token, game profile or password. | Once per startup if opted in, or manually from Settings → Updates. First start asks for the preference; it remains changeable. No repeating background check. |
 | Update download | HTTPS to GitHub; redirects limited to `github.com`, `release-assets.githubusercontent.com`, `objects.githubusercontent.com`. | Only after choosing Install and restart. |
+| GUI skin download | HTTPS to author-published `drive.google.com` links and `drive.usercontent.google.com` redirects. Pinned SHA-256 packages, bounded downloads and extraction; no game credentials. | Only when Download is chosen in Game GUI. Download installs separate data files; Apply skin is a separate confirmed operation. |
 | Open article, website or release | Opens the selected public URL in your default browser. | User click. Browser cookies/history/extensions and the destination's privacy practices apply. |
 
 Remote services can see your public IP address, request time and normal protocol metadata. Windows DNS/proxy/network configuration can also affect these connections. The launcher does not run a public web server, Discord webhook sender or port scan. Custom server health checks use only their configured login endpoint; names alone do not attach a custom server to another server's public report.
@@ -32,10 +33,16 @@ Installation requires confirmation and write access to the app folder; it does n
 
 ## Local files and retention
 
+Game GUI templates contain only selected supported preferences, never the whole account folder. Templates and backups can contain character labels, local paths and personal GUI settings. They are not encrypted or uploaded automatically. Skin imports reject executable/script entries and unsafe archive paths; the author download's optional command script is omitted and never executed. Package hashes identify reviewed contents, not a publisher signature. Data validation cannot guarantee compatibility or appearance in every game client.
+
+GUI changes require confirmation and affected clients must exit before preference writes. Nexus can ask to relog known clients via `/quit`, waits for actual process exit, and rechecks before writing. Unknown clients block the change. Character-only operations match affected character identities and preference paths. For shared skin changes, an unverified Prefs-to-game mapping can expand the confirmation to all identified running AO clients. Cancellation cannot undo an already completed logout. File transactions back up changes and attempt rollback on failure; unresolved recovery data is preserved. Do not manually launch affected clients or edit their preferences during an operation.
+
 | Location | Retention |
 | --- | --- |
 | `%LOCALAPPDATA%\AONexus\AONexus.json` and profile recovery files | Saved settings; preserved across updates. |
 | `%LOCALAPPDATA%\AONexus\Credentials` | Encrypted passwords until removed through account settings/Forget passwords. |
+| `%LOCALAPPDATA%\AONexus\GuiLayouts` | Templates until deleted. Latest 10 completed layout backups per character and 10 successful skin-selection backups per Prefs installation; interrupted/unrecognized recovery records remain for inspection. |
+| `Gui` beside the game's `Prefs` folder | Installed custom skins remain for reuse. Identical imports reuse matching contents. Temporary download/import staging is cleaned on success or failure. Original game skin files are not replaced. |
 | `%LOCALAPPDATA%\AONexus\News` | Bounded per-source news cache, reused for offline fallback. |
 | `%LOCALAPPDATA%\AONexus\Runtime` | Verified, content-addressed bundled login engine. Reused when the payload is unchanged. Old runtime versions are preserved because open game clients may still use their native components. |
 | In-memory activity log | Current session only. Default 5 MB of UTF-8 text; adjustable 1–100 MB under Settings → Updates. Oldest entries are discarded first. The searchable window shows the same retained log. This is a text limit, not a total RAM limit. |

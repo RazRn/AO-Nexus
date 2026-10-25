@@ -193,6 +193,7 @@ namespace AOLauncher
         private void ConfigureSidebar()
         {
             serverSidebar.Configure(settings);
+            ConfigureHealthAlerts();
             bool shown = settings.ShowServerNews || settings.ShowServerHealth;
             sidebarLayout.ColumnStyles[1].Width = shown ? NexusChrome.Scale(this, 358) : 0;
             sidebarLayout.Controls[0].Margin = new Padding(0, 0, shown ? NexusChrome.Scale(this, 18) : 0, 0);
@@ -212,9 +213,15 @@ namespace AOLauncher
             // Let the native menu finish dismissing before Close disposes it.
             trayExitItem.Click += (sender, e) => BeginInvoke((Action)Close);
             trayMenu.Items.AddRange(new ToolStripItem[] { trayOpenItem, new ToolStripSeparator(), trayExitItem });
+            trayHealthItem = new ToolStripMenuItem();
+            trayMenu.Items.Insert(1, trayHealthItem);
+            trayMenu.Opening += (sender, e) => PopulateHealthMenu();
             RefreshTrayLanguage();
             trayIcon = new NotifyIcon { Icon = Icon, Text = "AO Nexus", ContextMenuStrip = trayMenu };
             trayIcon.MouseClick += (sender, e) => { if (e.Button == MouseButtons.Left) RestoreFromTray(); };
+            trayIcon.BalloonTipClicked += (sender, e) => ShowHealthFromTray();
+            serverSidebar.Health.Checked += HandleHealthChecks;
+            RefreshHealthTray();
         }
 
         private void RefreshTrayLanguage()
@@ -222,6 +229,7 @@ namespace AOLauncher
             if (trayOpenItem == null) return;
             trayOpenItem.Text = T("Open AO Nexus");
             trayExitItem.Text = T("Exit AO Nexus");
+            RefreshHealthTray();
         }
 
         protected override void OnResize(EventArgs e)
@@ -295,7 +303,7 @@ namespace AOLauncher
                 WindowState = restoreWindowState;
                 Activate();
                 hiddenInTray = false;
-                trayIcon.Visible = false;
+                RefreshHealthTray();
             }
             finally { restoringFromTray = false; }
         }
@@ -350,9 +358,9 @@ namespace AOLauncher
             var settingsButton = Theme.Button(T("Settings"));
             settingsButton.AutoSize = false;
             settingsButton.Size = new Size(124, 36);
-            settingsButton.Dock = DockStyle.Top;
+            settingsButton.Dock = DockStyle.Right;
             settingsButton.Click += OpenSettings;
-            var headerActions = new Panel { Dock = DockStyle.Right, Width = 148, Padding = new Padding(0, 22, 24, 7), BackColor = Color.Transparent };
+            var headerActions = new Panel { Dock = DockStyle.Right, Width = 374, Padding = new Padding(0, 22, 24, 7), BackColor = Color.Transparent };
             string versionText = "v" + typeof(MainForm).Assembly.GetName().Version.ToString(3);
             var versionLabel = new Label
             {
@@ -365,7 +373,15 @@ namespace AOLauncher
                 LinkColor = Theme.Accent, VisitedLinkColor = Theme.Accent, ActiveLinkColor = Theme.Amber, BackColor = Color.Transparent, TextAlign = ContentAlignment.MiddleRight };
             updateAvailableLink.LinkClicked += (sender, e) => OpenUpdates(this);
             headerActions.Controls.Add(updateAvailableLink);
-            headerActions.Controls.Add(settingsButton);
+            var headerButtons = new Panel { Dock = DockStyle.Top, Height = 36, BackColor = Color.Transparent };
+            headerButtons.Controls.Add(settingsButton);
+            var gameGuiButton = Theme.Button(SidebarText.L("Game GUI · Experimental", "Spil-GUI · Eksperimentel"));
+            gameGuiButton.Name = "gameGuiManager";
+            gameGuiButton.AutoSize = false; gameGuiButton.Size = new Size(218, 36);
+            gameGuiButton.Dock = DockStyle.Left; gameGuiButton.Click += OpenGameGui;
+            headerButtons.Controls.Add(gameGuiButton);
+            headerActions.Controls.Add(headerButtons);
+            editingControls.Add(gameGuiButton);
             header.Controls.Add(headerActions);
             editingControls.Add(settingsButton);
             layout.Controls.Add(header, 0, 0);
@@ -1252,7 +1268,7 @@ namespace AOLauncher
                 if (dialog.ShowDialog(this) != DialogResult.OK) return;
                 if (settings.Accounts.Where(a => AccountTargets.SameServer(a, account)).SelectMany(a => a.Characters).Any(c => c.CharacterId == dialog.CharacterId))
                 { ShowInfo(T("A character with this Character ID is already listed.")); return; }
-                var character = new CharacterConfig { Name = dialog.CharacterName, CharacterId = dialog.CharacterId, NamePending = dialog.NamePending };
+                var character = new CharacterConfig { Name = dialog.CharacterName, CharacterId = dialog.CharacterId, NamePending = dialog.NamePending, PendingGuiTemplateId = settings.DefaultGuiTemplateId };
                 account.Characters.Add(character);
                 SaveSettings();
                 RefreshTree(character);
@@ -1322,7 +1338,7 @@ namespace AOLauncher
             foreach (int id in ids)
             {
                 if (!account.Characters.Any(character => character.CharacterId == id))
-                    account.Characters.Add(new CharacterConfig { CharacterId = id, Name = F("Character {0}", id), NamePending = true, Selected = false });
+                    account.Characters.Add(new CharacterConfig { CharacterId = id, Name = F("Character {0}", id), NamePending = true, Selected = false, PendingGuiTemplateId = value.DefaultGuiTemplateId });
             }
             return true;
         }
@@ -1386,6 +1402,8 @@ namespace AOLauncher
                 if (logViewer != null && !logViewer.IsDisposed) logViewer.SetLogText(retained);
                 settings.ShowServerNews = dialog.ShowServerNews;
                 settings.ShowServerHealth = dialog.ShowServerHealth;
+                settings.BackgroundHealthChecks = dialog.BackgroundHealthChecks;
+                settings.HealthTrayNotifications = dialog.HealthTrayNotifications;
                 settings.NewsSourceIds = dialog.NewsSourceIds;
                 settings.HealthServerIds = dialog.HealthServerIds;
                 settings.HealthCheckEndpoints = dialog.HealthCheckEndpoints;
@@ -1419,7 +1437,7 @@ namespace AOLauncher
 
         private async Task StartSelectedCore()
         {
-            if (running || smoke) return;
+            if (running || smoke || guiOperationBusy) return;
             var accounts = settings.Accounts.Where(a => a.Characters.Any(c => c.Selected)).ToList();
             if (accounts.Count == 0) return;
             if (!ConfirmSelectedLaunch()) return;
@@ -1427,6 +1445,7 @@ namespace AOLauncher
                 if (!EnsureGameFolder(account)) return;
             try { ValidateSelectedAccounts(settings); }
             catch (ArgumentException ex) { ShowInfo(ex.Message); return; }
+            if (!await ApplyPendingGuiBeforeLaunch(accounts)) return;
             if (!EnsurePasswords(accounts, out var credentials)) return;
             LaunchRequest request;
             try { request = CreateLaunchRequest(settings, credentials); }
@@ -1658,6 +1677,7 @@ namespace AOLauncher
         {
             if (!running) return;
             stopRequested = true;
+            guiCancellation?.Cancel();
             preparationCancellation?.Cancel();
             backendRunner?.Stop();
             stopButton.Enabled = false;
@@ -1763,6 +1783,7 @@ namespace AOLauncher
             {
                 if (!running) StatusText = T("STATUS · Char detected");
                 AppendLog(F("{0} (ID {1}) is now in the account list. Your saved teams are unchanged.", updated.Name, updated.CharacterId));
+                if (!string.IsNullOrEmpty(updated.PendingGuiTemplateId)) AppendLog(SidebarText.L("A default GUI template is queued. Use Game GUI to apply and relog, or quit normally and let Nexus apply it at the next login.", "Et standard-GUI afventer. Brug Spil-GUI til at anvende og genlogge, eller luk normalt og lad Nexus anvende det ved næste login."));
             }
             else AppendLog(F("Character {0} logged in as {1}. The name has been updated in the list.", updated.CharacterId, updated.Name));
         }
@@ -1821,7 +1842,7 @@ namespace AOLauncher
             var existing = owner.Characters.FirstOrDefault(character => character.CharacterId == notification.CharacterId);
             if (existing == null)
             {
-                existing = new CharacterConfig { CharacterId = notification.CharacterId, Name = actualName, NamePending = false, Selected = false };
+                existing = new CharacterConfig { CharacterId = notification.CharacterId, Name = actualName, NamePending = false, Selected = false, PendingGuiTemplateId = value.DefaultGuiTemplateId };
                 owner.Characters.Add(existing);
             }
             else if (existing.NamePending || string.IsNullOrWhiteSpace(existing.Name))
@@ -1903,6 +1924,8 @@ namespace AOLauncher
 
         private void OnFormClosing(object sender, FormClosingEventArgs e)
         {
+            if (guiOperationBusy && e.CloseReason == CloseReason.UserClosing)
+            { guiCancellation?.Cancel(); e.Cancel = true; return; }
             if (!closing && e.CloseReason == CloseReason.UserClosing)
             {
                 if (confirmingWindowAction) { e.Cancel = true; return; }

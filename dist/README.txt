@@ -1,4 +1,4 @@
-AO NEXUS 1.0.21
+AO NEXUS 1.1.2
 Based on AOQuickLauncher by never-knows-best and contributors.
 Enhanced by Luckyspawn.
 
@@ -165,3 +165,35 @@ Save the table and Settings. Restore selected server defaults resets its checks.
 Unverified zone/chat endpoints start disabled; public report sources stay fixed.
 The health panel has no manual Refresh or footer guide. One enabled server
 uses a plain name. Updates wait while dropdowns are open.
+
+GAME GUI (v1.1.2)
+Choose Game GUI at the top of Nexus. Layouts captures a saved character setup,
+copies directly from another char, or applies a template to selected chars.
+Window layout, hotbars, key bindings and pet names are independent choices.
+Roll out to all reviews the affected targets. Use for new chars queues a default
+until their saved preferences exist and the clients are offline.
+Skins manages the installation-wide skin: Default AO, complete imported ZIPs,
+or seven author-sourced Notum Dovvetech/Darktech themes. Choose the correct
+Classic or New engine variant. Downloading does not activate a skin.
+Online targets require a confirmed /quit, actual exit, then file changes and
+relogin. Unknown clients must be closed manually. No forced shutdown is used.
+Backups can restore changed settings; failed batches attempt reverse rollback.
+The latest 10 completed layout backups per char and 10 successful skin-selection
+backups per installation are retained. Unresolved recovery records are kept.
+Test on one character/installation first; appearance and compatibility vary.
+Full guide: https://github.com/RazRn/AO-Nexus/blob/main/docs/Game-GUI.md
+BACKGROUND HEALTH (v1.1.2)
+Settings > Sidebar offers background checks and tray outage/recovery notifications.
+Notifications enable background monitoring. Nexus must remain open, including in
+the tray. Two failed checks confirm an issue (usually 1-2 minutes); one successful
+check confirms recovery. Windows controls popup duration; the tray retains status.
+Unknown/stale reports do not claim recovery. Switch off background checks and hide
+the health panel to stop monitoring. No credentials are sent by health probes.
+
+EXPERIMENTAL GAME GUI AND RESET (v1.1.2)
+The front-page button is marked Game GUI - Experimental. Try one character first.
+Layouts always includes AO default layout: select it, choose characters, then Apply layout.
+This uses that installation's defaults and backs up changes. Actions, bar count,
+bindings, pet names, chat subscriptions and the current skin are kept.
+Apply saved default uses your personal default template instead.
+Update release notes now have readable headings, bullets and paragraph spacing.

@@ -33,9 +33,11 @@ namespace AOLauncher
         {
             string text = (markdown ?? "").Replace("\r\n", "\n").Replace('\r', '\n');
             if (text.Length > 32000) text = text.Substring(0, 32000);
-            text = Regex.Replace(text, @"(?m)^#{1,6}\s+", "", RegexOptions.None, TimeSpan.FromMilliseconds(100));
+            text = Regex.Replace(text, @"(?m)^#{1,6}[ \t]+(.+)$", "$1\n", RegexOptions.None, TimeSpan.FromMilliseconds(100));
             text = Regex.Replace(text, @"(?m)^[ \t]*[-*][ \t]+", "• ", RegexOptions.None, TimeSpan.FromMilliseconds(100));
             text = text.Replace("**", "").Replace("`", "");
+            text = Regex.Replace(text, @"\n(?=• )", "\n\n", RegexOptions.None, TimeSpan.FromMilliseconds(100));
+            text = Regex.Replace(text, @"\n{3,}", "\n\n", RegexOptions.None, TimeSpan.FromMilliseconds(100));
             return text.Trim().Replace("\n", "\r\n");
         }
         internal static string UpdateRoot => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AONexus", "Updates");

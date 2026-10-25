@@ -2,15 +2,15 @@
 
 **A launcher for your accounts, characters and teams across Anarchy Online servers.**
 
-AO Nexus **v1.0.21** brings separate game installations, login servers, saved character selections and server news into one Windows app. It includes presets for Funcom AO, Project Rubi-Ka and AO Rebirth, and lets you add your own server entries.
+AO Nexus **v1.1.2** brings separate game installations, login servers, saved character selections and server news into one Windows app. It includes presets for Funcom AO, Project Rubi-Ka and AO Rebirth, and lets you add your own server entries.
 
 Based on [AOQuickLauncher](https://gitlab.com/never-knows-best/aoquicklauncher) by **never-knows-best and contributors**. Enhanced by **Luckyspawn**.
 
 [Download a release](https://github.com/RazRn/AO-Nexus/releases) · [Source repository](https://github.com/RazRn/AO-Nexus) · [Player guide](dist/README.txt)
 
-![AO Nexus dashboard with a saved team, accounts grouped by server, account details and server news](docs/images/published/launcher-overview-4405607347f213fb.png)
+![AO Nexus dashboard with a saved team, accounts grouped by server, account details and server news](docs/images/published/launcher-overview-ab7b0c6299bf6513.png)
 
-Screenshots use example accounts and offline news fixtures, with no personal accounts or passwords. All guide screenshots were regenerated from v1.0.21.
+Screenshots use example accounts and offline news fixtures, with no personal accounts or passwords. All guide screenshots were regenerated from v1.1.2.
 
 ## What it does
 
@@ -23,6 +23,8 @@ Screenshots use example accounts and offline news fixtures, with no personal acc
 - Opens character creation and can add a newly created character automatically when it enters the game.
 - Saves passwords only when requested, encrypts saved passwords for the Windows user, and lets you update each account separately.
 - Shows news from official server websites with a saved choice of sources.
+- Captures character GUI templates with optional layout, hotbars, keybindings and pet names; applies them to selected characters or rolls them out to all.
+- Manages shared installation skins, author downloads and recovery backups through Game GUI.
 - Supports English and Danish, with an automatic Windows-language default.
 - Minimizes to the Windows system tray, keeping the launcher out of the taskbar and Alt+Tab while logins continue.
 - Optionally starts in the tray with Windows and restores the existing window when launched again.
@@ -40,12 +42,41 @@ AO Nexus launches supported Windows AO clients. It does not install or patch the
 - [Preset shortcuts and logout](#preset-shortcuts-and-logout)
 - [Create a new character](#create-a-new-character)
 - [Passwords](#passwords)
+- [Game GUI templates and skins](#game-gui-templates-and-skins)
 - [News and language](#news-and-language)
 - [Local data, updates and sharing](#local-data-updates-and-sharing)
 - [Troubleshooting](#troubleshooting)
 - [Build and test](#build-and-test)
 - [Source map](#source-map)
 - [License and attribution](#license-and-attribution)
+
+## Game GUI templates and skins
+
+Choose **Game GUI · Experimental** at the top of Nexus. Test one character first. The manager has separate **Layouts**, **Skins** and **Backups** tabs. Its character selection is independent of your login selection and team presets.
+
+![Layout templates and an independent character selection for applying or rolling out a template](docs/images/published/gui-layouts-4990bdd654a3d99c.png)
+
+Capture a saved setup from a character or copy directly from one character to others. **Window layout** is selected initially; **Hotbars**, **Key bindings** and **Pet names** are optional. Hotbar actions may reference items or nanos that another character does not have. **Roll out to all…** reviews all configured target characters before applying the chosen components.
+
+![Capture dialog with separate component choices](docs/images/published/gui-capture-94905ffee7ae65e3.png)
+
+**Use for new chars** assigns a template to characters added afterward. It waits for real saved preferences to exist and for the client to be offline. **Apply saved default** applies that personal template to existing characters. Templates are snapshots, so later changes on the source character do not alter them automatically.
+
+For a reset, select the built-in **AO default layout**, select characters, then press **Apply layout**. It reads each installation's shipped defaults and clears supported position overrides, preserving hotbar actions/count, key bindings, pet names, chat subscriptions and the active skin. The operation creates backups and uses the same logout/relog flow.
+
+![Built-in AO default layout reset](docs/images/published/gui-default-layout-d73ad3a0d8e73da4.png)
+
+![Skin manager with installation selection, original AO skin and author download choices](docs/images/published/gui-skins-a88402fac3a25e3f.png)
+
+Skins affect a shared installation's preferences. Select **Default**, import a complete skin ZIP, or download a Notum Dovvetech/Darktech theme from the author's published sources. Choose the correct classic/new-engine variant. Downloads install separate folders and do not activate the skin until you choose **Apply skin**. Skin rollout copies to each configured preference installation once. The skin archives are not bundled in Nexus.
+
+![Backup manager for character layouts and installation skin selection](docs/images/published/gui-backups-12436b728b18a1ff.png)
+
+Nexus asks before relogging affected online clients, requests `/quit`, waits for actual exit, backs up the changed data and restarts the identified clients after success. It never forces game processes closed. Character layouts affect the selected characters; shared skin changes can require other clients to relog. Unknown clients must be closed manually when Nexus cannot rule them out safely. Failed batches attempt to restore earlier changes and report any recovery failures. Keep affected clients closed during the file operation.
+
+Start with one character or installation and verify the result in game before a wide rollout. See the [complete Game GUI guide](docs/Game-GUI.md) for supported preferences, author credits, compatibility, storage and recovery.
+
+For optional community-inspired starting points, see [five starter layouts](docs/Starter-GUI-Layouts.md). The generator creates layout-only templates for a chosen game-window size; it does not apply them to characters automatically.
 
 ## Install and first launch
 
@@ -140,7 +171,7 @@ Open **Settings → Accounts → Manage login servers…** to rename servers, ed
 
 ![Login server editor showing connection settings, simultaneous account and character limits, and total character slots](docs/images/published/server-settings-515e6f4b4c4ee421.png)
 
-These are the defaults in the **v1.0.21 source**, rather than a live statement of each server's current rules or availability. Existing profiles can retain their saved values.
+These are the defaults in the **v1.1.2 source**, rather than a live statement of each server's current rules or availability. Existing profiles can retain their saved values.
 
 | Server preset | Login address | Max. accounts | Chars per account | Character slots |
 | --- | --- | ---: | ---: | ---: |
@@ -218,7 +249,7 @@ The game handles its normal logout countdown. Combat, zoning, movement or cancel
 
 **Existing game windows need one normal restart through v1.0.15 or later** to enable quit control. The same applies to a client opened through **Create new char**: save/import the character and start it normally once. Unsupported or untracked clients are skipped with an explanation. AOSharp is not required. Closing Nexus itself still leaves all game windows open.
 
-For implementation details and test coverage, see [Quit control](docs/Camp-Control.md). See [What's new in v1.0.21](docs/Whats-New-1.0.21.md) for the English feature list.
+For implementation details and test coverage, see [Quit control](docs/Camp-Control.md). See [What's new in v1.1.2](docs/Whats-New-1.1.2.md) for the English feature list.
 
 ## Create a new character
 
@@ -275,9 +306,9 @@ The **Server news** panel reads Funcom AO, Project Rubi-Ka and AO Rebirth's offi
 
 Use **Refresh** to fetch again; automatic refresh runs every 15 minutes while Server news is visible. Switching tabs or hiding Nexus pauses requests. Headlines open the original article in your browser. Article dates and refresh times are different; unavailable news does not prevent login. Cached news provides a fallback. See [news sources](NEWS-SOURCES.md).
 
-**Server health** is independently optional in Settings. When both are enabled they share tabs on the right; turning both off gives the account list more space. Choose the displayed server to see login, world/zone, chat and official-report checks. It refreshes every 60 seconds while visible, with a 15-second minimum between server switches. There is no manual Refresh button; one enabled server is shown as a plain name. **Reachable** means a TCP connection from your PC, not a successful game login. Missing checks or stale reports are **Unknown**. See [endpoints, sources and limitations](docs/Server-Health.md).
+**Server health** is independently optional in Settings. When both are enabled they share tabs on the right; turning both off gives the account list more space. Choose the displayed server to see login, world/zone, chat and official-report checks. It refreshes every 60 seconds while visible by default. In Settings → Sidebar, enable background checks for all selected servers, including while minimized or on another tab. Optional tray notifications enable background checks and report confirmed issues and recovery; the tray retains unresolved issue status. Two failed checks confirm an issue (usually 1–2 minutes); one positive check confirms recovery. Windows controls popup duration. There is a 15-second minimum between check batches. There is no manual Refresh button; one enabled server is shown as a plain name. **Reachable** means a TCP connection from your PC, not a successful game login. Missing checks or stale reports are **Unknown**. See [endpoints, sources and limitations](docs/Server-Health.md).
 
-![Server health with synthetic reachability and official-report examples](docs/images/published/server-health-c7f7426bc845b32f.png)
+![Server health with synthetic reachability and official-report examples](docs/images/published/server-health-76136485c1365f1b.png)
 
 Settings are divided into four tabs:
 
@@ -289,7 +320,7 @@ Edit TCP monitoring hosts, ports and enabled checks under **Settings → Account
 
 ![Account settings with server catalog and saved-password removal](docs/images/published/settings-accounts-3991485f41a3a1c2.png)
 
-![Sidebar settings with optional news, health and source choices](docs/images/published/settings-sidebar-c2b7fa7ce155d7f3.png)
+![Sidebar settings with optional news, health and source choices](docs/images/published/settings-sidebar-8b6b44f4c2d4dd9e.png)
 
 Under **Settings → General → Language**, choose **Automatic (system language)**, **Dansk** or **English**. Automatic uses Danish for a Danish Windows UI language and English otherwise. New log messages use the chosen language; messages already written are not translated retroactively.
 
@@ -309,24 +340,24 @@ From v1.0.18, use **Settings → Updates → Check for updates…**. You can als
 
 Choose **Install and restart** after reviewing the version and release notes. Nexus downloads the release ZIP from `RazRn/AO-Nexus`, verifies GitHub's SHA-256 digest, the executable checksum and version, and stages the EXE. A separate staged copy waits for Nexus to close, replaces the installed executable, keeps a backup beside it, and reopens it. Active launcher logins or character detection must finish or be stopped first; existing game windows stay open. Updates require write access to the installation folder and do not request administrator privileges. Save pending Settings edits before installing.
 
-![Update dialog showing the installed version and stable release check](docs/images/published/app-updates-599f596f704d25c8.png)
+![Update dialog showing the installed version and stable release check](docs/images/published/app-updates-033ea4bbe61dfb50.png)
 
 Update checks and downloads are reported in the activity log. After a successful installation, the restarted app reports the new version and opens a **What's new** window once. Its release summary is bundled with that version in English and Danish, works offline, and does not appear on ordinary startups. A persistent history is kept in `%LOCALAPPDATA%\AONexus\Updates\update-history.log`. Both the session activity log and update history default to 5 MB each, adjustable from 1–100 MB under **Settings → Updates**. Oldest entries are trimmed; reducing the limit also trims existing update history. Completed update stages are removed after startup; abandoned stages are retried once older than 24 hours. Active or locked stages are left alone and retried on a later startup. Only the latest previous executable is retained for recovery. Cached login runtimes remain because game clients may still use them. Checks happen once per startup when enabled, or when you press Check for updates; there is no periodic background poll.
 
-![One-time release summary after a successful update](docs/images/published/whats-new-e67eba942a7f6ce2.png)
+![One-time release summary after a successful update](docs/images/published/whats-new-d3f024c2fa44fe76.png)
 
 The updater uses public GitHub Releases without a GitHub login or token. It ignores prereleases and does not downgrade. Network or verification failures leave the installed executable untouched. Installation uses atomic replacement; the old EXE remains as an `AONexus.exe.previous-*` backup. Staging files and the installation result are under `%LOCALAPPDATA%\AONexus\Updates`. Profiles and credentials are not included in downloads or sent to GitHub. The SHA-256 check authenticates the download against GitHub's release metadata; it is not a separate publisher signature. Trust remains with this repository and its release permissions.
 
 Older versions need one manual update to v1.0.18 or later before they can use this feature. Manual ZIP installation remains available.
 
 
-![Readable update notes using an offline example of a future release](docs/images/published/update-available-f8dce63bb0fbbc6e.png)
+![Readable update notes using an offline example of a future release](docs/images/published/update-available-aa67baa223417abe.png)
 
 ### Privacy and security
 
 Open **Settings → General → Privacy & security** for an offline explanation of optional password storage, local data, network connections and update verification. The [full privacy and security document](docs/Privacy-and-Security.md) describes exact destinations, controls, retention and limitations. Passwords are encrypted locally for your Windows user; this does not add transport encryption to the game's protocol. Account names, paths and presets are not encrypted. Nexus has no analytics integration or automatic log/crash upload.
 
-![Offline privacy and security overview](docs/images/published/privacy-security-be0e3f42ba0ace45.png)
+![Offline privacy and security overview](docs/images/published/privacy-security-ec20ac40549d140b.png)
 ### Profile and distribution files
 
 The executable can live in a folder of your choice, but profile data is stored per Windows user rather than next to it.

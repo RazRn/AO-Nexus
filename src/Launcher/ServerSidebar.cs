@@ -11,11 +11,13 @@ namespace AOLauncher
 {
     internal sealed class SidebarOptions : UserControl
     {
-        private readonly CheckBox news, health;
+        private readonly CheckBox news, health, background, notifications;
         private readonly Dictionary<string, CheckBox> sources = new Dictionary<string, CheckBox>();
         private readonly FlowLayoutPanel servers;
         internal bool ShowNews => news.Checked;
         internal bool ShowHealth => health.Checked;
+        internal bool BackgroundChecks => background.Checked;
+        internal bool TrayNotifications => notifications.Checked;
         internal List<string> NewsIds => sources.Where(pair => pair.Value.Checked).Select(pair => pair.Key).ToList();
         internal List<string> HealthIds => servers.Controls.OfType<CheckBox>().Where(box => box.Checked).Select(box => (string)box.Tag).ToList();
         internal SidebarOptions(LauncherSettings settings)
@@ -34,15 +36,20 @@ namespace AOLauncher
             fields.Controls.Add(feedChoices);
             health = Check(L("Show Server health", "Vis serverstatus"), settings.ShowServerHealth, "showServerHealth");
             fields.Controls.Add(health);
+            background = Check(L("Check selected servers in the background", "Tjek valgte servere i baggrunden"), settings.BackgroundHealthChecks || settings.HealthTrayNotifications, "backgroundHealthChecks");
+            notifications = Check(L("Tray notifications for outages and recovery", "Bakkemeddelelser ved udfald og genoprettelse"), settings.HealthTrayNotifications, "healthTrayNotifications");
+            fields.Controls.Add(background); fields.Controls.Add(notifications);
             servers = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Top, FlowDirection = FlowDirection.TopDown, WrapContents = false, Margin = new Padding(18, 0, 0, 14) };
             fields.Controls.Add(servers);
             RebuildServers(settings.LoginServers, settings.HealthServerIds ?? new List<string> { "rebirth", "prk", "live", "live-2019" });
-            var note = new Label { Text = L("When both are enabled, they share the sidebar as tabs. Health checks run only while the health view is visible. Turn both off for more account space.", "Når begge er slået til, vises de som faner. Status tjekkes kun, mens statusvisningen er synlig. Slå begge fra for mere plads til konti."), AutoSize = true, MaximumSize = new Size(440, 0), ForeColor = Theme.Muted, Dock = DockStyle.Top, Margin = new Padding(0, 12, 0, 8) };
+            var note = new Label { Text = L("Background checks run every 60 seconds while Nexus is open, including in the tray. Notifications enable background checks and report issues after two failed checks, then recovery. Windows controls popup duration; the tray keeps the outage status. Without background checks, only the visible health view is checked.", "Baggrundstjek kører hvert 60. sekund, mens Nexus er åben, også i bakken. Meddelelser aktiverer baggrundstjek og rapporterer problemer efter to fejlede tjek, derefter genoprettelse. Windows styrer varigheden; bakken bevarer fejlstatus. Uden baggrundstjek tjekkes kun den synlige statusvisning."), AutoSize = true, MaximumSize = new Size(440, 0), ForeColor = Theme.Muted, Dock = DockStyle.Top, Margin = new Padding(0, 12, 0, 8) };
             fields.Controls.Add(note);
             fields.ClientSizeChanged += (sender, e) => note.MaximumSize = new Size(Math.Max(100, fields.ClientSize.Width - 24), 0);
             news.CheckedChanged += (sender, e) => feedChoices.Enabled = news.Checked;
-            health.CheckedChanged += (sender, e) => servers.Enabled = health.Checked;
-            feedChoices.Enabled = news.Checked; servers.Enabled = health.Checked;
+            health.CheckedChanged += (sender, e) => servers.Enabled = health.Checked || background.Checked;
+            background.CheckedChanged += (sender, e) => { if (!background.Checked) notifications.Checked = false; servers.Enabled = health.Checked || background.Checked; };
+            notifications.CheckedChanged += (sender, e) => { if (notifications.Checked) background.Checked = true; };
+            feedChoices.Enabled = news.Checked; servers.Enabled = health.Checked || background.Checked;
             Controls.Add(SlimScrolling.Wrap(fields));
         }
         internal void RebuildServers(IEnumerable<LoginServerProfile> profiles, IEnumerable<string> selected)
@@ -79,6 +86,7 @@ namespace AOLauncher
             News.ApplySelectionPreferences(settings.NewsSourceIds);
             Health.Endpoints = HealthEndpoints.Clone(settings.HealthCheckEndpoints);
             Health.Configure(settings.LoginServers, settings.HealthServerIds);
+            Health.SetBackgroundChecks(settings.BackgroundHealthChecks || settings.HealthTrayNotifications);
             News.RefreshLanguage(); Health.RefreshLanguage();
             if (settings.ShowServerNews && settings.ShowServerHealth)
             {
@@ -112,6 +120,8 @@ namespace AOLauncher
         private readonly Dictionary<string, List<HealthResult[]>> history = new Dictionary<string, List<HealthResult[]>>();
         private CancellationTokenSource pending;
         private bool busy, disposed, deferredRender;
+        private bool backgroundChecks, configuring;
+        internal event Action<List<HealthSnapshot>> Checked;
         private DateTime lastAttempt = DateTime.MinValue;
         internal Func<LoginServerProfile, CancellationToken, Task<HealthResult[]>> Check = ServerHealth.CheckAsync;
         internal Dictionary<string, HealthEndpoints> Endpoints = new Dictionary<string, HealthEndpoints>();
@@ -129,19 +139,20 @@ namespace AOLauncher
             serverName.Name = "healthServerName"; serverName.Dock = DockStyle.Fill; serverName.ForeColor = Theme.Foreground;
             serverName.TextAlign = ContentAlignment.MiddleLeft;
             serverChoice.Controls.Add(picker); serverChoice.Controls.Add(serverName);
-            picker.SelectedIndexChanged += (sender, e) => { pending?.Cancel(); Render(); _ = RefreshAsync(false); };
+            picker.SelectedIndexChanged += (sender, e) => { if (!backgroundChecks) pending?.Cancel(); Render(); if (!configuring) _ = RefreshAsync(false); };
             cards.Dock = DockStyle.Fill; cards.FlowDirection = FlowDirection.TopDown; cards.WrapContents = false; cards.AutoScroll = true;
             cards.ClientSizeChanged += (sender, e) => { foreach (Control card in cards.Controls) card.Width = Math.Max(100, cards.ClientSize.Width - 4); };
             status.Dock = DockStyle.Fill; status.ForeColor = Theme.Muted;
             layout.Controls.Add(heading, 0, 0); layout.Controls.Add(serverChoice, 0, 1); layout.Controls.Add(SlimScrolling.Wrap(cards), 0, 2);
             layout.Controls.Add(status, 0, 3); Controls.Add(layout);
-            timer.Tick += async (sender, e) => { if (BackgroundUi.DropdownOpen()) return; if (deferredRender) Render(); UpdateStatus(); await RefreshAsync(false); };
-            VisibleChanged += (sender, e) => { if (Visible) { timer.Start(); Render(); _ = RefreshAsync(false); } else { timer.Stop(); pending?.Cancel(); } };
+            timer.Tick += async (sender, e) => { if (!backgroundChecks && BackgroundUi.DropdownOpen()) return; if (deferredRender && Visible) Render(); if (Visible) UpdateStatus(); await RefreshAsync(false); };
+            VisibleChanged += (sender, e) => { if (Visible) { timer.Start(); Render(); if (!configuring) _ = RefreshAsync(false); } else if (!backgroundChecks) { timer.Stop(); pending?.Cancel(); } };
             Load += async (sender, e) => { if (Visible) { timer.Start(); await RefreshAsync(false); } };
             RefreshLanguage();
         }
         internal void Configure(IEnumerable<LoginServerProfile> profiles, IEnumerable<string> selected)
         {
+            configuring = true;
             string current = (picker.SelectedItem as LoginServerProfile)?.Id;
             var ids = new HashSet<string>(selected ?? new[] { "rebirth", "prk", "live", "live-2019" }, StringComparer.OrdinalIgnoreCase);
             pending?.Cancel(); picker.Items.Clear();
@@ -153,7 +164,16 @@ namespace AOLauncher
             serverName.Visible = picker.Items.Count == 1;
             serverName.Text = picker.Items.Count == 1 ? picker.Items[0].ToString() : "";
             serverChoice.Visible = picker.Items.Count > 0;
+            var validKeys = new HashSet<string>(picker.Items.Cast<LoginServerProfile>().Select(item => ServerHealth.EndpointKey(item) + "|" + HealthEndpoints.Resolve(item, Endpoints).Key));
+            foreach (string key in history.Keys.Where(key => !validKeys.Contains(key)).ToArray()) history.Remove(key);
+            configuring = false;
             Render();
+        }
+        internal void SetBackgroundChecks(bool enabled)
+        {
+            if (backgroundChecks != enabled) { pending?.Cancel(); lastAttempt = DateTime.MinValue; }
+            backgroundChecks = enabled;
+            if (enabled || Visible) timer.Start(); else { timer.Stop(); pending?.Cancel(); }
         }
         internal void RefreshLanguage()
         {
@@ -163,22 +183,33 @@ namespace AOLauncher
         internal async Task RefreshAsync(bool manual)
         {
             var server = picker.SelectedItem as LoginServerProfile;
-            if (disposed || busy || !Visible || !IsHandleCreated || server == null || BackgroundUi.DropdownOpen()) return;
-            var samples = Samples(server);
-            DateTime last = samples.Count == 0 ? DateTime.MinValue : samples.Last()[0].CheckedUtc;
-            if (!manual && DateTime.UtcNow - last < TimeSpan.FromSeconds(60)) return;
+            if (disposed || busy || configuring || (!backgroundChecks && (!Visible || !IsHandleCreated || BackgroundUi.DropdownOpen())) || server == null) return;
+            var candidates = backgroundChecks ? picker.Items.Cast<LoginServerProfile>().ToArray() : new[] { server };
+            var due = candidates.GroupBy(item => ServerHealth.EndpointKey(item) + "|" + HealthEndpoints.Resolve(item, Endpoints).Key).Select(group => group.First())
+                .Where(item => manual || Samples(item).Count == 0 || DateTime.UtcNow - Samples(item).Last()[0].CheckedUtc >= TimeSpan.FromSeconds(60)).ToArray();
+            if (due.Length == 0) return;
             // Global throttle also covers switching servers repeatedly.
             if (DateTime.UtcNow - lastAttempt < TimeSpan.FromSeconds(15)) return;
             lastAttempt = DateTime.UtcNow; busy = true;
             var cancellation = new CancellationTokenSource(); pending = cancellation;
             try
             {
-                var result = preview ? Preview(server) : await Check(server, cancellation.Token);
-                if (disposed || cancellation.IsCancellationRequested) return;
-                samples.Add(result); if (samples.Count > 24) samples.RemoveAt(0);
-                Render();
+                var completed = new List<HealthSnapshot>();
+                foreach (var target in due)
+                {
+                    cancellation.Token.ThrowIfCancellationRequested();
+                    var result = preview ? Preview(target) : await Check(target, cancellation.Token);
+                    if (disposed || cancellation.IsCancellationRequested) return;
+                    if (result == null || result.Length == 0) continue;
+                    var samples = Samples(target);
+                    samples.Add(result); if (samples.Count > 24) samples.RemoveAt(0);
+                    completed.Add(new HealthSnapshot { Server = target, Scope = ServerHealth.EndpointKey(target) + "|" + HealthEndpoints.Resolve(target, Endpoints).Key, Results = result });
+                }
+                if (completed.Count > 0) Checked?.Invoke(completed);
+                if (Visible) Render(); else deferredRender = true;
             }
             catch (OperationCanceledException) { }
+            catch (Exception) { /* Failed observation is not evidence of a service outage. Retry on the timer. */ }
             finally { if (ReferenceEquals(pending, cancellation)) pending = null; cancellation.Dispose(); busy = false; if (!disposed) UpdateStatus(); }
         }
         private List<HealthResult[]> Samples(LoginServerProfile server)
@@ -186,7 +217,6 @@ namespace AOLauncher
             string key = ServerHealth.EndpointKey(server) + "|" + HealthEndpoints.Resolve(server, Endpoints).Key;
             if (!history.TryGetValue(key, out var result))
             {
-                if (history.Count >= 32) history.Remove(history.Keys.First());
                 history[key] = result = new List<HealthResult[]>();
             }
             return result;
@@ -209,6 +239,7 @@ namespace AOLauncher
         private void Render()
         {
             if (disposed) return;
+            if (!Visible) { deferredRender = true; return; }
             if (BackgroundUi.DropdownOpen()) { deferredRender = true; return; }
             deferredRender = false;
             cards.SuspendLayout(); foreach (Control control in cards.Controls.Cast<Control>().ToArray()) control.Dispose();
@@ -232,7 +263,7 @@ namespace AOLauncher
             var server = picker.SelectedItem as LoginServerProfile;
             var sample = server == null ? null : Samples(server).LastOrDefault();
             status.Text = busy ? L("Checking…", "Tjekker…") : sample == null ? L("Waiting for a check", "Venter på et tjek")
-                : (preview ? L("Example data", "Eksempeldata") : L("Checked ", "Tjekket ") + sample[0].CheckedUtc.ToLocalTime().ToString("HH:mm:ss")) + L(" · every 60s while visible", " · hvert 60. sekund når synlig");
+                : (preview ? L("Example data", "Eksempeldata") : L("Checked ", "Tjekket ") + sample[0].CheckedUtc.ToLocalTime().ToString("HH:mm:ss")) + (backgroundChecks ? L(" · background · every 60s", " · baggrund · hvert 60. sekund") : L(" · every 60s while visible", " · hvert 60. sekund når synlig"));
         }
         protected override void Dispose(bool disposing)
         {

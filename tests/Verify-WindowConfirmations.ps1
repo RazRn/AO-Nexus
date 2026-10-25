@@ -64,7 +64,7 @@ foreach ($language in @('en','da')) {
             $notes=$whatsNew.Controls.Find('installedReleaseNotes',$true)[0]
             Assert ($notes.ReadOnly -and $notes.Text.Length -gt 300 -and $notes.Width -gt 200) 'Release summary contains embedded readable notes at both DPI scales'
             Assert ($notes.SelectionLength -eq 0 -and $whatsNew.Controls.Find('updateSuccess',$true)[0].Top -ge 0) 'Release summary opens at the top without selecting all notes'
-            $expected=if($language -eq 'da'){'Opdatér'}else{'Update button'}
+            $expected=if($language -eq 'da'){'Spil-GUI er markeret Eksperimentel'}else{'Game GUI is marked Experimental'}
             Assert ($notes.Text.Contains($expected)) 'Release notes use the selected app language'
             (Field $whatsNew 'CancelAction').PerformClick();[Windows.Forms.Application]::DoEvents()
             Assert (!$whatsNew.Visible) 'Close dismisses the nonmodal release summary'

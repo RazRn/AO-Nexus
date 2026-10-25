@@ -1,9 +1,17 @@
-• Choose a startup default in Create/Edit team preset. With no default, no preset is selected at startup. This never starts games automatically.
+• Game GUI is marked Experimental. A built-in AO default layout resets supported windows while keeping actions, bindings, pets and the active skin. Test one character first.
 
-• Server health is more compact: one server uses a plain name, without a dropdown, and checks update automatically without a Refresh button.
+• Update notes now have highlighted headings, separate bullets and more room to read.
 
-• Health and news updates wait while dropdowns are open, keeping your selection uninterrupted.
+• Optional background server checks and tray notifications are available under Settings → Sidebar. Two failed checks confirm an issue; a successful check confirms recovery. The tray retains unresolved issues.
 
-• Edit monitoring IP addresses/hostnames, ports and enabled checks in Settings → Accounts → Manage health checks. Account login settings are separate. Restore defaults per server when needed.
+• Game GUI headings stay readable during operations. Capture/copy now explicitly identifies the source and confirms normal logout before reading its saved preferences.
 
-• Funcom and Project Rubi-Ka defaults have been rechecked. Unverified zone/chat endpoints stay unconfigured. The guide and screenshots are refreshed.
+• Game GUI now manages character layouts, shared installation skins and backups in three tabs.
+
+• Capture a template or copy from another character. Choose window layout, hotbars, keybindings and pet names separately. Apply to selected characters or review a rollout to all.
+
+• Set a default template for new characters. It waits for saved preferences and an offline client before applying. Existing characters can receive the default explicitly.
+
+• Select the default AO skin, import a complete skin ZIP, or download Notum Dovvetech/Darktech themes from the author. Choose the correct classic/new-engine variant and test one installation first.
+
+• Online changes ask to relog using /quit and wait for actual exit. Backups support recovery; failed batches attempt rollback. Keep affected clients closed during the operation.

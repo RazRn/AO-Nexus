@@ -53,7 +53,14 @@
     <Compile Include="ServerNews.cs" />
     <Compile Include="NewsPanel.cs" />
     <Compile Include="ServerHealth.cs" />
+    <Compile Include="HealthAlerts.cs" />
+    <Compile Include="MainForm.HealthAlerts.cs" />
     <Compile Include="HealthEndpoints.cs" />
+    <Compile Include="GuiLayouts.cs" />
+    <Compile Include="GuiSkins.cs" />
+    <Compile Include="GuiManagerDialog.cs" />
+    <Compile Include="GuiSessions.cs" />
+    <Compile Include="MainForm.GameGui.cs" />
     <Compile Include="ServerSidebar.cs" />
     <Compile Include="Models.cs" />
     <Compile Include="Presets.cs" />

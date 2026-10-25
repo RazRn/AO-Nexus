@@ -9,6 +9,7 @@ namespace AOLauncher
     {
         private static readonly Dictionary<string, string> Danish = new Dictionary<string, string>(StringComparer.Ordinal)
         {
+            { "Game GUI…", "Spil-GUI…" },
             { "Use as startup default", "Brug som standard ved opstart" },
             { "Startup default", "Standard ved opstart" },
             { "No preset selected", "Intet preset valgt" },

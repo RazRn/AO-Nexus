@@ -2,7 +2,21 @@
 
 Enable **Settings → Sidebar → Show Server health**, choose the servers to offer in its picker, and Save. Server news has an independent toggle and source selection. With both panels enabled they share tabs; with both disabled accounts reclaim the sidebar width.
 
-Only the currently displayed health server is checked. Every batch has four rows: login connection, world/zone connection, chat connection and official service report. Checks run every 60 seconds while visible, pause in the tray/on the news tab, and cancel when hidden. There is no manual Refresh button. Server switching has a global 15-second throttle; batches never overlap. New checks and background rendering wait while a dropdown is open. At most four operations run together, with a 3-second TCP timeout and 5-second HTTP timeout. JSON responses are limited to 64 KiB; redirects are not followed. With one server enabled, its name replaces the dropdown.
+Every batch has four rows: login connection, world/zone connection, chat connection and official service report. Without background monitoring, only the visible health server is checked every 60 seconds; hiding it cancels the check. Enable **Check selected servers in the background** under Settings → Sidebar to check every selected server even on the news tab, with the sidebar disabled, or while Nexus is in the tray. Nexus must remain running. This is opt-in and separate from displaying the panel.
+
+There is no manual Refresh button. Server switching has a global 15-second throttle; batches never overlap. Background batches visit servers sequentially and deduplicate identical endpoint configurations. Up to four operations run together for one server, with a 3-second TCP timeout and 5-second HTTP timeout. JSON responses are limited to 64 KiB; redirects are not followed. Open dropdowns defer painting without stopping opted-in background probes. With one server enabled, its name replaces the dropdown.
+
+## Tray notifications
+
+Enable **Tray notifications for outages and recovery** in Settings → Sidebar. This also enables background monitoring; background monitoring can be used without notifications. Disabling background checks also disables notifications. Save to apply these preferences.
+
+- Two consecutive failed observations raise one issue notification, typically about 1–2 minutes after an outage begins, plus check duration. Large server lists, PC sleep and network delays can extend this.
+- Continuing failures do not produce repeated popups. A confirmed successful observation sends one recovery notification, normally within the next 60-second cycle.
+- Unknown, missing or stale reports do not claim recovery. An existing outage remains unresolved until a positive observation, or until that endpoint is removed/changed in settings.
+- The tray icon stays available when notifications are enabled. An unresolved issue uses a warning icon; right-click → Server health shows retained service states and the latest transition. Restoring the main window does not remove this status icon. Transitions also appear in the session activity log.
+- Windows controls popup duration and may suppress notifications through its settings. Nexus does not repeatedly reopen a popup to keep it pinned. The warning/status persists in the tray while Nexus is running. Notification and incident state are session-local; after a restart Nexus establishes a new baseline.
+
+TCP notifications say **unreachable from this PC**, since routing, DNS, firewall or local internet failures can look like a server outage. Public API notifications are labelled **reported issue** separately. There are no Discord messages or webhook calls in this feature.
 
 ## Edit endpoints
 

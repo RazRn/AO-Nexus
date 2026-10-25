@@ -1,9 +1,17 @@
-• Vælg et standardhold ved opstart under Opret/Rediger hold. Uden et standardhold vælges intet hold ved opstart. Spil startes aldrig automatisk.
+• Spil-GUI er markeret Eksperimentel. Et indbygget AO-standardlayout nulstiller understøttede vinduer og bevarer handlinger, taster, kæledyr og aktuelt skin. Prøv først én char.
 
-• Serverstatus er mere kompakt: én server vises som navn uden rullemenu, og tjek opdateres automatisk uden en Opdater-knap.
+• Opdateringsnoter har tydelige overskrifter, adskilte punkter og mere læseplads.
 
-• Status og nyheder venter, mens rullemenuer er åbne, så dit valg ikke afbrydes.
+• Valgfrie baggrundstjek og bakkemeddelelser findes under Indstillinger → Sidepanel. To fejlede tjek bekræfter et problem; et vellykket tjek bekræfter genoprettelse. Bakken bevarer uafklarede problemer.
 
-• Ret overvågningens IP-adresser/værtsnavne, porte og aktive tjek under Indstillinger → Konti → Administrer statustjek. Kontoens loginindstillinger er separate. Gendan standarder pr. server efter behov.
+• Spil-GUI-overskrifter forbliver læselige under handlinger. Kopiering identificerer nu kilde-charen og bekræfter normalt logout, før de gemte indstillinger læses.
 
-• Standarderne for Funcom og Project Rubi-Ka er kontrolleret igen. Ikke-verificerede zone-/chatadresser forbliver ukonfigurerede. Guide og skærmbilleder er opdateret.
+• Spil-GUI samler char-layouts, delte installationsskins og sikkerhedskopier i tre faner.
+
+• Gem en skabelon eller kopiér fra en anden char. Vælg vindueslayout, genvejsbjælker, tastaturgenveje og petnavne separat. Anvend på valgte chars eller gennemgå en udrulning til alle.
+
+• Vælg et standardlayout til nye chars. Det anvendes først, når gemte indstillinger findes og klienten er lukket. Eksisterende chars kan få standardlayoutet efter dit valg.
+
+• Vælg det oprindelige AO-skin, importér en komplet skin-ZIP eller hent Notum Dovvetech/Darktech fra forfatteren. Vælg den rigtige klassiske/nye grafikmotor og test én installation først.
+
+• Ændringer for online chars spørger om genlogin via /quit og venter på fuld lukning. Sikkerhedskopier understøtter gendannelse; ved fejl forsøges tidligere ændringer rullet tilbage. Hold berørte klienter lukket under handlingen.

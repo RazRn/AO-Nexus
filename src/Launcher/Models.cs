@@ -25,11 +25,14 @@ namespace AOLauncher
         public List<LaunchPreset> Presets { get; set; } = new List<LaunchPreset>();
         public string SelectedPresetId { get; set; }
         public string DefaultPresetId { get; set; }
+        public string DefaultGuiTemplateId { get; set; }
         public List<LoginServerProfile> LoginServers { get; set; } = LoginServerProfile.Defaults();
         public List<string> CollapsedServers { get; set; } = new List<string>();
         public List<string> NewsSourceIds { get; set; } = ServerNews.NormalizeSourceIds(null).ToList();
         public bool ShowServerNews { get; set; } = true;
         public bool ShowServerHealth { get; set; } = true;
+        public bool BackgroundHealthChecks { get; set; }
+        public bool HealthTrayNotifications { get; set; }
         public Dictionary<string, HealthEndpoints> HealthCheckEndpoints { get; set; } = new Dictionary<string, HealthEndpoints>();
         public List<string> HealthServerIds { get; set; } = new List<string> { "rebirth", "prk", "live", "live-2019" };
     }
@@ -111,6 +114,7 @@ namespace AOLauncher
 
     internal sealed class CharacterConfig
     {
+        public string PendingGuiTemplateId { get; set; }
         public string Name { get; set; }
         public int CharacterId { get; set; }
         public bool Selected { get; set; } = true;
