@@ -6,6 +6,7 @@
 - Inline dropdowns and buttons have equal visible heights and aligned top edges. Match the dropdown to the established button height, including DPI scaling; do not shrink the buttons. Vertically center the text in each control.
 - Use 12 px inset padding and consistent spacing between sections. Keep headings, controls and content aligned to the same inset edges.
 - Allow more rows only where content or the supported window size requires them. Check English and Danish text for overlap and clipping.
-- Keep preset selection, its save status and both shortcut fields together in YOUR SQUADS. Account actions remain beside the account list.
+- Keep preset selection, its save status and both shortcut fields together in YOUR TEAMS. Place account actions inside ACCOUNTS BY SERVER, above its list. Wrap the toolbar when needed rather than clipping actions or shrinking their button height.
+- Use text links for lightweight view actions such as Expand all and Collapse all, aligned beside the section heading. Preserve keyboard focus, hover feedback and disabled states.
 
 Reference: [Microsoft Windows layout guidelines](https://learn.microsoft.com/en-us/windows/win32/uxguide/vis-layout), especially top alignment, text baselines and consistent control sizing. Nexus keeps its existing dark palette and button dimensions.

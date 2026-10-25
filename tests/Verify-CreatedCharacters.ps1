@@ -1,4 +1,4 @@
-param([string]$AssemblyPath = (Join-Path $PSScriptRoot '..\src\Launcher\bin\Release\AONexus.exe'))
+﻿param([string]$AssemblyPath = (Join-Path $PSScriptRoot '..\src\Launcher\bin\Release\AONexus.exe'))
 $ErrorActionPreference = 'Stop'
 if ([IntPtr]::Size -ne 4 -or $PSVersionTable.PSEdition -eq 'Core') { throw 'Run with 32-bit Windows PowerShell -NoProfile -STA.' }
 Add-Type -AssemblyName System.Web.Extensions, System.Windows.Forms
@@ -65,19 +65,19 @@ $snapshot = $serializer.Serialize($fixture.Settings)
 $duplicate = Apply $fixture (Notice $fixture)
 Assert ($fixture.Account.Characters.Count -eq 1 -and $snapshot -ceq $serializer.Serialize($fixture.Settings)) 'An identical creation event must be idempotent.'
 
-# Selection and saved squads remain under the user's control.
+# Selection and saved teams remain under the user's control.
 $fixture = Fixture
 $known = New-Char 980100 'Knownhero' $true
 $fixture.Account.Characters.Add($known)
-$preset = New-Model 'LaunchPreset'; $preset.Id = 'fixture-squad'; $preset.Name = 'Existing squad'
+$preset = New-Model 'LaunchPreset'; $preset.Id = 'fixture-team'; $preset.Name = 'Existing team'
 $member = New-Model 'PresetCharacter'; $member.AccountId = $fixture.Account.Id; $member.CharacterId = $known.CharacterId
 $preset.Characters.Add($member); $fixture.Settings.Presets.Add($preset); $fixture.Settings.SelectedPresetId = $preset.Id
 $presetBefore = $serializer.Serialize($fixture.Settings.Presets)
 Assert (Can-Create $fixture) 'An account with one of two slots used must initially offer creation.'
 $result = Apply $fixture (Notice $fixture)
-Assert $result.Accepted 'A second char must be imported without changing the selected squad.'
+Assert $result.Accepted 'A second char must be imported without changing the selected team.'
 Assert ($known.Selected -and !$result.Updated.Selected -and $fixture.Settings.SelectedPresetId -eq $preset.Id) 'Import must preserve existing selection and keep the new char unselected.'
-Assert ($presetBefore -ceq $serializer.Serialize($fixture.Settings.Presets)) 'Import must not append the char to a saved squad.'
+Assert ($presetBefore -ceq $serializer.Serialize($fixture.Settings.Presets)) 'Import must not append the char to a saved team.'
 Assert (!(Can-Create $fixture)) 'The creation action must become unavailable when the imported char fills configured capacity.'
 
 # An already listed manually named char is preserved, including its selection.
@@ -214,7 +214,7 @@ try {
     Call-Instance $main 'HandleOperationLine' ([object[]]@($createdLine, $fixture.Request, $first, $true)) | Out-Null
     Assert ($fixture.Account.Characters.Count -eq 1 -and !(Get-Field $main 'log').Text.Contains('synthetic-password-only')) 'A background creation result must update the list without logging credentials.'
     Assert ([object]::ReferenceEquals((Get-Field $main 'backendRunner'), $second) -and (Get-Field $main 'running') -and (Get-Field $main 'statusLabel').Text -ceq $status) 'A background creation result must preserve a newer foreground login and its status.'
-    Assert (!$fixture.Account.Characters[0].Selected -and $fixture.Settings.Presets.Count -eq 0) 'The real event handler must keep the discovered char unselected and preserve squads.'
+    Assert (!$fixture.Account.Characters[0].Selected -and $fixture.Settings.Presets.Count -eq 0) 'The real event handler must keep the discovered char unselected and preserve teams.'
 
     $event = [Windows.Forms.FormClosingEventArgs]::new([Windows.Forms.CloseReason]::UserClosing, $false)
     Call-Instance $main 'OnFormClosing' ([object[]]@($main, $event)) | Out-Null

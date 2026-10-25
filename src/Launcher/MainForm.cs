@@ -42,8 +42,8 @@ namespace AOLauncher
         private Button updatePresetButton;
         private Button renamePresetButton;
         private Button deletePresetButton;
-        private Button expandAccountsButton;
-        private Button collapseAccountsButton;
+        private LinkLabel expandAccountsLink;
+        private LinkLabel collapseAccountsLink;
         private BackendRunner backendRunner;
         private readonly HashSet<BackendRunner> creationMonitors = new HashSet<BackendRunner>();
         private CancellationTokenSource preparationCancellation;
@@ -272,14 +272,13 @@ namespace AOLauncher
             body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 358));
             layout.Controls.Add(body, 0, 1);
-            var workspace = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 4, Margin = new Padding(0, 0, 18, 0) };
+            var workspace = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, Margin = new Padding(0, 0, 18, 0) };
             workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 181));
-            workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
             workspace.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 102));
             body.Controls.Add(workspace, 0, 0);
 
-            var toolbar = new FlowLayoutPanel { Dock = DockStyle.Fill, Padding = Padding.Empty, WrapContents = false, Margin = Padding.Empty };
+            var toolbar = new FlowLayoutPanel { Name = "accountActions", Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = Padding.Empty, WrapContents = true, Margin = Padding.Empty };
             AddAction(toolbar, T("Add account"), AddAccount);
             addCharacterButton = AddAction(toolbar, T("Add character"), AddCharacter);
             editButton = AddAction(toolbar, T("Edit"), EditSelected);
@@ -289,11 +288,11 @@ namespace AOLauncher
             foreach (Button button in toolbar.Controls)
             {
                 button.Font = new Font("Segoe UI", 9F);
-                button.MinimumSize = new Size(0, 32);
+                button.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+                button.MinimumSize = new Size(0, 34);
                 button.Padding = new Padding(8, 3, 8, 3);
-                button.Margin = new Padding(0, 0, 5, 0);
+                button.Margin = new Padding(0, 0, 5, 6);
             }
-            workspace.Controls.Add(toolbar, 0, 1);
 
             var presetFrame = new NexusPanel { Name = "presetSection", Dock = DockStyle.Fill, Margin = new Padding(0, 0, 0, 12), Padding = new Padding(12) };
             var presets = new TableLayoutPanel { Dock = DockStyle.Fill, Margin = Padding.Empty, Padding = Padding.Empty, BackColor = Theme.Surface, ColumnCount = 5, RowCount = 4 };
@@ -303,7 +302,7 @@ namespace AOLauncher
             presets.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
             presets.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));
             presets.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            var presetCaption = Caption(T("YOUR SQUADS"));
+            var presetCaption = Caption(T("YOUR TEAMS"));
             presets.Controls.Add(presetCaption, 0, 0);
             presets.SetColumnSpan(presetCaption, 5);
             presetPicker.DropDownStyle = ComboBoxStyle.DropDownList;
@@ -353,8 +352,9 @@ namespace AOLauncher
             content.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 260));
             content.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             var leftFrame = new NexusPanel { Dock = DockStyle.Fill, Margin = Padding.Empty, Padding = new Padding(12), Name = "accountsByServer" };
-            var left = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Margin = Padding.Empty, BackColor = Theme.Surface };
-            left.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
+            var left = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, Margin = Padding.Empty, BackColor = Theme.Surface };
+            left.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+            left.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             left.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             leftFrame.Controls.Add(left);
             var accountHeader = new TableLayoutPanel { Name = "accountsHeader", Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 1, Margin = Padding.Empty };
@@ -367,21 +367,29 @@ namespace AOLauncher
             accountCaption.TextAlign = ContentAlignment.MiddleLeft;
             accountCaption.Margin = Padding.Empty;
             accountHeader.Controls.Add(accountCaption, 0, 0);
-            expandAccountsButton = Theme.Button(T("Expand all"));
-            collapseAccountsButton = Theme.Button(T("Collapse all"));
-            expandAccountsButton.Click += (sender, e) => SetAccountsCollapsed(false);
-            collapseAccountsButton.Click += (sender, e) => SetAccountsCollapsed(true);
-            var accountButtons = new[] { expandAccountsButton, collapseAccountsButton };
-            for (int index = 0; index < accountButtons.Length; index++)
+            expandAccountsLink = new LinkLabel { Text = T("Expand all"), Name = "expandAccounts" };
+            collapseAccountsLink = new LinkLabel { Text = T("Collapse all"), Name = "collapseAccounts" };
+            expandAccountsLink.LinkClicked += (sender, e) => SetAccountsCollapsed(false);
+            collapseAccountsLink.LinkClicked += (sender, e) => SetAccountsCollapsed(true);
+            var accountLinks = new[] { expandAccountsLink, collapseAccountsLink };
+            for (int index = 0; index < accountLinks.Length; index++)
             {
-                accountButtons[index].Font = new Font("Segoe UI", 8.5F);
-                accountButtons[index].MinimumSize = new Size(76, 26);
-                accountButtons[index].Padding = new Padding(6, 1, 6, 1);
-                accountButtons[index].Margin = new Padding(4, 0, 0, 4);
-                accountHeader.Controls.Add(accountButtons[index], index + 1, 0);
-                editingControls.Add(accountButtons[index]);
+                var link = accountLinks[index];
+                link.Font = new Font("Segoe UI", 8.5F);
+                link.AutoSize = true;
+                link.Dock = DockStyle.Fill;
+                link.TextAlign = ContentAlignment.MiddleLeft;
+                link.LinkBehavior = LinkBehavior.HoverUnderline;
+                link.LinkColor = link.VisitedLinkColor = Theme.Accent;
+                link.ActiveLinkColor = Theme.Amber;
+                link.DisabledLinkColor = Theme.Muted;
+                link.TabStop = true;
+                link.Margin = new Padding(12, 0, 0, 0);
+                accountHeader.Controls.Add(link, index + 1, 0);
+                editingControls.Add(link);
             }
             left.Controls.Add(accountHeader, 0, 0);
+            left.Controls.Add(toolbar, 0, 1);
             tree.Dock = DockStyle.Fill;
             tree.BorderStyle = BorderStyle.None;
             tree.BackColor = Theme.Surface;
@@ -413,7 +421,7 @@ namespace AOLauncher
                 { e.Handled = true; e.SuppressKeyPress = true; CreateCharacter(sender, e); }
             };
             tree.HandleCreated += (sender, e) => HideCreationCheckboxes();
-            left.Controls.Add(SlimScrolling.Wrap(tree), 0, 1);
+            left.Controls.Add(SlimScrolling.Wrap(tree), 0, 2);
             editingControls.Add(tree);
             content.Controls.Add(leftFrame, 0, 0);
 
@@ -472,7 +480,7 @@ namespace AOLauncher
             editingControls.Add(updatePasswordButton);
             rightFrame.Controls.Add(right);
             content.Controls.Add(rightFrame, 1, 0);
-            workspace.Controls.Add(content, 0, 2);
+            workspace.Controls.Add(content, 0, 1);
 
             var logPanel = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(0, 12, 0, 0), Margin = Padding.Empty, ColumnCount = 1, RowCount = 2 };
             logPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
@@ -493,7 +501,7 @@ namespace AOLauncher
             log.Font = new Font("Consolas", 8.5F);
             log.Margin = Padding.Empty;
             logPanel.Controls.Add(SlimScrolling.Wrap(log), 0, 1);
-            workspace.Controls.Add(logPanel, 0, 3);
+            workspace.Controls.Add(logPanel, 0, 2);
 
             newsPanel = new NewsPanel(smoke) { Dock = DockStyle.Fill, Margin = Padding.Empty };
             newsPanel.ApplySelectionPreferences(settings.NewsSourceIds);
@@ -1009,7 +1017,7 @@ namespace AOLauncher
             addCharacterButton.Enabled = CurrentAccount != null && !running;
             editButton.Enabled = CurrentAccount != null && !running;
             removeButton.Enabled = CurrentAccount != null && !(tree.SelectedNode?.Tag is CreationAction) && !running;
-            expandAccountsButton.Enabled = collapseAccountsButton.Enabled = settings.Accounts.Count > 0 && !running;
+            expandAccountsLink.Enabled = collapseAccountsLink.Enabled = settings.Accounts.Count > 0 && !running;
             var account = CurrentAccount;
             var character = CurrentCharacter;
             bool creation = tree.SelectedNode?.Tag is CreationAction;
@@ -1019,7 +1027,7 @@ namespace AOLauncher
             createCharacterButton.Enabled = createCharacterButton.Visible && !running && !smoke;
             detailHelp.Visible = creation;
             detailHelp.Text = creation
-                ? T("Keep AO Nexus open while you create the char. Once it enters the game, its ID and name are added here automatically. It starts unchecked and is not added to your saved squads.")
+                ? T("Keep AO Nexus open while you create the char. Once it enters the game, its ID and name are added here automatically. It starts unchecked and is not added to your saved teams.")
                 : T("Select an account or char to see its details. Double-click a char to edit it.");
             if (creation)
             {
@@ -1644,7 +1652,7 @@ namespace AOLauncher
             if (request.Characters.Count == 1 && request.Characters[0].CreateCharacter)
             {
                 if (!running) statusLabel.Text = T("STATUS · Char detected");
-                AppendLog(F("{0} (ID {1}) is now in the account list. Your saved squads are unchanged.", updated.Name, updated.CharacterId));
+                AppendLog(F("{0} (ID {1}) is now in the account list. Your saved teams are unchanged.", updated.Name, updated.CharacterId));
             }
             else AppendLog(F("Character {0} logged in as {1}. The name has been updated in the list.", updated.CharacterId, updated.Name));
         }

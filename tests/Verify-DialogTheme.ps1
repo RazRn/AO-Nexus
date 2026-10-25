@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$AssemblyPath = (Join-Path $PSScriptRoot '..\src\Launcher\bin\Release\AONexus.exe'),
     [string]$PreviewDirectory = (Join-Path $PSScriptRoot '..\logs\dialog-theme-previews')
 )
@@ -321,7 +321,7 @@ foreach ($language in @('en','da')) {
             switch ($kind) {
                 'AccountDialog' { $arguments=[object[]]@($null,$settings) }
                 'CharacterDialog' { $arguments=[object[]]@('SyntheticAccount',$character) }
-                'PresetNameDialog' { $arguments=[object[]]@('Synthetic preset','Synthetic squad',[string[]]@('Reserved')) }
+                'PresetNameDialog' { $arguments=[object[]]@('Synthetic preset','Synthetic team',[string[]]@('Reserved')) }
                 'PasswordDialog' { $arguments=[object[]]@($account) }
                 'SettingsDialog' { $arguments=[object[]]@($settings) }
                 'LoginServersDialog' { $arguments=New-Object object[] 1; $arguments[0]=$settings.LoginServers }

@@ -501,7 +501,7 @@ foreach ($language in @('en','da')) {
 
         $saved = Clone-Settings $config
         Assert ($saved.LoginServers[0].MaxAccounts -eq 0 -and $saved.LoginServers[0].MaxCharactersPerAccount -eq 1 -and $saved.LoginServers[0].CharacterSlots -eq 6 -and $saved.Accounts[0].CharacterSlots -eq 9) 'Settings roundtrip must preserve all three independent values and the account override.'
-        Assert (!$saved.Accounts[0].Characters[0].Selected -and $saved.Accounts[0].Characters.Count -eq 1 -and $saved.Presets.Count -eq 0) 'Clarified labels must not alter selected chars, saved counts or squads.'
+        Assert (!$saved.Accounts[0].Characters[0].Selected -and $saved.Accounts[0].Characters.Count -eq 1 -and $saved.Presets.Count -eq 0) 'Clarified labels must not alter selected chars, saved counts or teams.'
         $dialog = New-ServerDialog $config.LoginServers
         if ($scale -gt 1) { $dialog.Font=[Drawing.Font]::new($dialog.Font.FontFamily,$dialog.Font.Size*$scale,$dialog.Font.Style); $dialog.Scale([Drawing.SizeF]::new($scale,$scale)) }
         $grid=$dialog.GetType().GetField('grid',$instance).GetValue($dialog)

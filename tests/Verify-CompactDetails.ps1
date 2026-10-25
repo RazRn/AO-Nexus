@@ -116,7 +116,7 @@ foreach ($scale in @(1, 1.5)) {
             Assert ($serializer.Serialize($config) -ceq $before) 'Viewing account, char and server details must not change saved data or selected checkboxes.'
 
             $originalLabel = $accountNode.Tag.Label
-            $accountNode.Tag.Label = 'Synthetic squad with a deliberately descriptive multi-word account label'
+            $accountNode.Tag.Label = 'Synthetic team with a deliberately descriptive multi-word account label'
             $tree.SelectedNode = $accountNode; Invoke-Main 'UpdateSelection' | Out-Null; Layout $script:form
             Fits-Text (Field 'detailTitle') 'Long wrapping account title'
             Assert ((Field 'detailTitle').Height -gt (Field 'detailTitle').Font.Height -and (Field 'detailTitle').Width -lt $details.Width) 'A long title must wrap inside the narrow sidebar.'

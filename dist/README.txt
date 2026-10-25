@@ -1,4 +1,4 @@
-AO NEXUS 1.0.16
+AO NEXUS 1.0.17
 Based on AOQuickLauncher by never-knows-best and contributors.
 Customized by Luckyspawn.
 

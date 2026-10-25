@@ -66,7 +66,7 @@ namespace AOLauncher
             { "YOUR GATEWAY TO RUBI-KA", "DIN INDGANG TIL RUBI-KA" },
             { "One launcher. Every world. Your team.", "Én launcher. Alle verdener. Dit hold." },
             { "TEAM SETUP", "HOLDSAMMENSÆTNING" },
-            { "YOUR SQUADS", "DINE HOLD" },
+            { "YOUR TEAMS", "DINE TEAMS" },
             { "{0}  ·  {1}/{2} accounts", "{0}  ·  {1}/{2} konti" },
             { "DETAILS", "DETALJER" },
             { "ACTIVITY", "AKTIVITET" },
@@ -77,14 +77,14 @@ namespace AOLauncher
             { "Select an account or char to see its details. Double-click a char to edit it.", "Vælg en konto eller char for at se detaljer. Dobbeltklik på en char for at redigere." },
             { "Preview · sample accounts", "Forhåndsvisning · eksempler på konti" },
             { "Copied your AO Launcher profile. AO Nexus now saves changes separately.", "Din AO Launcher-profil er kopieret. AO Nexus gemmer nu ændringer separat." },
-            { "Keep AO Nexus open while you create the char. Once it enters the game, its ID and name are added here automatically. It starts unchecked and is not added to your saved squads.", "Hold AO Nexus åben, mens du opretter din char. Når den kommer ind i spillet, tilføjes dens ID og navn automatisk her. Den starter uden flueben og føjes ikke til dine gemte hold." },
+            { "Keep AO Nexus open while you create the char. Once it enters the game, its ID and name are added here automatically. It starts unchecked and is not added to your saved teams.", "Hold AO Nexus åben, mens du opretter din char. Når den kommer ind i spillet, tilføjes dens ID og navn automatisk her. Den starter uden flueben og føjes ikke til dine gemte teams." },
             { "Keep AO Nexus open. The new char will be added automatically after entering the game. You can continue using the launcher meanwhile.", "Hold AO Nexus åben. Den nye char tilføjes automatisk, når den kommer ind i spillet. Du kan bruge launcheren imens." },
             { "STATUS · Waiting for the new char in game", "STATUS · Venter på den nye char i spillet" },
             { "STATUS · Char detected", "STATUS · Char fundet" },
             { "STATUS · Automatic char detection ended", "STATUS · Automatisk registrering af char afsluttet" },
             { "Automatic char detection ended. You can import the char from the account's Prefs folder or add its ID manually.", "Automatisk registrering af char er afsluttet. Du kan importere charen fra kontoens Prefs-mappe eller tilføje dens ID manuelt." },
             { "Character creation finished. The detected char is available in the account list.", "Oprettelse af char er afsluttet. Den fundne char vises under kontoen." },
-            { "{0} (ID {1}) is now in the account list. Your saved squads are unchanged.", "{0} (ID {1}) vises nu under kontoen. Dine gemte hold er uændrede." },
+            { "{0} (ID {1}) is now in the account list. Your saved teams are unchanged.", "{0} (ID {1}) vises nu under kontoen. Dine gemte teams er uændrede." },
             { "The detected char could not be matched to its original account. Check whether the account or server settings changed; you can add the char manually.", "Den fundne char kunne ikke matches med den oprindelige konto. Kontrollér, om konto- eller serverindstillingerne er ændret; du kan tilføje charen manuelt." }
         };
 

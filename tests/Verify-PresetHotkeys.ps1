@@ -92,7 +92,7 @@ try {
         $picker = Field 'presetPicker'; $update = Field 'updatePresetButton'
         Assert ($picker.Height -eq $update.Height -and $picker.Top -eq $update.Top) ('Inline dropdown and buttons align: ' + $picker.Bounds + ' / ' + $update.Bounds)
         $header = $form.Controls.Find('accountsHeader', $true)[0]
-        Assert ($header.GetPositionFromControl((Field 'expandAccountsButton')).Row -eq 0) 'Section actions share the heading row'
+        Assert ($header.GetPositionFromControl((Field 'expandAccountsLink')).Row -eq 0) 'Section actions share the heading row'
         if ($language -eq 'en') {
             $out = Join-Path $PSScriptRoot '../logs/preset-shortcuts-preview.png'
             $bitmap = [Drawing.Bitmap]::new($form.Width, $form.Height)

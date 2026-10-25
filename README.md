@@ -1,21 +1,21 @@
 # AO Nexus
 
-**A launcher for your accounts, characters and squads across Anarchy Online servers.**
+**A launcher for your accounts, characters and teams across Anarchy Online servers.**
 
-AO Nexus **v1.0.16** brings separate game installations, login servers, saved character selections and server news into one Windows app. It includes presets for Funcom AO, Project Rubi-Ka and AO Rebirth, and lets you add your own server entries.
+AO Nexus **v1.0.17** brings separate game installations, login servers, saved character selections and server news into one Windows app. It includes presets for Funcom AO, Project Rubi-Ka and AO Rebirth, and lets you add your own server entries.
 
 Based on [AOQuickLauncher](https://gitlab.com/never-knows-best/aoquicklauncher) by **never-knows-best and contributors**. Customized by **Luckyspawn**.
 
 [Download a release](https://github.com/RazRn/AO-Nexus/releases) · [Source repository](https://github.com/RazRn/AO-Nexus) · [Player guide](dist/README.txt)
 
-![AO Nexus dashboard with a saved squad, accounts grouped by server, account details and server news](docs/images/launcher-overview.png)
+![AO Nexus dashboard with a saved team, accounts grouped by server, account details and server news](docs/images/launcher-overview.png)
 
-Screenshots use example accounts and offline news fixtures, with no personal accounts or passwords. All guide screenshots were regenerated from v1.0.16.
+Screenshots use example accounts and offline news fixtures, with no personal accounts or passwords. All guide screenshots were regenerated from v1.0.17.
 
 ## What it does
 
 - Groups accounts and characters by server, with collapsible lists and a details panel.
-- Saves squads containing characters from any combination of accounts and servers.
+- Saves teams containing characters from any combination of accounts and servers.
 - Gives each account its own game folder, server connection and password preference.
 - Imports character IDs from existing Prefs folders, or accepts IDs entered manually.
 - Starts independent account queues in parallel, with characters on the same account logging in one at a time.
@@ -26,7 +26,7 @@ Screenshots use example accounts and offline news fixtures, with no personal acc
 - Supports English and Danish, with an automatic Windows-language default.
 - Minimizes to the Windows system tray, keeping the launcher out of the taskbar and Alt+Tab while logins continue.
 - Optionally starts in the tray with Windows and restores the existing window when launched again.
-- Saves separate global start and logout shortcuts for each squad. Logout requests normal `/quit`, without forcing clients closed.
+- Saves separate global start and logout shortcuts for each team. Logout requests normal `/quit`, without forcing clients closed.
 
 AO Nexus launches supported Windows AO clients. It does not install or patch the game, provide AOSharp plugins, or automatically support a replacement client with a different login protocol.
 
@@ -35,7 +35,7 @@ AO Nexus launches supported Windows AO clients. It does not install or patch the
 - [Install and first launch](#install-and-first-launch)
 - [Add accounts and characters](#add-accounts-and-characters)
 - [Game folders, servers and limits](#game-folders-servers-and-limits)
-- [Choose characters and save squads](#choose-characters-and-save-squads)
+- [Choose characters and save teams](#choose-characters-and-save-teams)
 - [Start and stop logins](#start-and-stop-logins)
 - [Preset shortcuts and logout](#preset-shortcuts-and-logout)
 - [Create a new character](#create-a-new-character)
@@ -135,7 +135,7 @@ Open **Settings → Manage login servers…** to rename servers, edit their addr
 
 ![Login server editor showing connection settings, simultaneous account and character limits, and total character slots](docs/images/server-settings.png)
 
-These are the defaults in the **v1.0.16 source**, rather than a live statement of each server's current rules or availability. Existing profiles can retain their saved values.
+These are the defaults in the **v1.0.17 source**, rather than a live statement of each server's current rules or availability. Existing profiles can retain their saved values.
 
 | Server preset | Login address | Max. accounts | Chars per account | Character slots |
 | --- | --- | ---: | ---: | ---: |
@@ -163,20 +163,20 @@ The launcher also accounts for tracked game clients that are already running. Th
 
 These values are checks in AO Nexus. Changing them does not grant extra slots, alter server rules or make a server accept additional sessions. Keep them consistent with the server's current rules.
 
-## Choose characters and save squads
+## Choose characters and save teams
 
 The main list is grouped as **server → account → character**. Use the chevrons to collapse groups, or **Expand all** and **Collapse all**. Checking an account or server selects its child characters; **Select all** and **Clear selection** apply to the whole list.
 
 To save a setup:
 
 1. Check the characters you want, across any accounts or servers.
-2. Under **YOUR SQUADS**, choose **Save new…** and give the setup a name.
+2. Under **YOUR TEAMS**, choose **Save new…** and give the setup a name.
 3. Later, choose that setup in the picker to restore its selection.
 4. Review the selected characters and choose **Log in selected** when ready.
 
-Selecting a squad changes checkboxes; it does not immediately start games. If you change the checkboxes afterwards, the status shows **Modified**. Choose **Update** to save that selection into the current squad, or **Save new…** to keep it separately. **Rename…** and **Delete** manage the saved squad itself.
+Selecting a team changes checkboxes; it does not immediately start games. If you change the checkboxes afterwards, the status shows **Modified**. Choose **Update** to save that selection into the current team, or **Save new…** to keep it separately. **Rename…** and **Delete** manage the saved team itself.
 
-A squad stores character references, not a second copy of the account settings. Account changes still apply. Missing characters are reported and skipped; newly imported or created characters do not silently join existing squads.
+A team stores character references, not a second copy of the account settings. Account changes still apply. Missing characters are reported and skipped; newly imported or created characters do not silently join existing teams.
 
 ## Start and stop logins
 
@@ -193,15 +193,15 @@ Serial login does not mean the first character closes when the next starts. Succ
 
 ## Preset shortcuts and logout
 
-![Separate start and logout shortcut fields for the selected squad](docs/images/preset-shortcuts.png)
+![Separate start and logout shortcut fields for the selected team](docs/images/preset-shortcuts.png)
 
-1. Select a saved squad under **YOUR SQUADS**. Each preset has its own **Start shortcut** and **Logout shortcut**.
+1. Select a saved team under **YOUR TEAMS**. Each preset has its own **Start shortcut** and **Logout shortcut**.
 2. Click a field, then press your combination, for example **Ctrl + Alt + F6** to start and **Ctrl + Alt + F7** to log out. Use Ctrl or Alt with a letter, number or function key. F12 and Windows-key combinations are reserved.
 3. The shortcut is saved immediately. Click the field and press **Delete** or **Backspace** to clear it; **Esc** cancels recording. The preset's **Update** button still saves changes to its character selection.
 
 The shortcuts work while Nexus is running, including when it is hidden in the system tray. They are unassigned by default. Duplicate bindings and unavailable Windows registrations are reported; choose another combination if a different app already owns it. Shortcuts are ignored while Nexus is busy or has a dialog open.
 
-**Start** applies the saved squad and opens the usual launch confirmation. Account limits, game-folder checks and password preferences still apply. Characters already recognized as running are skipped.
+**Start** applies the saved team and opens the usual launch confirmation. Account limits, game-folder checks and password preferences still apply. Characters already recognized as running are skipped.
 
 **Logout** lists the safely matched running characters and asks before sending `/quit`. A shared character in two presets can appear in either preset's logout list; always review the names. Matching includes the account, server, character ID, game installation, process ID, process start time and game-window title. It is checked again after confirmation.
 
@@ -209,7 +209,7 @@ The game handles its normal logout countdown. Combat, zoning, movement or cancel
 
 **Existing game windows need one normal restart through v1.0.15 or later** to enable quit control. The same applies to a client opened through **Create new char**: save/import the character and start it normally once. Unsupported or untracked clients are skipped with an explanation. AOSharp is not required. Closing Nexus itself still leaves all game windows open.
 
-For implementation details and test coverage, see [Quit control](docs/Camp-Control.md). See [What's new in v1.0.16](docs/Whats-New-1.0.16.md) for the English feature list.
+For implementation details and test coverage, see [Quit control](docs/Camp-Control.md). See [What's new in v1.0.17](docs/Whats-New-1.0.16.md) for the English feature list.
 
 ## Create a new character
 
@@ -220,7 +220,7 @@ For implementation details and test coverage, see [Quit control](docs/Camp-Contr
 3. Complete character creation in the game itself.
 4. Keep AO Nexus open until the character enters the world.
 
-AO Nexus monitors that launched client for up to one hour. When it detects the new ID and name, it adds the character under the correct account, **unchecked**. Prefs are not required for this detection, and existing squads are unchanged. The rest of the launcher remains usable while creation is open.
+AO Nexus monitors that launched client for up to one hour. When it detects the new ID and name, it adds the character under the correct account, **unchecked**. Prefs are not required for this detection, and existing teams are unchanged. The rest of the launcher remains usable while creation is open.
 
 Closing AO Nexus ends this detection but leaves the game window open. If detection ends or the client does not support it, import the character from Prefs or add its ID manually. The capacity check only knows characters already recorded in the launcher; the server remains the authority on whether another can be created.
 
@@ -235,7 +235,7 @@ Closing AO Nexus ends this detection but leaves the game window open. If detecti
 | Unchecked | Prompt once for that account per login or character-creation action. Reuse that entry for its selected characters during the action, without saving it for future actions. |
 | Checked | Save the password encrypted for the current Windows user and use it for future logins. |
 
-New accounts default to asking each time. Existing profiles retain their previous remembering preference. You can mix remembered and non-remembered accounts in the same squad.
+New accounts default to asking each time. Existing profiles retain their previous remembering preference. You can mix remembered and non-remembered accounts in the same team.
 
 ![Password prompt with an optional remember-password checkbox and explanation of password storage and removal](docs/images/password-options.png)
 
@@ -256,7 +256,7 @@ This replaces only that account's encrypted copy in AO Nexus, for all its charac
 
 For one account, open **Edit**, uncheck **Remember password for this account**, and **Save**. Its old saved password is removed.
 
-For all AO Nexus accounts, use **Settings → Forget passwords**. This clears saved passwords immediately while keeping accounts and squads. Remembering preferences remain, so the next password prompt can save a new value if its checkbox is still checked.
+For all AO Nexus accounts, use **Settings → Forget passwords**. This clears saved passwords immediately while keeping accounts and teams. Remembering preferences remain, so the next password prompt can save a new value if its checkbox is still checked.
 
 Saved passwords use Windows data protection for the current Windows user. They are not stored in the account-settings JSON. A copied credential file is not intended as a portable password export; expect to enter passwords again when moving to another Windows account or computer.
 
@@ -276,7 +276,7 @@ The executable can live in a folder of your choice, but profile data is stored p
 
 | Path | Purpose |
 | --- | --- |
-| `%LOCALAPPDATA%\AONexus\AONexus.json` | Accounts, character selections, squads, server settings, language and news choices. |
+| `%LOCALAPPDATA%\AONexus\AONexus.json` | Accounts, character selections, teams, server settings, language and news choices. |
 | `%LOCALAPPDATA%\AONexus\Credentials` | Windows-encrypted saved passwords. |
 | `%LOCALAPPDATA%\AONexus\News` | Cached news. |
 | `%LOCALAPPDATA%\AONexus\Runtime` | Verified extracted copies of the embedded login engine. |
@@ -301,7 +301,7 @@ Share the release ZIP with someone else, rather than your AppData profile. It co
 | A server limit blocks a selection. | Review **Max. accounts** and **Chars per account**, including existing open clients. **Character slots** is a different limit. |
 | **Create new char** is absent. | Compare the known character count with its inherited or overridden slot limit. Only adjust the value when appropriate for the account. |
 | A newly created character was not added. | Keep AO Nexus open until the character enters the world. If detection ended, import Prefs or enter the ID manually. |
-| A changed squad selection is not saved. | Check for **Modified**, then choose **Update** or save a new squad. |
+| A changed team selection is not saved. | Check for **Modified**, then choose **Update** or save a new team. |
 | News is old or unavailable. | Check the article's publication date, try **Refresh**, or open the source website. Cached articles may be older than the refresh time. |
 | Replacing the EXE fails. | Close AO Nexus first; Windows locks a running executable. Your game windows can stay open. |
 | A replacement client or unusual installation does not log in. | It may not support this backend's client hooks or login flow. A matching server address alone does not establish compatibility. |
