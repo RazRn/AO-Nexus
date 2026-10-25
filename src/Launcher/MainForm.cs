@@ -15,7 +15,7 @@ using static AOLauncher.Localization.Texts;
 
 namespace AOLauncher
 {
-    internal sealed class MainForm : Form
+    internal sealed partial class MainForm : Form
     {
         private readonly bool smoke;
         private LauncherSettings settings;
@@ -55,6 +55,13 @@ namespace AOLauncher
         private bool storageBlocked;
         private bool saveErrorShown;
         private string startupError;
+        private NotifyIcon trayIcon;
+        private ContextMenuStrip trayMenu;
+        private ToolStripMenuItem trayOpenItem;
+        private ToolStripMenuItem trayExitItem;
+        private FormWindowState restoreWindowState = FormWindowState.Normal;
+        private bool hiddenInTray;
+        private bool restoringFromTray;
 
         public MainForm(bool smokeMode)
         {
@@ -122,8 +129,10 @@ namespace AOLauncher
             BuildLayout();
             RefreshPresetPicker();
             RefreshTree();
+            InitializeTray();
             Shown += (sender, e) =>
             {
+                RegisterPresetHotkeys();
                 BeginInvoke((Action)HideCreationCheckboxes);
                 if (startupError != null) NexusMessageBox.Show(this, startupError, T("Could not open settings"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 if (smoke) AppendLog(T("UI preview uses sample data. It does not log in or change your settings."));
@@ -134,6 +143,93 @@ namespace AOLauncher
         }
 
         private NewsPanel newsPanel;
+
+        private void InitializeTray()
+        {
+            trayMenu = new ContextMenuStrip
+            {
+                BackColor = Theme.SurfaceRaised, ForeColor = Theme.Foreground, Font = Font,
+                ShowImageMargin = false, Padding = new Padding(4),
+                Renderer = new NewsPanel.SourceMenuRenderer()
+            };
+            trayOpenItem = new ToolStripMenuItem { Padding = new Padding(5) };
+            trayExitItem = new ToolStripMenuItem { Padding = new Padding(5) };
+            trayOpenItem.Click += (sender, e) => RestoreFromTray();
+            // Let the native menu finish dismissing before Close disposes it.
+            trayExitItem.Click += (sender, e) => BeginInvoke((Action)Close);
+            trayMenu.Items.AddRange(new ToolStripItem[] { trayOpenItem, new ToolStripSeparator(), trayExitItem });
+            RefreshTrayLanguage();
+            trayIcon = new NotifyIcon { Icon = Icon, Text = "AO Nexus", ContextMenuStrip = trayMenu };
+            trayIcon.MouseClick += (sender, e) => { if (e.Button == MouseButtons.Left) RestoreFromTray(); };
+        }
+
+        private void RefreshTrayLanguage()
+        {
+            if (trayOpenItem == null) return;
+            trayOpenItem.Text = T("Open AO Nexus");
+            trayExitItem.Text = T("Exit AO Nexus");
+        }
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            if (trayIcon == null || closing || IsDisposed || restoringFromTray) return;
+            if (WindowState == FormWindowState.Minimized)
+            {
+                if (hiddenInTray) return;
+                hiddenInTray = true;
+                trayIcon.Visible = true;
+                // Hiding removes the window from the taskbar and Alt+Tab without
+                // recreating its handle or interrupting background login callbacks.
+                Hide();
+            }
+            else if (!hiddenInTray) restoreWindowState = WindowState;
+        }
+
+        private void RestoreFromTray()
+        {
+            if (closing || IsDisposed || !hiddenInTray) return;
+            restoringFromTray = true;
+            try
+            {
+                Show();
+                WindowState = restoreWindowState;
+                Activate();
+                hiddenInTray = false;
+                trayIcon.Visible = false;
+            }
+            finally { restoringFromTray = false; }
+        }
+
+        internal void ShowLauncher()
+        {
+            if (closing || IsDisposed) return;
+            if (hiddenInTray) RestoreFromTray();
+            else
+            {
+                Show();
+                if (WindowState == FormWindowState.Minimized) WindowState = restoreWindowState;
+                Activate();
+            }
+            // Bring an open account/settings dialog forward with its owner.
+            foreach (var owned in OwnedForms.Where(form => form.Visible)) owned.Activate();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (trayIcon != null)
+                {
+                    trayIcon.Visible = false;
+                    trayIcon.Dispose();
+                    trayIcon = null;
+                }
+                trayMenu?.Dispose();
+                trayMenu = null;
+            }
+            base.Dispose(disposing);
+        }
 
         private void BuildLayout()
         {
@@ -177,7 +273,7 @@ namespace AOLauncher
             body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 358));
             layout.Controls.Add(body, 0, 1);
             var workspace = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 4, Margin = new Padding(0, 0, 18, 0) };
-            workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 86));
+            workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 145));
             workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
             workspace.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 102));
@@ -199,11 +295,12 @@ namespace AOLauncher
             }
             workspace.Controls.Add(toolbar, 0, 1);
 
-            var presets = new TableLayoutPanel { Dock = DockStyle.Fill, Margin = Padding.Empty, Padding = Padding.Empty, ColumnCount = 5, RowCount = 3 };
+            var presets = new TableLayoutPanel { Dock = DockStyle.Fill, Margin = Padding.Empty, Padding = Padding.Empty, ColumnCount = 5, RowCount = 4 };
             presets.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             for (int index = 0; index < 4; index++) presets.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             presets.RowStyles.Add(new RowStyle(SizeType.Absolute, 20));
             presets.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
+            presets.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));
             presets.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             var presetCaption = Caption(T("YOUR SQUADS"));
             presets.Controls.Add(presetCaption, 0, 0);
@@ -243,6 +340,9 @@ namespace AOLauncher
             presetStatus.Margin = new Padding(0, 1, 0, 0);
             presets.Controls.Add(presetStatus, 0, 2);
             presets.SetColumnSpan(presetStatus, 5);
+            var shortcuts = BuildPresetHotkeys();
+            presets.Controls.Add(shortcuts, 0, 3);
+            presets.SetColumnSpan(shortcuts, 5);
             workspace.Controls.Add(presets, 0, 0);
 
             var content = new TableLayoutPanel { Dock = DockStyle.Fill, Margin = Padding.Empty, ColumnCount = 2, RowCount = 1 };
@@ -621,6 +721,7 @@ namespace AOLauncher
 
         private void UpdatePresetStatus()
         {
+            RefreshHotkeyFields();
             var preset = CurrentPreset;
             updatePresetButton.Enabled = preset != null && !running;
             renamePresetButton.Enabled = preset != null && !running;
@@ -711,6 +812,7 @@ namespace AOLauncher
             {
                 change();
                 SaveSettings();
+                RegisterPresetHotkeys();
                 RefreshPresetPicker();
                 UpdateSelection();
             }
@@ -1146,6 +1248,16 @@ namespace AOLauncher
         {
             using (var dialog = new SettingsDialog(settings))
             {
+                try { dialog.StartWithWindows = !smoke && WindowsStartup.IsEnabled; }
+                catch (Exception ex) when (ex is System.Security.SecurityException || ex is UnauthorizedAccessException || ex is IOException)
+                { ShowInfo(T("Windows startup settings could not be read.") + "\r\n" + ex.Message); return; }
+                dialog.SaveStartupAction = enabled =>
+                {
+                    if (smoke) return null;
+                    try { WindowsStartup.SetEnabled(enabled, Application.ExecutablePath); return null; }
+                    catch (Exception ex) when (ex is System.Security.SecurityException || ex is UnauthorizedAccessException || ex is IOException)
+                    { return T("Windows startup settings could not be saved.") + "\r\n" + ex.Message; }
+                };
                 dialog.ForgetPasswordsAction = () => ForgetPasswords(null, EventArgs.Empty);
                 if (dialog.ShowDialog(this) != DialogResult.OK) return;
                 var previousTargets = settings.Accounts.ToDictionary(account => account.Id, AccountTargets.Endpoint);
@@ -1171,12 +1283,19 @@ namespace AOLauncher
             GuiStrings.Retranslate(this);
             NexusStrings.Retranslate(this);
             newsPanel?.RefreshLanguage();
+            RefreshTrayLanguage();
             RefreshPresetPicker();
             RefreshTree(tree.SelectedNode?.Tag);
             ResumeLayout(true);
         }
 
         private async void StartSelected(object sender, EventArgs e)
+        {
+            if (shortcutActionBusy) return;
+            await StartSelectedCore();
+        }
+
+        private async Task StartSelectedCore()
         {
             if (running || smoke) return;
             var accounts = settings.Accounts.Where(a => a.Characters.Any(c => c.Selected)).ToList();

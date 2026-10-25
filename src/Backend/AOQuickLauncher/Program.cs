@@ -35,6 +35,7 @@ namespace AOQuickLauncher
 
             public bool CreateCharacter { get; set; }
             internal string CharacterPipe { get; set; }
+            internal string CampToken { get; set; }
 
             [Option('q', "quiet", Required = false, HelpText = "Quiet Mode")]
             public bool Quiet { get; set; }
@@ -112,6 +113,9 @@ namespace AOQuickLauncher
             client.StartInfo.Environment["AOPass"] = options.Password;
             client.StartInfo.Environment["AOCharId"] = options.CharacterId.ToString();
             client.StartInfo.Environment["AOCreateCharacter"] = Convert.ToString(options.CreateCharacter);
+            client.StartInfo.Environment.Remove("AONexusCampToken");
+            if (!options.CreateCharacter && options.CampToken != null)
+                client.StartInfo.Environment["AONexusCampToken"] = options.CampToken;
             // This one-use pipe identifies only the client spawned for this creation.
             // Never inherit a reporter destination into a normal character login.
             if (options.CreateCharacter && !string.IsNullOrEmpty(options.CharacterPipe))

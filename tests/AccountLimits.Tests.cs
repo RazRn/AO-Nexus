@@ -18,6 +18,7 @@ namespace AOQuickLauncher
             public int CharacterId { get; set; }
             public bool CreateCharacter { get; set; }
             internal string CharacterPipe { get; set; }
+            internal string CampToken { get; set; }
         }
         internal static Process SpawnAOProcess(Options options, LaunchTarget target)
         {

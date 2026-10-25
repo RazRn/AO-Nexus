@@ -1,4 +1,4 @@
-AO NEXUS 1.0.11
+AO NEXUS 1.0.14
 Based on AOQuickLauncher by never-knows-best and contributors.
 Customized by Luckyspawn.
 
@@ -7,6 +7,35 @@ Double-click AONexus.exe. Keep this folder anywhere you prefer.
 The installed version appears at the lower-right corner of the app header.
 The login engine is compressed inside the EXE; no second app folder is needed.
 Windows 10/11 with .NET Framework 4.8 is required. The game is installed separately.
+
+MINIMIZE TO TRAY
+Minimize hides Nexus in the Windows system tray, removing it from the taskbar
+and Alt+Tab. Login queues and new-character detection continue in the background.
+Click the Nexus tray icon to restore it, or right-click for Open AO Nexus / Exit
+AO Nexus. Look under the tray's hidden-icons arrow if Windows hides the icon.
+The window's X still closes Nexus. Exiting leaves your game windows open.
+Only one Nexus instance runs per Windows user session. Opening Nexus again
+restores the existing window, even when it is in the tray.
+
+START WITH WINDOWS
+In Settings, check Start with Windows and Save to start Nexus in the tray when
+you sign in to Windows. This is off by default and never logs game accounts in.
+Uncheck it and Save to remove automatic startup. No administrator rights needed.
+After moving the EXE, open it from the new location and Save Settings again to
+update the startup path. Windows Task Manager can also disable startup apps.
+
+PRESET SHORTCUTS
+Select a saved preset. Click Start shortcut or Logout shortcut and press your
+combination (for example Ctrl+Alt+F6 and Ctrl+Alt+F7). It is saved automatically.
+Click a field and press Delete/Backspace to clear it, or Esc to cancel recording.
+Shortcuts are unassigned by default and work while Nexus runs, including in the
+tray. Duplicate or unavailable combinations are reported. F12 and Windows-key
+combinations are reserved. Start shows the usual launch confirmation.
+Logout asks before sending normal /camp to the matched preset clients. Combat,
+movement or cancellation may prevent logout. Nexus never forces a game closed.
+Older running clients need a normal restart through v1.0.14 or later to enable
+camp control. Newly created chars also need one normal launch after being saved.
+AOSharp is not required. Closing Nexus itself leaves all game clients open.
 
 FIRST START
 If AO Launcher is already set up on this Windows profile, AO Nexus copies its

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -845,11 +845,14 @@ namespace AOLauncher
     internal sealed class SettingsDialog : EditorDialog
     {
         private readonly ComboBox languageInput;
+        private readonly CheckBox startWithWindowsInput;
+        public Func<bool, string> SaveStartupAction { private get; set; }
+        public bool StartWithWindows { get => startWithWindowsInput.Checked; set => startWithWindowsInput.Checked = value; }
         public Func<bool> ForgetPasswordsAction { private get; set; }
         public string Language => languageInput.SelectedIndex == 1 ? "da" : languageInput.SelectedIndex == 2 ? "en" : "auto";
         public List<LoginServerProfile> LoginServers { get; private set; }
 
-        public SettingsDialog(LauncherSettings settings) : base(T("Settings"), 500)
+        public SettingsDialog(LauncherSettings settings) : base(T("Settings"), 650)
         {
             // Keep notes within the viewport as text scales. An implicit AutoSize
             // column can grow to its text width and repeatedly toggle both bars.
@@ -861,6 +864,13 @@ namespace AOLauncher
             languageInput.SelectedIndex = settings.Language == "da" ? 1 : settings.Language == "en" ? 2 : 0;
             languagePanel.Controls.Add(languageInput);
             Fields.Controls.Add(languagePanel);
+            startWithWindowsInput = new NexusCheckBox
+            {
+                Name = "startWithWindows", Text = T("Start with Windows"),
+                AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 4, 0, 4)
+            };
+            Fields.Controls.Add(startWithWindowsInput);
+            AddWrappedNote(T("Start in the system tray when you sign in to Windows. No game accounts are logged in automatically. Turn this off here to remove automatic startup."), "windowsStartupGuide");
             AddNote(T("Set the game folder and login server under each account: Edit → Game and server."), 65);
             var serversButton = Theme.Button(T("Manage login servers…"));
             serversButton.Click += (sender, e) =>
@@ -888,6 +898,8 @@ namespace AOLauncher
             Fields.ClientSizeChanged += (sender, e) => passwordStatus.MaximumSize = new Size(Math.Max(100, Fields.ClientSize.Width - 20), 0);
             SaveButton.Click += (sender, e) =>
             {
+                string startupError = SaveStartupAction?.Invoke(StartWithWindows);
+                if (!string.IsNullOrEmpty(startupError)) { ErrorLabel.Text = startupError; return; }
                 DialogResult = DialogResult.OK;
             };
         }
@@ -900,7 +912,7 @@ namespace AOLauncher
 
         public LoginServersDialog(IEnumerable<LoginServerProfile> profiles) : base(T("Login servers"), 560)
         {
-            ClientSize = new Size(1000, 560);
+            ClientSize = new Size(1100, 600);
             Fields.AutoScroll = false;
             Fields.RowCount = 4;
             Fields.RowStyles.Add(new RowStyle(SizeType.AutoSize));

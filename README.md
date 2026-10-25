@@ -2,7 +2,7 @@
 
 **A launcher for your accounts, characters and squads across Anarchy Online servers.**
 
-AO Nexus **v1.0.11** brings separate game installations, login servers, saved character selections and server news into one Windows app. It includes presets for Funcom AO, Project Rubi-Ka and AO Rebirth, and lets you add your own server entries.
+AO Nexus **v1.0.14** brings separate game installations, login servers, saved character selections and server news into one Windows app. It includes presets for Funcom AO, Project Rubi-Ka and AO Rebirth, and lets you add your own server entries.
 
 Based on [AOQuickLauncher](https://gitlab.com/never-knows-best/aoquicklauncher) by **never-knows-best and contributors**. Customized by **Luckyspawn**.
 
@@ -10,7 +10,7 @@ Based on [AOQuickLauncher](https://gitlab.com/never-knows-best/aoquicklauncher) 
 
 ![AO Nexus dashboard with a saved squad, accounts grouped by server, account details and server news](docs/images/launcher-overview.png)
 
-Screenshots show the actual v1.0.11 interface with example accounts and offline news fixtures. They contain no personal accounts or passwords.
+Screenshots use example accounts and offline news fixtures, with no personal accounts or passwords. The main guide images show v1.0.11; the shortcut example shows v1.0.14.
 
 ## What it does
 
@@ -18,12 +18,15 @@ Screenshots show the actual v1.0.11 interface with example accounts and offline 
 - Saves squads containing characters from any combination of accounts and servers.
 - Gives each account its own game folder, server connection and password preference.
 - Imports character IDs from existing Prefs folders, or accepts IDs entered manually.
-- Starts independent account queues in parallel, while logging in characters on the same account one at a time.
+- Starts independent account queues in parallel, with characters on the same account logging in one at a time.
 - Checks configurable account, simultaneous-character and character-slot limits before launching.
 - Opens character creation and can add a newly created character automatically when it enters the game.
 - Saves passwords only when requested, encrypts saved passwords for the Windows user, and lets you update each account separately.
 - Shows news from official server websites with a saved choice of sources.
 - Supports English and Danish, with an automatic Windows-language default.
+- Minimizes to the Windows system tray, keeping the launcher out of the taskbar and Alt+Tab while logins continue.
+- Optionally starts in the tray with Windows and restores the existing window when launched again.
+- Saves separate global start and logout shortcuts for each squad. Logout requests normal `/camp`, without forcing clients closed.
 
 AO Nexus launches supported Windows AO clients. It does not install or patch the game, provide AOSharp plugins, or automatically support a replacement client with a different login protocol.
 
@@ -34,6 +37,7 @@ AO Nexus launches supported Windows AO clients. It does not install or patch the
 - [Game folders, servers and limits](#game-folders-servers-and-limits)
 - [Choose characters and save squads](#choose-characters-and-save-squads)
 - [Start and stop logins](#start-and-stop-logins)
+- [Preset shortcuts and logout](#preset-shortcuts-and-logout)
 - [Create a new character](#create-a-new-character)
 - [Passwords](#passwords)
 - [News and language](#news-and-language)
@@ -55,6 +59,12 @@ You need Windows 10 or 11, **.NET Framework 4.8**, and a separate game installat
 6. Check the characters you want, choose **Log in selected**, review the confirmation, and enter any requested passwords.
 
 The executable contains the compressed login engine. You do not need a sibling AOQuickLauncher folder. On first use, the engine is extracted and verified in the local runtime cache.
+
+Use the window's **Minimize** button to keep Nexus running in the system tray, out of the taskbar and Alt+Tab. Click its tray icon to restore the window, or right-click it for **Open AO Nexus** and **Exit AO Nexus**. Windows may put the icon under the tray's hidden-icons arrow. Minimizing keeps login queues and new-character detection running. The window's **X** and **Exit AO Nexus** close the launcher; your game windows stay open.
+
+Only one Nexus instance runs per Windows user session, even when opened from different folders. Starting it again opens the existing window, including when it is hidden in the tray.
+
+Under **Settings**, enable **Start with Windows** and choose **Save** to start Nexus in the tray when you sign in. This is off by default and never logs game accounts in automatically. Uncheck it and save to remove automatic startup. It uses a single entry under your Windows user's `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` key, without requiring administrator rights. If you move the launcher, open it from its new location and save Settings again to update the startup path. Windows Task Manager can also disable startup apps.
 
 If the earlier AO Launcher is configured on the same Windows profile, AO Nexus imports its accounts, presets, server catalog and eligible encrypted passwords on first start. It copies that profile without changing the original. Subsequent settings are independent.
 
@@ -180,6 +190,26 @@ A squad stores character references, not a second copy of the account settings. 
 Serial login does not mean the first character closes when the next starts. Successfully opened game windows remain open, subject to server limits. Creating duplicate account entries or using separate game folders does not make the same login run in parallel.
 
 **Stop login** stops further launcher activity for that login action. Game windows already started remain open. You can also close AO Nexus after login; it does not close your game windows.
+
+## Preset shortcuts and logout
+
+![Separate start and logout shortcut fields for the selected squad](docs/images/preset-shortcuts.png)
+
+1. Select a saved squad under **YOUR SQUADS**. Each preset has its own **Start shortcut** and **Logout shortcut**.
+2. Click a field, then press your combination, for example **Ctrl + Alt + F6** to start and **Ctrl + Alt + F7** to log out. Use Ctrl or Alt with a letter, number or function key. F12 and Windows-key combinations are reserved.
+3. The shortcut is saved immediately. Click the field and press **Delete** or **Backspace** to clear it; **Esc** cancels recording. The preset's **Update** button still saves changes to its character selection.
+
+The shortcuts work while Nexus is running, including when it is hidden in the system tray. They are unassigned by default. Duplicate bindings and unavailable Windows registrations are reported; choose another combination if a different app already owns it. Shortcuts are ignored while Nexus is busy or has a dialog open.
+
+**Start** applies the saved squad and opens the usual launch confirmation. Account limits, game-folder checks and password preferences still apply. Characters already recognized as running are skipped.
+
+**Logout** lists the safely matched running characters and asks before sending `/camp`. A shared character in two presets can appear in either preset's logout list; always review the names. Matching includes the account, server, character ID, game installation, process ID, process start time and game-window title. It is checked again after confirmation.
+
+The game handles its normal logout countdown. Combat, zoning, movement or cancellation may prevent logout; Nexus never kills the game, uses instant quit, or repeatedly retries. An acknowledgement means the client accepted the camp request, not that the server has completed logout.
+
+**Existing game windows need one normal restart through v1.0.14 or later** to enable camp control. The same applies to a client opened through **Create new char**: save/import the character and start it normally once. Unsupported or untracked clients are skipped with an explanation. AOSharp is not required. Closing Nexus itself still leaves all game windows open.
+
+For implementation details and test coverage, see [Camp control](docs/Camp-Control.md). See [What's new in v1.0.14](docs/Whats-New-1.0.14.md) for the English feature list.
 
 ## Create a new character
 

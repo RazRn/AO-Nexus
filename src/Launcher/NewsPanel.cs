@@ -419,7 +419,7 @@ namespace AOLauncher
 
         // ContextMenuStrip otherwise mixes the dark window colors with the Windows
         // image gutter and selection gradient. Paint the popup using one palette.
-        private sealed class SourceMenuRenderer : ToolStripProfessionalRenderer
+        internal sealed class SourceMenuRenderer : ToolStripProfessionalRenderer
         {
             public SourceMenuRenderer() : base(new SourceMenuColors()) { RoundedEdges = false; }
 

@@ -13,15 +13,30 @@ namespace AOLauncher
             Application.SetCompatibleTextRenderingDefault(false);
             bool preview = args.Any(arg => arg == "--preview-ui");
             bool smoke = preview || args.Any(arg => arg == "--smoke" || arg == "--check-ui");
-            using (var form = new MainForm(smoke))
+            bool startup = args.Any(arg => arg == "--startup");
+            // Synthetic previews must never activate or interfere with a real session.
+            using (var instance = smoke ? null : new DesktopInstance(DesktopInstance.InstanceName))
             {
-                if (smoke)
+                if (instance != null && !instance.IsOwner)
                 {
-                    var timer = new Timer { Interval = preview ? 180000 : 15000 };
-                    timer.Tick += (sender, e) => { timer.Stop(); timer.Dispose(); form.Close(); };
-                    form.Shown += (sender, e) => timer.Start();
+                    if (!startup) instance.RequestShow();
+                    return;
                 }
-                Application.Run(form);
+                using (var form = new MainForm(smoke))
+                {
+                    form.Shown += (sender, e) =>
+                    {
+                        if (startup) form.WindowState = FormWindowState.Minimized;
+                        instance?.Listen(form, form.ShowLauncher);
+                    };
+                    if (smoke)
+                    {
+                        var timer = new Timer { Interval = preview ? 180000 : 15000 };
+                        timer.Tick += (sender, e) => { timer.Stop(); timer.Dispose(); form.Close(); };
+                        form.Shown += (sender, e) => timer.Start();
+                    }
+                    Application.Run(form);
+                }
             }
         }
     }

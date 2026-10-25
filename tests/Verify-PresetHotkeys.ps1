@@ -1,0 +1,116 @@
+﻿param([string]$AssemblyPath = (Join-Path $PSScriptRoot '..\dist\AONexus.exe'))
+$ErrorActionPreference = 'Stop'
+if ([IntPtr]::Size -ne 4 -or $PSVersionTable.PSEdition -eq 'Core') { throw 'Use 32-bit Windows PowerShell -STA.' }
+Add-Type -AssemblyName System.Windows.Forms, System.Drawing, System.Web.Extensions
+Add-Type @'
+using System;
+using System.Runtime.InteropServices;
+public static class HotkeyNativeFixture {
+    [DllImport("user32.dll", SetLastError=true)] public static extern bool RegisterHotKey(IntPtr window, int id, uint modifiers, uint key);
+    [DllImport("user32.dll")] public static extern bool UnregisterHotKey(IntPtr window, int id);
+}
+'@
+[Windows.Forms.Application]::EnableVisualStyles()
+$a = [Reflection.Assembly]::LoadFrom((Resolve-Path -LiteralPath $AssemblyPath).Path)
+$private = [Reflection.BindingFlags]'NonPublic,Instance'
+$statics = [Reflection.BindingFlags]'NonPublic,Static'
+$checks = 0
+function Assert($v, $m) { if (!$v) { throw $m }; $script:checks++ }
+function NewObject($name) { [Activator]::CreateInstance($a.GetType('AOLauncher.' + $name), $true) }
+function Binding($key, $mod) { $b = NewObject 'HotkeyBinding'; $b.Key = $key; $b.Modifiers = $mod; return $b }
+function Valid($b) { $b.GetType().GetProperty('IsValid', $private).GetValue($b) }
+function Field($name) { $form.GetType().GetField($name, $private).GetValue($form) }
+function Call($name, $argsList = @()) { $form.GetType().GetMethod($name, $private).Invoke($form, $argsList) }
+Assert (Valid (Binding 65 3)) 'Ctrl Alt A should be valid'
+Assert (!(Valid (Binding 65 0))) 'Bare letter must be rejected'
+Assert (!(Valid (Binding 65 4))) 'Shift letter must be rejected'
+Assert (!(Valid (Binding 123 2))) 'F12 is reserved'
+Assert (!(Valid (Binding 115 1))) 'Alt F4 must be rejected'
+Assert (!(Valid (Binding 65 8))) 'Windows modifier must be rejected'
+Assert ((Binding 117 7).ToString() -eq 'Ctrl + Alt + Shift + F6') 'Stable readable shortcut'
+$form = [Activator]::CreateInstance($a.GetType('AOLauncher.MainForm'), [object[]]@($true))
+try {
+    $form.Show(); [Windows.Forms.Application]::DoEvents()
+    $settings = Field 'settings'; $preset = $settings.Presets[0]
+    Assert ($null -eq $preset.StartHotkey -and $null -eq $preset.CampHotkey) 'Old presets must start unbound'
+    $start = Binding 117 3; $camp = Binding 118 3
+    Assert ($null -eq (Call 'SaveHotkey' @($false, $start))) 'Start binding should save'
+    Assert ($null -ne (Call 'SaveHotkey' @($true, $start))) 'Start and camp cannot share a shortcut'
+    Assert ($null -eq (Call 'SaveHotkey' @($true, $camp))) 'Distinct logout shortcut should save'
+    $other = NewObject 'LaunchPreset'; $other.Name = 'Second preset'; $settings.Presets.Add($other)
+    $settings.SelectedPresetId = $other.Id
+    Assert ($null -ne (Call 'SaveHotkey' @($false, $camp))) 'Cross-preset shortcut conflict'
+    $settings.SelectedPresetId = $preset.Id
+    $serializer = New-Object Web.Script.Serialization.JavaScriptSerializer
+    $json = $serializer.Serialize($settings)
+    $copy = $serializer.Deserialize($json, $settings.GetType())
+    Assert ($copy.Presets[0].StartHotkey.Key -eq 117 -and $copy.Presets[0].CampHotkey.Key -eq 118) 'Both shortcuts survive JSON round trip'
+    $service = $a.GetType('AOLauncher.PresetService')
+    $service.GetMethod('Update', $statics).Invoke($null, @($settings, $preset))
+    Assert ($preset.StartHotkey.Key -eq 117 -and $preset.CampHotkey.Key -eq 118) 'Updating members must retain shortcuts'
+    Call 'RefreshPresetPicker'
+    $field = Field 'startHotkeyField'
+    $field.PerformClick()
+    Assert ($field.GetType().GetProperty('Capturing', $private).GetValue($field)) 'Click must enter capture'
+    $message = [Windows.Forms.Message]::Create($field.Handle, 0x100, [IntPtr]0, [IntPtr]0)
+    $method = $field.GetType().GetMethod('ProcessCmdKey', $private)
+    $method.Invoke($field, @($message, [Windows.Forms.Keys]::Escape)) | Out-Null
+    Assert ($preset.StartHotkey.Key -eq 117) 'Escape must preserve shortcut'
+    $field.PerformClick()
+    $method.Invoke($field, @($message, ([Windows.Forms.Keys]::Control -bor [Windows.Forms.Keys]::Alt -bor [Windows.Forms.Keys]::F9))) | Out-Null
+    Assert ($preset.StartHotkey.Key -eq 120) 'Capture must save actual combination'
+    $field.PerformClick()
+    $method.Invoke($field, @($message, [Windows.Forms.Keys]::Delete)) | Out-Null
+    Assert ($null -eq $preset.StartHotkey -and $preset.CampHotkey.Key -eq 118) 'Delete clears only the chosen shortcut'
+    # Only registration is enabled on this synthetic form. Never invoke a launch action or save a real profile.
+    $preset.StartHotkey = Binding 133 7; $preset.CampHotkey = Binding 134 7
+    $form.GetType().GetField('smoke', $private).SetValue($form, $false)
+    try {
+        Call 'RegisterPresetHotkeys'
+        Assert ((Field 'registeredHotkeys').Count -eq 2) 'Register both shortcuts with Windows'
+        $form.WindowState = [Windows.Forms.FormWindowState]::Minimized; [Windows.Forms.Application]::DoEvents()
+        Assert (!( [HotkeyNativeFixture]::RegisterHotKey([IntPtr]::Zero, 808, 7, 133))) 'Shortcut stays registered while hidden in tray'
+        Call 'ShowLauncher'
+        $other.StartHotkey = Binding 133 7
+        Call 'RegisterPresetHotkeys'
+        Assert ((Field 'hotkeyFailures').ContainsKey($other.Id)) 'Windows registration conflicts are reported'
+        $other.StartHotkey = $null
+    } finally {
+        Call 'UnregisterPresetHotkeys'
+        $form.GetType().GetField('smoke', $private).SetValue($form, $true)
+    }
+    Assert ([HotkeyNativeFixture]::RegisterHotKey([IntPtr]::Zero, 808, 7, 133)) 'Unregister releases the combination'
+    [void][HotkeyNativeFixture]::UnregisterHotKey([IntPtr]::Zero, 808)
+    $preset.StartHotkey = Binding 117 3; $preset.CampHotkey = Binding 118 3
+    foreach ($language in @('en', 'da')) {
+        $settings.Language = $language; Call 'ApplyLanguage'; [Windows.Forms.Application]::DoEvents()
+        $field = Field 'campHotkeyField'
+        Assert ($field.Visible -and $field.Width -gt 80 -and $field.Height -ge 25) 'Fields must be usable in both languages'
+        if ($language -eq 'en') {
+            $out = Join-Path $PSScriptRoot '../logs/preset-shortcuts-preview.png'
+            $bitmap = [Drawing.Bitmap]::new($form.Width, $form.Height)
+            try { $form.DrawToBitmap($bitmap, [Drawing.Rectangle]::new(0,0,$form.Width,$form.Height)); $bitmap.Save($out, [Drawing.Imaging.ImageFormat]::Png) }
+            finally { $bitmap.Dispose() }
+            $panel = (Field 'startHotkeyField').Parent.Parent
+            $bitmap = [Drawing.Bitmap]::new($panel.Width, $panel.Height)
+            try { $panel.DrawToBitmap($bitmap, [Drawing.Rectangle]::new(0,0,$panel.Width,$panel.Height)); $bitmap.Save((Join-Path $PSScriptRoot '../logs/preset-shortcuts.png'), [Drawing.Imaging.ImageFormat]::Png) }
+            finally { $bitmap.Dispose() }
+        }
+    }
+    $camping = $a.GetType('AOLauncher.PresetCamping')
+    $client = NewObject 'PresetCamping+Client'; $account = $settings.Accounts[0]
+    $client.AccountIdentity = 'id:' + $account.Id; $client.Username = $account.Username
+    $client.CharacterId = $account.Characters[0].CharacterId; $client.CharacterName = 'Fixture'
+    $client.GamePath = $account.GamePath; $client.Server = $account.Server; $client.Port = $account.Port
+    $typed = [Array]::CreateInstance($client.GetType(), 1); $typed[0] = $client
+    function Matches { @($camping.GetMethod('Match', $statics).Invoke($null, @($settings, $preset, $typed))) }
+    Assert ((Matches).Count -eq 1) 'Exact preset identity matches'
+    $client.Port++; Assert ((Matches).Count -eq 0) 'Wrong server port rejected'; $client.Port--
+    $client.AccountIdentity = 'id:wrong'; Assert ((Matches).Count -eq 0) 'Wrong account rejected'; $client.AccountIdentity = 'id:' + $account.Id
+    $client.Pending = $true; Assert ((Matches).Count -eq 0) 'Pending client rejected'; $client.Pending = $false
+    $client.CreateCharacter = $true; Assert ((Matches).Count -eq 0) 'Creation client rejected'; $client.CreateCharacter = $false
+    $client.GamePath = 'C:\wrong'; Assert ((Matches).Count -eq 0) 'Wrong game folder rejected'
+    Assert (!$camping.GetMethod('IsSameProcess', $statics).Invoke($null, @($client))) 'Missing process must fail closed'
+    Assert (!$camping.GetMethod('ValidToken', $statics).Invoke($null, @('untrusted/name'))) 'Invalid event token rejected'
+} finally { $form.Dispose() }
+Write-Host "PASS: $checks preset hotkey, localization, persistence and logout identity checks. No real games touched."

@@ -326,7 +326,8 @@ namespace AOQuickLauncher
                 }
                 Console.WriteLine(Texts.F("Starting {0} (ID {1})...", entry.CharacterName, entry.CharacterId));
                 using (var client = Program.SpawnAOProcess(new Program.Options {
-                    Username = entry.Account, Password = entry.Password, CharacterId = entry.CharacterId
+                    Username = entry.Account, Password = entry.Password, CharacterId = entry.CharacterId,
+                    CampToken = Guid.NewGuid().ToString("N")
                 }, target))
                 {
                     bool trackingRequired = request.Characters.Any(selected =>

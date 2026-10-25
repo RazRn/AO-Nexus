@@ -132,7 +132,8 @@ namespace AOQuickLauncher
                     GamePath = normalizedPath,
                     ProcessId = client.Id,
                     StartTimeUtcTicks = client.StartTime.ToUniversalTime().Ticks,
-                    CharacterName = observedName
+                    CharacterName = observedName,
+                    CampToken = client.StartInfo.Environment.TryGetValue("AONexusCampToken", out var token) ? token : null
                 };
 
                 lock (Sync)
@@ -327,6 +328,7 @@ namespace AOQuickLauncher
 
         internal sealed class ClientRecord
         {
+            public string CampToken { get; set; }
             public ClientRecord() { }
             public string AccountIdentity { get; set; }
             public string Username { get; set; }

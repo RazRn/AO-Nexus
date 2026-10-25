@@ -315,6 +315,8 @@ void ReportCreatedCharacter()
     }
 }
 
+#include "CampControl.h"
+
 void ThreadMain(HMODULE hModule)
 {
     LoadAddresses();
@@ -344,6 +346,12 @@ void ThreadMain(HMODULE hModule)
         catch (...) { }
     }
 
+    // Keep the module alive only when the UI-thread camp timer references its code.
+    // Windows tears down the timer and event handles when the game process exits.
+    bool campInstalled = false;
+    try { campInstalled = InstallCampControl(); }
+    catch (...) { }
+    if (campInstalled) ExitThread(0);
     FreeLibraryAndExitThread(hModule, NULL);
 }
 

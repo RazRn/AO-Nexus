@@ -78,22 +78,8 @@ function Native-ItemClick($Menu, $Item) {
     [NewsTestNative]::ClickAt($Menu.Handle,$bounds.X + [int]($bounds.Width / 2),$bounds.Y + [int]($bounds.Height / 2))
 }
 function Check-WebsiteItemDismissal($Panel, $OwnerForm) {
-    # Prove that these native item messages catch the former lifecycle bug. This
-    # disposable menu has no destination and recreates only the old Closed handler.
-    $legacy = [Windows.Forms.ContextMenuStrip]::new()
-    $legacy.Name = 'syntheticLegacyPopup'
-    $item = [Windows.Forms.ToolStripMenuItem]::new('Inert regression fixture')
-    $legacy.Items.Add($item) | Out-Null
-    $legacy.add_Closed([Windows.Forms.ToolStripDropDownClosedEventHandler]{ param($sender,$args) $sender.Dispose() })
-    $legacyFailure = $null
-    try {
-        $legacy.Show($OwnerForm,[Drawing.Point]::new(0,0))
-        try { Native-ItemClick $legacy $item; [Windows.Forms.Application]::DoEvents() }
-        catch { $legacyFailure = $_.Exception.GetBaseException() }
-        Assert-Check ($legacyFailure -is [ObjectDisposedException] -and $legacyFailure.StackTrace -like '*OnItemClicked*') 'Native item-click dismissal reproduces the old synchronous-disposal exception.'
-        'PASS: isolated legacy popup reproduced ObjectDisposedException through OnItemClicked; the actual app popup must not throw.'
-    } finally { $legacy.Dispose() }
-
+    # Exercise the production popup directly. Deliberately throwing from a legacy
+    # native callback can terminate Windows PowerShell before its catch block runs.
     $newsType = $assembly.GetType('AOLauncher.ServerNews',$true)
     $sources = $newsType.GetField('Sources',$staticFlags).GetValue($null)
     $safeUrl = $newsType.GetMethod('SafeUrl',$staticFlags)

@@ -1,4 +1,4 @@
-﻿using AOLauncher.Localization;
+using AOLauncher.Localization;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -50,8 +50,24 @@ namespace AOLauncher
         }
     }
 
+    internal sealed class HotkeyBinding
+    {
+        // Stable Win32 virtual-key and modifier codes, independent of display language.
+        public uint Modifiers { get; set; }
+        public int Key { get; set; }
+        internal bool IsValid => (Modifiers & ~7u) == 0 && (Modifiers & 3) != 0
+            && ((Key >= 65 && Key <= 90) || (Key >= 48 && Key <= 57) || (Key >= 112 && Key <= 135 && Key != 123))
+            && !(Key == 115 && Modifiers == 1);
+        internal bool SameAs(HotkeyBinding other) => other != null && Key == other.Key && Modifiers == other.Modifiers;
+        public override string ToString() => ((Modifiers & 2) != 0 ? "Ctrl + " : "")
+            + ((Modifiers & 1) != 0 ? "Alt + " : "") + ((Modifiers & 4) != 0 ? "Shift + " : "")
+            + (Key >= 112 && Key <= 135 ? "F" + (Key - 111).ToString() : Key >= 48 && Key <= 90 ? ((char)Key).ToString() : "?");
+    }
+
     internal sealed class LaunchPreset
     {
+        public HotkeyBinding StartHotkey { get; set; }
+        public HotkeyBinding CampHotkey { get; set; }
         public string Id { get; set; } = Guid.NewGuid().ToString("D");
         public string Name { get; set; }
         public List<PresetCharacter> Characters { get; set; } = new List<PresetCharacter>();
