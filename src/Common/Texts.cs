@@ -111,7 +111,6 @@ namespace AOLauncher.Localization
             { "Select at least one character.", "Vælg mindst én char." },
             { "Select no more than 100 characters at a time.", "Vælg højst 100 chars ad gangen." },
             { "The timeout must be between 10 and 600 seconds.", "Ventetiden skal være mellem 10 og 600 sekunder." },
-            { "ID {0} was not detected in game. Check the game window, account details and character ID. Characters started after it continue; existing game windows stay open.", "ID {0} blev ikke fundet i spillet. Kontrollér spilvinduet, kontooplysninger og char-ID. Chars startet efter den fortsætter; åbne spilvinduer forbliver åbne." },
             { "The start spacing must be between 0 and 10000 milliseconds.", "Afstanden mellem opstarter skal være mellem 0 og 10000 millisekunder." },
             { "Enter a username and password for every selected account.", "Indtast kontonavn og adgangskode til alle valgte konti." },
             { "Each character must have a unique, positive character ID.", "Hver char skal have et unikt, positivt char-ID." },

@@ -23,8 +23,6 @@ namespace AOLauncher
         // The login handler skips drawing the login and character screens (measured ~1.5 s faster per character).
         // Missing in older profiles: they get the faster default as well.
         public bool QuietLaunch { get; set; } = true;
-        // Start the next character on an account once the previous one is handed over to the world.
-        public bool FastSameAccountLogins { get; set; } = true;
         public string GamePath { get; set; } = string.Empty;
         public string Server { get; set; } = "2.24.96.30";
         public int Port { get; set; } = 7500;
@@ -136,7 +134,6 @@ namespace AOLauncher
         public int Port { get; set; }
         public int ReadyTimeoutSeconds { get; set; } = 120;
         public bool QuietLaunch { get; set; }
-        public bool StartAfterHandoff { get; set; }
         public List<LaunchCharacter> Characters { get; set; } = new List<LaunchCharacter>();
     }
 

@@ -71,10 +71,8 @@ namespace AOQuickLauncher
         public int StartSpacingMs { get; set; } = 1500;
         // Experimental: LoginHandler skips drawing the login and character screens.
         public bool QuietLaunch { get; set; }
-        // The next character on the same account starts once the previous one has been handed over to the
-        // world (zone and chat connections), not when it is fully loaded. Starting earlier, right after the
-        // character is selected, disconnected the loading character ("stale_login") in testing.
-        public bool StartAfterHandoff { get; set; }
+        // Characters on one account still start one at a time: tested on Funcom Rubi-Ka, a second
+        // login on the same account disconnects a character that is still loading into the world.
     }
 
     internal static class LaunchQueue
@@ -316,9 +314,7 @@ namespace AOQuickLauncher
             if (!request.Characters.Any(entry => entry.CreateCharacter))
                 Console.WriteLine(Texts.T("Accounts start in parallel; characters on the same account log in one at a time."));
             var queueSizes = request.Characters.GroupBy(AccountQueueKey, StringComparer.OrdinalIgnoreCase).Select(group => group.Count()).ToArray();
-            Diagnostic("queues", null, new { ParallelQueues = queueSizes.Length, CharactersPerQueue = queueSizes, request.ReadyTimeoutSeconds, request.StartSpacingMs, request.QuietLaunch, request.StartAfterHandoff });
-            // Confirmations that continue after the next character on the account has started.
-            var confirmations = new System.Collections.Concurrent.ConcurrentBag<Task<bool>>();
+            Diagnostic("queues", null, new { ParallelQueues = queueSizes.Length, CharactersPerQueue = queueSizes, request.ReadyTimeoutSeconds, request.StartSpacingMs, request.QuietLaunch });
             int result = await RunAccountQueuesAsync(request.Characters, async entry =>
             {
                 var target = entry.ResolvedTarget;
@@ -373,37 +369,11 @@ namespace AOQuickLauncher
                     Console.WriteLine(Texts.F("Waiting for the game window for ID {0}...", entry.CharacterId));
                 }
                 catch { client.Dispose(); status?.Dispose(); throw; }
-                int processId = client.Id;
-                var released = new System.Runtime.CompilerServices.StrongBox<bool>();
-                confirmation = ConfirmCharacterAsync(entry, target, client, status, request.ReadyTimeoutSeconds, released);
-                if (request.StartAfterHandoff)
-                {
-                    var connections = new List<string>();
-                    string ports = await ZoneHandoff.WaitAsync(processId, target.Server + ":" + target.Port, confirmation,
-                        request.ReadyTimeoutSeconds * 1000, spawnTimer, connections).ConfigureAwait(false);
-                    lock (connections)
-                        Diagnostic("connections", entry, new { Handoff = ports != null, Timeline = string.Join(", ", connections) });
-                    if (ports != null && !confirmation.IsCompleted)
-                    {
-                        long handoffMs = spawnTimer.ElapsedMilliseconds;
-                        // A short margin after the chat connection; the claim itself happened before it.
-                        await Task.WhenAny(confirmation, Task.Delay(500)).ConfigureAwait(false);
-                        if (!confirmation.IsCompleted)
-                        {
-                            Diagnostic("handoff", entry, new { HandoffMs = handoffMs, Ports = ports, NextStartsAfterMs = spawnTimer.ElapsedMilliseconds });
-                            released.Value = true;
-                            confirmations.Add(confirmation);
-                            return true;
-                        }
-                    }
-                }
+                confirmation = ConfirmCharacterAsync(entry, target, client, status, request.ReadyTimeoutSeconds);
                 bool confirmed = await confirmation.ConfigureAwait(false);
                 if (confirmed) await Task.Delay(250).ConfigureAwait(false);
                 return confirmed;
             });
-            // Characters released early still have to reach the world before the run reports success.
-            bool[] background = await Task.WhenAll(confirmations).ConfigureAwait(false);
-            if (background.Any(ok => !ok)) result = 2;
             Console.WriteLine(Texts.T(result == 0 ? "All login queues finished. Game clients remain open." :
                 "Login queues finished with an error on at least one account. Game clients remain open."));
             return result;
@@ -411,7 +381,7 @@ namespace AOQuickLauncher
 
         /// <summary>Waits for the character to appear in the world, then records and reports it. Owns the client and status channel.</summary>
         private static async Task<bool> ConfirmCharacterAsync(CharacterLaunch entry, LaunchTarget target, Process client,
-            LoginStatusChannel status, int timeoutSeconds, System.Runtime.CompilerServices.StrongBox<bool> released)
+            LoginStatusChannel status, int timeoutSeconds)
         {
             try
             {
@@ -421,10 +391,7 @@ namespace AOQuickLauncher
                     wait.WindowState, wait.TitleChanges, Stages = status?.Summary() ?? "unavailable", Dialogs = wait.Dialogs, RunningClients = SafeRunningClients() });
                 if (actualName == null)
                 {
-                    // A character released early may already have later characters running behind it.
-                    Console.Error.WriteLine(released.Value
-                        ? Texts.F("ID {0} was not detected in game. Check the game window, account details and character ID. Characters started after it continue; existing game windows stay open.", entry.CharacterId)
-                        : Texts.F("This account's queue stopped: ID {0} was not detected in game. Check the game window, account details and character ID. Other accounts continue; existing game windows stay open.", entry.CharacterId));
+                    Console.Error.WriteLine(Texts.F("This account's queue stopped: ID {0} was not detected in game. Check the game window, account details and character ID. Other accounts continue; existing game windows stay open.", entry.CharacterId));
                     return false;
                 }
                 ClientSessions.Record(entry, target, client, actualName);
