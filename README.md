@@ -2,7 +2,7 @@
 
 **A launcher for your accounts, characters and squads across Anarchy Online servers.**
 
-AO Nexus **v1.0.15** brings separate game installations, login servers, saved character selections and server news into one Windows app. It includes presets for Funcom AO, Project Rubi-Ka and AO Rebirth, and lets you add your own server entries.
+AO Nexus **v1.0.16** brings separate game installations, login servers, saved character selections and server news into one Windows app. It includes presets for Funcom AO, Project Rubi-Ka and AO Rebirth, and lets you add your own server entries.
 
 Based on [AOQuickLauncher](https://gitlab.com/never-knows-best/aoquicklauncher) by **never-knows-best and contributors**. Customized by **Luckyspawn**.
 
@@ -10,7 +10,7 @@ Based on [AOQuickLauncher](https://gitlab.com/never-knows-best/aoquicklauncher) 
 
 ![AO Nexus dashboard with a saved squad, accounts grouped by server, account details and server news](docs/images/launcher-overview.png)
 
-Screenshots use example accounts and offline news fixtures, with no personal accounts or passwords. The main guide images show v1.0.11; the shortcut example shows v1.0.15.
+Screenshots use example accounts and offline news fixtures, with no personal accounts or passwords. All guide screenshots were regenerated from v1.0.16.
 
 ## What it does
 
@@ -135,7 +135,7 @@ Open **Settings → Manage login servers…** to rename servers, edit their addr
 
 ![Login server editor showing connection settings, simultaneous account and character limits, and total character slots](docs/images/server-settings.png)
 
-These are the defaults in the **v1.0.11 source**, rather than a live statement of each server's current rules or availability. Existing profiles can retain their saved values.
+These are the defaults in the **v1.0.16 source**, rather than a live statement of each server's current rules or availability. Existing profiles can retain their saved values.
 
 | Server preset | Login address | Max. accounts | Chars per account | Character slots |
 | --- | --- | ---: | ---: | ---: |
@@ -209,7 +209,7 @@ The game handles its normal logout countdown. Combat, zoning, movement or cancel
 
 **Existing game windows need one normal restart through v1.0.15 or later** to enable quit control. The same applies to a client opened through **Create new char**: save/import the character and start it normally once. Unsupported or untracked clients are skipped with an explanation. AOSharp is not required. Closing Nexus itself still leaves all game windows open.
 
-For implementation details and test coverage, see [Quit control](docs/Camp-Control.md). See [What's new in v1.0.15](docs/Whats-New-1.0.15.md) for the English feature list.
+For implementation details and test coverage, see [Quit control](docs/Camp-Control.md). See [What's new in v1.0.16](docs/Whats-New-1.0.16.md) for the English feature list.
 
 ## Create a new character
 
@@ -245,10 +245,10 @@ After changing the password with the game server:
 
 1. Select the **account row** in AO Nexus.
 2. Choose **Update saved password** in **DETAILS**.
-3. Enter **New password** and **Confirm new password**.
+3. Enter your existing **Game account password** once.
 4. Choose **Save password**.
 
-![Update saved password dialog with new password and confirmation fields](docs/images/update-saved-password.png)
+![Update saved password dialog with a single existing game-account password field](docs/images/update-saved-password.png)
 
 This replaces only that account's encrypted copy in AO Nexus, for all its characters. It does not change the game-server password or log the account in. Saving here enables remembering for that account; other accounts are unaffected. Cancel leaves the saved password unchanged.
 

@@ -77,10 +77,11 @@ public static class SavedPasswordUpdateProbe {
             $dialog = Dialog $account
             try {
                 ShowFixture $dialog $scale
-                $password = Field $dialog 'passwordInput'; $confirmation = Field $dialog 'confirmPasswordInput'
+                $password = Field $dialog 'passwordInput'
+                Assert (@($dialog.Controls.Find('confirmNewPassword', $true)).Count -eq 0) 'Updating a saved copy must not require password confirmation.'
                 $save = Field $dialog 'SaveButton'; $errorLabel = Field $dialog 'ErrorLabel'; $fields = Field $dialog 'Fields'
-                Assert ($password.UseSystemPasswordChar -and $confirmation.UseSystemPasswordChar -and !$password.Text -and !$confirmation.Text) 'Both new-password fields must start blank and masked.'
-                Assert ($password.GetType().Name -eq 'NexusTextBox' -and $confirmation.GetType().Name -eq 'NexusTextBox') 'Password fields must use the shared dark control.'
+                Assert ($password.UseSystemPasswordChar -and !$password.Text) 'The existing-password field must start blank and masked.'
+                Assert ($password.GetType().Name -eq 'NexusTextBox') 'The password field must use the shared dark control.'
                 $expectedTitle = if ($language -eq 'da') { 'Opdatér gemt adgangskode — Synthetic account' } else { 'Update saved password — Synthetic account' }
                 Assert ($dialog.Text -ceq $expectedTitle) 'The dedicated dialog must use the selected language.'
                 $guide = @($fields.Controls | Where-Object Name -eq 'savedPasswordGuide')[0]
@@ -99,9 +100,7 @@ public static class SavedPasswordUpdateProbe {
                 [SavedPasswordUpdateProbe]::Reset(); Probe $dialog
                 $save.PerformClick()
                 Assert ([SavedPasswordUpdateProbe]::Calls -eq 0 -and $dialog.DialogResult -eq 'None' -and $errorLabel.Text.Length -gt 0) 'Empty inputs must keep the dialog open without saving.'
-                $password.Text = 'synthetic-CaseSensitive'; $confirmation.Text = 'synthetic-casesensitive'; $save.PerformClick()
-                Assert ([SavedPasswordUpdateProbe]::Calls -eq 0 -and $dialog.DialogResult -eq 'None') 'Confirmation must compare passwords case-sensitively before saving.'
-                $confirmation.Text = $password.Text
+                $password.Text = 'synthetic-CaseSensitive'
                 [SavedPasswordUpdateProbe]::Error = 'Synthetic storage unavailable'; $save.PerformClick()
                 Assert ([SavedPasswordUpdateProbe]::Calls -eq 1 -and $dialog.DialogResult -eq 'None' -and $errorLabel.Text -ceq 'Synthetic storage unavailable') 'A storage failure must keep the form open with a useful error.'
                 Assert (!$account.RememberPassword) 'The dialog itself must not change account settings before its policy callback succeeds.'
@@ -113,7 +112,7 @@ public static class SavedPasswordUpdateProbe {
                 $errorMeasure = [Windows.Forms.TextRenderer]::MeasureText($errorLabel.Text,$errorLabel.Font,[Drawing.Size]::new($errorLabel.ClientSize.Width,10000),[Windows.Forms.TextFormatFlags]'WordBreak,TextBoxControl,NoPrefix')
                 Assert ($errorLabel.Height -ge $errorMeasure.Height) 'The complete rollback failure message must fit without clipping at normal and enlarged scaling.'
                 [SavedPasswordUpdateProbe]::Reset()
-                $password.Text = ''; $confirmation.Text = ''; $errorLabel.Text = ''
+                $password.Text = ''; $errorLabel.Text = ''
                 $fields.AutoScrollPosition = [Drawing.Point]::Empty; [Windows.Forms.Application]::DoEvents()
                 $bitmap = [Drawing.Bitmap]::new($dialog.ClientSize.Width,$dialog.ClientSize.Height)
                 try {
@@ -121,20 +120,20 @@ public static class SavedPasswordUpdateProbe {
                     try { Assert ([SavedPasswordUpdateNative]::PrintWindow($dialog.Handle,$dc,1)) 'The owned password dialog preview must render.' } finally { $graphics.ReleaseHdc($dc); $graphics.Dispose() }
                     $bitmap.Save((Join-Path ([IO.Path]::GetFullPath($PreviewDirectory)) ('SavedPasswordDialog-' + $language + '-' + [int]($scale*100) + '.png')), [Drawing.Imaging.ImageFormat]::Png)
                 } finally { $bitmap.Dispose() }
-                $password.Text = ' synthetic-preserve-spaces '; $confirmation.Text = $password.Text; $save.PerformClick()
-                Assert ([SavedPasswordUpdateProbe]::Received -ceq ' synthetic-preserve-spaces ' -and $dialog.DialogResult -eq 'OK') 'A matching password must be saved exactly without trimming and close successfully.'
-                Assert (!$password.Text -and !$confirmation.Text) 'Successful saving must clear both password fields.'
+                $password.Text = ' synthetic-preserve-spaces '; $save.PerformClick()
+                Assert ([SavedPasswordUpdateProbe]::Received -ceq ' synthetic-preserve-spaces ' -and $dialog.DialogResult -eq 'OK') 'The entered password must be saved exactly without trimming and close successfully.'
+                Assert (!$password.Text) 'Successful saving must clear the password field.'
             } finally { $dialog.Dispose() }
 
             $cancelled = Dialog (Account 'cancel-only' $true)
             try {
                 ShowFixture $cancelled $scale; [SavedPasswordUpdateProbe]::Reset(); Probe $cancelled
-                $cancelPassword = Field $cancelled 'passwordInput'; $cancelConfirm = Field $cancelled 'confirmPasswordInput'
-                $cancelPassword.Text = 'synthetic-cancelled'; $cancelConfirm.Text = 'synthetic-cancelled'
+                $cancelPassword = Field $cancelled 'passwordInput'
+                $cancelPassword.Text = 'synthetic-cancelled'
                 (Field $cancelled 'CancelAction').PerformClick(); $cancelled.Close()
                 Assert ([SavedPasswordUpdateProbe]::Calls -eq 0) 'Cancel must never invoke a credential write.'
             } finally { $cancelled.Dispose() }
-            Assert (!$cancelPassword.Text -and !$cancelConfirm.Text -and $null -eq $cancelled.GetType().GetProperty('SavePasswordAction',$flags).GetValue($cancelled,$null)) 'Disposal must clear both password fields and release the callback.'
+            Assert (!$cancelPassword.Text -and $null -eq $cancelled.GetType().GetProperty('SavePasswordAction',$flags).GetValue($cancelled,$null)) 'Disposal must clear the password field and release the callback.'
 
             # MainForm is constructed only in offline smoke mode, with synthetic
             # settings. Temporarily exercise enabled-state calculation without

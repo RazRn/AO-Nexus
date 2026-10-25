@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$AssemblyPath = (Join-Path $PSScriptRoot '..\dist\AONexus.exe'),
     [string]$OutputDirectory = (Join-Path $PSScriptRoot '..\docs\images')
 )
@@ -89,10 +89,16 @@ try {
     if (!(Field $dashboard 'smoke') -or !(Field (Field $dashboard 'newsPanel') 'offlinePreview')) {
         throw 'Guide screenshots require the safe offline preview fixture.'
     }
+    $dashboard.ClientSize = [Drawing.Size]::new(1280, 1000)
     Show-Fixture $dashboard
+    $preset = (Field $dashboard 'settings').Presets[0]
+    $preset.StartHotkey = New-Model 'HotkeyBinding'; $preset.StartHotkey.Key = 117; $preset.StartHotkey.Modifiers = 3
+    $preset.CampHotkey = New-Model 'HotkeyBinding'; $preset.CampHotkey.Key = 118; $preset.CampHotkey.Modifiers = 3
+    $dashboard.GetType().GetMethod('RefreshHotkeyFields', $flags).Invoke($dashboard, @()) | Out-Null
     $tree = Field $dashboard 'tree'
     $tree.SelectedNode = $tree.Nodes[0].Nodes[0]
     Save-GuideScreenshot $dashboard 'launcher-overview.png'
+    Save-GuideScreenshot $dashboard.Controls.Find('presetSection', $true)[0] 'preset-shortcuts.png'
 } finally { $dashboard.Dispose(); [GuideScreenshotNative]::Pump() }
 
 $settings = New-Model 'LauncherSettings'
@@ -139,4 +145,11 @@ foreach ($fixture in @(
         Save-GuideScreenshot $dialog $fixture.File
     } finally { $dialog.Dispose(); [GuideScreenshotNative]::Pump() }
 }
-Write-Output 'PASS: screenshots use the actual application with synthetic accounts, empty password fields and offline news.'
+$version = $assembly.GetName().Version.ToString()
+$manifest = @("# Guide screenshot provenance", "", "Generated from AO Nexus $version using Capture-GuideScreenshots.ps1.", "", "Synthetic accounts, empty password fields and offline news. All seven README images are rendered from the actual controls.", "")
+foreach ($name in @('launcher-overview.png','preset-shortcuts.png','account-setup.png','game-and-server.png','server-settings.png','password-options.png','update-saved-password.png')) {
+    $hash = (Get-FileHash -LiteralPath (Join-Path $OutputDirectory $name) -Algorithm SHA256).Hash.ToLowerInvariant()
+    $manifest += ('- ' + $name + ': ' + $hash)
+}
+[IO.File]::WriteAllText((Join-Path $OutputDirectory 'SCREENSHOTS.md'), (($manifest -join "`n") + "`n"), [Text.UTF8Encoding]::new($false))
+Write-Output "PASS: all seven guide screenshots regenerated from $version using synthetic accounts, empty password fields and offline news."

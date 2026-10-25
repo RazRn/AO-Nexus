@@ -1,4 +1,4 @@
-AO NEXUS 1.0.15
+AO NEXUS 1.0.16
 Based on AOQuickLauncher by never-knows-best and contributors.
 Customized by Luckyspawn.
 
@@ -85,7 +85,7 @@ The same entry is used for all selected chars on that account, without saving it
 Uncheck Remember password and save the account to remove its saved password.
 Use Settings > Forget passwords to clear saved passwords for all AO Nexus accounts.
 To replace one saved password, select its account row and choose Update saved
-password in the Details panel. Enter the new game password twice and Save password.
+password in the Details panel. Enter the existing game-account password once and choose Save password.
 This updates only the encrypted copy in AO Nexus, without logging in or changing
 the password on the game server. Saving enables Remember password for that account.
 Other accounts are unaffected; cancelling leaves the saved password unchanged.

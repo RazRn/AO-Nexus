@@ -750,18 +750,15 @@ namespace AOLauncher
     internal sealed class SavedPasswordDialog : EditorDialog
     {
         private readonly TextBox passwordInput;
-        private readonly TextBox confirmPasswordInput;
         public Func<string, string> SavePasswordAction { private get; set; }
 
-        public SavedPasswordDialog(AccountConfig account) : base(F("Update saved password — {0}", account.Label), 600)
+        public SavedPasswordDialog(AccountConfig account) : base(F("Update saved password — {0}", account.Label), 520)
         {
             AddWrappedNote(F("Login for {0}", account.Username) + "\n"
                 + F("Login server: {0}", AccountTargets.Endpoint(account)), "savedPasswordAccount");
-            passwordInput = AddTextField(T("New password"), "", true);
-            passwordInput.Name = "newPassword";
-            confirmPasswordInput = AddTextField(T("Confirm new password"), "", true);
-            confirmPasswordInput.Name = "confirmNewPassword";
-            AddWrappedNote(T("Change your password with the game server first. This updates only the copy saved in AO Nexus, for all chars on this account.") + "\n\n"
+            passwordInput = AddTextField(T("Game account password"), "", true);
+            passwordInput.Name = "gameAccountPassword";
+            AddWrappedNote(T("Enter the password you already use to log in to this game account. This updates only the copy saved in AO Nexus, for all chars on this account. It does not change your password on the game server.") + "\n\n"
                 + T("The password is saved encrypted for your Windows user. To remove it, uncheck Remember password for this account under Edit account, or use Settings → Forget passwords to remove all saved passwords."), "savedPasswordGuide");
             if (!account.RememberPassword)
                 AddWrappedNote(T("Saving here also enables Remember password for this account. Future logins will use the saved password."), "savedPasswordRememberNotice");
@@ -777,14 +774,8 @@ namespace AOLauncher
             {
                 if (passwordInput.Text.Length == 0)
                 {
-                    ErrorLabel.Text = T("Enter the new password for this account.");
+                    ErrorLabel.Text = T("Enter the password for this account.");
                     passwordInput.Focus();
-                    return;
-                }
-                if (!string.Equals(passwordInput.Text, confirmPasswordInput.Text, StringComparison.Ordinal))
-                {
-                    ErrorLabel.Text = T("The passwords do not match. Enter the same password in both fields.");
-                    confirmPasswordInput.Focus();
                     return;
                 }
 
@@ -821,7 +812,6 @@ namespace AOLauncher
         private void ClearPasswordFields()
         {
             if (passwordInput != null && !passwordInput.IsDisposed) passwordInput.Clear();
-            if (confirmPasswordInput != null && !confirmPasswordInput.IsDisposed) confirmPasswordInput.Clear();
         }
 
         protected override void OnFormClosed(FormClosedEventArgs e)
