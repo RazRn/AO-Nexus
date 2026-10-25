@@ -287,18 +287,42 @@ namespace AOQuickLauncher
         internal static string Ports(System.Collections.Generic.IEnumerable<string> endpoints)
             => string.Join(",", endpoints.Select(endpoint => endpoint.Substring(endpoint.LastIndexOf(':') + 1)));
 
-        /// <summary>Waits for the handoff; returns the ports seen, or null when <paramref name="stop"/> finishes or time runs out.</summary>
-        internal static async Task<string> WaitAsync(int processId, string loginEndpoint, Task stop, int timeoutMs)
+        /// <summary>
+        /// Waits for the handoff; returns the ports seen, or null when <paramref name="stop"/> finishes or time runs out.
+        /// <paramref name="timeline"/> receives every connection change as "port+ or port- at seconds", for diagnostics.
+        /// </summary>
+        internal static async Task<string> WaitAsync(int processId, string loginEndpoint, Task stop, int timeoutMs,
+            Stopwatch clock, System.Collections.Generic.List<string> timeline)
         {
             var seen = new System.Collections.Generic.List<string>();
+            var open = new System.Collections.Generic.HashSet<string>();
             var timer = Stopwatch.StartNew();
             while (!stop.IsCompleted && timer.ElapsedMilliseconds < timeoutMs)
             {
-                try { if (Observe(seen, Read(processId), loginEndpoint)) return Ports(seen); }
-                catch (Exception) { return null; } // Unavailable table: keep the safe, slower path.
+                try
+                {
+                    var current = Read(processId);
+                    string at = (clock.ElapsedMilliseconds / 1000.0).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + "s";
+                    lock (timeline)
+                    {
+                        foreach (string endpoint in current.Where(item => !open.Contains(item)))
+                            timeline.Add(at + " " + Port(endpoint) + (endpoint == loginEndpoint ? " login" : "") + " open");
+                        foreach (string endpoint in open.Where(item => !current.Contains(item)))
+                            timeline.Add(at + " " + Port(endpoint) + " closed");
+                    }
+                    open = new System.Collections.Generic.HashSet<string>(current);
+                    if (Observe(seen, current, loginEndpoint)) return Ports(seen);
+                }
+                catch (Exception error)
+                {
+                    lock (timeline) timeline.Add("connection table unavailable: " + error.GetType().Name);
+                    return null; // Keep the safe, slower path.
+                }
                 await Task.WhenAny(stop, Task.Delay(150)).ConfigureAwait(false);
             }
             return null;
         }
+
+        private static string Port(string endpoint) => endpoint.Substring(endpoint.LastIndexOf(':') + 1);
     }
 }

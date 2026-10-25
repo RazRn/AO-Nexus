@@ -378,8 +378,11 @@ namespace AOQuickLauncher
                 confirmation = ConfirmCharacterAsync(entry, target, client, status, request.ReadyTimeoutSeconds, released);
                 if (request.StartAfterHandoff)
                 {
-                    var handoff = ZoneHandoff.WaitAsync(processId, target.Server + ":" + target.Port, confirmation, request.ReadyTimeoutSeconds * 1000);
-                    string ports = await handoff.ConfigureAwait(false);
+                    var connections = new List<string>();
+                    string ports = await ZoneHandoff.WaitAsync(processId, target.Server + ":" + target.Port, confirmation,
+                        request.ReadyTimeoutSeconds * 1000, spawnTimer, connections).ConfigureAwait(false);
+                    lock (connections)
+                        Diagnostic("connections", entry, new { Handoff = ports != null, Timeline = string.Join(", ", connections) });
                     if (ports != null && !confirmation.IsCompleted)
                     {
                         long handoffMs = spawnTimer.ElapsedMilliseconds;
