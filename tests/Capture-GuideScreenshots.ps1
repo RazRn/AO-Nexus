@@ -97,6 +97,11 @@ try {
     $tree = Field $dashboard 'tree'
     $tree.SelectedNode = $tree.Nodes[0].Nodes[0]
     Save-GuideScreenshot $dashboard 'launcher-overview.png'
+    $sidebar = Field $dashboard 'serverSidebar'
+    $tabs = $sidebar.GetType().GetProperty('Tabs',$flags).GetValue($sidebar)
+    $tabs.SelectedIndex=1
+    Save-GuideScreenshot $dashboard 'server-health.png'
+    $tabs.SelectedIndex=0
     foreach ($editing in @($true, $false)) {
         $title = if ($editing) { 'Edit team preset' } else { 'Create team preset' }
         $editor = New-Dialog 'PresetNameDialog' ([object[]]@($title, $preset.Name, [string[]]@(), $preset.StartHotkey, $preset.CampHotkey, 3, $editing))
@@ -120,10 +125,16 @@ try {
 $settings = New-Model 'LauncherSettings'
 $settingsPreview = New-Dialog 'SettingsDialog' ([object[]]@($settings))
 try {
-    $settingsPreview.ClientSize = [Drawing.Size]::new(510, 820)
+    $settingsPreview.ClientSize = [Drawing.Size]::new(640, 580)
     Show-Fixture $settingsPreview
     Save-GuideScreenshot $settingsPreview 'settings.png'
+    foreach ($entry in @(@(1,'settings-accounts.png'),@(2,'settings-sidebar.png'),@(3,'settings-updates.png'))) {
+        (Field $settingsPreview 'settingsTabs').SelectedIndex=$entry[0]
+        Save-GuideScreenshot $settingsPreview $entry[1]
+    }
 } finally { $settingsPreview.Dispose() }
+$privacyPreview = New-Dialog 'PrivacyDialog' ([object[]]@())
+try { Show-Fixture $privacyPreview; Save-GuideScreenshot $privacyPreview 'privacy-security.png' } finally { $privacyPreview.Dispose() }
 $releasePreview = New-Model 'UpdateRelease'
 $releasePreview.GetType().GetField('Version', $flags).SetValue($releasePreview, $assembly.GetName().Version)
 $updatesPreview = New-Dialog 'UpdateDialog' ([object[]]@([Func[bool]]{ return $false }, $releasePreview))
@@ -131,6 +142,10 @@ try {
     Show-Fixture $updatesPreview
     Save-GuideScreenshot $updatesPreview 'app-updates.png'
 } finally { $updatesPreview.Dispose() }
+$releasePreview.GetType().GetField('Version', $flags).SetValue($releasePreview, [version]'1.0.21.0')
+$releasePreview.GetType().GetField('Notes', $flags).SetValue($releasePreview, "# Example release notes`n`n- **Clear headings** and readable spacing.`n- Review the changes before installing.`n`nThis screenshot uses an offline fixture, not a published update.")
+$updatesPreview = New-Dialog 'UpdateDialog' ([object[]]@([Func[bool]]{ return $false }, $releasePreview))
+try { Show-Fixture $updatesPreview; Save-GuideScreenshot $updatesPreview 'update-available.png' } finally { $updatesPreview.Dispose() }
 foreach ($minimize in @($true,$false)) {
     $confirmation = New-Dialog 'WindowActionDialog' ([object[]]@($minimize))
     try {
@@ -192,8 +207,8 @@ $readmePath = Join-Path $PSScriptRoot '..\README.md'
 $readme = [IO.File]::ReadAllText($readmePath)
 $publishedDirectory = Join-Path $OutputDirectory 'published'
 [IO.Directory]::CreateDirectory($publishedDirectory) | Out-Null
-$manifest = @("# Guide screenshot provenance", "", "Generated from AO Nexus $version using Capture-GuideScreenshots.ps1.", "", "Synthetic accounts, empty password fields, offline news and an offline update fixture. All fourteen README images are rendered from the actual controls.", "")
-foreach ($name in @('launcher-overview.png','preset-shortcuts.png','preset-create.png','activity-log.png','settings.png','app-updates.png','minimize-confirmation.png','quit-confirmation.png','whats-new.png','account-setup.png','game-and-server.png','server-settings.png','password-options.png','update-saved-password.png')) {
+$manifest = @("# Guide screenshot provenance", "", "Generated from AO Nexus $version using Capture-GuideScreenshots.ps1.", "", "Synthetic accounts, empty password fields, offline news and an offline update fixture. All twenty README images are rendered from the actual controls.", "")
+foreach ($name in @('server-health.png','settings-accounts.png','settings-sidebar.png','settings-updates.png','privacy-security.png','update-available.png','launcher-overview.png','preset-shortcuts.png','preset-create.png','activity-log.png','settings.png','app-updates.png','minimize-confirmation.png','quit-confirmation.png','whats-new.png','account-setup.png','game-and-server.png','server-settings.png','password-options.png','update-saved-password.png')) {
     $hash = (Get-FileHash -LiteralPath (Join-Path $OutputDirectory $name) -Algorithm SHA256).Hash.ToLowerInvariant()
     $manifest += ('- ' + $name + ': ' + $hash)
     # GitHub's raw redirect can drop a query-string cache key. Give the file
@@ -217,4 +232,4 @@ foreach ($name in @('launcher-overview.png','preset-shortcuts.png','preset-creat
 }
 [IO.File]::WriteAllText($readmePath, $readme, [Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText((Join-Path $OutputDirectory 'SCREENSHOTS.md'), (($manifest -join "`n") + "`n"), [Text.UTF8Encoding]::new($false))
-Write-Output "PASS: all fourteen guide screenshots regenerated from $version using synthetic accounts and offline fixtures."
+Write-Output "PASS: all twenty guide screenshots regenerated from $version using synthetic accounts and offline fixtures."

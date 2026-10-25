@@ -159,6 +159,8 @@ foreach ($scale in @(1, 1.5)) {
                 $dialog.Scale([Drawing.SizeF]::new($scale,$scale))
             }
             Show-Offscreen $dialog
+        $dialog.GetType().GetField('settingsTabs', [Reflection.BindingFlags]'NonPublic,Instance').GetValue($dialog).SelectedIndex = 1
+        [Windows.Forms.Application]::DoEvents()
             $button = @(Descendants $dialog | Where-Object Name -eq 'forgetSavedPasswords')[0]
             $status = @(Descendants $dialog | Where-Object Name -eq 'passwordActionStatus')[0]
             Assert ($null -ne $button -and $button.Visible -and $button.Enabled) 'Settings must contain the enabled password action.'

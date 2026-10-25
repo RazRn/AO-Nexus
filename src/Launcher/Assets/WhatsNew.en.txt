@@ -1,9 +1,11 @@
-• Separate confirmations for minimizing to the tray and quitting. Each has “Don't show this again”; restore them in Settings.
+• Settings now has General, Accounts, Sidebar and Updates tabs.
 
-• Team presets now have an Update button to save the checked characters. Edit changes the name and shortcuts. The explanatory line has been removed.
+• Optional Server news and Server health share sidebar tabs. Pick sources in Settings. Health checks the displayed server every 60 seconds while visible; unverified information is Unknown.
 
-• Removed hover tooltips throughout Nexus. Information remains in Details and the relevant dialogs.
+• News pauses when hidden and refreshes only selected sources. Update release notes now have readable formatting.
 
-• Update checks and installation activity are logged, with a persistent update history and this one-time release summary after updating.
+• Logs default to 5 MB each, adjustable in Settings. Oldest entries are trimmed. Completed update staging files are cleaned up; one previous EXE is kept for recovery.
 
-Automatic checks run once when Nexus starts, if enabled. You can also check from Settings. Installation still requires your confirmation.
+• Privacy & security in Settings explains passwords, connections, local files and update verification. Credits now read Enhanced by Luckyspawn.
+
+Downloads and installation still require confirmation. Accounts and team presets are preserved.

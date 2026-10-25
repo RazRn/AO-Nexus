@@ -1,6 +1,6 @@
 AO NEXUS
 Based on AOQuickLauncher by never-knows-best and contributors
-Customized by Luckyspawn
+Enhanced by Luckyspawn
 
 Original AOQuickLauncher backend: never-knows-best and contributors
 https://gitlab.com/never-knows-best/aoquicklauncher

@@ -1,6 +1,6 @@
-AO NEXUS 1.0.19
+AO NEXUS 1.0.20
 Based on AOQuickLauncher by never-knows-best and contributors.
-Customized by Luckyspawn.
+Enhanced by Luckyspawn.
 
 START
 Double-click AONexus.exe. Keep this folder anywhere you prefer.
@@ -69,8 +69,7 @@ Missing or moved installations are detected before login and can be corrected.
 
 NEWS
 The news panel reads the official Funcom, Project Rubi-Ka and AO Rebirth sources.
-Use the source picker to check any combination of servers. Your choices save
-automatically and are restored when AO Nexus starts, like other settings.
+Choose publishers under Settings > Sidebar and Save. Sources and panel visibility are remembered.
 Publication dates are displayed so old announcements are not mistaken for new
 events. Source websites can change or be temporarily unavailable; cached news
 remains readable. Refresh requests current articles. Clicking a headline opens
@@ -134,3 +133,24 @@ Update activity is logged and the new version reports a successful installation.
 Persistent history: %LOCALAPPDATA%\AONexus\Updates\update-history.log
 A What's new window appears once after a successful update, with bundled release
 notes in your selected language. It works offline and does not appear on normal starts.
+
+SETTINGS, LOGS AND PRIVACY (v1.0.20)
+Settings has General, Accounts, Sidebar and Updates tabs. Manage login servers
+and Forget passwords are under Accounts. News and health are optional sidebar
+tabs; both can be hidden. Health checks only the displayed server every 60 seconds
+while visible. Reachable is TCP connectivity, not proof that game login works.
+Unknown means missing/stale/unverified information. News refreshes selected
+sources every 15 minutes while visible. Requests pause when hidden/in the tray.
+
+Settings > Updates has a log-size limit: 5 MB per log by default, adjustable
+1-100 MB. Oldest entries are trimmed. Activity is session-only; update history
+is saved locally. Completed update stages are cleaned after restart; abandoned
+stages are retried after 24 hours. Locked files are retried on a later start.
+One previous EXE is retained for recovery. Cached runtimes are kept because
+open game clients can still use them. Profiles and game files are preserved.
+
+Settings > General > Privacy & security explains password encryption, local files,
+network connections and update checks offline. Nexus has no analytics or automatic
+log/crash upload. Remote services still see your IP and normal request metadata.
+The full public documentation is at:
+https://github.com/RazRn/AO-Nexus/blob/main/docs/Privacy-and-Security.md

@@ -1,9 +1,11 @@
-• Separate bekræftelser ved minimering til proceslinjens meddelelsesområde og afslutning. Begge har “Vis ikke igen” og kan slås til igen i Indstillinger.
+• Indstillinger er nu opdelt i Generelt, Konti, Sidepanel og Opdateringer.
 
-• Team-presets har nu en Opdatér-knap, som gemmer de markerede chars. Rediger ændrer navn og genveje. Forklaringslinjen er fjernet.
+• Valgfrie Servernyheder og Serverstatus deler faner i sidepanelet. Vælg kilder i Indstillinger. Status tjekker den viste server hvert 60. sekund, når panelet vises. Ubekræftede oplysninger vises som Ukendt.
 
-• Værktøjstip er fjernet i Nexus. Oplysningerne findes stadig i Detaljer og de relevante dialoger.
+• Nyheder sættes på pause, når de er skjult, og hentes kun fra valgte kilder. Opdateringsnoter har nu læsbare linjeskift og punktopstillinger.
 
-• Søgning efter opdateringer og installation logges, med en gemt opdateringshistorik og denne engangsoversigt efter opdateringen.
+• Logge er som standard højst 5 MB hver; grænsen kan ændres i Indstillinger. Ældste poster fjernes først. Færdige opdateringsmapper ryddes op; én tidligere EXE beholdes til gendannelse.
 
-Automatisk søgning kører én gang ved start, hvis det er slået til. Du kan også søge fra Indstillinger. Installation kræver stadig din bekræftelse.
+• Privatliv og sikkerhed forklarer adgangskoder, forbindelser, lokale filer og kontrol af opdateringer. Krediteringen er nu Forbedret af Luckyspawn.
+
+Download og installation kræver stadig bekræftelse. Konti og hold bevares.

@@ -29,6 +29,15 @@ namespace AOLauncher
         internal const long MaxPackageBytes = 100 * 1024 * 1024;
         internal const long MaxExecutableBytes = 150 * 1024 * 1024;
         internal static Version CurrentVersion => typeof(AppUpdates).Assembly.GetName().Version;
+        internal static string FormatReleaseNotes(string markdown)
+        {
+            string text = (markdown ?? "").Replace("\r\n", "\n").Replace('\r', '\n');
+            if (text.Length > 32000) text = text.Substring(0, 32000);
+            text = Regex.Replace(text, @"(?m)^#{1,6}\s+", "", RegexOptions.None, TimeSpan.FromMilliseconds(100));
+            text = Regex.Replace(text, @"(?m)^[ \t]*[-*][ \t]+", "• ", RegexOptions.None, TimeSpan.FromMilliseconds(100));
+            text = text.Replace("**", "").Replace("`", "");
+            return text.Trim().Replace("\n", "\r\n");
+        }
         internal static string UpdateRoot => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AONexus", "Updates");
         public sealed class ReleaseDto
         {
@@ -101,6 +110,10 @@ namespace AOLauncher
             string folder = Path.Combine(UpdateRoot, Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(folder);
             string archive = Path.Combine(folder, "release.zip");
+            try
+            {
+            using (var active = new FileStream(Path.Combine(folder, ".active"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
+            {
             using (var client = Client())
             {
                 var address = new Uri(release.DownloadUrl);
@@ -130,6 +143,9 @@ namespace AOLauncher
             string executable = await Task.Run(() => VerifyAndExtract(archive, folder, release), cancellation).ConfigureAwait(false);
             File.Delete(archive);
             return executable;
+            }
+            }
+            catch { UpdateCleanup.RemoveStage(UpdateRoot, folder); throw; }
         }
         private static async Task CopyBounded(Stream input, Stream output, long limit, CancellationToken cancellation, IProgress<int> progress)
         {
@@ -184,15 +200,33 @@ namespace AOLauncher
 
     internal static class UpdateJournal
     {
+        private static readonly object Sync = new object();
+        private static int limit = 5 * 1024 * 1024;
+        internal static int MaxMegabytes { get { lock (Sync) return limit / (1024 * 1024); } }
+        internal static void Configure(int megabytes)
+        {
+            lock (Sync)
+            {
+                limit = LogRetention.NormalizeMb(megabytes) * 1024 * 1024;
+                try
+                {
+                    string file = Path.Combine(AppUpdates.UpdateRoot, "update-history.log");
+                    if (!UpdateCleanup.PlainPath(file)) return;
+                    if (File.Exists(file)) LogRetention.AppendFile(file, "", limit);
+                    if (File.Exists(file + ".previous") && UpdateCleanup.PlainPath(file + ".previous")) File.Delete(file + ".previous");
+                }
+                catch (IOException) { } catch (UnauthorizedAccessException) { }
+            }
+        }
         internal static void Record(string message)
         {
+            lock (Sync)
             try
             {
-                Directory.CreateDirectory(AppUpdates.UpdateRoot);
                 string file = Path.Combine(AppUpdates.UpdateRoot, "update-history.log");
-                if (File.Exists(file) && new FileInfo(file).Length > 1024 * 1024) File.Copy(file, file + ".previous", true);
-                if (File.Exists(file) && new FileInfo(file).Length > 1024 * 1024) File.WriteAllText(file, "");
-                File.AppendAllText(file, DateTime.UtcNow.ToString("u") + " " + (message ?? "").Replace('\r', ' ').Replace('\n', ' ') + Environment.NewLine);
+                if (!UpdateCleanup.PlainPath(file)) return;
+                Directory.CreateDirectory(AppUpdates.UpdateRoot);
+                LogRetention.AppendFile(file, DateTime.UtcNow.ToString("u") + " " + (message ?? "").Replace('\r', ' ').Replace('\n', ' ') + Environment.NewLine, limit);
             }
             catch (IOException) { }
             catch (UnauthorizedAccessException) { }
@@ -222,6 +256,7 @@ namespace AOLauncher
         public string NewSha256 { get; set; }
         public int ParentId { get; set; }
         public long ParentStartTicks { get; set; }
+        public int MaxLogSizeMb { get; set; } = 5;
     }
 
     internal static class UpdateInstaller
@@ -231,7 +266,7 @@ namespace AOLauncher
             using (var parent = Process.GetCurrentProcess())
             {
                 var request = new UpdateRequest { Target = Path.GetFullPath(target), OldSha256 = AppUpdates.Hash(target), NewSha256 = AppUpdates.Hash(staged),
-                    ParentId = parent.Id, ParentStartTicks = parent.StartTime.ToUniversalTime().Ticks };
+                    ParentId = parent.Id, ParentStartTicks = parent.StartTime.ToUniversalTime().Ticks, MaxLogSizeMb = UpdateJournal.MaxMegabytes };
                 string path = Path.Combine(Path.GetDirectoryName(staged), "request.json");
                 File.WriteAllText(path, new JavaScriptSerializer().Serialize(request));
                 Process.Start(new ProcessStartInfo(staged, "--apply-update \"" + path + "\"") { UseShellExecute = false, CreateNoWindow = true, WindowStyle = ProcessWindowStyle.Hidden });
@@ -252,6 +287,7 @@ namespace AOLauncher
                 if (request == null || !Path.IsPathRooted(request.Target) || Path.GetFullPath(request.Target).Equals(staged, StringComparison.OrdinalIgnoreCase)
                     || AppUpdates.Hash(staged) != request.NewSha256 || AssemblyName.GetAssemblyName(request.Target).Name != "AONexus")
                     throw new InvalidDataException("Invalid update request.");
+                UpdateJournal.Configure(request.MaxLogSizeMb);
                 Process parent = null;
                 try { parent = Process.GetProcessById(request.ParentId); } catch (ArgumentException) { }
                 using (parent)
@@ -269,6 +305,8 @@ namespace AOLauncher
                         catch (System.ComponentModel.Win32Exception) when (parent.HasExited) { }
                     }
                 }
+                using (var active = new FileStream(Path.Combine(folder, ".active"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
+                {
                 string backup = ReplaceVerified(staged, request.Target, request.OldSha256, request.NewSha256);
                 try
                 {
@@ -280,8 +318,9 @@ namespace AOLauncher
                     File.Replace(backup, request.Target, null);
                     throw;
                 }
-                try { File.WriteAllText(logPath, "Update installed. Previous executable: " + backup); }
+                try { File.WriteAllText(logPath, "Update installed. Previous executable: " + backup); File.WriteAllText(Path.Combine(folder, "complete"), ""); }
                 catch (IOException) { } catch (UnauthorizedAccessException) { }
+                }
             }
             catch (Exception ex)
             {

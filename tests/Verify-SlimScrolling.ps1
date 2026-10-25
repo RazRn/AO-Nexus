@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$AssemblyPath = (Join-Path $PSScriptRoot '..\src\Launcher\bin\Release\AONexus.exe'),
     [string]$PreviewDirectory = (Join-Path $PSScriptRoot '..\logs\slim-previews'),
     [switch]$SettingsProbe
@@ -119,6 +119,8 @@ if ($SettingsProbe) {
         $dialog.Font = [Drawing.Font]::new($dialog.Font.FontFamily, $dialog.Font.Size * 1.5, $dialog.Font.Style)
         $dialog.Scale([Drawing.SizeF]::new(1.5,1.5))
         Show-Offscreen $dialog
+        $dialog.GetType().GetField('settingsTabs', [Reflection.BindingFlags]'NonPublic,Instance').GetValue($dialog).SelectedIndex = 1
+        [Windows.Forms.Application]::DoEvents()
         $button = @(Descendants $dialog | Where-Object Name -eq 'forgetSavedPasswords')[0]
         $status = @(Descendants $dialog | Where-Object Name -eq 'passwordActionStatus')[0]
         Assert ($null -ne $button -and $null -ne $status) 'Settings must include its saved-password controls at 150% scale.'

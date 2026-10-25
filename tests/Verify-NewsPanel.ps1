@@ -131,7 +131,7 @@ try {
     $cards = Field $panel 'cards'
     Assert-Check (Field $panel 'offlinePreview') 'News fixture avoids personal cache and network.'
     Assert-Check (!(Field $panel 'automaticRefresh').Enabled) 'Offline news never starts the network refresh timer.'
-    Assert-Check ((Field $panel 'filter') -is [Windows.Forms.Button]) 'The source picker offers multiple choices.'
+    Assert-Check ($panel.Controls.Find('newsSourceFilter',$true).Count -eq 0) 'Source choice is only in Settings.'
     Assert-Check ((Selected $panel) -eq 'live|prk|rebirth') 'Fresh news defaults to all public publishers.'
     Assert-Check ($null -eq $panelType.GetField('rememberSelection',$flags)) 'Automatic persistence does not require a Remember checkbox.'
     Assert-Check ((Articles $panel) -eq 'article:live|article:prk|article:rebirth') 'Default preview shows one article from each publisher.'
@@ -169,40 +169,6 @@ try {
     $eventCount = $script:selectionEvents
     $panel.ApplySelectionPreferences([string[]]@('all'))
     Assert-Check ((Selected $panel) -eq 'live|prk|rebirth' -and $script:selectionEvents -eq $eventCount) 'Initializing the all-publishers alias is silent.'
-    (Field $panel 'filter').PerformClick()
-    $selectionMenu = Field $panel 'selectionMenu'
-    try {
-        $prkChoice = @($selectionMenu.Items | Where-Object Text -eq 'Project Rubi-Ka')[0]
-        Assert-Check ($null -ne $prkChoice -and $prkChoice.Checked) 'The picker visibly marks the selected publisher.'
-        $prkChoice.PerformClick()
-        Assert-Check ((Selected $panel) -eq 'live|rebirth' -and !$prkChoice.Checked) 'Clicking a checked publisher removes only that feed.'
-        $prkChoice.PerformClick()
-        Assert-Check ((Selected $panel) -eq 'live|prk|rebirth' -and $prkChoice.Checked) 'Clicking it again restores that feed alongside the others.'
-        @($selectionMenu.Items | Where-Object Name -eq 'clearNewsSources')[0].PerformClick()
-        Assert-Check ((Selected $panel) -eq '' -and !$prkChoice.Checked) 'The Clear menu action deselects every feed and updates its checkmarks.'
-        @($selectionMenu.Items | Where-Object Name -eq 'selectAllNewsSources')[0].PerformClick()
-        Assert-Check ((Selected $panel) -eq 'live|prk|rebirth' -and $prkChoice.Checked) 'The All menu action selects all public feeds.'
-        Assert-Check ($selectionMenu.Visible) 'Changing several choices leaves the source picker open.'
-        Assert-Check ($selectionMenu.Renderer.GetType().Name -eq 'SourceMenuRenderer' -and !$selectionMenu.Renderer.ColorTable.UseSystemColors) 'The checkable picker uses dark application colors.'
-    } finally { if (!$selectionMenu.IsDisposed) { $selectionMenu.Close(); $selectionMenu.Dispose() } }
-    Assert-Check ($null -eq (Field $panel 'selectionMenu')) 'Closing the picker clears its active reference without an exception.'
-    [Windows.Forms.Application]::DoEvents()
-    $picker = Field $panel 'filter'
-    $down = [Windows.Forms.KeyEventArgs]::new([Windows.Forms.Keys]::Down)
-    $picker.GetType().GetMethod('OnKeyDown',$flags).Invoke($picker,[object[]]@($down)) | Out-Null
-    $keyboardMenu = Field $panel 'selectionMenu'
-    try {
-        Assert-Check ($null -ne $keyboardMenu -and $keyboardMenu.Visible -and $down.Handled) 'Down opens the news picker from the keyboard.'
-        $choice = @($keyboardMenu.Items | Where-Object Name -eq 'newsSource-prk')[0]
-        $choice.Select()
-        $space = [Windows.Forms.KeyEventArgs]::new([Windows.Forms.Keys]::Space)
-        $keyboardMenu.GetType().GetMethod('OnKeyDown',$flags).Invoke($keyboardMenu,[object[]]@($space)) | Out-Null
-        Assert-Check ((Selected $panel) -eq 'live|rebirth' -and $space.Handled -and $keyboardMenu.Visible) 'Space toggles the highlighted publisher without closing the picker.'
-        $keyboardMenu.GetType().GetMethod('ProcessDialogKey',$flags).Invoke($keyboardMenu,[object[]]@([Windows.Forms.Keys]::Escape)) | Out-Null
-        Assert-Check ($null -eq (Field $panel 'selectionMenu') -and !$keyboardMenu.Visible) 'Escape safely dismisses the picker.'
-        [Windows.Forms.Application]::DoEvents()
-        Assert-Check ($keyboardMenu.IsDisposed) 'Dismissed picker resources are released after native close completes.'
-    } finally { if ($keyboardMenu -and !$keyboardMenu.IsDisposed) { $keyboardMenu.Close(); $keyboardMenu.Dispose() } }
     $panel.SetServerFilters([string[]]@('prk','rebirth'))
     # Two selected sources open a menu, never a browser. Exercise its real close path too.
     Invoke-Private $panel 'OpenSource' | Out-Null
@@ -213,7 +179,7 @@ try {
     Check-WebsiteItemDismissal $panel $form
     $beforeLanguageEvents = $script:selectionEvents
     Set-Language 'da'; $panel.RefreshLanguage()
-    Assert-Check ((Field $panel 'heading').Text -eq 'TRANSMISSIONER' -and (Field $panel 'refresh').Text -eq 'Opdater') 'News headings and actions translate to Danish.'
+    Assert-Check ((Field $panel 'heading').Text -eq 'SERVERNYHEDER' -and (Field $panel 'refresh').Text -eq 'Opdater') 'News headings and actions translate to Danish.'
     Assert-Check ((Selected $panel) -eq 'prk|rebirth' -and $script:selectionEvents -eq $beforeLanguageEvents) 'Language changes preserve selection without preference events.'
     $panel.RefreshNewsAsync().GetAwaiter().GetResult() | Out-Null
     Assert-Check ((Selected $panel) -eq 'prk|rebirth' -and $script:selectionEvents -eq $beforeLanguageEvents -and (Field $panel 'status').Text -like 'Forhåndsvisning*') 'Manual refresh preserves selection and remains offline.'
@@ -289,9 +255,9 @@ foreach ($language in @('en','da')) {
             if ($scale -gt 1) { $main.Font = [Drawing.Font]::new($main.Font.FontFamily,$main.Font.Size * $scale,$main.Font.Style); $main.Scale([Drawing.SizeF]::new($scale,$scale)) }
             $news = Field $main 'newsPanel'; $news.SetServerFilters([string[]]@('prk','rebirth'))
             Show-Offscreen $main
-            $picker = Field $news 'filter'; $refresh = Field $news 'refresh'
-            Assert-Check ($picker.Visible -and $refresh.Visible) 'Picker and refresh remain visible at minimum size and 150% scale.'
-            Assert-Check ($picker.Parent.ClientRectangle.Contains($picker.Bounds) -and $refresh.Parent.ClientRectangle.Contains($refresh.Bounds)) 'Picker and refresh fit their toolbar.'
+            $refresh = Field $news 'refresh'
+            Assert-Check ($refresh.Visible) 'Refresh remains visible at supported sizes.'
+            Assert-Check ($refresh.Parent.ClientRectangle.Contains($refresh.Bounds)) 'Refresh fits its header.'
             Check-CardWidths $news
             foreach ($card in (Field $news 'cards').Controls) {
                 if ($card.Tag -notlike 'article:*') { continue }
@@ -302,10 +268,6 @@ foreach ($language in @('en','da')) {
                 Assert-Check ($excerpt.Top -gt $title.Bottom -and $excerpt.Top - $title.Bottom -le 12) 'Summary follows the wrapped title with a small gap.'
             }
             Preview $main ('news-multiselect-' + $language + '-' + $scale + '.png')
-            $selectionMenu = Invoke-Private $news 'CreateSelectionMenu'
-            $selectionMenu.Show([Drawing.Point]::new(-32000,-32000)); [Windows.Forms.Application]::DoEvents()
-            Preview $selectionMenu ('news-picker-' + $language + '-' + $scale + '.png')
-            Assert-Check ((Selected $news) -eq 'prk|rebirth') 'Opening the picker does not change the feeds.'
         } finally {
             if ($selectionMenu) { $selectionMenu.Close(); $selectionMenu.Dispose() }
             $main.Dispose()

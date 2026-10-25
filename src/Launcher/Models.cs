@@ -17,6 +17,7 @@ namespace AOLauncher
         public bool HasChosenUpdatePreference { get; set; }
         public bool SkipTrayConfirmation { get; set; }
         public bool SkipQuitConfirmation { get; set; }
+        public int MaxLogSizeMb { get; set; } = 5;
         public string GamePath { get; set; } = string.Empty;
         public string Server { get; set; } = "2.24.96.30";
         public int Port { get; set; } = 7500;
@@ -26,6 +27,9 @@ namespace AOLauncher
         public List<LoginServerProfile> LoginServers { get; set; } = LoginServerProfile.Defaults();
         public List<string> CollapsedServers { get; set; } = new List<string>();
         public List<string> NewsSourceIds { get; set; } = ServerNews.NormalizeSourceIds(null).ToList();
+        public bool ShowServerNews { get; set; } = true;
+        public bool ShowServerHealth { get; set; } = true;
+        public List<string> HealthServerIds { get; set; } = new List<string> { "rebirth", "prk", "live", "live-2019" };
     }
 
     internal sealed class LoginServerProfile

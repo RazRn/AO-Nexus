@@ -14,3 +14,5 @@ Reference: [Microsoft Windows layout guidelines](https://learn.microsoft.com/en-
 
 - Use a dark terminal panel with a readable monospace font for logs. Keep search and detailed reading in a separate window.
 - News dates share the source-name row, right aligned. Measure wrapped headline height and leave a small consistent gap before the summary.
+- Group settings by purpose in dark tabs (General, Accounts, Sidebar, Updates); keep Save/Cancel outside the tab content. Move long privacy documentation into its own readable dialog. Preserve drafts until Save.
+- Optional news and health share sidebar tabs. Remove source selection from the dashboard when it is available in Settings. Health cards must distinguish a local connection check from a public report, include a text state as well as color, and label missing/stale data explicitly.

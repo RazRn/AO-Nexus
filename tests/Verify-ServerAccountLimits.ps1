@@ -410,12 +410,11 @@ try {
         $selectedWord = if ($language -eq 'da') { 'konti valgt' } else { 'accounts selected' }
         Assert ($prk.Text.Contains($selectedWord)) 'Server account ratios must explicitly describe selected accounts rather than character capacity.'
         $charsWord = if ($language -eq 'da') { 'Maks. chars online/konto: 1' } else { 'Max. chars online/account: 1' }
-        $tooltipBindings = $assembly.GetType('AOLauncher.NexusToolTips', $true).GetField('bindings', $static).GetValue($null)
-        $bindingArguments = [object[]]@($tree, $null)
-        $hasBinding = [bool]$tooltipBindings.GetType().GetMethod('TryGetValue').Invoke($tooltipBindings, $bindingArguments)
-        Assert (!$tree.ShowNodeToolTips -and $hasBinding -and $null -ne $bindingArguments[1]) 'Compact server overview must use the attached themed tooltip binding instead of native tooltips.'
-        Assert ($prk.ToolTipText.Contains($charsWord)) 'Compact server overview must expose the separate character limit per account in its tooltip.'
-        Assert ($rebirth.Text.Contains('/∞ ' + $accountWord) -and $rebirth.ToolTipText.Contains($unlimitedWord)) 'Compact server overview must show infinity and explain unlimited in its tooltip.'
+        Assert (!$tree.ShowNodeToolTips -and $null -eq $assembly.GetType('AOLauncher.NexusToolTips')) 'Hover tooltips remain disabled; details provide the explanation.'
+        $tree.SelectedNode=$prk
+        $formType.GetMethod('UpdateSelection',$instance).Invoke($form,@()) | Out-Null
+        Assert ($formType.GetField('detailText',$instance).GetValue($form).Text.Contains($charsWord)) 'Selected server details expose the separate character limit.'
+        Assert ($rebirth.Text.Contains('/∞ ' + $accountWord)) 'Compact server overview shows unlimited accounts.'
         Assert ($prk.ForeColor.ToArgb() -ne $assembly.GetType('AOLauncher.Theme').GetField('Warning').GetValue($null).ToArgb()) 'A selection at the limit must not appear over-limit.'
         $third.Characters[0].Selected = $true
         $formType.GetMethod('RefreshTree', $instance).Invoke($form, [object[]]@($null)) | Out-Null
@@ -482,7 +481,7 @@ foreach ($language in @('en','da')) {
         $slotLine = (Translate 'Default char slots/account: {0}') -f 6
         foreach ($expected in @($accountLine,$charLine,$slotLine)) {
             Assert ($text.Contains($expected)) ('Server details must show this independent limit: ' + $expected)
-            Assert ($serverNode.ToolTipText.Contains($expected)) ('Server tooltip must show this independent limit: ' + $expected)
+            Assert (!$tree.ShowNodeToolTips) 'Server details are available without hover tooltips.'
         }
         Assert (($slotMethod.Invoke($null,[object[]]@($config,'37.18.192.41:7505'))) -eq 6) 'The server slot helper must use the configured six-slot value instead of the endpoint fallback.'
         Assert ((Limit $config '37.18.192.41:7505') -eq 0 -and (CharacterLimit $config '37.18.192.41:7505') -eq 1) 'Showing capacity must not change either login limit.'

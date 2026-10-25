@@ -43,6 +43,8 @@ namespace AOLauncher
             }
         }
         private readonly TextBox log = new TextBox();
+        private int activityLogBytes;
+        private StringBuilder activityLog = new StringBuilder();
         private readonly ComboBox presetPicker = new NexusComboBox();
         private readonly List<Control> editingControls = new List<Control>();
         private Button startButton;
@@ -128,6 +130,8 @@ namespace AOLauncher
             }
 
             foreach (var account in settings.Accounts) AccountTargets.Initialize(settings, account);
+            settings.MaxLogSizeMb = LogRetention.NormalizeMb(settings.MaxLogSizeMb);
+            if (!smoke) UpdateJournal.Configure(settings.MaxLogSizeMb);
             if (smoke) settings.Language = "en";
             Texts.SetLanguage(settings.Language);
             GuiStrings.Register();
@@ -148,6 +152,7 @@ namespace AOLauncher
             InitializeTray();
             Shown += (sender, e) =>
             {
+                if (!smoke) _ = UpdateCleanup.AfterStartup(Application.ExecutablePath);
                 RegisterPresetHotkeys();
                 BeginInvoke((Action)HideCreationCheckboxes);
                 if (startupError != null) NexusMessageBox.Show(this, startupError, T("Could not open settings"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -179,6 +184,16 @@ namespace AOLauncher
         }
 
         private NewsPanel newsPanel;
+        private ServerSidebar serverSidebar;
+        private TableLayoutPanel sidebarLayout;
+
+        private void ConfigureSidebar()
+        {
+            serverSidebar.Configure(settings);
+            bool shown = settings.ShowServerNews || settings.ShowServerHealth;
+            sidebarLayout.ColumnStyles[1].Width = shown ? NexusChrome.Scale(this, 358) : 0;
+            sidebarLayout.Controls[0].Margin = new Padding(0, 0, shown ? NexusChrome.Scale(this, 18) : 0, 0);
+        }
 
         private void InitializeTray()
         {
@@ -327,7 +342,7 @@ namespace AOLauncher
             header.Controls.Add(headerMark);
             header.Controls.Add(new Label { Text = T("YOUR GATEWAY TO RUBI-KA"), Font = new Font("Segoe UI", 8.5F, FontStyle.Bold), ForeColor = Theme.Accent, BackColor = Color.Transparent, Location = new Point(109, 22), Size = new Size(550, 20) });
             header.Controls.Add(new Label { Text = "AO NEXUS", Font = new Font("Segoe UI", 33F, FontStyle.Bold), ForeColor = Theme.Foreground, BackColor = Color.Transparent, Location = new Point(103, 37), Size = new Size(550, 60) });
-            var credit = new Label { Text = T("Based on AOQuickLauncher by never-knows-best & contributors · Customized by Luckyspawn"), UseMnemonic = false, Font = new Font("Segoe UI", 8F), ForeColor = Color.FromArgb(159, 179, 191), BackColor = Color.Transparent, Location = new Point(110, 99), Size = new Size(710, 19) };
+            var credit = new Label { Text = T("Based on AOQuickLauncher by never-knows-best & contributors · Enhanced by Luckyspawn"), UseMnemonic = false, Font = new Font("Segoe UI", 8F), ForeColor = Color.FromArgb(159, 179, 191), BackColor = Color.Transparent, Location = new Point(110, 99), Size = new Size(710, 19) };
             header.Controls.Add(credit);
             var settingsButton = Theme.Button(T("Settings"));
             settingsButton.AutoSize = false;
@@ -353,6 +368,7 @@ namespace AOLauncher
             layout.Controls.Add(header, 0, 0);
 
             var body = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Margin = Padding.Empty, Padding = new Padding(24, 20, 24, 0) };
+            sidebarLayout = body;
             body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 358));
             layout.Controls.Add(body, 0, 1);
@@ -576,14 +592,15 @@ namespace AOLauncher
             logPanel.Controls.Add(logLayout);
             workspace.Controls.Add(logPanel, 0, 2);
 
-            newsPanel = new NewsPanel(smoke) { Dock = DockStyle.Fill, Margin = Padding.Empty };
-            newsPanel.ApplySelectionPreferences(settings.NewsSourceIds);
+            serverSidebar = new ServerSidebar(smoke);
+            newsPanel = serverSidebar.News;
             newsPanel.SelectionPreferencesChanged += (sender, e) =>
             {
                 settings.NewsSourceIds = newsPanel.SelectedSourceIds.ToList();
                 SaveSettings();
             };
-            body.Controls.Add(newsPanel, 1, 0);
+            body.Controls.Add(serverSidebar, 1, 0);
+            ConfigureSidebar();
 
             var footerFrame = new NexusPanel { Dock = DockStyle.Fill, Margin = new Padding(24, 10, 24, 18), Padding = new Padding(14, 10, 10, 10), BackColor = Theme.SurfaceRaised };
             var footer = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 2, Margin = Padding.Empty };
@@ -1354,6 +1371,17 @@ namespace AOLauncher
                 settings.HasChosenUpdatePreference = true;
                 settings.SkipTrayConfirmation = dialog.SkipTrayConfirmation;
                 settings.SkipQuitConfirmation = dialog.SkipQuitConfirmation;
+                settings.MaxLogSizeMb = dialog.MaxLogSizeMb;
+                if (!smoke) UpdateJournal.Configure(settings.MaxLogSizeMb);
+                string retained = LogRetention.Tail(activityLog.ToString(), settings.MaxLogSizeMb * 1024 * 1024);
+                activityLog = new StringBuilder(retained);
+                activityLogBytes = Encoding.UTF8.GetByteCount(retained);
+                log.Text = LogRetention.Tail(retained, 16000);
+                if (logViewer != null && !logViewer.IsDisposed) logViewer.SetLogText(retained);
+                settings.ShowServerNews = dialog.ShowServerNews;
+                settings.ShowServerHealth = dialog.ShowServerHealth;
+                settings.NewsSourceIds = dialog.NewsSourceIds;
+                settings.HealthServerIds = dialog.HealthServerIds;
                 SaveSettings();
                 ApplyLanguage();
                 UpdateSelection();
@@ -1368,7 +1396,7 @@ namespace AOLauncher
             SuspendLayout();
             GuiStrings.Retranslate(this);
             NexusStrings.Retranslate(this);
-            newsPanel?.RefreshLanguage();
+            if (serverSidebar != null) ConfigureSidebar();
             if (logViewer != null && !logViewer.IsDisposed) logViewer.RefreshLanguage();
             RefreshTrayLanguage();
             RefreshPresetPicker();
@@ -1832,7 +1860,7 @@ namespace AOLauncher
             if (logViewer == null || logViewer.IsDisposed)
             {
                 logViewer = new LogViewer();
-                logViewer.SetLogText(log.Text);
+                logViewer.SetLogText(activityLog.ToString());
                 logViewer.Show(this);
             }
             else { if (logViewer.WindowState == FormWindowState.Minimized) logViewer.WindowState = FormWindowState.Normal; logViewer.Activate(); }
@@ -1847,11 +1875,23 @@ namespace AOLauncher
                 catch (InvalidOperationException) { }
                 return;
             }
-            if (log.TextLength > 100000) log.Clear();
-            log.AppendText("[" + DateTime.Now.ToString("HH:mm:ss") + "] " + message + Environment.NewLine);
+            string entry = "[" + DateTime.Now.ToString("HH:mm:ss") + "] " + message + Environment.NewLine;
+            int limit = LogRetention.NormalizeMb(settings.MaxLogSizeMb) * 1024 * 1024;
+            int entryBytes = Encoding.UTF8.GetByteCount(entry);
+            if (activityLogBytes + entryBytes > limit)
+            {
+                string retained = LogRetention.Tail(activityLog.ToString() + entry, limit * 9 / 10);
+                activityLog = new StringBuilder(retained);
+                activityLogBytes = Encoding.UTF8.GetByteCount(retained);
+            }
+            else { activityLog.Append(entry); activityLogBytes += entryBytes; }
+            // The dashboard is a short preview; the searchable window receives the full retained history.
+            string preview = LogRetention.Tail(entry, 16000);
+            if (log.TextLength + preview.Length > 16000) log.Text = LogRetention.Tail(log.Text + preview, 12000);
+            else log.AppendText(preview);
             log.SelectionStart = log.TextLength;
             log.ScrollToCaret();
-            if (logViewer != null && !logViewer.IsDisposed) logViewer.SetLogText(log.Text);
+            if (logViewer != null && !logViewer.IsDisposed) logViewer.SetLogText(activityLog.ToString());
         }
 
         private void OnFormClosing(object sender, FormClosingEventArgs e)

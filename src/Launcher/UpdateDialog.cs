@@ -71,7 +71,7 @@ namespace AOLauncher
             else
             {
                 status.Text = F("Version {0} is available.", release.Version.ToString(3));
-                notes.Text = release.Notes; SaveButton.Text = T("Install and restart");
+                notes.Text = AppUpdates.FormatReleaseNotes(release.Notes); notes.Select(0, 0); SaveButton.Text = T("Install and restart");
                 notesViewport.Visible = true;
                 ClientSize = new Size(ClientSize.Width, (int)(520 * DeviceDpi / 96.0));
             }
@@ -97,18 +97,21 @@ namespace AOLauncher
             if (!canInstall()) { ErrorLabel.Text = T("Finish or stop current launcher activity before installing an update."); return; }
             busy = true; SaveButton.Enabled = false; ErrorLabel.Text = "";
             Record(F("Downloading update {0} from GitHub.", release.Version.ToString(3)));
+            string staged = null;
+            bool handedOff = false;
             try
             {
                 using (var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellation.Token))
                 {
                     timeout.CancelAfter(TimeSpan.FromMinutes(5));
                     var progress = new Progress<int>(percent => { if (!IsDisposed) status.Text = F("Downloading and verifying update… {0}%", percent); });
-                    string staged = await AppUpdates.StageAsync(release, Application.ExecutablePath, timeout.Token, progress);
+                    staged = await AppUpdates.StageAsync(release, Application.ExecutablePath, timeout.Token, progress);
                     cancellation.Token.ThrowIfCancellationRequested();
                     if (IsDisposed) return;
                     if (!canInstall()) throw new InvalidOperationException(T("Finish or stop current launcher activity before installing an update."));
                     Record(T("Update verified. Restarting Nexus to install it."));
                     UpdateInstaller.Start(staged, Application.ExecutablePath);
+                    handedOff = true;
                     Application.Exit();
                 }
             }
@@ -117,7 +120,11 @@ namespace AOLauncher
                 if (cancellation.IsCancellationRequested) UpdateJournal.Record("Update download cancelled.");
                 else { string error = F("Could not install update: {0}", ex.Message); Record(error); if (!IsDisposed) ErrorLabel.Text = error; }
             }
-            finally { busy = false; if (!IsDisposed) SaveButton.Enabled = true; }
+            finally
+            {
+                if (!handedOff && staged != null) UpdateCleanup.RemoveStage(AppUpdates.UpdateRoot, System.IO.Path.GetDirectoryName(staged));
+                busy = false; if (!IsDisposed) SaveButton.Enabled = true;
+            }
         }
         protected override void Dispose(bool disposing) { if (disposing && !IsDisposed) { cancellation.Cancel(); cancellation.Dispose(); } base.Dispose(disposing); }
     }

@@ -13,7 +13,7 @@ namespace AOLauncher
         internal static readonly Color TerminalForeground = Color.FromArgb(151, 211, 166);
         private readonly TextBox search = new NexusTextBox { Dock = DockStyle.Fill, MaxLength = 512, AutoSize = false };
         private readonly TextBox output = new TextBox { Dock = DockStyle.Fill, Multiline = true, ReadOnly = true,
-            ScrollBars = ScrollBars.Vertical, BorderStyle = BorderStyle.None, BackColor = TerminalBackground,
+            ScrollBars = ScrollBars.Both, WordWrap = false, BorderStyle = BorderStyle.None, BackColor = TerminalBackground,
             ForeColor = TerminalForeground, Font = new Font("Consolas", 10F) };
         private readonly CheckBox follow = new NexusCheckBox { AutoSize = true, Checked = true };
         private readonly Label count = new Label { Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, ForeColor = Theme.Muted };

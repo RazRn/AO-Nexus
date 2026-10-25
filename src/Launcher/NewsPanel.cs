@@ -18,7 +18,6 @@ namespace AOLauncher
         private readonly Label heading = new Label();
         private readonly Label subtitle = new Label();
         private readonly Label status = new Label();
-        private readonly Button filter = new Button();
         private readonly Button refresh = new Button();
         private readonly FlowLayoutPanel cards = new FlowLayoutPanel();
         private readonly LinkLabel sourceLink = new LinkLabel();
@@ -32,7 +31,6 @@ namespace AOLauncher
         private bool applyingPreferences;
         private readonly HashSet<string> selectedSources = new HashSet<string>(ServerNews.Sources.Select(source => source.Id), StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<ContextMenuStrip> ownedMenus = new HashSet<ContextMenuStrip>();
-        private ContextMenuStrip selectionMenu;
 
         public event EventHandler SelectionPreferencesChanged;
         public string[] SelectedSourceIds => ServerNews.Sources.Select(source => source.Id).Concat(new[] { "custom" }).Where(selectedSources.Contains).ToArray();
@@ -46,10 +44,9 @@ namespace AOLauncher
             Font = new Font("Segoe UI", 9F);
             Padding = new Padding(16, 14, 16, 10);
             Name = "serverNewsPanel";
-            var layout = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 6, ColumnCount = 1, Margin = Padding.Empty, Padding = Padding.Empty, BackColor = BackColor };
+            var layout = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 5, ColumnCount = 1, Margin = Padding.Empty, Padding = Padding.Empty, BackColor = BackColor };
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 27));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 23));
@@ -59,18 +56,9 @@ namespace AOLauncher
             var header = new TableLayoutPanel { Name = "newsHeader", Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Margin = Padding.Empty, Padding = new Padding(0, 0, 0, 4) };
             header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 78));
-            var toolbar = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, Margin = Padding.Empty, Padding = new Padding(0, 0, 0, 5) };
-            toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            filter.Dock = DockStyle.Fill; filter.FlatStyle = FlatStyle.Flat; filter.FlatAppearance.BorderColor = Theme.Border;
-            filter.BackColor = Theme.SurfaceRaised; filter.ForeColor = Theme.Foreground; filter.Margin = Padding.Empty; filter.Name = "newsSourceFilter";
-            filter.TextAlign = ContentAlignment.MiddleLeft; filter.Padding = new Padding(8, 0, 5, 0); filter.AutoEllipsis = true;
-            filter.Cursor = Cursors.Hand; filter.AccessibleRole = AccessibleRole.ButtonDropDown;
-            filter.Click += (sender, args) => OpenSelectionMenu();
-            filter.KeyDown += (sender, args) => { if (args.KeyCode == Keys.Down) { args.Handled = true; args.SuppressKeyPress = true; OpenSelectionMenu(); } };
             refresh.Dock = DockStyle.Fill; refresh.FlatStyle = FlatStyle.Flat; refresh.FlatAppearance.BorderColor = Theme.Border;
             refresh.BackColor = Theme.SurfaceRaised; refresh.ForeColor = Theme.Accent; refresh.Margin = Padding.Empty; refresh.Cursor = Cursors.Hand; refresh.Name = "refreshNews";
             refresh.Click += async (sender, args) => await RefreshNewsAsync();
-            toolbar.Controls.Add(filter, 0, 0);
             header.Controls.Add(heading, 0, 0); header.Controls.Add(refresh, 1, 0);
             cards.Dock = DockStyle.Fill; cards.AutoScroll = true; cards.FlowDirection = FlowDirection.TopDown; cards.WrapContents = false;
             cards.Margin = Padding.Empty; cards.Padding = Padding.Empty; cards.BackColor = Theme.Surface; cards.Name = "newsCards";
@@ -78,53 +66,46 @@ namespace AOLauncher
             status.Dock = DockStyle.Fill; status.ForeColor = Theme.Muted; status.TextAlign = ContentAlignment.MiddleLeft; status.Margin = new Padding(0, 3, 0, 0);
             sourceLink.Dock = DockStyle.Fill; sourceLink.LinkColor = Theme.Accent; sourceLink.ActiveLinkColor = Theme.Amber; sourceLink.VisitedLinkColor = Theme.Accent;
             sourceLink.Margin = Padding.Empty; sourceLink.TextAlign = ContentAlignment.MiddleLeft; sourceLink.LinkClicked += (sender, args) => OpenSource();
-            layout.Controls.Add(header, 0, 0); layout.Controls.Add(subtitle, 0, 1); layout.Controls.Add(toolbar, 0, 2);
-            layout.Controls.Add(SlimScrolling.Wrap(cards), 0, 3); layout.Controls.Add(status, 0, 4); layout.Controls.Add(sourceLink, 0, 5);
+            layout.Controls.Add(header, 0, 0); layout.Controls.Add(subtitle, 0, 1);
+            layout.Controls.Add(SlimScrolling.Wrap(cards), 0, 2); layout.Controls.Add(status, 0, 3); layout.Controls.Add(sourceLink, 0, 4);
             Controls.Add(layout);
             automaticRefresh.Interval = 15 * 60 * 1000;
             automaticRefresh.Tick += async (sender, args) => await RefreshNewsAsync();
             RefreshLanguage();
-            Load += async (sender, args) =>
-            {
-                if (started || offlinePreview) return;
-                started = true;
-                // Read cache away from the UI thread, then replace it with independently fetched sources.
-                try
-                {
-                    var cached = await Task.Run(() => ServerNews.Sources.Select(source => ServerNews.ReadCache(source, ServerNews.CacheDirectory)).ToArray(), lifetime.Token);
-                    if (IsDisposed || lifetime.IsCancellationRequested) return;
-                    snapshots = cached;
-                    Render();
-                    await RefreshNewsAsync();
-                    if (!IsDisposed) automaticRefresh.Start();
-                }
-                catch (OperationCanceledException) { }
-            };
+            Load += (sender, e) => ActivityChanged();
+            VisibleChanged += (sender, e) => ActivityChanged();
         }
 
+        private CancellationTokenSource refreshCancellation;
+        private DateTime lastRefreshUtc = DateTime.MinValue;
+        private void ActivityChanged()
+        {
+            if (!Visible) { automaticRefresh.Stop(); refreshCancellation?.Cancel(); return; }
+            if (offlinePreview || !IsHandleCreated || IsDisposed) return;
+            started = true; automaticRefresh.Start();
+            if (DateTime.UtcNow - lastRefreshUtc >= TimeSpan.FromMinutes(15)) _ = RefreshNewsAsync();
+        }
         private static string L(string english, string danish) => Texts.CurrentLanguage == "da" ? danish : english;
         private static CultureInfo Culture => CultureInfo.GetCultureInfo(Texts.CurrentLanguage == "da" ? "da-DK" : "en-GB");
 
         public void RefreshLanguage()
         {
-            heading.Text = L("TRANSMISSIONS", "TRANSMISSIONER");
+            heading.Text = L("SERVER NEWS", "SERVERNYHEDER");
             subtitle.Text = L("News from the official server websites", "Nyheder fra servernes officielle hjemmesider");
             refresh.Text = L("Refresh", "Opdater");
             refresh.AccessibleName = L("Refresh server news", "Opdater servernyheder");
-            filter.AccessibleName = L("Choose news sources", "Vælg nyhedskilder");
-            if (selectionMenu != null) selectionMenu.Close();
-            UpdateFilterCaption();
             Render();
         }
 
         public void ApplySelectionPreferences(IEnumerable<string> sourceIds)
         {
+            var normalized = ServerNews.NormalizeSourceIds(sourceIds);
+            if (!selectedSources.SetEquals(normalized)) { refreshCancellation?.Cancel(); lastRefreshUtc = DateTime.MinValue; }
             applyingPreferences = true;
             try
             {
                 selectedSources.Clear();
-                selectedSources.UnionWith(ServerNews.NormalizeSourceIds(sourceIds));
-                UpdateFilterCaption();
+                selectedSources.UnionWith(normalized);
                 Render();
             }
             finally { applyingPreferences = false; }
@@ -135,7 +116,6 @@ namespace AOLauncher
             var values = ServerNews.NormalizeSourceIds(sourceIds);
             if (selectedSources.SetEquals(values)) return;
             selectedSources.Clear(); selectedSources.UnionWith(values);
-            UpdateFilterCaption();
             Render();
             if (!applyingPreferences) SelectionPreferencesChanged?.Invoke(this, EventArgs.Empty);
             if (started && !offlinePreview && ServerNews.Sources.Any(source => selectedSources.Contains(source.Id) &&
@@ -151,35 +131,27 @@ namespace AOLauncher
             SetServerFilters(new[] { ServerNews.Sources.Any(source => source.Id == id) ? id : "custom" });
         }
 
-        private void UpdateFilterCaption()
-        {
-            var selected = ServerNews.Sources.Where(source => selectedSources.Contains(source.Id)).ToArray();
-            bool custom = selectedSources.Contains("custom");
-            string text;
-            if (selected.Length == 0) text = custom ? L("Local / custom server", "Lokal / tilpasset server") : L("No sources selected", "Ingen kilder valgt");
-            else if (selected.Length == ServerNews.Sources.Length && !custom) text = L("All news sources", "Alle nyhedskilder");
-            else text = string.Join(" + ", selected.Select(source => source.Id == "prk" ? "PRK" : source.Name)) + (custom ? L(" + custom", " + tilpasset") : "");
-            filter.Text = text + "  ▾";
-            filter.AccessibleDescription = string.Join(", ", selected.Select(source => source.Name).Concat(custom ? new[] { L("Local / custom server", "Lokal / tilpasset server") } : new string[0]));
-            if (selectionMenu != null) UpdateMenuChecks(selectionMenu);
-        }
-
         public async Task RefreshNewsAsync()
         {
-            if (refreshing || IsDisposed || lifetime.IsCancellationRequested) return;
+            if (refreshing || IsDisposed || lifetime.IsCancellationRequested || !Visible) return;
             if (offlinePreview || !ServerNews.Sources.Any(source => selectedSources.Contains(source.Id))) { Render(); return; }
             refreshing = true;
+            var cancellation = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
+            refreshCancellation = cancellation;
             refresh.Enabled = false;
             UpdateStatus();
             try
             {
-                snapshots = await ServerNews.RefreshAsync(lifetime.Token);
+                snapshots = await Task.WhenAll(ServerNews.Sources.Where(source => selectedSources.Contains(source.Id)).Select(source => ServerNews.FetchAsync(source, ServerNews.CacheDirectory, cancellation.Token)));
+                lastRefreshUtc = DateTime.UtcNow;
                 if (!IsDisposed && !lifetime.IsCancellationRequested) Render();
             }
             catch (OperationCanceledException) { }
             finally
             {
                 refreshing = false;
+                if (ReferenceEquals(refreshCancellation, cancellation)) refreshCancellation = null;
+                cancellation.Dispose();
                 if (!IsDisposed && !lifetime.IsCancellationRequested) { refresh.Enabled = ServerNews.Sources.Any(source => selectedSources.Contains(source.Id)); UpdateStatus(); }
             }
         }
@@ -194,7 +166,7 @@ namespace AOLauncher
             var visible = snapshots.Where(snapshot => selectedSources.Contains(snapshot.SourceId)).ToList();
             if (selectedSources.Count == 0)
             {
-                AddMessage(L("No news sources selected", "Ingen nyhedskilder valgt"), L("Choose one or more sources from the menu above to show their news here. Your selection is saved automatically.", "Vælg en eller flere kilder i menuen ovenfor for at vise deres nyheder her. Dit valg gemmes automatisk."));
+                AddMessage(L("No news sources selected", "Ingen nyhedskilder valgt"), L("Choose news sources in Settings → Sidebar.", "Vælg nyhedskilder i Indstillinger → Sidepanel."));
             }
             else if (selected.Length > 0)
             {
@@ -211,7 +183,7 @@ namespace AOLauncher
                 if (cards.Controls.Count == 0) AddMessage(L("Connecting to Rubi-Ka", "Forbinder til Rubi-Ka"), L("Fetching the latest published articles. You can use the launcher while news loads.", "Henter de senest udgivne artikler. Du kan bruge launcheren, mens nyhederne hentes."));
             }
             if (selectedSources.Contains("custom"))
-                AddMessage(L("Your own corner of Rubi-Ka", "Dit eget hjørne af Rubi-Ka"), L("Local and custom servers do not have a public news source configured. Choose one of the supported server feeds above.", "Lokale og tilpassede servere har ingen offentlig nyhedskilde konfigureret. Vælg en af servernes nyhedskilder ovenfor."));
+                AddMessage(L("Your own corner of Rubi-Ka", "Dit eget hjørne af Rubi-Ka"), L("Local and custom servers do not have a public news source configured. Choose sources in Settings → Sidebar.", "Lokale og tilpassede servere har ingen offentlig nyhedskilde konfigureret. Vælg kilder i Indstillinger → Sidepanel."));
             sourceLink.Visible = selected.Length > 0;
             sourceLink.Text = selected.Length > 1 ? L("Open server websites  ↗", "Åbn servernes hjemmesider  ↗") : L("Visit official news  ↗", "Besøg officielle nyheder  ↗");
             refresh.Enabled = !refreshing && selected.Length > 0;
@@ -322,70 +294,6 @@ namespace AOLauncher
             else status.Text = sourceCount + L(" · Updated ", " · Opdateret ") + last.ToLocalTime().ToString("d MMM · HH:mm", Culture) + L(" · every 15 min", " · hvert 15. min");
         }
 
-        private void OpenSelectionMenu()
-        {
-            if (selectionMenu != null) { selectionMenu.Close(); return; }
-            var menu = CreateSelectionMenu();
-            selectionMenu = menu;
-            menu.Closed += (sender, args) =>
-            {
-                if (ReferenceEquals(selectionMenu, menu)) selectionMenu = null;
-                QueueMenuDisposal(menu);
-            };
-            menu.Show(filter, new Point(0, filter.Height));
-        }
-
-        private ContextMenuStrip CreateSelectionMenu()
-        {
-            var menu = NewSourceMenu(true);
-            menu.Name = "newsSourceMenu";
-            foreach (var source in ServerNews.Sources) AddSourceChoice(menu, source.Id, source.Name);
-            AddSourceChoice(menu, "custom", L("Local / custom server", "Lokal / tilpasset server"));
-            menu.Items.Add(new ToolStripSeparator());
-            var all = NewMenuItem(L("Select all news sources", "Vælg alle nyhedskilder"));
-            all.Name = "selectAllNewsSources";
-            all.Click += (sender, args) => { SetServerFilters(null); UpdateMenuChecks(menu); };
-            menu.Items.Add(all);
-            var none = NewMenuItem(L("Clear selection", "Fravælg alle"));
-            none.Name = "clearNewsSources";
-            none.Click += (sender, args) => { SetServerFilters(new string[0]); UpdateMenuChecks(menu); };
-            menu.Items.Add(none);
-            // Check and convenience actions keep the popup open, so choosing several
-            // feeds needs one interaction. Escape and clicks elsewhere still close it.
-            menu.Closing += (sender, args) => { if (args.CloseReason == ToolStripDropDownCloseReason.ItemClicked) args.Cancel = true; };
-            menu.KeyDown += (sender, args) =>
-            {
-                if (args.KeyCode != Keys.Space) return;
-                var selected = menu.Items.OfType<ToolStripMenuItem>().FirstOrDefault(item => item.Selected);
-                if (selected == null) return;
-                selected.PerformClick();
-                args.Handled = true; args.SuppressKeyPress = true;
-            };
-            return menu;
-        }
-
-        private void AddSourceChoice(ContextMenuStrip menu, string id, string label)
-        {
-            var item = NewMenuItem(label);
-            item.Name = "newsSource-" + id;
-            item.Tag = id;
-            item.Checked = selectedSources.Contains(id);
-            item.Click += (sender, args) =>
-            {
-                var updated = new HashSet<string>(selectedSources, StringComparer.OrdinalIgnoreCase);
-                if (!updated.Remove(id)) updated.Add(id);
-                SetServerFilters(updated);
-                UpdateMenuChecks(menu);
-            };
-            menu.Items.Add(item);
-        }
-
-        private void UpdateMenuChecks(ContextMenuStrip menu)
-        {
-            foreach (ToolStripMenuItem item in menu.Items.OfType<ToolStripMenuItem>())
-                if (item.Tag is string id) item.Checked = selectedSources.Contains(id);
-        }
-
         private void OpenSource()
         {
             var selected = ServerNews.Sources.Where(source => selectedSources.Contains(source.Id)).ToArray();
@@ -423,7 +331,7 @@ namespace AOLauncher
                 ShowImageMargin = false,
                 ShowCheckMargin = checkable,
                 Padding = new Padding(4),
-                MinimumSize = new Size(Math.Max(210, checkable ? filter.Width : 0), 0),
+                MinimumSize = new Size(210, 0),
                 Renderer = new SourceMenuRenderer()
             };
             ownedMenus.Add(menu);
@@ -525,7 +433,6 @@ namespace AOLauncher
             if (disposing && !resourcesDisposed)
             {
                 lifetime.Cancel(); automaticRefresh.Stop(); automaticRefresh.Dispose();
-                selectionMenu = null;
                 foreach (var menu in ownedMenus.ToArray()) menu.Dispose();
             }
             base.Dispose(disposing);
