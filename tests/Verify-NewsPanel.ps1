@@ -221,7 +221,7 @@ try {
     foreach ($snapshot in (Field $panel 'snapshots')) { $snapshot.IsCached = $true; $snapshot.Unavailable = $true }
     Invoke-Private $panel 'Render' | Out-Null
     $liveCard = @($cards.Controls | Where-Object { $_.Tag -eq 'article:live' })[0]
-    Assert-Check (@($liveCard.Controls | Where-Object { $_.Text -like 'Latest saved article*' }).Count -eq 1) 'Cached news does not claim that no newer article exists.'
+    Assert-Check (@($liveCard.Controls | Where-Object { $_.Text -like '*Latest saved article*' }).Count -eq 1) 'Cached news does not claim that no newer article exists.'
     Check-CardWidths $panel
     $form.ClientSize = [Drawing.Size]::new(300,500); Layout $form; Check-CardWidths $panel
 } finally { $form.Dispose() }
@@ -293,6 +293,14 @@ foreach ($language in @('en','da')) {
             Assert-Check ($picker.Visible -and $refresh.Visible) 'Picker and refresh remain visible at minimum size and 150% scale.'
             Assert-Check ($picker.Parent.ClientRectangle.Contains($picker.Bounds) -and $refresh.Parent.ClientRectangle.Contains($refresh.Bounds)) 'Picker and refresh fit their toolbar.'
             Check-CardWidths $news
+            foreach ($card in (Field $news 'cards').Controls) {
+                if ($card.Tag -notlike 'article:*') { continue }
+                $source = $card.Controls['articleSource']; $date = $card.Controls['articleDate']
+                $title = $card.Controls['articleTitle']; $excerpt = $card.Controls['articleExcerpt']
+                Assert-Check ($source.Top -eq $date.Top -and $source.Right -lt $date.Left) 'News source and date share a row without overlap.'
+                Assert-Check ($date.Right -eq $title.Right -and $title.Right -eq $excerpt.Right) 'Date is right aligned with the text inset.'
+                Assert-Check ($excerpt.Top -gt $title.Bottom -and $excerpt.Top - $title.Bottom -le 12) 'Summary follows the wrapped title with a small gap.'
+            }
             Preview $main ('news-multiselect-' + $language + '-' + $scale + '.png')
             $selectionMenu = Invoke-Private $news 'CreateSelectionMenu'
             $selectionMenu.Show([Drawing.Point]::new(-32000,-32000)); [Windows.Forms.Application]::DoEvents()

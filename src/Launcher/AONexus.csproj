@@ -60,6 +60,9 @@
     <Compile Include="GuiStrings.cs" />
     <Compile Include="AppArtwork.cs" />
     <Compile Include="Dialogs.cs" />
+    <Compile Include="LogViewer.cs" />
+    <Compile Include="AppUpdates.cs" />
+    <Compile Include="UpdateDialog.cs" />
     <Compile Include="MainForm.cs" />
     <Compile Include="CredentialStore.cs" />
     <Compile Include="AccountPasswords.cs" />

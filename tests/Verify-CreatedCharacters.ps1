@@ -207,13 +207,13 @@ try {
     Set-Field $main 'backendRunner' $second
     Set-Field $main 'preparationCancellation' $secondPreparation
     Call-Instance $main 'SetRunning' ([object[]]@($true)) | Out-Null
-    $status = (Get-Field $main 'statusLabel').Text
+    $status = (Get-Field $main 'statusText')
     Call-Instance $main 'HandleOperationLine' ([object[]]@($startedLine, $fixture.Request, $first, $true)) | Out-Null
     Assert ([object]::ReferenceEquals((Get-Field $main 'backendRunner'), $second) -and (Get-Field $main 'running') -and [object]::ReferenceEquals((Get-Field $main 'preparationCancellation'), $secondPreparation)) 'A delayed old creation-start event must not detach a newer foreground login.'
     $createdLine = 'AOQL_CHARACTER ' + $serializer.Serialize((Notice $fixture))
     Call-Instance $main 'HandleOperationLine' ([object[]]@($createdLine, $fixture.Request, $first, $true)) | Out-Null
     Assert ($fixture.Account.Characters.Count -eq 1 -and !(Get-Field $main 'log').Text.Contains('synthetic-password-only')) 'A background creation result must update the list without logging credentials.'
-    Assert ([object]::ReferenceEquals((Get-Field $main 'backendRunner'), $second) -and (Get-Field $main 'running') -and (Get-Field $main 'statusLabel').Text -ceq $status) 'A background creation result must preserve a newer foreground login and its status.'
+    Assert ([object]::ReferenceEquals((Get-Field $main 'backendRunner'), $second) -and (Get-Field $main 'running') -and (Get-Field $main 'statusText') -ceq $status) 'A background creation result must preserve a newer foreground login and its status.'
     Assert (!$fixture.Account.Characters[0].Selected -and $fixture.Settings.Presets.Count -eq 0) 'The real event handler must keep the discovered char unselected and preserve teams.'
 
     $event = [Windows.Forms.FormClosingEventArgs]::new([Windows.Forms.CloseReason]::UserClosing, $false)

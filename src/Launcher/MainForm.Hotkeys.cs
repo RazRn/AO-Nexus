@@ -11,83 +11,43 @@ namespace AOLauncher
 {
     internal sealed partial class MainForm
     {
-        private HotkeyCapture startHotkeyField, campHotkeyField;
-        private Label hotkeyHelp;
+        private bool editingPreset;
         private bool shortcutActionBusy;
         private int nextHotkeyId = 0x1000;
         private readonly Dictionary<int, Tuple<string, bool>> registeredHotkeys = new Dictionary<int, Tuple<string, bool>>();
         private readonly Dictionary<string, string> hotkeyFailures = new Dictionary<string, string>();
 
-        private Control BuildPresetHotkeys()
+        private void RefreshHotkeyStatus()
         {
-            var panel = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 4, RowCount = 2, Margin = Padding.Empty };
-            panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
-            panel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            panel.Controls.Add(new Label { Text = T("Start shortcut"), AutoSize = true, ForeColor = Theme.Muted, Margin = new Padding(0, 7, 8, 0) }, 0, 0);
-            panel.Controls.Add(new Label { Text = T("Logout shortcut"), AutoSize = true, ForeColor = Theme.Muted, Margin = new Padding(12, 7, 8, 0) }, 2, 0);
-            startHotkeyField = new HotkeyCapture { Name = "presetStartHotkey", Dock = DockStyle.Fill, Margin = new Padding(0, 0, 0, 2), AccessibleName = T("Start shortcut") };
-            campHotkeyField = new HotkeyCapture { Name = "presetCampHotkey", Dock = DockStyle.Fill, Margin = new Padding(0, 0, 0, 2), AccessibleName = T("Logout shortcut") };
-            hotkeyHelp = new Label { Dock = DockStyle.Fill, ForeColor = Theme.Muted, AutoEllipsis = true, Font = new Font("Segoe UI", 8F), Margin = Padding.Empty };
-            panel.Controls.Add(startHotkeyField, 1, 0); panel.Controls.Add(campHotkeyField, 3, 0);
-            panel.Controls.Add(hotkeyHelp, 0, 1); panel.SetColumnSpan(hotkeyHelp, 4);
-            startHotkeyField.Commit = value => SaveHotkey(false, value);
-            campHotkeyField.Commit = value => SaveHotkey(true, value);
-            foreach (var field in new[] { startHotkeyField, campHotkeyField })
-            {
-                field.Error = error => { hotkeyHelp.Text = error; hotkeyHelp.ForeColor = Theme.Amber; };
-                field.CaptureChanged = () => { RegisterPresetHotkeys(); RefreshHotkeyFields(); };
-                editingControls.Add(field);
-            }
-            return panel;
-        }
-
-        private void RefreshHotkeyFields()
-        {
-            if (startHotkeyField == null) return;
-            var preset = CurrentPreset;
-            startHotkeyField.Enabled = campHotkeyField.Enabled = preset != null && !running && !shortcutActionBusy;
-            startHotkeyField.Binding = preset?.StartHotkey;
-            campHotkeyField.Binding = preset?.CampHotkey;
-            startHotkeyField.RefreshText(); campHotkeyField.RefreshText();
             string error;
-            bool failed = preset != null && hotkeyFailures.TryGetValue(preset.Id, out error);
-            hotkeyHelp.Text = failed ? hotkeyFailures[preset.Id] : T("Saved per preset · Ctrl/Alt + key · Delete clears · Esc cancels · Logout uses /quit.");
-            hotkeyHelp.ForeColor = failed ? Theme.Amber : Theme.Muted;
+            if (CurrentPreset != null && hotkeyFailures.TryGetValue(CurrentPreset.Id, out error))
+            {
+                presetStatus.Text = error;
+                presetStatus.ForeColor = Theme.Amber;
+            }
         }
 
-        private string SaveHotkey(bool camp, HotkeyBinding value)
+        private string ValidatePresetHotkeys(LaunchPreset preset, HotkeyBinding start, HotkeyBinding logout)
         {
-            var preset = CurrentPreset;
-            if (preset == null || running || storageBlocked) return T("Select a saved preset first.");
-            if (value != null && !value.IsValid) return T("This shortcut is not supported.");
-            foreach (var other in settings.Presets)
+            if (start != null && !start.IsValid || logout != null && !logout.IsValid)
+                return T("This shortcut is not supported.");
+            if (start != null && start.SameAs(logout)) return T("Start and logout need different shortcuts.");
+            foreach (var value in new[] { start, logout })
             {
-                if ((!ReferenceEquals(preset, other) || camp) && value != null && value.SameAs(other.StartHotkey)
-                    || (!ReferenceEquals(preset, other) || !camp) && value != null && value.SameAs(other.CampHotkey))
-                    return F("Shortcut already used by preset “{0}”.", other.Name);
-            }
-            // Capture suspends our registrations. Probe Windows before saving; no binding is replaced on failure.
-            if (!smoke && value != null)
-            {
-                if (!RegisterHotKey(Handle, 0xBFFF, value.Modifiers | 0x4000u, (uint)value.Key))
-                    return T("This shortcut is reserved or already used by another app.");
-                UnregisterHotKey(Handle, 0xBFFF);
-            }
-            var old = camp ? preset.CampHotkey : preset.StartHotkey;
-            if (camp) preset.CampHotkey = value; else preset.StartHotkey = value;
-            try { if (!smoke) SettingsStore.Save(settings); }
-            catch (Exception ex)
-            {
-                if (camp) preset.CampHotkey = old; else preset.StartHotkey = old;
-                return F("Could not save settings: {0}", ex.Message);
+                if (value == null) continue;
+                foreach (var other in settings.Presets.Where(item => !ReferenceEquals(item, preset)))
+                    if (value.SameAs(other.StartHotkey) || value.SameAs(other.CampHotkey))
+                        return F("Shortcut already used by preset “{0}”.", other.Name);
+                // Our registrations are suspended for the entire modal editor.
+                if (!smoke)
+                {
+                    if (!RegisterHotKey(Handle, 0xBFFF, value.Modifiers | 0x4000u, (uint)value.Key))
+                        return T("This shortcut is reserved or already used by another app.");
+                    UnregisterHotKey(Handle, 0xBFFF);
+                }
             }
             return null;
         }
-
         private void UnregisterPresetHotkeys()
         {
             if (IsHandleCreated) foreach (int id in registeredHotkeys.Keys) UnregisterHotKey(Handle, id);
@@ -96,7 +56,7 @@ namespace AOLauncher
         private void RegisterPresetHotkeys()
         {
             UnregisterPresetHotkeys(); hotkeyFailures.Clear();
-            if (smoke || closing || !IsHandleCreated || startHotkeyField?.Capturing == true || campHotkeyField?.Capturing == true) return;
+            if (smoke || closing || !IsHandleCreated || editingPreset) return;
             foreach (var preset in settings.Presets)
                 for (int action = 0; action < 2; action++)
                 {
@@ -111,7 +71,7 @@ namespace AOLauncher
                     }
                     else registeredHotkeys.Add(id, Tuple.Create(preset.Id, action == 1));
                 }
-            RefreshHotkeyFields();
+            RefreshHotkeyStatus();
         }
         protected override void OnHandleDestroyed(EventArgs e) { UnregisterPresetHotkeys(); base.OnHandleDestroyed(e); }
         protected override void WndProc(ref Message m)
@@ -120,7 +80,7 @@ namespace AOLauncher
             if (m.Msg == 0x0312 && registeredHotkeys.TryGetValue(m.WParam.ToInt32(), out action))
             {
                 if (!shortcutActionBusy && !running && !closing && Enabled
-                    && !OwnedForms.Any(form => form.Visible) && startHotkeyField?.Capturing != true && campHotkeyField?.Capturing != true)
+                    && !OwnedForms.Any(form => form.Visible && !(form is LogViewer)) && !editingPreset)
                 {
                     shortcutActionBusy = true; // Before BeginInvoke: suppress queued repeats and modal reentrancy.
                     BeginInvoke((Action)(async () => await InvokePresetShortcut(action.Item1, action.Item2)));
@@ -147,7 +107,7 @@ namespace AOLauncher
                 }
             }
             catch (Exception ex) { if (!closing) ShowInfo(ex.Message); }
-            finally { shortcutActionBusy = false; if (!closing) RefreshHotkeyFields(); }
+            finally { shortcutActionBusy = false; if (!closing) RefreshHotkeyStatus(); }
         }
         private async Task CampPreset(LaunchPreset preset)
         {

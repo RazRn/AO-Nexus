@@ -224,11 +224,11 @@ namespace AOLauncher
         {
             var source = ServerNews.Sources.First(item => item.Id == article.SourceId);
             var card = NewCard();
-            var sourceLabel = new Label { Text = source.Name.ToUpperInvariant(), UseMnemonic = false, ForeColor = SourceColor(source.Id), AutoEllipsis = true, Location = new Point(12, 12), Height = 18, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
+            var sourceLabel = new Label { Name = "articleSource", Text = source.Name.ToUpperInvariant(), UseMnemonic = false, ForeColor = SourceColor(source.Id), AutoEllipsis = true };
             var title = new LinkLabel { Text = article.Title, UseMnemonic = false, LinkBehavior = LinkBehavior.HoverUnderline, Font = titleFont, LinkColor = Theme.Foreground, ActiveLinkColor = Theme.Accent, VisitedLinkColor = Theme.Foreground, Location = new Point(12, 36), Height = 53, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
             title.LinkClicked += (sender, args) => OpenUrl(source, article.Url);
             string date = article.PublishedUtc.HasValue ? article.PublishedUtc.Value.ToString("d MMM yyyy", Culture) : L("Date not supplied", "Dato ikke oplyst");
-            var publication = new Label { Text = date + (snapshot.IsCached ? L("  ·  cached", "  ·  gemt kopi") : ""), ForeColor = Theme.Muted, Location = new Point(12, 90), Height = 18, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
+            var publication = new Label { Name = "articleDate", Text = date, ForeColor = Theme.Muted, TextAlign = ContentAlignment.TopRight, AutoEllipsis = true };
             string summary = article.Summary;
             bool older = article.PublishedUtc.HasValue && article.PublishedUtc.Value < DateTime.UtcNow.AddMonths(-6);
             if (older && ReferenceEquals(article, snapshot.Articles.FirstOrDefault()))
@@ -236,9 +236,11 @@ namespace AOLauncher
                     ? L("Latest saved article. Check the official website for newer updates.", "Senest gemte artikel. Tjek den officielle hjemmeside for nyere opdateringer.")
                     : L("Latest published here. This source has not posted a newer article.", "Senest udgivet her. Denne kilde har ikke offentliggjort en nyere artikel.");
             if (string.IsNullOrWhiteSpace(summary)) summary = L("Read the full announcement on the official website.", "Læs hele meddelelsen på den officielle hjemmeside.");
+            if (snapshot.IsCached) summary = L("Cached · ", "Gemt kopi · ") + summary;
             var excerpt = new Label { Text = summary, UseMnemonic = false, ForeColor = Theme.Muted, Location = new Point(12, 114), Height = 49, AutoEllipsis = true, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
             card.Controls.Add(sourceLabel); card.Controls.Add(title); card.Controls.Add(publication); card.Controls.Add(excerpt);
-            card.Height = 177;
+            title.Name = "articleTitle"; title.AutoEllipsis = true;
+            excerpt.Name = "articleExcerpt";
             card.Tag = "article:" + source.Id;
             cards.Controls.Add(card);
         }
@@ -274,8 +276,30 @@ namespace AOLauncher
             foreach (Control card in cards.Controls)
             {
                 card.Width = width;
-                foreach (Control child in card.Controls) child.Width = Math.Max(60, width - 24);
+                if (card.Tag is string tag && tag.StartsWith("article:", StringComparison.Ordinal)) LayoutArticle(card);
+                else foreach (Control child in card.Controls) child.Width = Math.Max(60, width - 24);
             }
+        }
+
+        private void LayoutArticle(Control card)
+        {
+            int inset = NexusChrome.Scale(this, 12), gap = NexusChrome.Scale(this, 6);
+            int width = Math.Max(40, card.Width - inset * 2);
+            var source = card.Controls["articleSource"];
+            var date = card.Controls["articleDate"];
+            var title = card.Controls["articleTitle"];
+            var excerpt = card.Controls["articleExcerpt"];
+            int headerHeight = Math.Max(source.Font.Height, date.Font.Height) + 2;
+            int dateWidth = Math.Min(width / 2, TextRenderer.MeasureText(date.Text, date.Font).Width + 2);
+            source.SetBounds(inset, inset, Math.Max(1, width - dateWidth - gap), headerHeight);
+            date.SetBounds(card.Width - inset - dateWidth, inset, dateWidth, headerHeight);
+            int titleHeight = Math.Min(title.Font.Height * 3, TextRenderer.MeasureText(title.Text, title.Font,
+                new Size(width, int.MaxValue), TextFormatFlags.WordBreak | TextFormatFlags.NoPrefix).Height);
+            title.SetBounds(inset, source.Bottom + gap, width, titleHeight);
+            int excerptHeight = Math.Min(excerpt.Font.Height * 3, TextRenderer.MeasureText(excerpt.Text, excerpt.Font,
+                new Size(width, int.MaxValue), TextFormatFlags.WordBreak | TextFormatFlags.NoPrefix).Height);
+            excerpt.SetBounds(inset, title.Bottom + gap, width, excerptHeight);
+            card.Height = excerpt.Bottom + inset;
         }
 
         private void UpdateStatus()

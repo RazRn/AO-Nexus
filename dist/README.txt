@@ -1,4 +1,4 @@
-AO NEXUS 1.0.17
+AO NEXUS 1.0.18
 Based on AOQuickLauncher by never-knows-best and contributors.
 Customized by Luckyspawn.
 
@@ -25,8 +25,8 @@ After moving the EXE, open it from the new location and Save Settings again to
 update the startup path. Windows Task Manager can also disable startup apps.
 
 PRESET SHORTCUTS
-Select a saved preset. Click Start shortcut or Logout shortcut and press your
-combination (for example Ctrl+Alt+F6 and Ctrl+Alt+F7). It is saved automatically.
+Under Team presets choose Save new or Edit. Click Start shortcut or Logout shortcut and press your
+combination (for example Ctrl+Alt+F6 and Ctrl+Alt+F7), then Save. Cancel discards edits.
 Click a field and press Delete/Backspace to clear it, or Esc to cancel recording.
 Shortcuts are unassigned by default and work while Nexus runs, including in the
 tray. Duplicate or unavailable combinations are reported. F12 and Windows-key
@@ -102,3 +102,23 @@ GUI debugging symbols remain in the source build output and are not needed to pl
 
 This is an independent community launcher, not an official Funcom product.
 See CREDITS.txt and Licenses for upstream attribution and dependency notices.
+
+TEAM PRESETS
+Use Edit to rename a team and change its shortcuts. To change its characters,
+check Replace saved characters with current selection before saving. Otherwise
+editing keeps the preset's existing characters. Save new creates a separate team.
+
+ACTIVITY LOG
+Open log opens a larger read-only window with live updates and text search.
+Ctrl+F focuses search. Clear search restores all lines. Disable Follow new entries
+to read older lines. The current session log is bounded to about 100,000 characters.
+
+GITHUB UPDATES
+Settings > Check for updates checks stable releases from RazRn/AO-Nexus on GitHub.
+First launch asks whether to enable startup checks and remembers your answer. You can change it in Settings.
+Install and restart downloads, verifies and replaces the EXE after Nexus exits.
+Your profile and game windows stay intact. Finish launcher activity first.
+The installation folder must be writable; no administrator access is requested.
+A previous EXE backup stays beside the installed file. Staging and result logs
+are in %LOCALAPPDATA%\AONexus\Updates. No GitHub login or token is needed.
+Versions before 1.0.18 require one manual update before this feature is available.

@@ -11,6 +11,7 @@ namespace AOLauncher
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            if (args.Length == 2 && args[0] == "--apply-update") { UpdateInstaller.Apply(args[1]); return; }
             bool preview = args.Any(arg => arg == "--preview-ui");
             bool smoke = preview || args.Any(arg => arg == "--smoke" || arg == "--check-ui");
             bool startup = args.Any(arg => arg == "--startup");

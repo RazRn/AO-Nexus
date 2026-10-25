@@ -13,6 +13,8 @@ namespace AOLauncher
     {
         public int Version { get; set; } = 2;
         public string Language { get; set; } = "auto";
+        public bool CheckForUpdatesOnStartup { get; set; }
+        public bool HasChosenUpdatePreference { get; set; }
         public string GamePath { get; set; } = string.Empty;
         public string Server { get; set; } = "2.24.96.30";
         public int Port { get; set; } = 7500;

@@ -668,26 +668,73 @@ namespace AOLauncher
     internal sealed class PresetNameDialog : EditorDialog
     {
         private readonly TextBox nameInput;
+        private readonly HotkeyCapture startHotkeyField, campHotkeyField;
+        private readonly CheckBox replaceCharacters;
         public string PresetName { get; private set; }
+        public HotkeyBinding StartHotkey => startHotkeyField.Binding;
+        public HotkeyBinding LogoutHotkey => campHotkeyField.Binding;
+        public bool ReplaceCharacters => replaceCharacters.Checked;
+        internal Func<HotkeyBinding, HotkeyBinding, string> ValidateShortcuts;
 
-        public PresetNameDialog(string title, string initialName, IEnumerable<string> reservedNames) : base(title, 280)
+        public PresetNameDialog(string title, string initialName, IEnumerable<string> reservedNames)
+            : this(title, initialName, reservedNames, null, null, 0, false) { }
+
+        public PresetNameDialog(string title, string initialName, IEnumerable<string> reservedNames,
+            HotkeyBinding start, HotkeyBinding logout, int selectedCount, bool editing) : base(title, 490)
         {
             nameInput = AddTextField(T("Preset name"), initialName);
             nameInput.MaxLength = 80;
             var reserved = new HashSet<string>(reservedNames ?? new string[0], StringComparer.OrdinalIgnoreCase);
-            AddNote(T("Give this character selection a name so you can find it again."), 55);
+            startHotkeyField = AddShortcut(T("Start shortcut"), "presetStartHotkey", start);
+            campHotkeyField = AddShortcut(T("Logout shortcut"), "presetCampHotkey", logout);
+            foreach (var field in new[] { startHotkeyField, campHotkeyField })
+            {
+                field.Commit = value => CheckShortcuts(ReferenceEquals(field, startHotkeyField) ? value : StartHotkey,
+                    ReferenceEquals(field, campHotkeyField) ? value : LogoutHotkey);
+                field.Error = error => ErrorLabel.Text = error;
+                field.CaptureChanged = () => { if (!field.Capturing) ErrorLabel.Text = ""; };
+            }
+            AddWrappedNote(T("Optional shortcuts · Ctrl/Alt + key · Delete clears · Esc cancels recording. Changes apply only when you save. Logout uses /quit."), "presetShortcutGuide");
+            replaceCharacters = new NexusCheckBox { Name = "replacePresetCharacters", Text = F("Replace saved characters with current selection ({0})", selectedCount),
+                AutoSize = true, Dock = DockStyle.Top, Checked = false, Margin = new Padding(0, 12, 0, 0) };
+            if (editing)
+            {
+                Fields.Controls.Add(replaceCharacters);
+                AddWrappedNote(T("Leave unchecked to keep the saved characters while editing the name or shortcuts."), "presetSelectionGuide");
+            }
+            else AddWrappedNote(F("This preset will save the current selection of {0} characters.", selectedCount), "presetSelectionGuide");
             SaveButton.Click += (sender, e) =>
             {
                 try
                 {
                     string validName = PresetService.ValidateName(nameInput.Text);
                     if (reserved.Contains(validName)) { ErrorLabel.Text = T("A preset with this name already exists."); return; }
+                    string error = CheckShortcuts(StartHotkey, LogoutHotkey);
+                    if (error != null) { ErrorLabel.Text = error; return; }
                     PresetName = validName;
                     DialogResult = DialogResult.OK;
                 }
                 catch (ArgumentException ex) { ErrorLabel.Text = ex.Message; }
             };
             Shown += (sender, e) => { nameInput.Focus(); nameInput.SelectAll(); };
+        }
+
+        private string CheckShortcuts(HotkeyBinding start, HotkeyBinding logout)
+        {
+            if (start != null && start.SameAs(logout)) return T("Start and logout need different shortcuts.");
+            return ValidateShortcuts?.Invoke(start, logout);
+        }
+
+        private HotkeyCapture AddShortcut(string label, string name, HotkeyBinding initial)
+        {
+            var panel = new Panel { Dock = DockStyle.Top, Height = 66, Margin = Padding.Empty, Padding = new Padding(0, 0, 0, 10) };
+            var field = new HotkeyCapture { Name = name, AccessibleName = label, Dock = DockStyle.Bottom, Height = 32,
+                Binding = initial == null ? null : new HotkeyBinding { Key = initial.Key, Modifiers = initial.Modifiers } };
+            field.RefreshText();
+            panel.Controls.Add(field);
+            panel.Controls.Add(new Label { Text = label, Dock = DockStyle.Top, Height = 24 });
+            Fields.Controls.Add(panel);
+            return field;
         }
     }
 
@@ -836,6 +883,9 @@ namespace AOLauncher
     {
         private readonly ComboBox languageInput;
         private readonly CheckBox startWithWindowsInput;
+        private readonly CheckBox checkUpdatesInput;
+        public Action CheckUpdatesAction { private get; set; }
+        public bool CheckForUpdatesOnStartup => checkUpdatesInput.Checked;
         public Func<bool, string> SaveStartupAction { private get; set; }
         public bool StartWithWindows { get => startWithWindowsInput.Checked; set => startWithWindowsInput.Checked = value; }
         public Func<bool> ForgetPasswordsAction { private get; set; }
@@ -885,6 +935,14 @@ namespace AOLauncher
             };
             Fields.Controls.Add(forgetPasswords);
             Fields.Controls.Add(passwordStatus);
+            checkUpdatesInput = new NexusCheckBox { Name = "checkUpdatesOnStartup", Text = T("Check for updates when Nexus starts"),
+                Checked = settings.CheckForUpdatesOnStartup, AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 16, 0, 8) };
+            Fields.Controls.Add(checkUpdatesInput);
+            var checkUpdates = Theme.Button(T("Check for updates…"));
+            checkUpdates.Name = "checkForUpdates";
+            checkUpdates.Click += (sender, e) => CheckUpdatesAction?.Invoke();
+            Fields.Controls.Add(checkUpdates);
+            AddWrappedNote(T("Checks GitHub for stable releases. Downloads and installation always require your confirmation."), "automaticUpdatesGuide");
             Fields.ClientSizeChanged += (sender, e) => passwordStatus.MaximumSize = new Size(Math.Max(100, Fields.ClientSize.Width - 20), 0);
             SaveButton.Click += (sender, e) =>
             {

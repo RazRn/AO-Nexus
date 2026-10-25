@@ -34,12 +34,13 @@ try {
     $settings = Field 'settings'; $preset = $settings.Presets[0]
     Assert ($null -eq $preset.StartHotkey -and $null -eq $preset.CampHotkey) 'Old presets must start unbound'
     $start = Binding 117 3; $camp = Binding 118 3
-    Assert ($null -eq (Call 'SaveHotkey' @($false, $start))) 'Start binding should save'
-    Assert ($null -ne (Call 'SaveHotkey' @($true, $start))) 'Start and camp cannot share a shortcut'
-    Assert ($null -eq (Call 'SaveHotkey' @($true, $camp))) 'Distinct logout shortcut should save'
+    Assert ($null -eq (Call 'ValidatePresetHotkeys' @($preset, $start, $null))) 'Start binding should save'
+    Assert ($null -ne (Call 'ValidatePresetHotkeys' @($preset, $start, $start))) 'Start and camp cannot share a shortcut'
+    Assert ($null -eq (Call 'ValidatePresetHotkeys' @($preset, $start, $camp))) 'Distinct logout shortcut should save'
+    $preset.StartHotkey = $start; $preset.CampHotkey = $camp
     $other = NewObject 'LaunchPreset'; $other.Name = 'Second preset'; $settings.Presets.Add($other)
     $settings.SelectedPresetId = $other.Id
-    Assert ($null -ne (Call 'SaveHotkey' @($false, $camp))) 'Cross-preset shortcut conflict'
+    Assert ($null -ne (Call 'ValidatePresetHotkeys' @($other, $camp, $null))) 'Cross-preset shortcut conflict'
     $settings.SelectedPresetId = $preset.Id
     $serializer = New-Object Web.Script.Serialization.JavaScriptSerializer
     $json = $serializer.Serialize($settings)
@@ -49,19 +50,26 @@ try {
     $service.GetMethod('Update', $statics).Invoke($null, @($settings, $preset))
     Assert ($preset.StartHotkey.Key -eq 117 -and $preset.CampHotkey.Key -eq 118) 'Updating members must retain shortcuts'
     Call 'RefreshPresetPicker'
-    $field = Field 'startHotkeyField'
-    $field.PerformClick()
-    Assert ($field.GetType().GetProperty('Capturing', $private).GetValue($field)) 'Click must enter capture'
-    $message = [Windows.Forms.Message]::Create($field.Handle, 0x100, [IntPtr]0, [IntPtr]0)
-    $method = $field.GetType().GetMethod('ProcessCmdKey', $private)
-    $method.Invoke($field, @($message, [Windows.Forms.Keys]::Escape)) | Out-Null
-    Assert ($preset.StartHotkey.Key -eq 117) 'Escape must preserve shortcut'
-    $field.PerformClick()
-    $method.Invoke($field, @($message, ([Windows.Forms.Keys]::Control -bor [Windows.Forms.Keys]::Alt -bor [Windows.Forms.Keys]::F9))) | Out-Null
-    Assert ($preset.StartHotkey.Key -eq 120) 'Capture must save actual combination'
-    $field.PerformClick()
-    $method.Invoke($field, @($message, [Windows.Forms.Keys]::Delete)) | Out-Null
-    Assert ($null -eq $preset.StartHotkey -and $preset.CampHotkey.Key -eq 118) 'Delete clears only the chosen shortcut'
+    $dialog = [Activator]::CreateInstance($a.GetType('AOLauncher.PresetNameDialog'), [object[]]@('Edit team preset', $preset.Name, [string[]]@('Reserved'), $start, $camp, 3, $true))
+    try {
+        $dialog.Show(); [Windows.Forms.Application]::DoEvents()
+        $field = $dialog.GetType().GetField('startHotkeyField', $private).GetValue($dialog)
+        $field.PerformClick()
+        Assert ($field.GetType().GetProperty('Capturing', $private).GetValue($field)) 'Click must enter capture in the editor'
+        $message = [Windows.Forms.Message]::Create($field.Handle, 0x100, [IntPtr]0, [IntPtr]0)
+        $method = $field.GetType().GetMethod('ProcessCmdKey', $private)
+        $method.Invoke($field, @($message, [Windows.Forms.Keys]::Escape)) | Out-Null
+        Assert ($dialog.StartHotkey.Key -eq 117) 'Escape must preserve the draft shortcut'
+        $field.PerformClick()
+        $method.Invoke($field, @($message, ([Windows.Forms.Keys]::Control -bor [Windows.Forms.Keys]::Alt -bor [Windows.Forms.Keys]::F9))) | Out-Null
+        Assert ($dialog.StartHotkey.Key -eq 120 -and $preset.StartHotkey.Key -eq 117) 'Capture changes only the draft'
+        $field.PerformClick()
+        $method.Invoke($field, @($message, [Windows.Forms.Keys]::Delete)) | Out-Null
+        Assert ($null -eq $dialog.StartHotkey -and $dialog.LogoutHotkey.Key -eq 118) 'Delete clears only the chosen draft shortcut'
+        Assert (!$dialog.ReplaceCharacters) 'Editing shortcuts must preserve saved members unless explicitly selected'
+        $dialog.DialogResult = [Windows.Forms.DialogResult]::Cancel
+    } finally { $dialog.Dispose() }
+    Assert ($preset.StartHotkey.Key -eq 117 -and $preset.CampHotkey.Key -eq 118) 'Cancel leaves both saved shortcuts unchanged'
     # Only registration is enabled on this synthetic form. Never invoke a launch action or save a real profile.
     $preset.StartHotkey = Binding 133 7; $preset.CampHotkey = Binding 134 7
     $form.GetType().GetField('smoke', $private).SetValue($form, $false)
@@ -84,10 +92,9 @@ try {
     $preset.StartHotkey = Binding 117 3; $preset.CampHotkey = Binding 118 3
     foreach ($language in @('en', 'da')) {
         $settings.Language = $language; Call 'ApplyLanguage'; [Windows.Forms.Application]::DoEvents()
-        $field = Field 'campHotkeyField'
-        Assert ($field.Visible -and $field.Width -gt 80 -and $field.Height -ge 25) 'Fields must be usable in both languages'
         $section = $form.Controls.Find('presetSection', $true)[0]
-        Assert ($null -ne $section -and $section.Contains($field)) 'Preset controls belong to their own section'
+        Assert ($section.Controls.Find('presetStartHotkey', $true).Count -eq 0) 'Main window must not expose editable shortcut fields'
+        Assert ($section.Height -lt 130) 'Preset section must stay compact'
         Assert ($section.Padding.Left -eq 12 -and $section.Margin.Bottom -ge 10) 'Preset section has inset controls and separation from account actions'
         $picker = Field 'presetPicker'; $update = Field 'updatePresetButton'
         Assert ($picker.Height -eq $update.Height -and $picker.Top -eq $update.Top) ('Inline dropdown and buttons align: ' + $picker.Bounds + ' / ' + $update.Bounds)

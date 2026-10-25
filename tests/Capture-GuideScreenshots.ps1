@@ -94,14 +94,43 @@ try {
     $preset = (Field $dashboard 'settings').Presets[0]
     $preset.StartHotkey = New-Model 'HotkeyBinding'; $preset.StartHotkey.Key = 117; $preset.StartHotkey.Modifiers = 3
     $preset.CampHotkey = New-Model 'HotkeyBinding'; $preset.CampHotkey.Key = 118; $preset.CampHotkey.Modifiers = 3
-    $dashboard.GetType().GetMethod('RefreshHotkeyFields', $flags).Invoke($dashboard, @()) | Out-Null
     $tree = Field $dashboard 'tree'
     $tree.SelectedNode = $tree.Nodes[0].Nodes[0]
     Save-GuideScreenshot $dashboard 'launcher-overview.png'
-    Save-GuideScreenshot $dashboard.Controls.Find('presetSection', $true)[0] 'preset-shortcuts.png'
+    foreach ($editing in @($true, $false)) {
+        $title = if ($editing) { 'Edit team preset' } else { 'Create team preset' }
+        $editor = New-Dialog 'PresetNameDialog' ([object[]]@($title, $preset.Name, [string[]]@(), $preset.StartHotkey, $preset.CampHotkey, 3, $editing))
+        try {
+            Show-Fixture $editor
+            $name = if ($editing) { 'preset-shortcuts.png' } else { 'preset-create.png' }
+            Save-GuideScreenshot $editor $name
+        } finally { $editor.Dispose() }
+    }
+    $viewer = New-Dialog 'LogViewer' ([object[]]@())
+    try {
+        $sampleLog = "[10:15:00] Ready. Choose a team preset to begin.`r`n[10:15:12] Example account: login started.`r`n[10:15:17] Aster: logged in.`r`n[10:15:22] Orion: logged in.`r`n[10:15:27] Vesper: logged in.`r`n[10:15:27] Done. Game windows remain open."
+        $viewer.GetType().GetMethod('SetLogText', $flags).Invoke($viewer, [object[]]@($sampleLog)) | Out-Null
+        Show-Fixture $viewer
+        (Field $viewer 'search').Text = 'logged in'
+        $viewer.GetType().GetMethod('RefreshLog', $flags).Invoke($viewer, @()) | Out-Null
+        Save-GuideScreenshot $viewer 'activity-log.png'
+    } finally { $viewer.Dispose() }
 } finally { $dashboard.Dispose(); [GuideScreenshotNative]::Pump() }
 
 $settings = New-Model 'LauncherSettings'
+$settingsPreview = New-Dialog 'SettingsDialog' ([object[]]@($settings))
+try {
+    $settingsPreview.ClientSize = [Drawing.Size]::new(510, 1100)
+    Show-Fixture $settingsPreview
+    Save-GuideScreenshot $settingsPreview 'settings.png'
+} finally { $settingsPreview.Dispose() }
+$releasePreview = New-Model 'UpdateRelease'
+$releasePreview.GetType().GetField('Version', $flags).SetValue($releasePreview, $assembly.GetName().Version)
+$updatesPreview = New-Dialog 'UpdateDialog' ([object[]]@([Func[bool]]{ return $false }, $releasePreview))
+try {
+    Show-Fixture $updatesPreview
+    Save-GuideScreenshot $updatesPreview 'app-updates.png'
+} finally { $updatesPreview.Dispose() }
 $account = New-Model 'AccountConfig'
 $account.Label = 'Rubi-Ka expedition'
 $account.Username = 'example-account'
@@ -148,8 +177,8 @@ foreach ($fixture in @(
 $version = $assembly.GetName().Version.ToString()
 $readmePath = Join-Path $PSScriptRoot '..\README.md'
 $readme = [IO.File]::ReadAllText($readmePath)
-$manifest = @("# Guide screenshot provenance", "", "Generated from AO Nexus $version using Capture-GuideScreenshots.ps1.", "", "Synthetic accounts, empty password fields and offline news. All seven README images are rendered from the actual controls.", "")
-foreach ($name in @('launcher-overview.png','preset-shortcuts.png','account-setup.png','game-and-server.png','server-settings.png','password-options.png','update-saved-password.png')) {
+$manifest = @("# Guide screenshot provenance", "", "Generated from AO Nexus $version using Capture-GuideScreenshots.ps1.", "", "Synthetic accounts, empty password fields, offline news and an offline update fixture. All eleven README images are rendered from the actual controls.", "")
+foreach ($name in @('launcher-overview.png','preset-shortcuts.png','preset-create.png','activity-log.png','settings.png','app-updates.png','account-setup.png','game-and-server.png','server-settings.png','password-options.png','update-saved-password.png')) {
     $hash = (Get-FileHash -LiteralPath (Join-Path $OutputDirectory $name) -Algorithm SHA256).Hash.ToLowerInvariant()
     $manifest += ('- ' + $name + ': ' + $hash)
     # A changed image must have a new URL, even when its filename stays the same.
@@ -160,4 +189,4 @@ foreach ($name in @('launcher-overview.png','preset-shortcuts.png','account-setu
 }
 [IO.File]::WriteAllText($readmePath, $readme, [Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText((Join-Path $OutputDirectory 'SCREENSHOTS.md'), (($manifest -join "`n") + "`n"), [Text.UTF8Encoding]::new($false))
-Write-Output "PASS: all seven guide screenshots regenerated from $version using synthetic accounts, empty password fields and offline news."
+Write-Output "PASS: all eleven guide screenshots regenerated from $version using synthetic accounts and offline fixtures."
