@@ -79,6 +79,16 @@ try { Must-Fail { Call $installer 'ReplaceVerified' @($staged,$target,$oldHash,$
 Assert ((Get-FileHash -LiteralPath $target).Hash.ToLowerInvariant() -eq $oldHash) 'Failed update keeps installed file unchanged'
 $backup=Call $installer 'ReplaceVerified' @($staged,$target,$oldHash,$fixtureHash)
 Assert ((Get-FileHash -LiteralPath $target).Hash.ToLowerInvariant() -eq $fixtureHash -and (Get-FileHash -LiteralPath $backup).Hash.ToLowerInvariant() -eq $oldHash) 'Successful atomic replacement retains the old executable as backup'
+$journal = $assembly.GetType('AOLauncher.UpdateJournal')
+$marker = Join-Path $root 'installed-version.txt'
+Assert (!(Call $journal 'ConsumeInstalledNotice' @($root))) 'Ordinary startup without an installation marker shows no release notice'
+[IO.File]::WriteAllText($marker,'0.1.0.0')
+Assert (!(Call $journal 'ConsumeInstalledNotice' @($root))) 'Another version cannot consume this installation notice'
+[IO.File]::WriteAllText($marker,$assembly.GetName().Version.ToString())
+Assert (Call $journal 'ConsumeInstalledNotice' @($root)) 'The installed version consumes its successful-update marker'
+Assert (!(Call $journal 'ConsumeInstalledNotice' @($root))) 'Release summary is shown once, not every startup'
+[IO.File]::WriteAllText($marker,('x'*129))
+Assert (!(Call $journal 'ConsumeInstalledNotice' @($root))) 'Oversized marker is ignored'
 if ($CheckGitHub) {
     $task=Call $updates 'CheckAsync' @([Threading.CancellationToken]::None)
     $live=$task.GetAwaiter().GetResult()

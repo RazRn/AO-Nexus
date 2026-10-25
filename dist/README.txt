@@ -1,4 +1,4 @@
-AO NEXUS 1.0.18
+AO NEXUS 1.0.19
 Based on AOQuickLauncher by never-knows-best and contributors.
 Customized by Luckyspawn.
 
@@ -104,9 +104,9 @@ This is an independent community launcher, not an official Funcom product.
 See CREDITS.txt and Licenses for upstream attribution and dependency notices.
 
 TEAM PRESETS
-Use Edit to rename a team and change its shortcuts. To change its characters,
-check Replace saved characters with current selection before saving. Otherwise
-editing keeps the preset's existing characters. Save new creates a separate team.
+Use Update to save the checked characters to the selected team. It is disabled
+when the saved selection already matches. Edit changes only the name and shortcuts.
+Save new creates a separate team.
 
 ACTIVITY LOG
 Open log opens a larger read-only window with live updates and text search.
@@ -122,3 +122,15 @@ The installation folder must be writable; no administrator access is requested.
 A previous EXE backup stays beside the installed file. Staging and result logs
 are in %LOCALAPPDATA%\AONexus\Updates. No GitHub login or token is needed.
 Versions before 1.0.18 require one manual update before this feature is available.
+
+WINDOW CONFIRMATIONS
+Minimize and Quit each ask first, with a separate Don't show this again checkbox.
+Cancel leaves Nexus running. Re-enable either confirmation in Settings.
+Windows startup and confirmed update restarts skip these extra prompts.
+
+UPDATE HISTORY
+Checks run once at startup when enabled, or manually in Settings. No polling.
+Update activity is logged and the new version reports a successful installation.
+Persistent history: %LOCALAPPDATA%\AONexus\Updates\update-history.log
+A What's new window appears once after a successful update, with bundled release
+notes in your selected language. It works offline and does not appear on normal starts.

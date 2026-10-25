@@ -1,15 +1,18 @@
 # Guide screenshot provenance
 
-Generated from AO Nexus 1.0.18.0 using Capture-GuideScreenshots.ps1.
+Generated from AO Nexus 1.0.19.0 using Capture-GuideScreenshots.ps1.
 
-Synthetic accounts, empty password fields, offline news and an offline update fixture. All eleven README images are rendered from the actual controls.
+Synthetic accounts, empty password fields, offline news and an offline update fixture. All fourteen README images are rendered from the actual controls.
 
-- launcher-overview.png: 0b87102cb279fa0a52373d78654d49645c6ddd464d2574c35a481e87cfd047b8
-- preset-shortcuts.png: 21523ea6a7a71ba2b1830b089cfc29a16e2d27ede66d6eaf63614b052d1cc2ae
-- preset-create.png: 1e0f9123cec21b0a664a826cc7f6b3085ee33b3dd6d4d6c77675cad628af45f9
+- launcher-overview.png: 299965b3354f734ed9e47e693798d24faaf56f9f663a36fe856b01d8f085a02c
+- preset-shortcuts.png: 0f8348016120ba0b33b1b1fd3ba488e3a1cf58f2b681fdbef699c46194625926
+- preset-create.png: 667dd10f7a9b3a582d2cf0d82b636832fb400937a90e0e3789e8a2c55f8fced3
 - activity-log.png: fcf7ade3596f2f4847abd39198c32350b45ccc9977f8565cb4644d5597d2d2ca
-- settings.png: d6fb2ed3ce0239498b0ee916f96c7f4686bea35061ec9da4911db50eecdfd685
-- app-updates.png: 1b67178ae24bf904cb202195d9bac40e3e1eda93bf1f696bb8c92c4010e10371
+- settings.png: 8559c371659969bad72ab6311e2e075c3cb72e2162e7dab41c17fb49577e571d
+- app-updates.png: 78121d8f551092738f115c8cd675e5d95bef51ef1b4bb7ef3b387788098373f5
+- minimize-confirmation.png: 0cb14b5023ddf31f88673330dfd9d8b31d2a963241e4ff883338f8ac4b1696e5
+- quit-confirmation.png: dce9c21828570945006021e83c3b67de735ebc21ac01a79ad89b14113b2a08ec
+- whats-new.png: 43ecf78eaa2e5cff4b4a7952b943bcfcc2eebf4286cea815c3541520ada14dc4
 - account-setup.png: de6013166163a75d62c6a86e7cb6c6742790e5cf84e51e9879d827e6a050e3d9
 - game-and-server.png: ac3a9d7ee12fc564ed667ed75505c90f908ca977eeb4b2d8f158f16e92ed5c22
 - server-settings.png: 515e6f4b4c4ee4216e31c9aa581c8898927f2668a533712af2bec8ec87240853

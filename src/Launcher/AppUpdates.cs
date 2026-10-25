@@ -182,6 +182,39 @@ namespace AOLauncher
         }
     }
 
+    internal static class UpdateJournal
+    {
+        internal static void Record(string message)
+        {
+            try
+            {
+                Directory.CreateDirectory(AppUpdates.UpdateRoot);
+                string file = Path.Combine(AppUpdates.UpdateRoot, "update-history.log");
+                if (File.Exists(file) && new FileInfo(file).Length > 1024 * 1024) File.Copy(file, file + ".previous", true);
+                if (File.Exists(file) && new FileInfo(file).Length > 1024 * 1024) File.WriteAllText(file, "");
+                File.AppendAllText(file, DateTime.UtcNow.ToString("u") + " " + (message ?? "").Replace('\r', ' ').Replace('\n', ' ') + Environment.NewLine);
+            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+        }
+        internal static void Installed()
+        {
+            Record("Installed AO Nexus " + AppUpdates.CurrentVersion.ToString(3));
+            try { File.WriteAllText(Path.Combine(AppUpdates.UpdateRoot, "installed-version.txt"), AppUpdates.CurrentVersion.ToString()); }
+            catch (IOException) { } catch (UnauthorizedAccessException) { }
+        }
+        internal static bool ConsumeInstalledNotice(string root)
+        {
+            try
+            {
+                string file = Path.Combine(root, "installed-version.txt");
+                if (!File.Exists(file) || new FileInfo(file).Length > 128 || File.ReadAllText(file).Trim() != AppUpdates.CurrentVersion.ToString()) return false;
+                File.Delete(file); return true;
+            }
+            catch (IOException) { return false; } catch (UnauthorizedAccessException) { return false; }
+        }
+    }
+
     internal sealed class UpdateRequest
     {
         public string Target { get; set; }
@@ -239,17 +272,20 @@ namespace AOLauncher
                 string backup = ReplaceVerified(staged, request.Target, request.OldSha256, request.NewSha256);
                 try
                 {
+                    UpdateJournal.Installed();
                     Process.Start(new ProcessStartInfo(request.Target) { UseShellExecute = true, WorkingDirectory = Path.GetDirectoryName(request.Target) });
-                    File.WriteAllText(logPath, "Update installed. Previous executable: " + backup);
                 }
                 catch
                 {
                     File.Replace(backup, request.Target, null);
                     throw;
                 }
+                try { File.WriteAllText(logPath, "Update installed. Previous executable: " + backup); }
+                catch (IOException) { } catch (UnauthorizedAccessException) { }
             }
             catch (Exception ex)
             {
+                UpdateJournal.Record("Update failed: " + ex.Message);
                 try { File.WriteAllText(logPath, "Update failed: " + ex.Message); } catch { }
                 MessageBox.Show("AO Nexus could not finish the update. Your profile was not changed.\r\n\r\n" + ex.Message
                     + "\r\n\r\n" + logPath, "AO Nexus update", MessageBoxButtons.OK, MessageBoxIcon.Warning);

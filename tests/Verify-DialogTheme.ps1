@@ -156,75 +156,12 @@ function Scroll-To($Dialog,$Control) {
     Layout $Dialog
 }
 function All-Nodes($Nodes) { foreach ($node in $Nodes) { $node; All-Nodes $node.Nodes } }
-function Check-Tooltip($Control,[string]$Name) {
-    $Control=$Control.PSObject.BaseObject
-    $tipType=$assembly.GetType('AOLauncher.NexusToolTips',$true)
-    $baseType=if ($Control -is [Windows.Forms.TreeView]) { [Windows.Forms.TreeView] } else { [Windows.Forms.DataGridView] }
-    $attach=$tipType.GetMethod('Attach',$staticFlags,$null,[Type[]]@($baseType),$null)
-    $attachArguments=New-Object object[] 1; $attachArguments[0]=$Control.PSObject.BaseObject
-    $attach.Invoke($null,$attachArguments) | Out-Null
-    $table=$tipType.GetField('bindings',$staticFlags).GetValue($null)
-    $arguments=[object[]]@($Control,$null)
-    Assert-Check ($table.GetType().GetMethod('TryGetValue').Invoke($table,$arguments)) 'The themed tooltip attaches to its owner.'
-    $binding=$arguments[1]
-    $attach.Invoke($null,$attachArguments) | Out-Null
-    $arguments=[object[]]@($Control,$null); $table.GetType().GetMethod('TryGetValue').Invoke($table,$arguments) | Out-Null
-    Assert-Check ([object]::ReferenceEquals($binding,$arguments[1])) 'Repeated theming reuses one tooltip binding.'
-    $tip=Field $binding 'tip'
-    Assert-Check ($tip.OwnerDraw -and $tip.BackColor.GetBrightness() -lt .30) 'Tooltips use owner drawing and a dark surface.'
-    $standardTip=[Windows.Forms.ToolTip]::new()
-    try { Assert-Check ($tip.InitialDelay -eq $standardTip.InitialDelay -and $tip.ReshowDelay -eq $standardTip.ReshowDelay -and $tip.AutoPopDelay -eq $standardTip.AutoPopDelay) 'The themed tooltip preserves ordinary hover and dismissal delays.' }
-    finally { $standardTip.Dispose() }
-    if ($Control -is [Windows.Forms.TreeView]) { Assert-Check (!$Control.ShowNodeToolTips) 'The light native tree tooltip is disabled.' }
-    else { Assert-Check (!$Control.ShowCellToolTips) 'The light native grid tooltip is disabled.' }
-    $bitmap=[Drawing.Bitmap]::new(600,140)
-    $graphics=[Drawing.Graphics]::FromImage($bitmap)
-    try {
-        $bounds=[Drawing.Rectangle]::new(0,0,$bitmap.Width,$bitmap.Height)
-        $args=[Windows.Forms.DrawToolTipEventArgs]::new($graphics,$Control,$Control,$bounds,'Synthetic tooltip: server limits and C:\SyntheticPrefs\account.',$tip.BackColor,$tip.ForeColor,$Control.Font)
-        $binding.GetType().GetMethod('Draw',$flags).Invoke($binding,[object[]]@($tip,$args)) | Out-Null
-        Assert-Check ([DialogThemeNative]::LightFraction($bitmap,$bounds) -lt .15) 'The actual tooltip Draw callback renders dark content.'
-        if ($PreviewDirectory) { $bitmap.Save((Join-Path $PreviewDirectory $Name),[Drawing.Imaging.ImageFormat]::Png) }
-    } finally { $graphics.Dispose(); $bitmap.Dispose() }
-    return $binding
-}
-function Check-TooltipDisposed($Binding) {
-    $tipType=$assembly.GetType('AOLauncher.NexusToolTips',$true)
-    $table=$tipType.GetField('bindings',$staticFlags).GetValue($null)
-    $arguments=[object[]]@((Field $Binding 'owner'),$null)
-    Assert-Check (!$table.GetType().GetMethod('TryGetValue').Invoke($table,$arguments)) 'Disposing a tooltip owner releases its registered binding.'
-}
-function Check-GridTooltipContent($Grid,$Binding) {
-    $cell=$Grid.Rows[0].Cells[0]; $column=$Grid.Columns[0]; $row=$Grid.Rows[0]
-    $saved=@{ Value=$cell.Value; Tip=$cell.ToolTipText; Style=$cell.Style.Clone(); Width=$column.Width; Height=$row.Height; Columns=$Grid.AutoSizeColumnsMode; Rows=$Grid.AutoSizeRowsMode }
-    $clipMethod=$Binding.GetType().GetMethod('ClippedCellText',$flags)
-    $cellArguments=New-Object object[] 1; $cellArguments[0]=$cell.PSObject.BaseObject
-    $long='A synthetic server name long enough to require several wrapped lines in a narrow cell.'
-    try {
-        $Grid.AutoSizeColumnsMode=[Windows.Forms.DataGridViewAutoSizeColumnsMode]::None
-        $Grid.AutoSizeRowsMode=[Windows.Forms.DataGridViewAutoSizeRowsMode]::None
-        $column.Width=90; $row.Height=[Math]::Max(28,$Grid.Font.Height+12); $cell.Style.WrapMode=[Windows.Forms.DataGridViewTriState]::False
-        $cell.Value=$long; $cell.ToolTipText=''; Layout $Grid
-        Assert-Check ($clipMethod.Invoke($Binding,$cellArguments) -ceq $long) 'A narrow clipped cell exposes its full formatted value in the themed tooltip.'
-        $cell.Value='OK'; Layout $Grid
-        Assert-Check ($clipMethod.Invoke($Binding,$cellArguments) -ceq '') 'A fully visible short cell does not show a redundant tooltip.'
-        $cell.Value=$long; $cell.ToolTipText='Explicit synthetic hint'; Layout $Grid
-        $rect=$Grid.GetCellDisplayRectangle(0,0,$true)
-        $arguments=[object[]]@([Drawing.Point]::new($rect.Left+3,$rect.Top+3),$null)
-        Assert-Check ($Binding.GetType().GetMethod('TextAt',$flags).Invoke($Binding,$arguments) -ceq 'Explicit synthetic hint') 'Explicit cell hints take precedence over clipped-value hints.'
-        $cell.ToolTipText=''; $column.Width=220; $cell.Style.WrapMode=[Windows.Forms.DataGridViewTriState]::True
-        $Grid.AutoSizeRowsMode=[Windows.Forms.DataGridViewAutoSizeRowsMode]::AllCells
-        $Grid.AutoResizeRow(0,[Windows.Forms.DataGridViewAutoSizeRowMode]::AllCells); Layout $Grid
-        Assert-Check ($clipMethod.Invoke($Binding,$cellArguments) -ceq '') 'A fully visible wrapped autosized cell does not show a redundant tooltip.'
-        $Grid.AutoSizeRowsMode=[Windows.Forms.DataGridViewAutoSizeRowsMode]::None; $row.Height=24; Layout $Grid
-        Assert-Check ($clipMethod.Invoke($Binding,$cellArguments) -ceq $long) 'A clipped wrapped cell still exposes its complete value.'
-        $cell.Value=''; Layout $Grid
-        Assert-Check ($clipMethod.Invoke($Binding,$cellArguments) -ceq '') 'Empty cells do not display automatic hints.'
-    } finally {
-        $cell.Value=$saved.Value; $cell.ToolTipText=$saved.Tip; $cell.Style=$saved.Style
-        $column.Width=$saved.Width; $row.Height=$saved.Height
-        $Grid.AutoSizeColumnsMode=$saved.Columns; $Grid.AutoSizeRowsMode=$saved.Rows; Layout $Grid
-    }
+function Check-NoTooltip($Control) {
+    if ($Control -is [Windows.Forms.TreeView]) {
+        Assert-Check (!$Control.ShowNodeToolTips) 'Tree node tooltips are disabled.'
+        $parameters=$Control.GetType().GetProperty('CreateParams',$flags).GetValue($Control)
+        Assert-Check (($parameters.Style -band 0x80) -ne 0) 'Native clipped-label hints are disabled.'
+    } else { Assert-Check (!$Control.ShowCellToolTips) 'All grid tooltips are disabled.' }
 }
 function Hit-Point($Tree,$Node,[Windows.Forms.TreeViewHitTestLocations]$Kind) {
     $Node.EnsureVisible(); Pump
@@ -237,14 +174,13 @@ function Hit-Point($Tree,$Node,[Windows.Forms.TreeViewHitTestLocations]$Kind) {
 }
 function Check-Tree([string]$Language,[double]$Scale) {
     $form=New-Dialog 'MainForm' ([object[]]@($true))
-    $tipBinding=$null
     try {
         Assert-Check ((Field $form 'smoke') -and (Field (Field $form 'newsPanel') 'offlinePreview')) 'The tree fixture uses sample accounts and offline news.'
         (Field $form 'settings').Language=$Language
         $form.GetType().GetMethod('ApplyLanguage',$flags).Invoke($form,@()) | Out-Null
         $form.Size=$form.MinimumSize; Show-Fixture $form $Scale
         $tree=Field $form 'tree'; $tree.ExpandAll(); Pump
-        $tipBinding=Check-Tooltip $tree "MainForm-tree-tooltip-$Language-$Scale.png"
+        Check-NoTooltip $tree
         $accountNode=@(All-Nodes $tree.Nodes | Where-Object { $_.Tag -and $_.Tag.GetType().Name -eq 'AccountConfig' })[0]
         Assert-Check ($null -ne $accountNode) 'The tree contains a synthetic account to exercise.'
         $point=Hit-Point $tree $accountNode ([Windows.Forms.TreeViewHitTestLocations]::PlusMinus)
@@ -281,7 +217,6 @@ function Check-Tree([string]$Language,[double]$Scale) {
         $bitmap=Preview $form "MainForm-tree-creation-$Language-$Scale.png"; $bitmap.Dispose()
     } finally {
         $form.Dispose(); Pump
-        if ($tipBinding) { Check-TooltipDisposed $tipBinding }
     }
 }
 
@@ -330,7 +265,6 @@ foreach ($language in @('en','da')) {
                 'SelectedTargetsDialog' { $arguments=[object[]]@("Synthetic account A - Local development`r`nSynthetic account B - Another server") }
             }
             $dialog=New-Dialog $kind $arguments
-            $tipBinding=$null
             try {
                 Show-Fixture $dialog $scale
                 Check-Theme $dialog $kind
@@ -341,8 +275,7 @@ foreach ($language in @('en','da')) {
                     foreach ($grid in @(Descendants $dialog | Where-Object { $_ -is [Windows.Forms.DataGridView] })) {
                         Assert-Check (!$grid.EnableHeadersVisualStyles -and $grid.BackgroundColor.GetBrightness() -lt .25) "$kind grid and header use the dark theme."
                         Assert-Check ([DialogThemeNative]::LightFraction($bitmap,(Control-Rect $dialog $grid)) -lt .20) "$kind grid has no large white native fill."
-                        $tipBinding=Check-Tooltip $grid "$kind-tooltip-$suffix"
-                        if ($kind -eq 'LoginServersDialog') { Check-GridTooltipContent $grid $tipBinding }
+                        Check-NoTooltip $grid
                     }
                 } finally { $bitmap.Dispose() }
                 switch ($kind) {
@@ -426,7 +359,6 @@ foreach ($language in @('en','da')) {
                 $script:failures.Add($failure); Write-Output "FAIL: $failure"
             } finally {
                 $dialog.Dispose(); Pump
-                if ($tipBinding) { Check-TooltipDisposed $tipBinding }
             }
         }
         $message=New-Dialog 'NexusMessageDialog' ([object[]]@("Synthetic warning.`r`nThis fixture never starts a game or reads a saved profile.",'AO Nexus',[Windows.Forms.MessageBoxButtons]::YesNoCancel,[Windows.Forms.MessageBoxIcon]::Warning,[Windows.Forms.MessageBoxDefaultButton]::Button2))

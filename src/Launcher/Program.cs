@@ -27,7 +27,7 @@ namespace AOLauncher
                 {
                     form.Shown += (sender, e) =>
                     {
-                        if (startup) form.WindowState = FormWindowState.Minimized;
+                        if (startup) form.MinimizeToTray();
                         instance?.Listen(form, form.ShowLauncher);
                     };
                     if (smoke)

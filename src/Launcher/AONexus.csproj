@@ -48,7 +48,6 @@
     <Compile Include="NexusControls.cs" />
     <Compile Include="NexusMessageBox.cs" />
     <Compile Include="NexusTreeView.cs" />
-    <Compile Include="NexusToolTips.cs" />
     <Compile Include="SlimScrolling.cs" />
     <Compile Include="NexusStrings.cs" />
     <Compile Include="ServerNews.cs" />
@@ -76,6 +75,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Assets\WhatsNew.en.txt"><WithCulture>false</WithCulture><LogicalName>AOLauncher.WhatsNew.en.txt</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Assets\WhatsNew.da.txt"><WithCulture>false</WithCulture><LogicalName>AOLauncher.WhatsNew.da.txt</LogicalName></EmbeddedResource>
     <EmbeddedResource Include="Assets\NexusBackdrop.png"><LogicalName>AOLauncher.Assets.NexusBackdrop.png</LogicalName></EmbeddedResource>
     <EmbeddedResource Include="Assets\Launcher.ico">
       <LogicalName>AOLauncher.Assets.Launcher.ico</LogicalName>

@@ -26,14 +26,13 @@ try {
             try {
                 Assert ($null -ne $dialog) 'Preset action must open the editor'
                 Assert (Field $main 'editingPreset') 'Shortcut dispatch must be suspended throughout the modal edit'
-                Assert (!(Field $dialog 'replaceCharacters').Checked) 'Membership replacement must be explicit'
+                Assert ($dialog.Controls.Find('replacePresetCharacters',$true).Count -eq 0) 'Edit only manages the name and shortcuts'
                 (Field $dialog 'nameInput').Text = 'Edited fixture'
                 $binding = [Activator]::CreateInstance($assembly.GetType('AOLauncher.HotkeyBinding'), $true)
                 $binding.Key = 117; $binding.Modifiers = 3
                 (Field $dialog 'startHotkeyField').GetType().GetField('Binding',$flags).SetValue((Field $dialog 'startHotkeyField'),$binding)
                 if ($mode -eq 'cancel') { (Field $dialog 'CancelAction').PerformClick() }
                 else {
-                    if ($mode -eq 'replace') { (Field $dialog 'replaceCharacters').Checked = $true }
                     (Field $dialog 'SaveButton').PerformClick()
                     Assert ($dialog.DialogResult -eq [Windows.Forms.DialogResult]::OK) 'Save should accept the valid draft'
                 }
@@ -46,15 +45,17 @@ try {
         Assert (!(Field $main 'editingPreset')) 'Closing the editor resumes shortcut dispatch'
     }
     $before = $serializer.Serialize($settings)
-    Edit-Fixture 'UpdateCurrentPreset' 'cancel'
+    Edit-Fixture 'EditCurrentPreset' 'cancel'
     Assert ($serializer.Serialize($settings) -ceq $before) 'Cancel must preserve all saved settings'
     $members = $serializer.Serialize($preset.Characters)
     foreach ($account in $settings.Accounts) { foreach ($char in $account.Characters) { $char.Selected = $false } }
-    Edit-Fixture 'UpdateCurrentPreset' 'save'
+    Edit-Fixture 'EditCurrentPreset' 'save'
     Assert ($preset.Name -eq 'Edited fixture' -and $preset.StartHotkey.Key -eq 117) 'Save commits name and shortcut together'
     Assert ($serializer.Serialize($preset.Characters) -ceq $members) 'Editing name or shortcut preserves saved members'
-    Edit-Fixture 'UpdateCurrentPreset' 'replace'
+    Call $main 'UpdateCurrentPreset' @($null,[EventArgs]::Empty)
     Assert ($preset.Characters.Count -eq 0) 'Explicit replacement saves the current empty selection'
+    Assert ($preset.Name -eq 'Edited fixture' -and $preset.StartHotkey.Key -eq 117) 'Update preserves the name and shortcuts'
+    Assert (!(Field $main 'updatePresetButton').Enabled) 'Update is disabled after the current selection has been saved'
     $preset.Name = 'Existing fixture'; $preset.StartHotkey = $null
     Edit-Fixture 'SaveNewPreset' 'save'
     Assert ($settings.Presets.Count -eq 2 -and $settings.Presets[1].StartHotkey.Key -eq 117) 'Create can save its own shortcut'

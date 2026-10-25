@@ -499,12 +499,11 @@ try {
     $preset = $presetType.GetMethod('Create', $staticFlags).Invoke($null, [object[]]@($config, 'Save new…'))
     $formType.GetMethod('RefreshPresetPicker', $flags).Invoke($form, [object[]]@()) | Out-Null
     $picker = $formType.GetField('presetPicker', $flags).GetValue($form)
-    $presetStatus = $formType.GetField('presetStatus', $flags).GetValue($form)
     $savedReferenceCount = $preset.Characters.Count
     $presetCharacterNode = Find-TreeNode $tree.Nodes $config.Accounts[0].Characters[0]
     $presetCharacterNode.Checked = !$presetCharacterNode.Checked
     $modifiedSelection = @($config.Accounts | ForEach-Object { $_.Characters | ForEach-Object { $_.Selected } }) -join ','
-    if ($presetStatus.Text -notlike 'Modified*' -or $preset.Characters.Count -ne $savedReferenceCount) { throw 'Checkbox edits must show Modified without changing the saved preset.' }
+    if (!$formType.GetField('updatePresetButton', $flags).GetValue($form).Enabled -or $preset.Characters.Count -ne $savedReferenceCount) { throw 'Checkbox edits must enable Update without changing the saved preset.' }
     $formType.GetMethod('RefreshPresetPicker', $flags).Invoke($form, [object[]]@()) | Out-Null
     if ((@($config.Accounts | ForEach-Object { $_.Characters | ForEach-Object { $_.Selected } }) -join ',') -ne $modifiedSelection) { throw 'Refreshing the dropdown must not apply the saved preset over current checkboxes.' }
     $config.Accounts[0].Label = 'Settings'
@@ -524,11 +523,11 @@ try {
         Test-ButtonBounds $form
     }
     $picker.GetType().GetMethod('OnSelectionChangeCommitted', $flags).Invoke($picker, [object[]]@([EventArgs]::Empty)) | Out-Null
-    if ($presetStatus.Text -like 'Modified*' -or $formType.GetField('running', $flags).GetValue($form)) { throw 'Choosing the same preset must restore its selection without logging in.' }
+    if ($formType.GetField('updatePresetButton', $flags).GetValue($form).Enabled -or $formType.GetField('running', $flags).GetValue($form)) { throw 'Choosing the same preset must restore its selection without logging in.' }
     $presetCharacterNode = Find-TreeNode $tree.Nodes $config.Accounts[0].Characters[0]
     $presetCharacterNode.Checked = !$presetCharacterNode.Checked
     $formType.GetMethod('UpdateCurrentPreset', $flags).Invoke($form, [object[]]@($null, [EventArgs]::Empty)) | Out-Null
-    if ($presetStatus.Text -like 'Modified*') { throw 'Update must save current checkboxes and clear Modified.' }
+    if ($formType.GetField('updatePresetButton', $flags).GetValue($form).Enabled) { throw 'Update must save current checkboxes and become disabled.' }
     $missingReference = $preset.Characters[0]
     $oldAccount = $config.Accounts | Where-Object { $_.Id -eq $missingReference.AccountId }
     $movedCharacter = $oldAccount.Characters | Where-Object { $_.CharacterId -eq $missingReference.CharacterId }
@@ -536,7 +535,7 @@ try {
     $otherAccount = $config.Accounts | Where-Object { $_.Id -ne $oldAccount.Id } | Select-Object -First 1
     $otherAccount.Characters.Add($movedCharacter)
     $formType.GetMethod('ApplySelectedPreset', $flags).Invoke($form, [object[]]@($null, [EventArgs]::Empty)) | Out-Null
-    if ($movedCharacter.Selected -or $presetStatus.Text -notlike '*missing*') { throw 'Missing preset refs must not select a matching ID under a different account.' }
+    if ($movedCharacter.Selected -or !$formType.GetField('log', $flags).GetValue($form).Text.Contains('saved characters no longer exist')) { throw 'Missing preset refs must be logged and must not select a matching ID under a different account.' }
     'PASS: preset edits show Modified without overwriting saved choices; same-preset selection restores checkboxes without login; Update captures selection; removed references cannot select another account.'
     'PASS: English/Danish immediate switches preserve current checkboxes, selected preset, log and user names matching translation keys.'
     foreach ($size in @([Drawing.Size]::new(1046,869), $form.MinimumSize)) {

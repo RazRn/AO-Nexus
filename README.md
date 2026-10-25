@@ -2,15 +2,15 @@
 
 **A launcher for your accounts, characters and teams across Anarchy Online servers.**
 
-AO Nexus **v1.0.18** brings separate game installations, login servers, saved character selections and server news into one Windows app. It includes presets for Funcom AO, Project Rubi-Ka and AO Rebirth, and lets you add your own server entries.
+AO Nexus **v1.0.19** brings separate game installations, login servers, saved character selections and server news into one Windows app. It includes presets for Funcom AO, Project Rubi-Ka and AO Rebirth, and lets you add your own server entries.
 
 Based on [AOQuickLauncher](https://gitlab.com/never-knows-best/aoquicklauncher) by **never-knows-best and contributors**. Customized by **Luckyspawn**.
 
 [Download a release](https://github.com/RazRn/AO-Nexus/releases) · [Source repository](https://github.com/RazRn/AO-Nexus) · [Player guide](dist/README.txt)
 
-![AO Nexus dashboard with a saved team, accounts grouped by server, account details and server news](docs/images/published/launcher-overview-0b87102cb279fa0a.png)
+![AO Nexus dashboard with a saved team, accounts grouped by server, account details and server news](docs/images/published/launcher-overview-299965b3354f734e.png)
 
-Screenshots use example accounts and offline news fixtures, with no personal accounts or passwords. All guide screenshots were regenerated from v1.0.18.
+Screenshots use example accounts and offline news fixtures, with no personal accounts or passwords. All guide screenshots were regenerated from v1.0.19.
 
 ## What it does
 
@@ -62,6 +62,11 @@ The executable contains the compressed login engine. You do not need a sibling A
 
 Use the window's **Minimize** button to keep Nexus running in the system tray, out of the taskbar and Alt+Tab. Click its tray icon to restore the window, or right-click it for **Open AO Nexus** and **Exit AO Nexus**. Windows may put the icon under the tray's hidden-icons arrow. Minimizing keeps login queues and new-character detection running. The window's **X** and **Exit AO Nexus** close the launcher; your game windows stay open.
 
+Minimizing and quitting each show a confirmation. **Don't show this again** saves a separate preference for that action only after you confirm. Cancel keeps Nexus open and does not remember the checkbox. In **Settings**, turn **Confirm before minimizing to tray** or **Confirm before quitting Nexus** back on whenever you want. Starting with Windows and an already-confirmed update restart do not show these extra prompts.
+
+![Minimize confirmation explaining the tray and optional suppression](docs/images/published/minimize-confirmation-0cb14b5023ddf31f.png)
+
+![Quit confirmation explaining what closes and what remains running](docs/images/published/quit-confirmation-dce9c21828570945.png)
 Only one Nexus instance runs per Windows user session, even when opened from different folders. Starting it again opens the existing window, including when it is hidden in the tray.
 
 Under **Settings**, enable **Start with Windows** and choose **Save** to start Nexus in the tray when you sign in. This is off by default and never logs game accounts in automatically. Uncheck it and save to remove automatic startup. It uses a single entry under your Windows user's `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` key, without requiring administrator rights. If you move the launcher, open it from its new location and save Settings again to update the startup path. Windows Task Manager can also disable startup apps.
@@ -135,7 +140,7 @@ Open **Settings → Manage login servers…** to rename servers, edit their addr
 
 ![Login server editor showing connection settings, simultaneous account and character limits, and total character slots](docs/images/published/server-settings-515e6f4b4c4ee421.png)
 
-These are the defaults in the **v1.0.18 source**, rather than a live statement of each server's current rules or availability. Existing profiles can retain their saved values.
+These are the defaults in the **v1.0.19 source**, rather than a live statement of each server's current rules or availability. Existing profiles can retain their saved values.
 
 | Server preset | Login address | Max. accounts | Chars per account | Character slots |
 | --- | --- | ---: | ---: | ---: |
@@ -174,9 +179,9 @@ To save a setup:
 3. Later, choose that setup in the picker to restore its selection.
 4. Review the selected characters and choose **Log in selected** when ready.
 
-Selecting a team changes checkboxes; it does not immediately start games. If you change the checkboxes afterwards, the status shows **Modified**. Choose **Edit…**, check **Replace saved characters with current selection**, and save to update that team. Leave that box unchecked when changing only the name or shortcuts. **Save new…** keeps a separate team; **Delete** removes a preset. **Cancel** discards every change in the editor.
+Selecting a team changes checkboxes; it does not immediately start games. After changing the checkboxes, choose **Update** to save that selection to the current team. Update is disabled when the saved selection already matches. **Edit…** changes only the name and shortcuts; **Save new…** keeps a separate team; **Delete** removes a preset. **Cancel** discards changes in the editor.
 
-![Create a team preset with a name and optional start and logout shortcuts](docs/images/published/preset-create-1e0f9123cec21b0a.png)
+![Create a team preset with a name and optional start and logout shortcuts](docs/images/published/preset-create-667dd10f7a9b3a58.png)
 
 A team stores character references, not a second copy of the account settings. Account changes still apply. Missing characters are reported and skipped; newly imported or created characters do not silently join existing teams.
 
@@ -195,7 +200,7 @@ Serial login does not mean the first character closes when the next starts. Succ
 
 ## Preset shortcuts and logout
 
-![Separate start and logout shortcut fields for the selected team](docs/images/published/preset-shortcuts-21523ea6a7a71ba2.png)
+![Separate start and logout shortcut fields for the selected team](docs/images/published/preset-shortcuts-0f8348016120ba0b.png)
 
 1. Select a saved team under **Team presets** and choose **Edit…**. The same shortcut fields appear when you choose **Save new…**.
 2. Click a field, then press your combination, for example **Ctrl + Alt + F6** to start and **Ctrl + Alt + F7** to log out. Use Ctrl or Alt with a letter, number or function key. F12 and Windows-key combinations are reserved.
@@ -211,7 +216,7 @@ The game handles its normal logout countdown. Combat, zoning, movement or cancel
 
 **Existing game windows need one normal restart through v1.0.15 or later** to enable quit control. The same applies to a client opened through **Create new char**: save/import the character and start it normally once. Unsupported or untracked clients are skipped with an explanation. AOSharp is not required. Closing Nexus itself still leaves all game windows open.
 
-For implementation details and test coverage, see [Quit control](docs/Camp-Control.md). See [What's new in v1.0.18](docs/Whats-New-1.0.18.md) for the English feature list.
+For implementation details and test coverage, see [Quit control](docs/Camp-Control.md). See [What's new in v1.0.19](docs/Whats-New-1.0.19.md) for the English feature list.
 
 ## Create a new character
 
@@ -284,11 +289,15 @@ The compact terminal-style log uses a dark background and monospace green text. 
 
 From v1.0.18, use **Settings → Check for updates…**. You can also enable **Check for updates when Nexus starts** and save Settings. On the first launch after upgrading, Nexus asks whether to enable automatic checks and remembers your answer. Nothing is enabled until you choose Yes; you can change it later in Settings. It checks once per startup and shows an **Update available…** link when a newer stable GitHub release exists; it never installs silently.
 
-![Settings with the optional startup update check and manual update button](docs/images/published/settings-d6fb2ed3ce023949.png)
+![Settings with the optional startup update check and manual update button](docs/images/published/settings-8559c371659969ba.png)
 
 Choose **Install and restart** after reviewing the version and release notes. Nexus downloads the release ZIP from `RazRn/AO-Nexus`, verifies GitHub's SHA-256 digest, the executable checksum and version, and stages the EXE. A separate staged copy waits for Nexus to close, replaces the installed executable, keeps a backup beside it, and reopens it. Active launcher logins or character detection must finish or be stopped first; existing game windows stay open. Updates require write access to the installation folder and do not request administrator privileges. Save pending Settings edits before installing.
 
-![Update dialog showing the installed version and stable release check](docs/images/published/app-updates-1b67178ae24bf904.png)
+![Update dialog showing the installed version and stable release check](docs/images/published/app-updates-78121d8f55109273.png)
+
+Update checks and downloads are reported in the activity log. After a successful installation, the restarted app reports the new version and opens a **What's new** window once. Its release summary is bundled with that version in English and Danish, works offline, and does not appear on ordinary startups. A persistent history is kept in `%LOCALAPPDATA%\AONexus\Updates\update-history.log` (with one rotated `.previous` file), and each installation also keeps its `update-result.txt` in its staging folder. Checks happen once per startup when enabled, or when you press Check for updates; there is no periodic background poll.
+
+![One-time release summary after a successful update](docs/images/published/whats-new-43ecf78eaa2e5cff.png)
 
 The updater uses public GitHub Releases without a GitHub login or token. It ignores prereleases and does not downgrade. Network or verification failures leave the installed executable untouched. Installation uses atomic replacement; the old EXE remains as an `AONexus.exe.previous-*` backup. Staging files and the installation result are under `%LOCALAPPDATA%\AONexus\Updates`. Profiles and credentials are not included in downloads or sent to GitHub. The SHA-256 check authenticates the download against GitHub's release metadata; it is not a separate publisher signature. Trust remains with this repository and its release permissions.
 

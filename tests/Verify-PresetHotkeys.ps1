@@ -66,7 +66,7 @@ try {
         $field.PerformClick()
         $method.Invoke($field, @($message, [Windows.Forms.Keys]::Delete)) | Out-Null
         Assert ($null -eq $dialog.StartHotkey -and $dialog.LogoutHotkey.Key -eq 118) 'Delete clears only the chosen draft shortcut'
-        Assert (!$dialog.ReplaceCharacters) 'Editing shortcuts must preserve saved members unless explicitly selected'
+        Assert ($dialog.Controls.Find('replacePresetCharacters',$true).Count -eq 0) 'Membership is updated outside the shortcut editor'
         $dialog.DialogResult = [Windows.Forms.DialogResult]::Cancel
     } finally { $dialog.Dispose() }
     Assert ($preset.StartHotkey.Key -eq 117 -and $preset.CampHotkey.Key -eq 118) 'Cancel leaves both saved shortcuts unchanged'
@@ -76,7 +76,7 @@ try {
     try {
         Call 'RegisterPresetHotkeys'
         Assert ((Field 'registeredHotkeys').Count -eq 2) 'Register both shortcuts with Windows'
-        $form.WindowState = [Windows.Forms.FormWindowState]::Minimized; [Windows.Forms.Application]::DoEvents()
+        Call 'MinimizeToTray'; [Windows.Forms.Application]::DoEvents()
         Assert (!( [HotkeyNativeFixture]::RegisterHotKey([IntPtr]::Zero, 808, 7, 133))) 'Shortcut stays registered while hidden in tray'
         Call 'ShowLauncher'
         $other.StartHotkey = Binding 133 7

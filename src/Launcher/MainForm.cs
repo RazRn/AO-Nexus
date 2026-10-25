@@ -44,7 +44,6 @@ namespace AOLauncher
         }
         private readonly TextBox log = new TextBox();
         private readonly ComboBox presetPicker = new NexusComboBox();
-        private readonly Label presetStatus = new Label();
         private readonly List<Control> editingControls = new List<Control>();
         private Button startButton;
         private Button addCharacterButton;
@@ -55,6 +54,7 @@ namespace AOLauncher
         private Button updatePasswordButton;
         private Button stopButton;
         private Button updatePresetButton;
+        private Button editPresetButton;
         private Button deletePresetButton;
         private LinkLabel expandAccountsLink;
         private LinkLabel collapseAccountsLink;
@@ -76,6 +76,8 @@ namespace AOLauncher
         private FormWindowState restoreWindowState = FormWindowState.Normal;
         private bool hiddenInTray;
         private bool restoringFromTray;
+        private bool confirmingWindowAction;
+        internal Func<bool, Tuple<bool, bool>> WindowActionPrompt = null;
 
         public MainForm(bool smokeMode)
         {
@@ -152,6 +154,17 @@ namespace AOLauncher
                 if (smoke) AppendLog(T("UI preview uses sample data. It does not log in or change your settings."));
                 else AppendLog(T("Ready. Add your accounts and characters, check the ones you want, then choose “Log in selected”."));
                 if (!smoke && LauncherBootstrap.ImportedThisSession) AppendLog(T("Copied your AO Launcher profile. AO Nexus now saves changes separately."));
+                if (!smoke && UpdateJournal.ConsumeInstalledNotice(AppUpdates.UpdateRoot))
+                {
+                    AppendLog(F("AO Nexus was updated to version {0}.", AppUpdates.CurrentVersion.ToString(3)));
+                    BeginInvoke((Action)(() =>
+                    {
+                        if (closing || IsDisposed) return;
+                        var whatsNew = new WhatsNewDialog();
+                        whatsNew.FormClosed += (closedSender, closedArgs) => whatsNew.Dispose();
+                        whatsNew.Show(this);
+                    }));
+                }
                 if (!smoke && !storageBlocked && !settings.HasChosenUpdatePreference)
                 {
                     var answer = NexusMessageBox.Show(this, T("Check GitHub for updates automatically when Nexus starts?\r\n\r\nYou can change this in Settings at any time. Updates are only downloaded and installed after you choose Install and restart."),
@@ -199,14 +212,59 @@ namespace AOLauncher
             if (trayIcon == null || closing || IsDisposed || restoringFromTray) return;
             if (WindowState == FormWindowState.Minimized)
             {
-                if (hiddenInTray) return;
-                hiddenInTray = true;
-                trayIcon.Visible = true;
-                // Hiding removes the window from the taskbar and Alt+Tab without
-                // recreating its handle or interrupting background login callbacks.
-                Hide();
+                if (hiddenInTray || confirmingWindowAction) return;
+                confirmingWindowAction = true;
+                BeginInvoke((Action)CompleteMinimizeRequest);
             }
             else if (!hiddenInTray) restoreWindowState = WindowState;
+        }
+
+        private void RequestMinimize()
+        {
+            if (hiddenInTray || confirmingWindowAction || closing) return;
+            confirmingWindowAction = true;
+            CompleteMinimizeRequest();
+        }
+
+        private void CompleteMinimizeRequest()
+        {
+            try
+            {
+                if (IsDisposed || closing) return;
+                restoringFromTray = true;
+                if (WindowState == FormWindowState.Minimized) WindowState = restoreWindowState;
+                restoringFromTray = false;
+                if (ConfirmWindowAction(true)) MinimizeToTray();
+            }
+            finally { restoringFromTray = false; confirmingWindowAction = false; }
+        }
+
+        internal void MinimizeToTray()
+        {
+            hiddenInTray = true;
+            trayIcon.Visible = true;
+            Hide();
+        }
+
+        private bool ConfirmWindowAction(bool minimize)
+        {
+            if ((smoke && WindowActionPrompt == null) || (minimize ? settings.SkipTrayConfirmation : settings.SkipQuitConfirmation)) return true;
+            bool accepted, remember;
+            if (WindowActionPrompt != null)
+            {
+                var answer = WindowActionPrompt(minimize); accepted = answer.Item1; remember = answer.Item2;
+            }
+            else
+            {
+                using (var dialog = new WindowActionDialog(minimize))
+                { accepted = dialog.ShowDialog(this) == DialogResult.OK; remember = dialog.DontShowAgain; }
+            }
+            if (accepted && remember)
+            {
+                if (minimize) settings.SkipTrayConfirmation = true; else settings.SkipQuitConfirmation = true;
+                SaveSettings();
+            }
+            return accepted;
         }
 
         private void RestoreFromTray()
@@ -299,7 +357,7 @@ namespace AOLauncher
             body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 358));
             layout.Controls.Add(body, 0, 1);
             var workspace = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, Margin = new Padding(0, 0, 18, 0) };
-            workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 118));
+            workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 92));
             workspace.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 102));
             body.Controls.Add(workspace, 0, 0);
@@ -321,15 +379,14 @@ namespace AOLauncher
             }
 
             var presetFrame = new NexusPanel { Name = "presetSection", Dock = DockStyle.Fill, Margin = new Padding(0, 0, 0, 12), Padding = new Padding(12) };
-            var presets = new TableLayoutPanel { Dock = DockStyle.Fill, Margin = Padding.Empty, Padding = Padding.Empty, BackColor = Theme.Surface, ColumnCount = 4, RowCount = 3 };
+            var presets = new TableLayoutPanel { Dock = DockStyle.Fill, Margin = Padding.Empty, Padding = Padding.Empty, BackColor = Theme.Surface, ColumnCount = 5, RowCount = 2 };
             presets.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            for (int index = 0; index < 3; index++) presets.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            for (int index = 0; index < 4; index++) presets.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             presets.RowStyles.Add(new RowStyle(SizeType.Absolute, 20));
             presets.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
-            presets.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));
             var presetCaption = Caption(T("Team presets"));
             presets.Controls.Add(presetCaption, 0, 0);
-            presets.SetColumnSpan(presetCaption, 4);
+            presets.SetColumnSpan(presetCaption, 5);
             presetPicker.DropDownStyle = ComboBoxStyle.DropDownList;
             presetPicker.FlatStyle = FlatStyle.Flat;
             presetPicker.BackColor = Theme.SurfaceRaised;
@@ -342,28 +399,23 @@ namespace AOLauncher
             editingControls.Add(presetPicker);
             var savePresetButton = Theme.Button(T("Save new…"));
             savePresetButton.Click += SaveNewPreset;
-            updatePresetButton = Theme.Button(T("Edit…"));
+            updatePresetButton = Theme.Button(T("Update"));
             updatePresetButton.Click += UpdateCurrentPreset;
+            editPresetButton = Theme.Button(T("Edit…"));
+            editPresetButton.Click += EditCurrentPreset;
             deletePresetButton = Theme.Button(T("Delete"));
             deletePresetButton.Click += DeleteCurrentPreset;
-            var presetButtons = new[] { savePresetButton, updatePresetButton, deletePresetButton };
+            var presetButtons = new[] { savePresetButton, updatePresetButton, editPresetButton, deletePresetButton };
             for (int index = 0; index < presetButtons.Length; index++)
             {
                 presetButtons[index].MinimumSize = new Size(0, 30);
                 presetButtons[index].Font = new Font("Segoe UI", 9F);
                 presetButtons[index].Padding = new Padding(7, 2, 7, 2);
-                presetButtons[index].Margin = new Padding(0, 1, index == 2 ? 0 : 5, 0);
+                presetButtons[index].Margin = new Padding(0, 1, index == presetButtons.Length - 1 ? 0 : 5, 0);
                 presets.Controls.Add(presetButtons[index], index + 1, 1);
                 editingControls.Add(presetButtons[index]);
             }
             ((NexusComboBox)presetPicker).MatchHeight(savePresetButton);
-            presetStatus.Dock = DockStyle.Fill;
-            presetStatus.Font = new Font("Segoe UI", 8.5F);
-            presetStatus.ForeColor = Theme.Muted;
-            presetStatus.AutoEllipsis = true;
-            presetStatus.Margin = new Padding(0, 1, 0, 0);
-            presets.Controls.Add(presetStatus, 0, 2);
-            presets.SetColumnSpan(presetStatus, 4);
             presetFrame.Controls.Add(presets);
             workspace.Controls.Add(presetFrame, 0, 0);
 
@@ -421,7 +473,7 @@ namespace AOLauncher
             tree.ShowLines = false;
             tree.ShowRootLines = true;
             tree.ShowPlusMinus = true;
-            NexusToolTips.Attach(tree);
+            tree.ShowNodeToolTips = false;
             tree.ForeColor = Theme.Foreground;
             tree.LineColor = Theme.Muted;
             tree.Font = new Font("Segoe UI", 9F);
@@ -755,25 +807,9 @@ namespace AOLauncher
         private void UpdatePresetStatus()
         {
             var preset = CurrentPreset;
-            updatePresetButton.Enabled = preset != null && !running;
+            updatePresetButton.Enabled = preset != null && !running && !PresetService.Matches(settings, preset);
+            editPresetButton.Enabled = preset != null && !running;
             deletePresetButton.Enabled = preset != null && !running;
-            if (preset == null)
-            {
-                presetStatus.Text = T("Choose a saved preset, or save the current checkboxes as a new preset.");
-                presetStatus.ForeColor = Theme.Muted;
-                return;
-            }
-            int missing = preset.Characters.Count(reference => !settings.Accounts.Any(account =>
-                string.Equals(account.Id, reference.AccountId, StringComparison.OrdinalIgnoreCase) &&
-                account.Characters.Any(character => character.CharacterId == reference.CharacterId)));
-            bool modified = !PresetService.Matches(settings, preset);
-            presetStatus.ForeColor = modified ? Theme.Amber : Theme.Muted;
-            presetStatus.Text = missing > 0
-                ? F("Modified · {0} saved characters are missing. Choose Edit to update the preset.", missing)
-                : modified
-                    ? T("Modified · Checkbox changes are not saved. Choose Edit to update the preset.")
-                    : T("Saved preset · Checkboxes match this preset. Log in selected when ready.");
-            RefreshHotkeyStatus();
         }
 
         private void ApplySelectedPreset(object sender, EventArgs e)
@@ -808,6 +844,13 @@ namespace AOLauncher
         private void UpdateCurrentPreset(object sender, EventArgs e)
         {
             var preset = CurrentPreset;
+            if (running || shortcutActionBusy || storageBlocked || preset == null) return;
+            ChangePreset(() => PresetService.Update(settings, preset));
+        }
+
+        private void EditCurrentPreset(object sender, EventArgs e)
+        {
+            var preset = CurrentPreset;
             if (running || preset == null) return;
             EditPreset(preset);
         }
@@ -831,7 +874,6 @@ namespace AOLauncher
                         if (preset != null)
                         {
                             PresetService.Rename(settings, target, dialog.PresetName);
-                            if (dialog.ReplaceCharacters) PresetService.Update(settings, target);
                         }
                         target.StartHotkey = dialog.StartHotkey;
                         target.CampHotkey = dialog.LogoutHotkey;
@@ -882,7 +924,6 @@ namespace AOLauncher
                     var serverNode = new TreeNode {
                         Tag = group, Checked = groupCharacters.Length > 0 && groupCharacters.All(character => character.Selected),
                         ForeColor = ServerLimitExceeded(group) ? Theme.Warning : Theme.Accent, BackColor = Theme.SurfaceRaised,
-                        ToolTipText = group.Name + "\r\n" + group.Endpoint + "\r\n" + ServerLimitText(group),
                         Text = ServerCaption(group)
                     };
                     tree.Nodes.Add(serverNode);
@@ -890,9 +931,7 @@ namespace AOLauncher
                     foreach (var account in group.Accounts)
                     {
                         var node = new TreeNode(AccountCaption(account)) {
-                            Tag = account, Checked = account.Characters.Count > 0 && account.Characters.All(c => c.Selected),
-                            ToolTipText = account.Label + "\r\n" + group.Name + "\r\n" + group.Endpoint
-                                + "\r\n" + CharacterSlotSummary(settings, account) + "\r\n" + CharacterSlotSource(account)
+                            Tag = account, Checked = account.Characters.Count > 0 && account.Characters.All(c => c.Selected)
                         };
                         serverNode.Nodes.Add(node);
                         bool selectedAccount = ReferenceEquals(selected, account) || account.Characters.Any(character => ReferenceEquals(selected, character));
@@ -905,8 +944,7 @@ namespace AOLauncher
                         foreach (var character in account.Characters)
                         {
                             var child = new TreeNode(character.NamePending ? F("Character {0} (name detected at login)", character.CharacterId) : character.Name) {
-                                Tag = character, Checked = character.Selected,
-                                ToolTipText = character.Name + "\r\n" + account.Label + "\r\n" + group.Name + "\r\n" + group.Endpoint
+                                Tag = character, Checked = character.Selected
                             };
                             node.Nodes.Add(child);
                             if (ReferenceEquals(selected, character))
@@ -923,8 +961,7 @@ namespace AOLauncher
                         {
                             var action = new CreationAction { Account = account };
                             var actionNode = new TreeNode("+ " + T("Create new char")) {
-                                Tag = action, ForeColor = Theme.Accent,
-                                ToolTipText = T("Double-click to open character creation for this account.")
+                                Tag = action, ForeColor = Theme.Accent
                             };
                             node.Nodes.Add(actionNode);
                             if (SameTreeItem(selected, action)) selectedNode = account.Collapsed ? node : actionNode;
@@ -1315,6 +1352,8 @@ namespace AOLauncher
                 settings.Language = dialog.Language;
                 settings.CheckForUpdatesOnStartup = dialog.CheckForUpdatesOnStartup;
                 settings.HasChosenUpdatePreference = true;
+                settings.SkipTrayConfirmation = dialog.SkipTrayConfirmation;
+                settings.SkipQuitConfirmation = dialog.SkipQuitConfirmation;
                 SaveSettings();
                 ApplyLanguage();
                 UpdateSelection();
@@ -1770,18 +1809,22 @@ namespace AOLauncher
         {
             try
             {
+                UpdateJournal.Record("Startup update check.");
+                AppendLog(T("Checking for updates…"));
                 var release = await AppUpdates.CheckAsync(updateCancellation.Token);
-                if (closing || IsDisposed || release.Version <= AppUpdates.CurrentVersion) return;
+                if (closing || IsDisposed) return;
+                string message = release.Version <= AppUpdates.CurrentVersion ? T("You are using the latest version.") : F("Version {0} is available.", release.Version.ToString(3));
+                AppendLog(message); UpdateJournal.Record(message);
+                if (release.Version <= AppUpdates.CurrentVersion) return;
                 availableUpdate = release; updateAvailableLink.Visible = true;
-                AppendLog(F("Version {0} is available.", release.Version.ToString(3)));
             }
-            catch (Exception ex) { if (!closing && !IsDisposed) AppendLog(F("Could not check for updates: {0}", ex.Message)); }
+            catch (Exception ex) { if (!closing && !IsDisposed) { string message = F("Could not check for updates: {0}", ex.Message); AppendLog(message); UpdateJournal.Record(message); } }
         }
 
         private void OpenUpdates(IWin32Window owner)
         {
             using (var dialog = new UpdateDialog(() => !running && !shortcutActionBusy && creationMonitors.Count == 0 && !closing, availableUpdate))
-                dialog.ShowDialog(owner);
+            { dialog.LogAction = AppendLog; dialog.ShowDialog(owner); }
         }
 
         private void OpenLog()
@@ -1813,6 +1856,17 @@ namespace AOLauncher
 
         private void OnFormClosing(object sender, FormClosingEventArgs e)
         {
+            if (!closing && e.CloseReason == CloseReason.UserClosing)
+            {
+                if (confirmingWindowAction) { e.Cancel = true; return; }
+                confirmingWindowAction = true;
+                try
+                {
+                    if (hiddenInTray) RestoreFromTray();
+                    if (!ConfirmWindowAction(false)) { e.Cancel = true; return; }
+                }
+                finally { confirmingWindowAction = false; }
+            }
             closing = true;
             updateCancellation.Cancel();
             stopRequested = true;

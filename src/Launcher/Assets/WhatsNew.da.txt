@@ -1,0 +1,9 @@
+• Separate bekræftelser ved minimering til proceslinjens meddelelsesområde og afslutning. Begge har “Vis ikke igen” og kan slås til igen i Indstillinger.
+
+• Team-presets har nu en Opdatér-knap, som gemmer de markerede chars. Rediger ændrer navn og genveje. Forklaringslinjen er fjernet.
+
+• Værktøjstip er fjernet i Nexus. Oplysningerne findes stadig i Detaljer og de relevante dialoger.
+
+• Søgning efter opdateringer og installation logges, med en gemt opdateringshistorik og denne engangsoversigt efter opdateringen.
+
+Automatisk søgning kører én gang ved start, hvis det er slået til. Du kan også søge fra Indstillinger. Installation kræver stadig din bekræftelse.

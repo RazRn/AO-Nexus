@@ -268,7 +268,7 @@ namespace AOLauncher
             return card;
         }
 
-        private static Color SourceColor(string id) => id == "rebirth" ? Theme.Accent : id == "prk" ? Theme.Amber : Color.FromArgb(153, 180, 223);
+        private static Color SourceColor(string id) => id == "rebirth" ? Color.FromArgb(115, 197, 208) : Color.FromArgb(157, 177, 190);
 
         private void ResizeCards()
         {
@@ -405,6 +405,7 @@ namespace AOLauncher
             {
                 var current = source;
                 var item = NewMenuItem(source.Name);
+                item.ForeColor = SourceColor(source.Id);
                 item.Tag = source.Id;
                 item.Click += (sender, args) => OpenUrl(current, current.SiteUrl);
                 menu.Items.Add(item);
@@ -489,7 +490,7 @@ namespace AOLauncher
 
             protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e)
             {
-                e.TextColor = e.Item.Selected || e.Item.Pressed ? Theme.Background : Theme.Foreground;
+                e.TextColor = e.Item.Selected || e.Item.Pressed ? Theme.Background : e.Item.ForeColor;
                 base.OnRenderItemText(e);
             }
         }

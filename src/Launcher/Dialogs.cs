@@ -81,7 +81,7 @@ namespace AOLauncher
                 grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
                 grid.EditingControlShowing -= StyleGridEditor;
                 grid.EditingControlShowing += StyleGridEditor;
-                NexusToolTips.Attach(grid);
+                grid.ShowCellToolTips = false;
             }
             else if (control is TabControl tabs)
             {
@@ -244,6 +244,26 @@ namespace AOLauncher
             Fields.ClientSizeChanged += (sender, e) => note.MaximumSize = new Size(
                 Math.Max(100, Fields.ClientSize.Width - note.Margin.Horizontal - SystemInformation.VerticalScrollBarWidth), 0);
             return note;
+        }
+    }
+
+    internal sealed class WindowActionDialog : EditorDialog
+    {
+        private readonly CheckBox remember;
+        internal bool DontShowAgain => remember.Checked;
+        internal WindowActionDialog(bool minimize) : base(T(minimize ? "Minimize to tray?" : "Quit AO Nexus?"), 330)
+        {
+            AddWrappedNote(T(minimize
+                ? "Nexus will keep running in the Windows system tray and disappear from the taskbar and Alt+Tab. Click its tray icon to return. Login activity continues."
+                : "This closes Nexus and stops pending launcher activity. Your game windows stay open. Preset shortcuts will stop working until you open Nexus again."), "windowActionGuide");
+            remember = new NexusCheckBox { Name = "dontShowAgain", Text = T("Don't show this again"), AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 14, 0, 8) };
+            Fields.Controls.Add(remember);
+            AddWrappedNote(T("You can turn confirmations back on in Settings."), "windowActionSettingsGuide");
+            SaveButton.Text = T(minimize ? "Minimize to tray" : "Quit Nexus");
+            SaveButton.Click += (sender, e) => DialogResult = DialogResult.OK;
+            AcceptButton = CancelAction;
+            ActiveControl = CancelAction;
+            Shown += (sender, e) => { CancelAction.Focus(); Fields.AutoScrollPosition = Point.Empty; };
         }
     }
 
@@ -669,18 +689,16 @@ namespace AOLauncher
     {
         private readonly TextBox nameInput;
         private readonly HotkeyCapture startHotkeyField, campHotkeyField;
-        private readonly CheckBox replaceCharacters;
         public string PresetName { get; private set; }
         public HotkeyBinding StartHotkey => startHotkeyField.Binding;
         public HotkeyBinding LogoutHotkey => campHotkeyField.Binding;
-        public bool ReplaceCharacters => replaceCharacters.Checked;
         internal Func<HotkeyBinding, HotkeyBinding, string> ValidateShortcuts;
 
         public PresetNameDialog(string title, string initialName, IEnumerable<string> reservedNames)
             : this(title, initialName, reservedNames, null, null, 0, false) { }
 
         public PresetNameDialog(string title, string initialName, IEnumerable<string> reservedNames,
-            HotkeyBinding start, HotkeyBinding logout, int selectedCount, bool editing) : base(title, 490)
+            HotkeyBinding start, HotkeyBinding logout, int selectedCount, bool editing) : base(title, 410)
         {
             nameInput = AddTextField(T("Preset name"), initialName);
             nameInput.MaxLength = 80;
@@ -695,14 +713,7 @@ namespace AOLauncher
                 field.CaptureChanged = () => { if (!field.Capturing) ErrorLabel.Text = ""; };
             }
             AddWrappedNote(T("Optional shortcuts · Ctrl/Alt + key · Delete clears · Esc cancels recording. Changes apply only when you save. Logout uses /quit."), "presetShortcutGuide");
-            replaceCharacters = new NexusCheckBox { Name = "replacePresetCharacters", Text = F("Replace saved characters with current selection ({0})", selectedCount),
-                AutoSize = true, Dock = DockStyle.Top, Checked = false, Margin = new Padding(0, 12, 0, 0) };
-            if (editing)
-            {
-                Fields.Controls.Add(replaceCharacters);
-                AddWrappedNote(T("Leave unchecked to keep the saved characters while editing the name or shortcuts."), "presetSelectionGuide");
-            }
-            else AddWrappedNote(F("This preset will save the current selection of {0} characters.", selectedCount), "presetSelectionGuide");
+            if (!editing) AddWrappedNote(F("This preset will save the current selection of {0} characters.", selectedCount), "presetSelectionGuide");
             SaveButton.Click += (sender, e) =>
             {
                 try
@@ -884,6 +895,9 @@ namespace AOLauncher
         private readonly ComboBox languageInput;
         private readonly CheckBox startWithWindowsInput;
         private readonly CheckBox checkUpdatesInput;
+        private readonly CheckBox confirmTrayInput, confirmQuitInput;
+        public bool SkipTrayConfirmation => !confirmTrayInput.Checked;
+        public bool SkipQuitConfirmation => !confirmQuitInput.Checked;
         public Action CheckUpdatesAction { private get; set; }
         public bool CheckForUpdatesOnStartup => checkUpdatesInput.Checked;
         public Func<bool, string> SaveStartupAction { private get; set; }
@@ -911,6 +925,11 @@ namespace AOLauncher
             };
             Fields.Controls.Add(startWithWindowsInput);
             AddWrappedNote(T("Start in the system tray when you sign in to Windows. No game accounts are logged in automatically. Turn this off here to remove automatic startup."), "windowsStartupGuide");
+            confirmTrayInput = new NexusCheckBox { Text = T("Confirm before minimizing to tray"), Name = "confirmTray", AutoSize = true, Dock = DockStyle.Top,
+                Checked = !settings.SkipTrayConfirmation, Margin = new Padding(0, 4, 0, 4) };
+            confirmQuitInput = new NexusCheckBox { Text = T("Confirm before quitting Nexus"), Name = "confirmQuit", AutoSize = true, Dock = DockStyle.Top,
+                Checked = !settings.SkipQuitConfirmation, Margin = new Padding(0, 4, 0, 4) };
+            Fields.Controls.Add(confirmTrayInput); Fields.Controls.Add(confirmQuitInput);
             AddNote(T("Set the game folder and login server under each account: Edit → Game and server."), 65);
             var serversButton = Theme.Button(T("Manage login servers…"));
             serversButton.Click += (sender, e) =>
@@ -996,9 +1015,6 @@ namespace AOLauncher
             grid.Columns[4].FillWeight = 100;
             grid.Columns[5].FillWeight = 90;
             grid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            grid.Columns[3].ToolTipText = T("0 = unlimited accounts");
-            grid.Columns[4].ToolTipText = T("0 = unlimited characters per account");
-            grid.Columns[5].ToolTipText = T("Total characters per account. 0 = no launcher limit / unknown.");
             grid.Columns[3].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             grid.Columns[4].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             grid.Columns[5].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;

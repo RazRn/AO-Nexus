@@ -120,7 +120,7 @@ try {
 $settings = New-Model 'LauncherSettings'
 $settingsPreview = New-Dialog 'SettingsDialog' ([object[]]@($settings))
 try {
-    $settingsPreview.ClientSize = [Drawing.Size]::new(510, 1100)
+    $settingsPreview.ClientSize = [Drawing.Size]::new(510, 820)
     Show-Fixture $settingsPreview
     Save-GuideScreenshot $settingsPreview 'settings.png'
 } finally { $settingsPreview.Dispose() }
@@ -131,7 +131,20 @@ try {
     Show-Fixture $updatesPreview
     Save-GuideScreenshot $updatesPreview 'app-updates.png'
 } finally { $updatesPreview.Dispose() }
+foreach ($minimize in @($true,$false)) {
+    $confirmation = New-Dialog 'WindowActionDialog' ([object[]]@($minimize))
+    try {
+        Show-Fixture $confirmation
+        $filename = if ($minimize) { 'minimize-confirmation.png' } else { 'quit-confirmation.png' }
+        Save-GuideScreenshot $confirmation $filename
+    } finally { $confirmation.Dispose() }
+}
 $account = New-Model 'AccountConfig'
+$whatsNew = New-Dialog 'WhatsNewDialog' ([object[]]@())
+try {
+    Show-Fixture $whatsNew
+    Save-GuideScreenshot $whatsNew 'whats-new.png'
+} finally { $whatsNew.Dispose() }
 $account.Label = 'Rubi-Ka expedition'
 $account.Username = 'example-account'
 $account.GamePath = 'C:\Games\AO-Rebirth'
@@ -179,8 +192,8 @@ $readmePath = Join-Path $PSScriptRoot '..\README.md'
 $readme = [IO.File]::ReadAllText($readmePath)
 $publishedDirectory = Join-Path $OutputDirectory 'published'
 [IO.Directory]::CreateDirectory($publishedDirectory) | Out-Null
-$manifest = @("# Guide screenshot provenance", "", "Generated from AO Nexus $version using Capture-GuideScreenshots.ps1.", "", "Synthetic accounts, empty password fields, offline news and an offline update fixture. All eleven README images are rendered from the actual controls.", "")
-foreach ($name in @('launcher-overview.png','preset-shortcuts.png','preset-create.png','activity-log.png','settings.png','app-updates.png','account-setup.png','game-and-server.png','server-settings.png','password-options.png','update-saved-password.png')) {
+$manifest = @("# Guide screenshot provenance", "", "Generated from AO Nexus $version using Capture-GuideScreenshots.ps1.", "", "Synthetic accounts, empty password fields, offline news and an offline update fixture. All fourteen README images are rendered from the actual controls.", "")
+foreach ($name in @('launcher-overview.png','preset-shortcuts.png','preset-create.png','activity-log.png','settings.png','app-updates.png','minimize-confirmation.png','quit-confirmation.png','whats-new.png','account-setup.png','game-and-server.png','server-settings.png','password-options.png','update-saved-password.png')) {
     $hash = (Get-FileHash -LiteralPath (Join-Path $OutputDirectory $name) -Algorithm SHA256).Hash.ToLowerInvariant()
     $manifest += ('- ' + $name + ': ' + $hash)
     # GitHub's raw redirect can drop a query-string cache key. Give the file
@@ -204,4 +217,4 @@ foreach ($name in @('launcher-overview.png','preset-shortcuts.png','preset-creat
 }
 [IO.File]::WriteAllText($readmePath, $readme, [Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText((Join-Path $OutputDirectory 'SCREENSHOTS.md'), (($manifest -join "`n") + "`n"), [Text.UTF8Encoding]::new($false))
-Write-Output "PASS: all eleven guide screenshots regenerated from $version using synthetic accounts and offline fixtures."
+Write-Output "PASS: all fourteen guide screenshots regenerated from $version using synthetic accounts and offline fixtures."

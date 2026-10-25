@@ -17,16 +17,6 @@ namespace AOLauncher
         private readonly Dictionary<int, Tuple<string, bool>> registeredHotkeys = new Dictionary<int, Tuple<string, bool>>();
         private readonly Dictionary<string, string> hotkeyFailures = new Dictionary<string, string>();
 
-        private void RefreshHotkeyStatus()
-        {
-            string error;
-            if (CurrentPreset != null && hotkeyFailures.TryGetValue(CurrentPreset.Id, out error))
-            {
-                presetStatus.Text = error;
-                presetStatus.ForeColor = Theme.Amber;
-            }
-        }
-
         private string ValidatePresetHotkeys(LaunchPreset preset, HotkeyBinding start, HotkeyBinding logout)
         {
             if (start != null && !start.IsValid || logout != null && !logout.IsValid)
@@ -71,11 +61,12 @@ namespace AOLauncher
                     }
                     else registeredHotkeys.Add(id, Tuple.Create(preset.Id, action == 1));
                 }
-            RefreshHotkeyStatus();
         }
         protected override void OnHandleDestroyed(EventArgs e) { UnregisterPresetHotkeys(); base.OnHandleDestroyed(e); }
         protected override void WndProc(ref Message m)
         {
+            if (m.Msg == 0x0112 && (m.WParam.ToInt64() & 0xFFF0) == 0xF020 && trayIcon != null)
+            { RequestMinimize(); return; }
             Tuple<string, bool> action;
             if (m.Msg == 0x0312 && registeredHotkeys.TryGetValue(m.WParam.ToInt32(), out action))
             {
@@ -107,7 +98,7 @@ namespace AOLauncher
                 }
             }
             catch (Exception ex) { if (!closing) ShowInfo(ex.Message); }
-            finally { shortcutActionBusy = false; if (!closing) RefreshHotkeyStatus(); }
+            finally { shortcutActionBusy = false; }
         }
         private async Task CampPreset(LaunchPreset preset)
         {

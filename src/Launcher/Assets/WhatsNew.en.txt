@@ -1,0 +1,9 @@
+• Separate confirmations for minimizing to the tray and quitting. Each has “Don't show this again”; restore them in Settings.
+
+• Team presets now have an Update button to save the checked characters. Edit changes the name and shortcuts. The explanatory line has been removed.
+
+• Removed hover tooltips throughout Nexus. Information remains in Details and the relevant dialogs.
+
+• Update checks and installation activity are logged, with a persistent update history and this one-time release summary after updating.
+
+Automatic checks run once when Nexus starts, if enabled. You can also check from Settings. Installation still requires your confirmation.

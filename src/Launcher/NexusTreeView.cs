@@ -11,6 +11,18 @@ namespace AOLauncher
     {
         internal NexusTreeView() { DrawMode = TreeViewDrawMode.OwnerDrawAll; }
 
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                var parameters = base.CreateParams;
+                // TVS_NOTOOLTIPS: ShowNodeToolTips=false disables node infotips,
+                // but the native truncated-label tooltip otherwise remains active.
+                parameters.Style |= 0x0080;
+                return parameters;
+            }
+        }
+
         protected override void OnGotFocus(EventArgs e) { base.OnGotFocus(e); Invalidate(); }
         protected override void OnLostFocus(EventArgs e) { base.OnLostFocus(e); Invalidate(); }
 
