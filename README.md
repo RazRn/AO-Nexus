@@ -6,7 +6,7 @@ Keep separate game folders and login servers for Funcom AO, Project Rubi-Ka and 
 
 **[Download the latest release](https://github.com/RazRn/AO-Nexus/releases/latest)** · [Player guide](docs/Player-Guide.md) · [Release notes](https://github.com/RazRn/AO-Nexus/releases)
 
-![AO Nexus with a team preset, accounts grouped by server, details and news](docs/images/published/launcher-overview-9fd4ab70ed9235a2.png)
+![AO Nexus with a team preset, accounts grouped by server, details and news](docs/images/published/launcher-overview-2a1539db3de8659a.png)
 
 *Example accounts and offline news; no personal accounts or passwords. [Screenshot provenance](docs/images/SCREENSHOTS.md).*
 

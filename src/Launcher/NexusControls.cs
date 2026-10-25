@@ -508,6 +508,13 @@ namespace AOLauncher
             SetStyle(ControlStyles.ResizeRedraw, true);
             BackColor = Theme.Surface;
         }
+        protected override void OnPaintBackground(PaintEventArgs e)
+        {
+            base.OnPaintBackground(e);
+            if (!string.IsNullOrEmpty(Legend))
+                using (var brush = new SolidBrush(Parent?.BackColor ?? Theme.Background))
+                    e.Graphics.FillRectangle(brush, 0, 0, Width, Font.Height / 2);
+        }
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
@@ -519,10 +526,14 @@ namespace AOLauncher
                 {
                     using (var font = new Font(Font, FontStyle.Bold))
                     {
-                        var size = TextRenderer.MeasureText(Legend, font);
+                        // Section legends share typography regardless of translation casing.
+                        var caption = Legend.ToUpperInvariant();
+                        var size = TextRenderer.MeasureText(caption, font);
                         var rect = new Rectangle(12, 0, Math.Max(0, Math.Min(Width - 24, size.Width + 8)), size.Height);
                         using (var brush = new SolidBrush(BackColor)) e.Graphics.FillRectangle(brush, rect);
-                        TextRenderer.DrawText(e.Graphics, Legend, font, rect, Theme.Muted, TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix | TextFormatFlags.EndEllipsis);
+                        using (var brush = new SolidBrush(Parent?.BackColor ?? Theme.Background))
+                            e.Graphics.FillRectangle(brush, rect.X, rect.Y, rect.Width, top);
+                        TextRenderer.DrawText(e.Graphics, caption, font, rect, Theme.Muted, TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix | TextFormatFlags.EndEllipsis);
                     }
                 }
             }

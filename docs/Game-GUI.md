@@ -19,7 +19,7 @@ These are different scopes. A window layout belongs to a character. The game's s
 
 For a one-time copy, select targets first and choose **Copy from char…**. The temporary captured template is removed afterward; the target backups remain available.
 
-![Layout manager with the template list, one target character and Apply layout marked in red](images/published/gui-layouts-54a87c2e1092525f.png)
+![Layout manager with the template list, one target character and Apply layout marked in red](images/published/gui-layouts-302650f45f5b0612.png)
 
 *1 — Choose a personal template or the built-in AO default layout. 2 — Select the target character; start with one. 3 — Apply the selected layout. These are example accounts; the red marks are guide annotations.*
 
@@ -116,7 +116,7 @@ Do not manually launch the affected game or edit its preference files during an 
 
 ## Backups and recovery
 
-![Backups tab with an example recovery record and Restore backup marked in red](images/published/gui-backups-1e1565f0c6658b60.png)
+![Backups tab with an example recovery record and Restore backup marked in red](images/published/gui-backups-3836bc9101bf2778.png)
 
 *1 — Select the recovery record and review its original character or installation. 2 — Restore backup returns that target to the recorded state; it does not copy the record to a different character.*
 

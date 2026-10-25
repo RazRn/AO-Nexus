@@ -42,6 +42,12 @@ try {
     foreach($name in @('presetSection','accountsByServer')) {
       $panel=$main.Controls.Find($name,$true)[0]
       Assert ($panel.Visible -and $panel.Width -gt 100 -and $panel.Parent.ClientRectangle.Contains($panel.Bounds)) "$name stays inside the maximized workspace on cycle $cycle"
+      $pixels=[Drawing.Bitmap]::new($panel.Width,$panel.Height)
+      try {
+        $panel.DrawToBitmap($pixels,[Drawing.Rectangle]::new(0,0,$panel.Width,$panel.Height))
+        Assert ($pixels.GetPixel($panel.Width-4,2).ToArgb() -eq $panel.Parent.BackColor.ToArgb()) "$name uses the surrounding background above its legend border"
+        Assert ($pixels.GetPixel($panel.Width-4,$panel.Font.Height+2).ToArgb() -eq $panel.BackColor.ToArgb()) "$name retains its surface inside the border"
+      } finally {$pixels.Dispose()}
     }
     $main.WindowState='Normal';$main.Location=[Drawing.Point]::new(-18000,-18000);[Windows.Forms.Application]::DoEvents()
   }

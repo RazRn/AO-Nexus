@@ -54,6 +54,12 @@ foreach ($language in @('en','da')) {
     for ($page=0; $page -lt $pages; $page++) {
      if ($tabs.Count) { $tabs[0].SelectedIndex=$page; Pump }
      $context="$kind $language $scale page $page"
+     if ($kind -eq 'SettingsDialog' -and $page -eq 1) {
+      $loginAction=$dialog.Controls.Find('manageLoginServers',$true)[0]
+      $healthAction=$dialog.Controls.Find('manageHealthChecks',$true)[0]
+      Check ($healthAction.Top - $loginAction.Bottom -ge 8*$scale-1) "$context stacked actions need a visible gap"
+      Check ($healthAction.Left -eq $loginAction.Left -and $healthAction.Width -eq $loginAction.Width) "$context related actions should align and have equal widths"
+     }
      $work=[Windows.Forms.Screen]::FromControl($dialog).WorkingArea
      Check ($dialog.Height -le $work.Height) "$context exceeds screen height"
      foreach ($table in @(Children $dialog | Where-Object { $_ -is [Windows.Forms.TableLayoutPanel] -and $_.Visible -and $_.AutoScroll })) {

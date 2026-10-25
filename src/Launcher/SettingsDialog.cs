@@ -84,10 +84,15 @@ namespace AOLauncher
                     if (dialog.ShowDialog(this) == DialogResult.OK) HealthCheckEndpoints = dialog.Endpoints;
             };
             serverFields.Controls.Add(healthEndpoints);
-            Note(serverFields, T("Saved passwords"));
+            var passwordsHeading = Note(serverFields, T("Saved passwords"));
+            passwordsHeading.Font = new Font(settingsTabs.Font, FontStyle.Bold);
+            passwordsHeading.Margin = new Padding(0, 16, 0, 8);
             Note(serverFields, T("Clear saved passwords for all AO Nexus accounts immediately. You will be asked again at the next login."));
             var forget = Theme.Button(T("Forget passwords")); forget.Name = "forgetSavedPasswords";
+            serverFields.Controls.Add(forget);
             var passwordStatus = Note(serverFields, ""); passwordStatus.Name = "passwordActionStatus";
+            passwordStatus.Visible = false;
+            passwordStatus.TextChanged += (sender, e) => passwordStatus.Visible = !string.IsNullOrEmpty(passwordStatus.Text);
             forget.Click += (sender, e) =>
             {
                 if (ForgetPasswordsAction == null) return;
@@ -95,7 +100,6 @@ namespace AOLauncher
                 passwordStatus.Text = cleared ? T("Saved passwords cleared. Accounts and presets are unchanged.") : T("Passwords could not be cleared. Try again.");
                 passwordStatus.ForeColor = cleared ? Theme.Accent : Theme.Warning;
             };
-            serverFields.Controls.Add(forget);
 
             checkUpdatesInput = Check("Check for updates when Nexus starts", settings.CheckForUpdatesOnStartup, "checkUpdatesOnStartup");
             updateFields.Controls.Add(checkUpdatesInput);
@@ -108,6 +112,12 @@ namespace AOLauncher
             updateFields.Controls.Add(logSizeInput);
             Note(updateFields, L("Default: 5 MB per log. Oldest entries are removed first. The activity log lasts only for this session; update history is saved on this PC. Update downloads are cleaned up automatically; one previous executable is kept for recovery.",
                 "Standard: 5 MB pr. log. Ældste poster fjernes først. Aktivitetsloggen findes kun i denne session; opdateringshistorikken gemmes på denne pc. Opdateringsfiler ryddes automatisk op; én tidligere programfil beholdes til gendannelse."));
+            foreach (var fields in new[] { Fields, serverFields, updateFields })
+                foreach (var button in fields.Controls.OfType<Button>())
+                {
+                    button.Margin = new Padding(0, 0, 0, 8);
+                    button.MinimumSize = new Size(220, 34);
+                }
             SaveButton.Click += (sender, e) =>
             {
                 string startupError = SaveStartupAction?.Invoke(StartWithWindows);
@@ -124,10 +134,10 @@ namespace AOLauncher
             var page = new TabPage(title) { BackColor = Theme.Background, Padding = new Padding(12) };
             page.Controls.Add(SlimScrolling.Wrap(fields)); settingsTabs.TabPages.Add(page); return fields;
         }
-        private static CheckBox Check(string key, bool value, string name) => new NexusCheckBox { Name = name, Text = T(key), Checked = value, AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 9, 0, 8) };
+        private static CheckBox Check(string key, bool value, string name) => new NexusCheckBox { Name = name, Text = T(key), Checked = value, AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 0, 0, 8) };
         private static Label Note(TableLayoutPanel fields, string text)
         {
-            var note = new Label { Text = text, AutoSize = true, Dock = DockStyle.Top, MaximumSize = new Size(500, 0), ForeColor = Theme.Muted, Margin = new Padding(0, 8, 0, 14) };
+            var note = new Label { Text = text, AutoSize = true, Dock = DockStyle.Top, MaximumSize = new Size(500, 0), ForeColor = Theme.Muted, Margin = new Padding(0, 0, 0, 12) };
             fields.Controls.Add(note); fields.ClientSizeChanged += (sender, e) => note.MaximumSize = new Size(Math.Max(100, fields.ClientSize.Width - 24), 0); return note;
         }
     }

@@ -2,6 +2,8 @@
 
 - Use the existing dark theme and `NexusPanel` border for distinct sections.
 - Put dashboard section titles into the top border as fieldset-style legends. Place related controls together immediately below the legend, with consistent top edges and vertical text alignment. Avoid dedicated heading rows that consume content space.
+- Section legends use the shared UI font in bold, with uppercase captions in both languages. Keep preset, accounts and details headings identical in size and weight; normal controls retain sentence case.
+- Above a legend border, paint the surrounding container background; only the enclosed panel uses the raised surface color. Keep stacked Settings actions at a consistent width with 8 px gaps, 12 px after explanatory text, and a larger break before a new group. Empty feedback must not reserve a blank row.
 - Keep actions for a particular field beside that field: for example, preset Save new/Update/Edit/Delete stay next to the preset picker.
 - Inline dropdowns and buttons have equal visible heights and aligned top edges. Match the dropdown to the established button height, including DPI scaling; do not shrink the buttons. Vertically center the text in each control.
 - Use 12 px inset padding and consistent spacing between sections. Keep headings, controls and content aligned to the same inset edges.
