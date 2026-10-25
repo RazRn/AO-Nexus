@@ -71,9 +71,8 @@ namespace AOQuickLauncher
         public int StartSpacingMs { get; set; } = 1500;
         // Experimental: LoginHandler skips drawing the login and character screens.
         public bool QuietLaunch { get; set; }
-        // Experimental: start the next character on an account once the previous one is requested
-        // from the character list, instead of after it is confirmed in the world.
-        public bool OverlapLogins { get; set; }
+        // Characters on one account still start one at a time: tested on Funcom Rubi-Ka, a second
+        // login on the same account disconnects a character that is still loading into the world.
     }
 
     internal static class LaunchQueue
@@ -315,10 +314,7 @@ namespace AOQuickLauncher
             if (!request.Characters.Any(entry => entry.CreateCharacter))
                 Console.WriteLine(Texts.T("Accounts start in parallel; characters on the same account log in one at a time."));
             var queueSizes = request.Characters.GroupBy(AccountQueueKey, StringComparer.OrdinalIgnoreCase).Select(group => group.Count()).ToArray();
-            Diagnostic("queues", null, new { ParallelQueues = queueSizes.Length, CharactersPerQueue = queueSizes, request.ReadyTimeoutSeconds, request.StartSpacingMs, request.QuietLaunch, request.OverlapLogins });
-            // With overlapping logins, a character's in-game confirmation finishes here after the
-            // next character on its account has already started.
-            var confirmations = new System.Collections.Concurrent.ConcurrentBag<Task<bool>>();
+            Diagnostic("queues", null, new { ParallelQueues = queueSizes.Length, CharactersPerQueue = queueSizes, request.ReadyTimeoutSeconds, request.StartSpacingMs, request.QuietLaunch });
             int result = await RunAccountQueuesAsync(request.Characters, async entry =>
             {
                 var target = entry.ResolvedTarget;
@@ -373,27 +369,11 @@ namespace AOQuickLauncher
                     Console.WriteLine(Texts.F("Waiting for the game window for ID {0}...", entry.CharacterId));
                 }
                 catch { client.Dispose(); status?.Dispose(); throw; }
-                confirmation = ConfirmCharacterAsync(entry, target, client, status, request.ReadyTimeoutSeconds, request.OverlapLogins && status != null);
-                if (request.OverlapLogins && status != null)
-                {
-                    // Release this account's queue once the character has been requested from the
-                    // character list; loading into the world continues while the next one logs in.
-                    var timeout = Task.Delay(TimeSpan.FromSeconds(request.ReadyTimeoutSeconds));
-                    await Task.WhenAny(status.Requested, confirmation, timeout).ConfigureAwait(false);
-                    if (status.Requested.IsCompleted && !confirmation.IsCompleted)
-                    {
-                        Diagnostic("overlap", entry, new { NextStartsAfterMs = spawnTimer.ElapsedMilliseconds });
-                        confirmations.Add(confirmation);
-                        return true;
-                    }
-                }
+                confirmation = ConfirmCharacterAsync(entry, target, client, status, request.ReadyTimeoutSeconds);
                 bool confirmed = await confirmation.ConfigureAwait(false);
                 if (confirmed) await Task.Delay(250).ConfigureAwait(false);
                 return confirmed;
             });
-            // Overlapped confirmations must finish before the run reports its result.
-            bool[] background = await Task.WhenAll(confirmations).ConfigureAwait(false);
-            if (background.Any(ok => !ok)) result = 2;
             Console.WriteLine(Texts.T(result == 0 ? "All login queues finished. Game clients remain open." :
                 "Login queues finished with an error on at least one account. Game clients remain open."));
             return result;
@@ -401,7 +381,7 @@ namespace AOQuickLauncher
 
         /// <summary>Waits for the character to appear in the world, then records and reports it. Owns the client and status channel.</summary>
         private static async Task<bool> ConfirmCharacterAsync(CharacterLaunch entry, LaunchTarget target, Process client,
-            LoginStatusChannel status, int timeoutSeconds, bool overlapping)
+            LoginStatusChannel status, int timeoutSeconds)
         {
             try
             {
@@ -411,10 +391,7 @@ namespace AOQuickLauncher
                     wait.WindowState, wait.TitleChanges, Stages = status?.Summary() ?? "unavailable", Dialogs = wait.Dialogs, RunningClients = SafeRunningClients() });
                 if (actualName == null)
                 {
-                    // When logins overlap, later characters may already have started; do not claim the queue stopped.
-                    Console.Error.WriteLine(overlapping && status.Requested.IsCompleted
-                        ? Texts.F("ID {0} was not detected in game. Check the game window, account details and character ID. Characters started after it continue; existing game windows stay open.", entry.CharacterId)
-                        : Texts.F("This account's queue stopped: ID {0} was not detected in game. Check the game window, account details and character ID. Other accounts continue; existing game windows stay open.", entry.CharacterId));
+                    Console.Error.WriteLine(Texts.F("This account's queue stopped: ID {0} was not detected in game. Check the game window, account details and character ID. Other accounts continue; existing game windows stay open.", entry.CharacterId));
                     return false;
                 }
                 ClientSessions.Record(entry, target, client, actualName);

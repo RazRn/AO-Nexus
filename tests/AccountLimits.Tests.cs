@@ -241,13 +241,12 @@ namespace AOQuickLauncher
                     Pass(!channel.Requested.IsCompleted, "A partial line does not count as requested");
                     bytes = System.Text.Encoding.ASCII.GetBytes("ter-requested\n");
                     writer.Write(bytes, 0, bytes.Length); writer.Flush();
-                    Pass(channel.Requested.Wait(2000), "Character requested completes the overlap signal");
+                    Pass(channel.Requested.Wait(2000), "Character requested is signalled");
                 }
                 string summary = channel.Summary();
                 Pass(summary.Contains("s login-screen") && summary.Contains("s character-requested") && !summary.Contains("Secret") && !summary.Contains("@"), "Timeline keeps valid stages only, without '@'");
                 lock (stages) Pass(stages.SequenceEqual(new[] { "login-screen", "character-list", "character-requested" }), "Stages are reported in order");
             }
-            Pass(new LaunchRequest().OverlapLogins == false, "Overlapping logins are opt-in");
         }
 
         private static void Check(string name, CharacterLaunch[] selected, ClientSessions.ClientRecord[] records, string error = null, string language = "en")

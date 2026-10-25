@@ -1,3 +1,5 @@
+• Hurtigere holdlogin: Nexus bekræfter en char i verden ca. 0,6 s hurtigere og venter 0,25 s i stedet for 1 s, før næste char på samme konto starter. Tilsammen sparer det ca. 1,3 s pr. char.
+
 • Login-forløb pr. char: spilklienten melder nu hvert login-trin (login-skærm, serverforbindelse, char-liste, char valgt) til diagnoseloggen med tider samt teksten i eventuelle Windows-fejldialoger. Rapportér et problem kan så vise præcis, hvor et login stoppede.
 
 • Klienter fra samme spilmappe startes nu mindst 1,5 sekund fra hinanden. AO låser kortvarigt filer ved opstart, og samtidige starter kunne fejle med "No write access to the main AO folder".
