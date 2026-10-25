@@ -78,6 +78,15 @@ namespace AOLauncher
         }
         private void TabTextChanged(object sender, EventArgs e) { UpdateTabSize(); Invalidate(); }
 
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+            bool tab = false;
+            for (int i = 0; i < TabCount; i++) if (GetTabRect(i).Contains(e.Location)) { tab = true; break; }
+            Cursor = tab ? Cursors.Hand : Cursors.Default;
+        }
+        protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); Cursor = Cursors.Default; }
+
         protected override void OnPaintBackground(PaintEventArgs e) { e.Graphics.Clear(Theme.Background); }
         protected override void OnPaint(PaintEventArgs e)
         {
@@ -119,6 +128,7 @@ namespace AOLauncher
         private bool matchingHeight;
         internal NexusComboBox()
         {
+            DropDownStyleChanged += (sender, e) => Cursor = DropDownStyle == ComboBoxStyle.DropDownList ? Cursors.Hand : Cursors.Default;
             BackColor = Theme.SurfaceRaised;
             ForeColor = Theme.Foreground;
             FlatStyle = FlatStyle.Flat;
@@ -310,7 +320,7 @@ namespace AOLauncher
     internal sealed class NexusCheckBox : CheckBox
     {
         private bool hover;
-        internal NexusCheckBox() { ForeColor = Theme.Foreground; DoubleBuffered = true; }
+        internal NexusCheckBox() { ForeColor = Theme.Foreground; DoubleBuffered = true; Cursor = Cursors.Hand; }
         protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); hover = true; Invalidate(); }
         protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); hover = false; Invalidate(); }
         protected override void OnCheckStateChanged(EventArgs e) { base.OnCheckStateChanged(e); Invalidate(); }
@@ -420,13 +430,35 @@ namespace AOLauncher
     internal sealed class NexusHero : Panel
     {
         private readonly Image backdrop;
+        private readonly Timer activityTimer = new Timer { Interval = 50 };
+        private bool activity;
+        private int completed, total, phase;
+        internal bool ActivityRunning => activity;
+        internal int Completed => completed;
+        internal void BeginActivity(int count = 0)
+        {
+            total = Math.Max(0, count); completed = phase = 0; activity = true;
+            activityTimer.Enabled = Visible; Invalidate();
+        }
+        internal void ReportActivity(int count)
+        {
+            completed = Math.Max(0, Math.Min(total, count)); Invalidate();
+        }
+        internal void EndActivity()
+        {
+            activity = false; activityTimer.Stop(); completed = total = 0; Invalidate();
+        }
         internal NexusHero()
         {
             DoubleBuffered = true;
             SetStyle(ControlStyles.ResizeRedraw, true);
             BackColor = Theme.Background;
             backdrop = AppArtwork.CreateBackdrop();
+            activityTimer.Tick += (sender, e) => { phase = (phase + 1) % 100; Invalidate(new Rectangle(0, Math.Max(0, Height - 4), Width, 4)); };
         }
+
+        protected override void OnVisibleChanged(EventArgs e)
+        { base.OnVisibleChanged(e); activityTimer.Enabled = activity && Visible; }
 
         protected override void OnPaintBackground(PaintEventArgs e)
         {
@@ -444,18 +476,31 @@ namespace AOLauncher
             using (var shade = new LinearGradientBrush(ClientRectangle, Color.Transparent, Color.FromArgb(110, 8, 18, 28), 90F))
                 e.Graphics.FillRectangle(shade, ClientRectangle);
             using (var line = new Pen(Theme.Border)) e.Graphics.DrawLine(line, 0, Height - 1, Width, Height - 1);
-            using (var line = new Pen(Theme.Accent, 2)) e.Graphics.DrawLine(line, 24, Height - 1, 150, Height - 1);
+            if (!activity)
+            {
+                using (var line = new Pen(Theme.Accent, 2)) e.Graphics.DrawLine(line, 24, Height - 1, 150, Height - 1);
+            }
+            else
+            {
+                int filled = total > 0 ? (int)((long)Width * completed / total) : 0;
+                using (var brush = new SolidBrush(Theme.Accent)) e.Graphics.FillRectangle(brush, 0, Height - 3, filled, 3);
+                int remaining = Width - filled, segment = Math.Min(remaining, Math.Max(30, Width / 10));
+                int offset = (int)((remaining + segment) * phase / 100.0) - segment;
+                int left = Math.Max(filled, filled + offset), right = Math.Min(Width, filled + offset + segment);
+                if (right > left) using (var brush = new SolidBrush(Theme.Amber)) e.Graphics.FillRectangle(brush, left, Height - 3, right - left, 3);
+            }
         }
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing) backdrop?.Dispose();
+            if (disposing) { activityTimer.Dispose(); backdrop?.Dispose(); }
             base.Dispose(disposing);
         }
     }
 
     internal sealed class NexusPanel : Panel
     {
+        internal string Legend { get; set; }
         internal NexusPanel()
         {
             DoubleBuffered = true;
@@ -467,7 +512,20 @@ namespace AOLauncher
         {
             base.OnPaint(e);
             if (Width > 0 && Height > 0)
-                using (var pen = new Pen(Theme.Border)) e.Graphics.DrawRectangle(pen, 0, 0, Width - 1, Height - 1);
+            {
+                int top = string.IsNullOrEmpty(Legend) ? 0 : Font.Height / 2;
+                using (var pen = new Pen(Theme.Border)) e.Graphics.DrawRectangle(pen, 0, top, Width - 1, Math.Max(0, Height - top - 1));
+                if (!string.IsNullOrEmpty(Legend))
+                {
+                    using (var font = new Font(Font, FontStyle.Bold))
+                    {
+                        var size = TextRenderer.MeasureText(Legend, font);
+                        var rect = new Rectangle(12, 0, Math.Max(0, Math.Min(Width - 24, size.Width + 8)), size.Height);
+                        using (var brush = new SolidBrush(BackColor)) e.Graphics.FillRectangle(brush, rect);
+                        TextRenderer.DrawText(e.Graphics, Legend, font, rect, Theme.Muted, TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix | TextFormatFlags.EndEllipsis);
+                    }
+                }
+            }
         }
     }
 }

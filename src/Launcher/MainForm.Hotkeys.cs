@@ -115,8 +115,11 @@ namespace AOLauncher
                 MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.OK) return;
             foreach (var control in editingControls) control.Enabled = false;
             startButton.Enabled = false;
+            var processes = new List<System.Diagnostics.Process>();
+            header.BeginActivity(supported.Count);
             try
             {
+                foreach (var client in supported) processes.Add(GuiSessions.OpenConfirmed(client));
                 // Snapshot identities are checked again immediately before each signal. Never discover extra clients after confirmation.
                 foreach (var client in supported)
                 {
@@ -124,8 +127,24 @@ namespace AOLauncher
                     string result = await Task.Run(() => PresetCamping.SendCamp(client));
                     if (!closing) AppendLog(client.CharacterName + ": " + T(result));
                 }
+                var elapsed = System.Diagnostics.Stopwatch.StartNew();
+                while (!closing && elapsed.Elapsed < TimeSpan.FromSeconds(90))
+                {
+                    int exited = processes.Count(process => process.HasExited);
+                    header.ReportActivity(exited);
+                    if (exited == processes.Count) break;
+                    await Task.Delay(250);
+                }
+                if (!closing && processes.Any(process => !process.HasExited))
+                    AppendLog(SidebarText.L("Some clients are still open. Logout may have been interrupted; no clients were forcibly closed.",
+                        "Nogle klienter er stadig åbne. Logout kan være afbrudt; ingen klienter blev tvangslukket."));
             }
-            finally { if (!closing) { foreach (var control in editingControls) control.Enabled = true; UpdateSelection(); } }
+            finally
+            {
+                foreach (var process in processes) process.Dispose();
+                if (!header.IsDisposed) header.EndActivity();
+                if (!closing) { foreach (var control in editingControls) control.Enabled = true; UpdateSelection(); }
+            }
         }
         [DllImport("user32.dll", SetLastError = true)] private static extern bool RegisterHotKey(IntPtr hwnd, int id, uint modifiers, uint key);
         [DllImport("user32.dll", SetLastError = true)] private static extern bool UnregisterHotKey(IntPtr hwnd, int id);

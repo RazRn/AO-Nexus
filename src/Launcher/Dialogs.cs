@@ -44,6 +44,8 @@ namespace AOLauncher
 
         internal static void Apply(Control control)
         {
+            if (control is ButtonBase || control is LinkLabel || control is ListBox)
+                control.Cursor = Cursors.Hand;
             if (control is TextBoxBase text)
             {
                 text.BackColor = Surface;
@@ -104,6 +106,7 @@ namespace AOLauncher
 
         internal static void StyleCombo(ComboBox combo)
         {
+            if (combo.DropDownStyle == ComboBoxStyle.DropDownList) combo.Cursor = Cursors.Hand;
             combo.BackColor = SurfaceRaised;
             combo.ForeColor = Foreground;
             if (combo is NexusComboBox) return;
@@ -165,6 +168,8 @@ namespace AOLauncher
         protected readonly Label ErrorLabel;
         protected readonly Button SaveButton;
         protected readonly Button CancelAction;
+        protected bool FitContentOnOpen = true;
+        private bool fittingContent;
 
         protected EditorDialog(string title, int height = 320)
         {
@@ -212,7 +217,73 @@ namespace AOLauncher
         protected override void OnLoad(EventArgs e)
         {
             Theme.Apply(this);
+            foreach (var tabs in Descendants(this).OfType<TabControl>())
+                tabs.SelectedIndexChanged += (sender, args) => QueueContentFit();
             base.OnLoad(e);
+        }
+
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+            QueueContentFit();
+        }
+
+        protected void QueueContentFit()
+        {
+            if (!IsHandleCreated || fittingContent || IsDisposed) return;
+            BeginInvoke((Action)(() => { if (!IsDisposed) FitDialogContent(); }));
+        }
+
+        private void FitDialogContent()
+        {
+            if (fittingContent) return;
+            fittingContent = true;
+            var tables = Descendants(this).OfType<TableLayoutPanel>()
+                .Where(table => table.Visible && table.AutoScroll).ToArray();
+            try
+            {
+                // WinForms can retain a scroll extent from the tiny pre-layout
+                // bounds. Measure with fresh extents, after the dialog is laid out.
+                foreach (var table in tables) table.AutoScroll = false;
+                PerformLayout();
+                int extra = 0;
+                foreach (var table in tables)
+                {
+                    SlimScrolling.LayoutNow(table);
+                    table.PerformLayout();
+                    // Grids and document viewers own their scrolling regions.
+                    if (table.ColumnCount != 1 || table.RowStyles.Cast<RowStyle>().Any(row => row.SizeType == SizeType.Percent)) continue;
+                    extra = Math.Max(extra, table.GetPreferredSize(new Size(table.ClientSize.Width, 0)).Height - table.ClientSize.Height + 8);
+                }
+                Rectangle work = Screen.FromControl(Owner ?? this).WorkingArea;
+                int frame = Height - ClientSize.Height;
+                int maxHeight = Math.Max(200, work.Height - frame - 24);
+                if (FitContentOnOpen && extra > 0)
+                    ClientSize = new Size(ClientSize.Width, Math.Min(maxHeight, ClientSize.Height + extra));
+                // Keep the footer reachable on smaller screens and higher DPI.
+                if (ClientSize.Height > maxHeight) ClientSize = new Size(ClientSize.Width, maxHeight);
+                if (Top >= work.Top && Bottom > work.Bottom) Top = Math.Max(work.Top, work.Bottom - Height);
+            }
+            finally
+            {
+                foreach (var table in tables)
+                {
+                    SlimScrolling.LayoutNow(table);
+                    table.AutoScroll = true;
+                    table.PerformLayout();
+                    SlimScrolling.Refresh(table);
+                }
+                fittingContent = false;
+            }
+        }
+
+        private static IEnumerable<Control> Descendants(Control parent)
+        {
+            foreach (Control child in parent.Controls)
+            {
+                yield return child;
+                foreach (Control descendant in Descendants(child)) yield return descendant;
+            }
         }
 
         protected TextBox AddTextField(string label, string value, bool password = false, TableLayoutPanel container = null)
@@ -242,7 +313,7 @@ namespace AOLauncher
             };
             Fields.Controls.Add(note);
             Fields.ClientSizeChanged += (sender, e) => note.MaximumSize = new Size(
-                Math.Max(100, Fields.ClientSize.Width - note.Margin.Horizontal - SystemInformation.VerticalScrollBarWidth), 0);
+                Math.Max(100, Fields.ClientSize.Width - note.Margin.Horizontal), 0);
             return note;
         }
     }
@@ -345,6 +416,7 @@ namespace AOLauncher
 
         public AccountDialog(AccountConfig account, LauncherSettings defaults) : base(account == null ? T("Add account") : T("Edit account"), 620)
         {
+            ClientSize = new Size(640, 740);
             knownAccounts = defaults.Accounts.ToArray();
             knownServers = defaults.LoginServers.ToArray();
             gameManuallyChosen = account != null;
@@ -702,6 +774,7 @@ namespace AOLauncher
         public PresetNameDialog(string title, string initialName, IEnumerable<string> reservedNames,
             HotkeyBinding start, HotkeyBinding logout, int selectedCount, bool editing) : base(title, 500)
         {
+            ClientSize = new Size(600, 540);
             nameInput = AddTextField(T("Preset name"), initialName);
             nameInput.MaxLength = 80;
             var reserved = new HashSet<string>(reservedNames ?? new string[0], StringComparer.OrdinalIgnoreCase);

@@ -1,3 +1,9 @@
+• Kompakte overskrifter i rammen samler teampresets, kontohandlinger og detaljer. Korte dialoger har mere plads og undgår unødvendige rullepaneler.
+
+• Linjen under headeren viser fremdrift ved login/logout og aktivitet under ventetid. Logout bruger /quit og følger klienternes lukning i op til 90 sekunder; ingen klienter tvangslukkes.
+
+• Klik på logfeltet for at åbne det søgbare logvindue. Klikbare kontroller viser en håndmarkør. Valget Intet preset valgt rydder markeringerne, men bevarer gemte teams.
+
 • Ryd log i aktivitetsloggen beder om bekræftelse og rydder derefter alle sessionens poster og forhåndsvisningen. Nye poster vises fortsat; den separate fil med opdateringshistorik bevares.
 
 • Rettet efterladte kanter og dropdown-fragmenter ved maksimering eller ændring af Nexus-vinduets størrelse. Paneler, knapper, header og nyhedskort gentegnes nu helt.

@@ -1,3 +1,9 @@
+• Compact border legends group team presets, account actions and details. Short dialogs have more room and avoid unnecessary scrollbars.
+
+• The header line shows login/logout progress and waiting activity. Logout uses /quit and watches actual client exit for up to 90 seconds; clients are never forcibly closed.
+
+• Click the log preview to open its searchable window. Clickable controls use a hand cursor. Choosing No preset selected clears current checkboxes while keeping saved teams.
+
 • Clear log in the activity-log window asks for confirmation, then clears all session entries and the dashboard preview. New logging continues; the separate update-history file is kept.
 
 • Fixed leftover borders and dropdown fragments when maximizing or resizing Nexus. Custom panels, buttons, the header and news cards now repaint fully.

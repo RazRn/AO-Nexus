@@ -1,4 +1,4 @@
-﻿param([string]$AssemblyPath = (Join-Path $PSScriptRoot '..\dist\AONexus.exe'))
+param([string]$AssemblyPath = (Join-Path $PSScriptRoot '..\dist\AONexus.exe'))
 $ErrorActionPreference = 'Stop'
 if ([IntPtr]::Size -ne 4 -or $PSVersionTable.PSEdition -eq 'Core') { throw 'Use 32-bit Windows PowerShell -STA.' }
 Add-Type -AssemblyName System.Windows.Forms, System.Drawing, System.Web.Extensions
@@ -98,8 +98,8 @@ try {
         Assert ($section.Padding.Left -eq 12 -and $section.Margin.Bottom -ge 10) 'Preset section has inset controls and separation from account actions'
         $picker = Field 'presetPicker'; $update = Field 'updatePresetButton'
         Assert ($picker.Height -eq $update.Height -and $picker.Top -eq $update.Top) ('Inline dropdown and buttons align: ' + $picker.Bounds + ' / ' + $update.Bounds)
-        $header = $form.Controls.Find('accountsHeader', $true)[0]
-        Assert ($header.GetPositionFromControl((Field 'expandAccountsLink')).Row -eq 0) 'Section actions share the heading row'
+        $header = $form.Controls.Find('accountActions', $true)[0]
+        Assert ([object]::ReferenceEquals((Field 'expandAccountsLink').Parent,$header)) 'Expand and collapse actions share the account toolbar below its border legend'
         if ($language -eq 'en') {
             $out = Join-Path $PSScriptRoot '../logs/preset-shortcuts-preview.png'
             $bitmap = [Drawing.Bitmap]::new($form.Width, $form.Height)

@@ -109,6 +109,7 @@ namespace AOLauncher
             }
             SaveButton.Focus();
             Fields.AutoScrollPosition = Point.Empty;
+            QueueContentFit();
         }
         private async Task Check()
         {

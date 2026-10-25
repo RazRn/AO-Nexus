@@ -8,6 +8,7 @@ namespace AOLauncher
     {
         internal PrivacyDialog() : base(L("Privacy & security", "Privatliv og sikkerhed"), 620)
         {
+            FitContentOnOpen = false;
             ClientSize = new Size(670, 620);
             Section(L("Passwords", "Adgangskoder"),
                 L("Saving is optional for each account. Saved passwords use Windows DPAPI encryption for your Windows user and are tied to that account and login endpoint. Uncheck Remember password under Edit account to delete that account's copy, or use Settings → Accounts → Forget passwords for all accounts. Update saved password changes only Nexus's copy.",

@@ -76,6 +76,30 @@ try {
             } finally { $editor.Dispose() }
         }
     }
+    $savedPresets=$serializer.Serialize($settings.Presets)
+    foreach ($account in $settings.Accounts) { foreach ($char in $account.Characters) { $char.Selected=$true } }
+    (Field $main 'presetPicker').SelectedIndex=0
+    Call $main 'ApplySelectedPreset' @($null,[EventArgs]::Empty)
+    Assert (@($settings.Accounts | ForEach-Object { $_.Characters | Where-Object Selected }).Count -eq 0 -and !$settings.SelectedPresetId) 'Choosing No preset selected clears all live character selections'
+    Assert ($serializer.Serialize($settings.Presets) -ceq $savedPresets) 'Clearing selections never rewrites saved teams'
+    $account=$settings.Accounts[0];$character=$account.Characters[0];$character.Selected=$true
+    $credentials=New-Object 'Collections.Generic.Dictionary[string,string]'
+    $credentials[$account.Id]='synthetic-not-used'
+    $request=$main.GetType().GetMethod('CreateLaunchRequest',[Reflection.BindingFlags]'Static,NonPublic').Invoke($null,[object[]]@($settings,$credentials.PSObject.BaseObject))
+    $main.GetType().GetField('progressRequest',$flags).SetValue($main,$request)
+    $hero=Field $main 'header'; Call $hero 'BeginActivity' @([int]1)
+    $event='AOQL_CHARACTER '+$serializer.Serialize(@{AccountId=$account.Id;CharacterId=$character.CharacterId;CharacterName=$character.Name})
+    Call $main 'HandleBackendLine' @($event,$request)
+    Call $main 'HandleBackendLine' @($event,$request)
+    Assert ((Field $hero 'completed') -eq 1) 'A verified character-ready event advances progress exactly once'
+    Call $hero 'ReportActivity' @([int]99)
+    Assert ((Field $hero 'completed') -eq 1) 'Progress is bounded to the actual batch size'
+    Call $main 'SetRunning' @($false)
+    Assert (!(Field $hero 'activity') -and !(Field $hero 'activityTimer').Enabled) 'Finishing or stopping a batch ends animation'
+    $previewLog=Field $main 'log'
+    Assert ($previewLog.Cursor -eq [Windows.Forms.Cursors]::Hand -and $previewLog.ScrollBars -eq 'None') 'Log preview is a clickable surface without a competing scroll action'
+    $previewLog.GetType().GetMethod('OnClick',$flags).Invoke($previewLog,@([EventArgs]::Empty)) | Out-Null
+    Assert ($null -ne (Field $main 'logViewer')) 'Clicking the preview opens the searchable activity window'
     Call $main 'OpenLog'
     $viewer = Field $main 'logViewer'
     $viewer.Location = [Drawing.Point]::new(-16000,-16000)

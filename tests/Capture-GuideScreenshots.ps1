@@ -99,6 +99,11 @@ try {
     $tree = Field $dashboard 'tree'
     $tree.SelectedNode = $tree.Nodes[0].Nodes[0]
     Save-GuideScreenshot $dashboard 'launcher-overview.png'
+    $hero = Field $dashboard 'header'
+    $hero.GetType().GetMethod('BeginActivity',$flags).Invoke($hero,[object[]]@([int]3)) | Out-Null
+    $hero.GetType().GetMethod('ReportActivity',$flags).Invoke($hero,[object[]]@([int]1)) | Out-Null
+    Save-GuideScreenshot $dashboard 'launch-progress.png'
+    $hero.GetType().GetMethod('EndActivity',$flags).Invoke($hero,@()) | Out-Null
     $sidebar = Field $dashboard 'serverSidebar'
     (Field $dashboard 'settings').HealthServerIds.Clear()
     (Field $dashboard 'settings').HealthServerIds.Add('rebirth')
@@ -148,7 +153,7 @@ try {
     Show-Fixture $updatesPreview
     Save-GuideScreenshot $updatesPreview 'app-updates.png'
 } finally { $updatesPreview.Dispose() }
-$releasePreview.GetType().GetField('Version', $flags).SetValue($releasePreview, [version]'1.1.5.0')
+$releasePreview.GetType().GetField('Version', $flags).SetValue($releasePreview, [version]'1.1.6.0')
 $releasePreview.GetType().GetField('Notes', $flags).SetValue($releasePreview, "# Example release notes`n`n- **Clear headings** and readable spacing.`n- Review the changes before installing.`n`nThis screenshot uses an offline fixture, not a published update.")
 $updatesPreview = New-Dialog 'UpdateDialog' ([object[]]@([Func[bool]]{ return $false }, $releasePreview))
 try { Show-Fixture $updatesPreview; Save-GuideScreenshot $updatesPreview 'update-available.png' } finally { $updatesPreview.Dispose() }
@@ -178,14 +183,10 @@ $account.Port = $profile.Port
 
 $dialog = New-Dialog 'AccountDialog' ([object[]]@($account, $settings))
 try {
-    # Expand the guide capture to expose the full scrollable Account and Prefs
-    # page. Production controls and contents are unchanged; users can scroll
-    # this same page in the normal dialog.
-    $dialog.ClientSize = [Drawing.Size]::new(510, 850)
     Show-Fixture $dialog
     Save-GuideScreenshot $dialog 'account-setup.png'
     (Field $dialog 'accountTabs').SelectedIndex = 1
-    $dialog.ClientSize = [Drawing.Size]::new(510, 620)
+
     Save-GuideScreenshot $dialog 'game-and-server.png'
 } finally { $dialog.Dispose(); [GuideScreenshotNative]::Pump() }
 
@@ -220,8 +221,8 @@ $readmePath = Join-Path $PSScriptRoot '..\README.md'
 $readme = [IO.File]::ReadAllText($readmePath)
 $publishedDirectory = Join-Path $OutputDirectory 'published'
 [IO.Directory]::CreateDirectory($publishedDirectory) | Out-Null
-$manifest = @("# Guide screenshot provenance", "", "Generated from AO Nexus $version using Capture-GuideScreenshots.ps1.", "", "Synthetic accounts, empty password fields, offline news and an offline update fixture. All twenty-six README images are rendered from the actual controls.", "")
-foreach ($name in @('gui-default-layout.png','gui-layouts.png','gui-capture.png','gui-skins.png','gui-backups.png','health-endpoints.png','server-health.png','settings-accounts.png','settings-sidebar.png','settings-updates.png','privacy-security.png','update-available.png','launcher-overview.png','preset-shortcuts.png','preset-create.png','activity-log.png','settings.png','app-updates.png','minimize-confirmation.png','quit-confirmation.png','whats-new.png','account-setup.png','game-and-server.png','server-settings.png','password-options.png','update-saved-password.png')) {
+$manifest = @("# Guide screenshot provenance", "", "Generated from AO Nexus $version using Capture-GuideScreenshots.ps1.", "", "Synthetic accounts, empty password fields, offline news and an offline update fixture. All twenty-seven README images are rendered from the actual controls.", "")
+foreach ($name in @('launch-progress.png','gui-default-layout.png','gui-layouts.png','gui-capture.png','gui-skins.png','gui-backups.png','health-endpoints.png','server-health.png','settings-accounts.png','settings-sidebar.png','settings-updates.png','privacy-security.png','update-available.png','launcher-overview.png','preset-shortcuts.png','preset-create.png','activity-log.png','settings.png','app-updates.png','minimize-confirmation.png','quit-confirmation.png','whats-new.png','account-setup.png','game-and-server.png','server-settings.png','password-options.png','update-saved-password.png')) {
     $hash = (Get-FileHash -LiteralPath (Join-Path $OutputDirectory $name) -Algorithm SHA256).Hash.ToLowerInvariant()
     $manifest += ('- ' + $name + ': ' + $hash)
     # GitHub's raw redirect can drop a query-string cache key. Give the file
@@ -245,4 +246,4 @@ foreach ($name in @('gui-default-layout.png','gui-layouts.png','gui-capture.png'
 }
 [IO.File]::WriteAllText($readmePath, $readme, [Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText((Join-Path $OutputDirectory 'SCREENSHOTS.md'), (($manifest -join "`n") + "`n"), [Text.UTF8Encoding]::new($false))
-Write-Output "PASS: all twenty-six guide screenshots regenerated from $version using synthetic accounts and offline fixtures."
+Write-Output "PASS: all twenty-seven guide screenshots regenerated from $version using synthetic accounts and offline fixtures."

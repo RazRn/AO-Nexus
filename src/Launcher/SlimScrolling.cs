@@ -23,6 +23,12 @@ namespace AOLauncher
             host?.QueueRefresh();
         }
 
+        internal static void LayoutNow(Control content)
+        {
+            var host = content as SlimScrollHost ?? content?.Parent?.Parent as SlimScrollHost;
+            host?.UpdateScrollbars();
+        }
+
         internal static void SetVisible(Control content, bool visible)
         {
             var host = content?.Parent?.Parent as SlimScrollHost;
@@ -111,7 +117,7 @@ namespace AOLauncher
             catch (InvalidOperationException) { queued = false; }
         }
 
-        private void UpdateScrollbars()
+        internal void UpdateScrollbars()
         {
             if (updating || Content.IsDisposed || !Content.IsHandleCreated) return;
             updating = true;

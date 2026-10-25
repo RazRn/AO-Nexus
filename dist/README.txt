@@ -1,4 +1,4 @@
-AO NEXUS 1.1.4
+AO NEXUS 1.1.5
 Based on AOQuickLauncher by never-knows-best and contributors.
 Enhanced by Luckyspawn.
 
@@ -108,7 +108,7 @@ when the saved selection already matches. Edit changes the name, shortcuts and s
 Save new creates a separate team.
 
 ACTIVITY LOG
-Open log opens a larger read-only window with live updates and text search.
+Click the log preview to open a larger read-only window with live updates and text search.
 Ctrl+F focuses search. Clear search restores all lines. Disable Follow new entries
 to read older lines. The current session log uses the size limit in Settings > Updates (5 MB by default).
 
@@ -203,3 +203,8 @@ v1.1.3 fixes stale border and dropdown fragments after resizing or maximizing Ne
 v1.1.4: Open log > Clear log asks for confirmation before clearing the full session
 activity history, including filtered-out entries. New logging continues normally.
 Activity is kept in memory; the separate update-history file is not deleted.
+
+v1.1.5: Compact border legends, roomier dialogs and a clickable log preview.
+The header line shows confirmed login/logout progress and waiting activity.
+Choosing No preset selected clears current checkboxes, keeping saved teams.
+Logout still uses /quit; Nexus waits up to 90 seconds and never forces exit.

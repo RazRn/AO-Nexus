@@ -25,6 +25,13 @@ namespace AOLauncher
 
         protected override void OnGotFocus(EventArgs e) { base.OnGotFocus(e); Invalidate(); }
         protected override void OnLostFocus(EventArgs e) { base.OnLostFocus(e); Invalidate(); }
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+            var hit = HitTest(e.Location);
+            Cursor = hit.Node != null && (hit.Location & (TreeViewHitTestLocations.Label | TreeViewHitTestLocations.StateImage | TreeViewHitTestLocations.PlusMinus | TreeViewHitTestLocations.Image)) != 0
+                ? Cursors.Hand : Cursors.Default;
+        }
 
         protected override void OnDrawNode(DrawTreeNodeEventArgs e)
         {

@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string]$AssemblyPath = (Join-Path $PSScriptRoot '..\src\Launcher\bin\Release\AONexus.exe'),
     [string]$PreviewDirectory = (Join-Path $PSScriptRoot '..\logs\slim-previews'),
     [switch]$SettingsProbe
@@ -297,9 +297,9 @@ foreach ($language in @('en','da')) {
             Assert ((Field $main 'smoke') -and (Field $news 'offlinePreview')) 'Dashboard scrollbar checks must use synthetic accounts and offline news.'
             for ($i = 0; $i -lt 60; $i++) { $tree.Nodes.Add('Scrollbar fixture ' + $i) | Out-Null }
             $log.Text = ((0..99 | ForEach-Object { 'Synthetic login message ' + $_ }) -join "`r`n")
-            Sync $tree; Sync $log
+            Sync $tree
             $nativeHosts = @()
-            foreach ($content in @($tree,$log,(Field $news 'cards'))) {
+            foreach ($content in @($tree,(Field $news 'cards'))) {
                 $owner = $content.Parent
                 while ($owner -and $owner.GetType().Name -ne 'SlimScrollHost') { $owner = $owner.Parent }
                 Assert ($null -ne $owner) "$($content.Name) must use slim scrolling on the actual dashboard."

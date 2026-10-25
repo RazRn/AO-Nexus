@@ -507,6 +507,7 @@ namespace AOLauncher
         internal GuiLayoutComponents Components => GuiComponentChoices.Selected(components);
         internal GuiCaptureDialog(IEnumerable<GuiCharacterChoice> characters, bool copy) : base(copy ? L("Copy layout from char", "Kopiér layout fra char") : L("Capture GUI layout", "Gem GUI-layout"), 520)
         {
+            ClientSize = new Size(620, 600);
             AddWrappedNote(L("AO saves layout changes on normal logout. A running source must /quit before capture or copy; Nexus can relog it for you. If it is already closed, confirm that its latest changes were saved by a normal logout.", "AO gemmer layoutændringer ved normalt logout. En aktiv kilde skal afslutte med /quit før kopiering; Nexus kan genlogge den for dig. Er den allerede lukket, skal du bekræfte, at de seneste ændringer blev gemt ved normalt logout."), "captureGuiGuide");
             source = new NexusComboBox { Name = "guiCaptureSource", Dock = DockStyle.Top, DropDownStyle = ComboBoxStyle.DropDownList };
             foreach (var character in characters) source.Items.Add(character); Fields.Controls.Add(source);

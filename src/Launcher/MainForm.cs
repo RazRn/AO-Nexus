@@ -43,6 +43,9 @@ namespace AOLauncher
             }
         }
         private readonly TextBox log = new TextBox();
+        private NexusHero header;
+        private LaunchRequest progressRequest;
+        private readonly HashSet<CharacterConfig> completedLogins = new HashSet<CharacterConfig>();
         private int activityLogBytes;
         private StringBuilder activityLog = new StringBuilder();
         private int missingStartupCharacters;
@@ -346,7 +349,7 @@ namespace AOLauncher
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 96));
             Controls.Add(layout);
 
-            var header = new NexusHero { Dock = DockStyle.Fill, Margin = Padding.Empty };
+            header = new NexusHero { Dock = DockStyle.Fill, Margin = Padding.Empty };
             var headerMark = AppArtwork.CreateHeaderMark();
             headerMark.Location = new Point(27, 38);
             headerMark.Size = new Size(66, 66);
@@ -392,7 +395,7 @@ namespace AOLauncher
             body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 358));
             layout.Controls.Add(body, 0, 1);
             var workspace = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, Margin = new Padding(0, 0, 18, 0) };
-            workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 92));
+            workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 84));
             workspace.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 102));
             body.Controls.Add(workspace, 0, 0);
@@ -413,15 +416,12 @@ namespace AOLauncher
                 button.Margin = new Padding(0, 0, 5, 6);
             }
 
-            var presetFrame = new NexusPanel { Name = "presetSection", Dock = DockStyle.Fill, Margin = new Padding(0, 0, 0, 12), Padding = new Padding(12) };
+            var presetFrame = new NexusPanel { Name = "presetSection", Legend = T("Team presets"), AccessibleName = T("Team presets"), Dock = DockStyle.Fill, Margin = new Padding(0, 0, 0, 12), Padding = new Padding(12, 22, 12, 12) };
             var presets = new TableLayoutPanel { Dock = DockStyle.Fill, Margin = Padding.Empty, Padding = Padding.Empty, BackColor = Theme.Surface, ColumnCount = 5, RowCount = 2 };
             presets.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             for (int index = 0; index < 4; index++) presets.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            presets.RowStyles.Add(new RowStyle(SizeType.Absolute, 20));
+            presets.RowStyles.Add(new RowStyle(SizeType.Absolute, 0));
             presets.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
-            var presetCaption = Caption(T("Team presets"));
-            presets.Controls.Add(presetCaption, 0, 0);
-            presets.SetColumnSpan(presetCaption, 5);
             presetPicker.DropDownStyle = ComboBoxStyle.DropDownList;
             presetPicker.FlatStyle = FlatStyle.Flat;
             presetPicker.BackColor = Theme.SurfaceRaised;
@@ -458,22 +458,12 @@ namespace AOLauncher
             content.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             content.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 260));
             content.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            var leftFrame = new NexusPanel { Dock = DockStyle.Fill, Margin = Padding.Empty, Padding = new Padding(12), Name = "accountsByServer" };
+            var leftFrame = new NexusPanel { Legend = T("ACCOUNTS BY SERVER"), AccessibleName = T("ACCOUNTS BY SERVER"), Dock = DockStyle.Fill, Margin = Padding.Empty, Padding = new Padding(12, 22, 12, 12), Name = "accountsByServer" };
             var left = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, Margin = Padding.Empty, BackColor = Theme.Surface };
-            left.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
             left.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            left.RowStyles.Add(new RowStyle(SizeType.Absolute, 0));
             left.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             leftFrame.Controls.Add(left);
-            var accountHeader = new TableLayoutPanel { Name = "accountsHeader", Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 1, Margin = Padding.Empty };
-            accountHeader.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            accountHeader.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            accountHeader.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            accountHeader.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
-            var accountCaption = Caption(T("ACCOUNTS BY SERVER"));
-            accountCaption.Dock = DockStyle.Fill;
-            accountCaption.TextAlign = ContentAlignment.MiddleLeft;
-            accountCaption.Margin = Padding.Empty;
-            accountHeader.Controls.Add(accountCaption, 0, 0);
             expandAccountsLink = new LinkLabel { Text = T("Expand all"), Name = "expandAccounts" };
             collapseAccountsLink = new LinkLabel { Text = T("Collapse all"), Name = "collapseAccounts" };
             expandAccountsLink.LinkClicked += (sender, e) => SetAccountsCollapsed(false);
@@ -484,19 +474,19 @@ namespace AOLauncher
                 var link = accountLinks[index];
                 link.Font = new Font("Segoe UI", 8.5F);
                 link.AutoSize = true;
-                link.Dock = DockStyle.Fill;
+                link.Dock = DockStyle.None;
                 link.TextAlign = ContentAlignment.MiddleLeft;
+                link.MinimumSize = new Size(0, 34);
                 link.LinkBehavior = LinkBehavior.HoverUnderline;
                 link.LinkColor = link.VisitedLinkColor = Theme.Accent;
                 link.ActiveLinkColor = Theme.Amber;
                 link.DisabledLinkColor = Theme.Muted;
                 link.TabStop = true;
                 link.Margin = new Padding(12, 0, 0, 0);
-                accountHeader.Controls.Add(link, index + 1, 0);
+                toolbar.Controls.Add(link);
                 editingControls.Add(link);
             }
-            left.Controls.Add(accountHeader, 0, 0);
-            left.Controls.Add(toolbar, 0, 1);
+            left.Controls.Add(toolbar, 0, 0);
             tree.Dock = DockStyle.Fill;
             tree.BorderStyle = BorderStyle.None;
             tree.BackColor = Theme.Surface;
@@ -532,14 +522,13 @@ namespace AOLauncher
             editingControls.Add(tree);
             content.Controls.Add(leftFrame, 0, 0);
 
-            var rightFrame = new NexusPanel { Dock = DockStyle.Fill, Margin = new Padding(12, 0, 0, 0), Padding = new Padding(12), Name = "selectionDetails" };
+            var rightFrame = new NexusPanel { Legend = T("DETAILS"), AccessibleName = T("DETAILS"), Dock = DockStyle.Fill, Margin = new Padding(12, 0, 0, 0), Padding = new Padding(12, 22, 12, 12), Name = "selectionDetails" };
             var right = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 4, Margin = Padding.Empty, BackColor = Theme.Surface };
             right.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            right.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
+            right.RowStyles.Add(new RowStyle(SizeType.Absolute, 0));
             right.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             right.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             right.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            right.Controls.Add(Caption(T("DETAILS")), 0, 0);
             detailTitle.Dock = DockStyle.None;
             detailTitle.AutoSize = true;
             detailTitle.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
@@ -600,15 +589,13 @@ namespace AOLauncher
             log.Font = new Font("Consolas", 9F);
             log.AccessibleName = T("Activity log");
             log.Margin = Padding.Empty;
-            var logLayout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Margin = Padding.Empty };
-            logLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            logLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            var openLog = new LinkLabel { Text = T("Open log…"), AutoSize = true, LinkColor = Theme.Accent, ActiveLinkColor = Theme.Amber,
-                VisitedLinkColor = Theme.Accent, LinkBehavior = LinkBehavior.HoverUnderline, Margin = new Padding(10, 0, 0, 0) };
-            openLog.LinkClicked += (sender, e) => OpenLog();
-            logLayout.Controls.Add(SlimScrolling.Wrap(log), 0, 0);
-            logLayout.Controls.Add(openLog, 1, 0);
-            logPanel.Controls.Add(logLayout);
+            log.ScrollBars = ScrollBars.None;
+            log.Cursor = logPanel.Cursor = Cursors.Hand;
+            log.AccessibleRole = AccessibleRole.PushButton;
+            log.Click += (sender, e) => OpenLog();
+            logPanel.Click += (sender, e) => OpenLog();
+            log.KeyDown += (sender, e) => { if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space) { e.Handled = e.SuppressKeyPress = true; OpenLog(); } };
+            logPanel.Controls.Add(log);
             workspace.Controls.Add(logPanel, 0, 2);
 
             serverSidebar = new ServerSidebar(smoke);
@@ -856,7 +843,10 @@ namespace AOLauncher
             if (choice?.Preset == null)
             {
                 settings.SelectedPresetId = null;
+                foreach (var account in settings.Accounts)
+                    foreach (var character in account.Characters) character.Selected = false;
                 SaveSettings();
+                RefreshTree();
                 UpdatePresetStatus();
                 return;
             }
@@ -1501,6 +1491,9 @@ namespace AOLauncher
             if (creation) creationMonitors.Add(runner);
             preparationCancellation = preparation;
             SetRunning(true);
+            progressRequest = request;
+            completedLogins.Clear();
+            header.BeginActivity(creation ? 0 : request.Characters.Count);
             try
             {
                 using (runner)
@@ -1666,6 +1659,8 @@ namespace AOLauncher
         private void SetRunning(bool value)
         {
             running = value;
+            if (value) header?.BeginActivity();
+            else { header?.EndActivity(); progressRequest = null; completedLogins.Clear(); }
             foreach (var control in editingControls) control.Enabled = !value;
             startButton.Text = value ? T("Logging in…") : T("Log in selected  →");
             stopButton.Enabled = value && !stopRequested;
@@ -1779,6 +1774,7 @@ namespace AOLauncher
             }
             SaveSettings();
             RefreshTree();
+            if (ReferenceEquals(request, progressRequest) && completedLogins.Add(updated)) header.ReportActivity(completedLogins.Count);
             if (request.Characters.Count == 1 && request.Characters[0].CreateCharacter)
             {
                 if (!running) StatusText = T("STATUS · Char detected");
