@@ -102,7 +102,7 @@ namespace AOLauncher
             serverFields.Controls.Add(quietLaunchInput);
             Note(serverFields, L("On by default. The game client goes straight to the selected character without showing the login and character list, about 1.5 seconds faster per character. Login errors are then not shown in the game window; the activity log and Report a problem show where a login stopped. Turn it off to see the game's own login screens.",
                 "Slået til som standard. Spilklienten går direkte til den valgte char uden at vise login og char-liste, ca. 1,5 sekund hurtigere pr. char. Login-fejl vises så ikke i spilvinduet; aktivitetsloggen og Rapportér et problem viser, hvor et login stoppede. Slå den fra for at se spillets egne login-skærme."));
-            overlapLoginsInput = new NexusCheckBox { Name = "overlapLogins", Text = L("Start the next character as soon as the previous one is selected (experimental)", "Start næste char, så snart den forrige er valgt (eksperimentel)"),
+            overlapLoginsInput = new NexusCheckBox { Name = "overlapLogins", Text = L("Overlap logins on one account (experimental)", "Overlappende logins på én konto (eksperimentel)"),
                 Checked = settings.OverlapLogins, AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 4, 0, 8) };
             serverFields.Controls.Add(overlapLoginsInput);
             Note(serverFields, L("Characters on the same account normally start one by one after the previous one is in the world. With this on, the next starts while the previous one is still loading, so a team logs in much faster. If the server rejects overlapping logins, turn it off again.",
