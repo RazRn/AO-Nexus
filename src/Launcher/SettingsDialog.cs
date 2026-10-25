@@ -51,6 +51,7 @@ namespace AOLauncher
             var sidebar = new TabPage(L("Sidebar", "Sidepanel")) { BackColor = Theme.Background, Padding = new Padding(12) };
             sidebarOptions = new SidebarOptions(settings); sidebar.Controls.Add(sidebarOptions); settingsTabs.TabPages.Add(sidebar);
             var updateFields = AddPage(L("Updates", "Opdateringer"));
+            var loginFields = AddPage(L("Login", "Login"));
             DialogLayout.Controls.Add(settingsTabs, 0, 0);
 
             var languagePanel = new Panel { Dock = DockStyle.Top, Height = 69, Margin = Padding.Empty, Padding = new Padding(0, 0, 0, 14) };
@@ -97,16 +98,6 @@ namespace AOLauncher
                     if (dialog.ShowDialog(this) == DialogResult.OK) HealthCheckEndpoints = dialog.Endpoints;
             };
             serverFields.Controls.Add(healthEndpoints);
-            quietLaunchInput = new NexusCheckBox { Name = "quietLaunch", Text = L("Skip login screens (faster)", "Spring login-skærme over (hurtigere)"),
-                Checked = settings.QuietLaunch, AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 12, 0, 8) };
-            serverFields.Controls.Add(quietLaunchInput);
-            Note(serverFields, L("On by default. The game client goes straight to the selected character without showing the login and character list, about 1.5 seconds faster per character. Login errors are then not shown in the game window; the activity log and Report a problem show where a login stopped. Turn it off to see the game's own login screens.",
-                "Slået til som standard. Spilklienten går direkte til den valgte char uden at vise login og char-liste, ca. 1,5 sekund hurtigere pr. char. Login-fejl vises så ikke i spilvinduet; aktivitetsloggen og Rapportér et problem viser, hvor et login stoppede. Slå den fra for at se spillets egne login-skærme."));
-            fastSameAccountInput = new NexusCheckBox { Name = "fastSameAccountLogins", Text = L("Fast logins on one account", "Hurtige logins på én konto"),
-                Checked = settings.FastSameAccountLogins, AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 4, 0, 8) };
-            serverFields.Controls.Add(fastSameAccountInput);
-            Note(serverFields, L("For servers that allow several characters per account, such as AO Rebirth: the next character starts as soon as the previous one has been handed over to the game world, while it is still loading. Turn it off if characters are disconnected while loading.",
-                "For servere, der tillader flere chars pr. konto, som AO Rebirth: næste char starter, så snart den forrige er overdraget til spilverdenen, mens den stadig indlæser. Slå det fra, hvis chars bliver smidt ud under indlæsning."));
             var passwordsHeading = Note(serverFields, T("Saved passwords"));
             passwordsHeading.Font = new Font(settingsTabs.Font, FontStyle.Bold);
             passwordsHeading.Margin = new Padding(0, 16, 0, 8);
@@ -124,6 +115,16 @@ namespace AOLauncher
                 passwordStatus.ForeColor = cleared ? Theme.Accent : Theme.Warning;
             };
 
+            quietLaunchInput = new NexusCheckBox { Name = "quietLaunch", Text = L("Skip login screens (faster)", "Spring login-skærme over (hurtigere)"),
+                Checked = settings.QuietLaunch, AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 0, 0, 8) };
+            loginFields.Controls.Add(quietLaunchInput);
+            Note(loginFields, L("On by default. The game client goes straight to the selected character without showing the login and character list, about 1.5 seconds faster per character. Login errors are then not shown in the game window; the activity log and Report a problem show where a login stopped. Turn it off to see the game's own login screens.",
+                "Slået til som standard. Spilklienten går direkte til den valgte char uden at vise login og char-liste, ca. 1,5 sekund hurtigere pr. char. Login-fejl vises så ikke i spilvinduet; aktivitetsloggen og Rapportér et problem viser, hvor et login stoppede. Slå den fra for at se spillets egne login-skærme."));
+            fastSameAccountInput = new NexusCheckBox { Name = "fastSameAccountLogins", Text = L("Fast logins on one account", "Hurtige logins på én konto"),
+                Checked = settings.FastSameAccountLogins, AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 4, 0, 8) };
+            loginFields.Controls.Add(fastSameAccountInput);
+            Note(loginFields, L("For servers that allow several characters per account, such as AO Rebirth: the next character starts as soon as the previous one has been handed over to the game world, while it is still loading. Turn it off if characters are disconnected while loading.",
+                "For servere, der tillader flere chars pr. konto, som AO Rebirth: næste char starter, så snart den forrige er overdraget til spilverdenen, mens den stadig indlæser. Slå det fra, hvis chars bliver smidt ud under indlæsning."));
             checkUpdatesInput = Check("Check for updates when Nexus starts", settings.CheckForUpdatesOnStartup, "checkUpdatesOnStartup");
             updateFields.Controls.Add(checkUpdatesInput);
             Note(updateFields, L("Checks once when Nexus starts. Downloads and installation always need your confirmation.", "Tjekker én gang ved start. Download og installation kræver altid din bekræftelse."));
@@ -155,7 +156,7 @@ namespace AOLauncher
                     : L("Some diagnostics files could not be deleted. Try again.", "Nogle diagnostikfiler kunne ikke slettes. Prøv igen.");
                 diagnosticsStatus.ForeColor = cleared ? Theme.Accent : Theme.Warning;
             };
-            foreach (var fields in new[] { Fields, serverFields, updateFields })
+            foreach (var fields in new[] { Fields, serverFields, updateFields, loginFields })
                 foreach (var button in fields.Controls.OfType<Button>())
                 {
                     button.Margin = new Padding(0, 0, 0, 8);

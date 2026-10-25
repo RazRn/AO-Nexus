@@ -65,7 +65,7 @@ try {
         $dialog=[Activator]::CreateInstance($a.GetType('AOLauncher.SettingsDialog'),[object[]]@($settings))
         try{
             Show-Fixture $dialog;$tabs=Field $dialog 'settingsTabs'
-            Assert ($tabs.TabCount -eq 4) 'Settings groups controls into four tabs'
+            Assert ($tabs.TabCount -eq 5) 'Settings groups controls into five tabs'
             for($i=0;$i -lt 4;$i++){$tabs.SelectedIndex=$i;[Windows.Forms.Application]::DoEvents();Assert ($tabs.GetTabRect($i).Right -le $tabs.ClientSize.Width) 'Every settings tab fits without clipping'}
             $draft=Field $dialog 'sidebarOptions'
             $before=$json.Serialize($settings);$dialog.Controls.Find('showServerNews',$true)[0].Checked=$true
