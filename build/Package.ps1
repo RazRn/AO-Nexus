@@ -48,4 +48,6 @@ try {
 } finally { $reader.Dispose() }
 $destination = Join-Path $projectRoot 'AO-Nexus-Luckyspawn.zip'
 Move-Item -LiteralPath $temporary -Destination $destination -Force
+$archiveHash = (Get-FileHash -LiteralPath $destination -Algorithm SHA256).Hash.ToLowerInvariant()
+[IO.File]::WriteAllText($destination + '.sha256.txt', $archiveHash + '  ' + [IO.Path]::GetFileName($destination) + "`r`n", [Text.Encoding]::ASCII)
 Write-Host "Verified release: $destination ($($inputs.Count) public files; no personal settings or passwords)."
