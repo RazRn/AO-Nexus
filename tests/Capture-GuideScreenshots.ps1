@@ -1,6 +1,6 @@
 param(
     [string]$AssemblyPath = (Join-Path $PSScriptRoot '..\dist\AONexus.exe'),
-    [string]$OutputDirectory = (Join-Path $PSScriptRoot '..\docs\images')
+    [string]$OutputDirectory = (Join-Path $PSScriptRoot '..\logs\guide-captures')
 )
 
 # Render the real application controls with in-memory examples only. No saved
@@ -11,6 +11,7 @@ if ([IntPtr]::Size -ne 4 -or $PSVersionTable.PSEdition -eq 'Core') {
     throw 'Use 32-bit Windows PowerShell -STA.'
 }
 Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+. (Join-Path $PSScriptRoot 'Render-GuideCapture.ps1')
 [Windows.Forms.Application]::SetUnhandledExceptionMode([Windows.Forms.UnhandledExceptionMode]::ThrowException)
 [Windows.Forms.Application]::EnableVisualStyles()
 [Windows.Forms.Application]::SetCompatibleTextRenderingDefault($false)
@@ -76,6 +77,7 @@ function Save-GuideScreenshot($Dialog, [string]$Name) {
     } finally { $graphics.ReleaseHdc($dc); $graphics.Dispose() }
     try { $bitmap.Save((Join-Path $OutputDirectory $Name), [Drawing.Imaging.ImageFormat]::Png) }
     finally { $bitmap.Dispose() }
+    Export-GuideCapture $Dialog $Name (Join-Path $OutputDirectory 'curated')
     Write-Output "Saved $Name"
 }
 
@@ -90,6 +92,11 @@ try {
         throw 'Guide screenshots require the safe offline preview fixture.'
     }
     $dashboard.ClientSize = [Drawing.Size]::new(1280, 1000)
+    $exampleAccounts=(Field $dashboard 'settings').Accounts
+    $exampleAccounts[0].Label='Main account'
+    $exampleAccounts[1].Label='Weekend account'
+    $exampleAccounts[2].Label='Ithaca account'
+    $dashboard.GetType().GetMethod('RefreshTree',$flags).Invoke($dashboard,[object[]]@($null)) | Out-Null
     Show-Fixture $dashboard
     $preset = (Field $dashboard 'settings').Presets[0]
     (Field $dashboard 'settings').DefaultPresetId=$preset.Id
@@ -124,6 +131,7 @@ try {
     }
     $viewer = New-Dialog 'LogViewer' ([object[]]@())
     try {
+        $viewer.ClientSize = [Drawing.Size]::new(900,340)
         $sampleLog = "[10:15:00] Ready. Choose a team preset to begin.`r`n[10:15:12] Example account: login started.`r`n[10:15:17] Aster: logged in.`r`n[10:15:22] Orion: logged in.`r`n[10:15:27] Vesper: logged in.`r`n[10:15:27] Done. Game windows remain open."
         $viewer.GetType().GetMethod('SetLogText', $flags).Invoke($viewer, [object[]]@($sampleLog)) | Out-Null
         Show-Fixture $viewer
@@ -171,7 +179,7 @@ try {
     Show-Fixture $whatsNew
     Save-GuideScreenshot $whatsNew 'whats-new.png'
 } finally { $whatsNew.Dispose() }
-$account.Label = 'Rubi-Ka expedition'
+$account.Label = 'Main account'
 $account.Username = 'example-account'
 $account.GamePath = 'C:\Games\AO-Rebirth'
 $account.ServerProfileId = 'rebirth'
@@ -217,33 +225,5 @@ $guiCaptureHost = Join-Path $env:WINDIR 'SysWOW64\WindowsPowerShell\v1.0\powersh
 & $guiCaptureHost -NoProfile -ExecutionPolicy Bypass -STA -File (Join-Path $PSScriptRoot 'Verify-GuiManager.ps1') -AssemblyPath $AssemblyPath -PublicGuideDirectory $OutputDirectory
 if ($LASTEXITCODE -ne 0) { throw 'Game GUI screenshot verification failed.' }
 $version = $assembly.GetName().Version.ToString()
-$readmePath = Join-Path $PSScriptRoot '..\README.md'
-$readme = [IO.File]::ReadAllText($readmePath)
-$publishedDirectory = Join-Path $OutputDirectory 'published'
-[IO.Directory]::CreateDirectory($publishedDirectory) | Out-Null
-$manifest = @("# Guide screenshot provenance", "", "Generated from AO Nexus $version using Capture-GuideScreenshots.ps1.", "", "Synthetic accounts, empty password fields, offline news and an offline update fixture. All twenty-seven README images are rendered from the actual controls.", "")
-foreach ($name in @('launch-progress.png','gui-default-layout.png','gui-layouts.png','gui-capture.png','gui-skins.png','gui-backups.png','health-endpoints.png','server-health.png','settings-accounts.png','settings-sidebar.png','settings-updates.png','privacy-security.png','update-available.png','launcher-overview.png','preset-shortcuts.png','preset-create.png','activity-log.png','settings.png','app-updates.png','minimize-confirmation.png','quit-confirmation.png','whats-new.png','account-setup.png','game-and-server.png','server-settings.png','password-options.png','update-saved-password.png')) {
-    $hash = (Get-FileHash -LiteralPath (Join-Path $OutputDirectory $name) -Algorithm SHA256).Hash.ToLowerInvariant()
-    $manifest += ('- ' + $name + ': ' + $hash)
-    # GitHub's raw redirect can drop a query-string cache key. Give the file
-    # itself a content-specific name so every CDN hop requests the new image.
-    $stem = [IO.Path]::GetFileNameWithoutExtension($name)
-    $publishedName = $stem + '-' + $hash.Substring(0, 16) + '.png'
-    Copy-Item -LiteralPath (Join-Path $OutputDirectory $name) -Destination (Join-Path $publishedDirectory $publishedName) -Force
-    $pattern = 'docs/images/(?:' + [regex]::Escape($name) + '|published/' + [regex]::Escape($stem) + '-[a-f0-9]{16}\.png)(?:\?v=[a-f0-9]+)?(?=\))'
-    if (-not [regex]::IsMatch($readme, $pattern)) { throw "Missing README image reference: $name" }
-    foreach ($old in [regex]::Matches($readme, $pattern)) {
-        if ($old.Value -like 'docs/images/published/*') {
-            $oldName = [IO.Path]::GetFileName(($old.Value -split '\?')[0])
-            if ($oldName -ne $publishedName) {
-                $oldPath = [IO.Path]::GetFullPath((Join-Path $publishedDirectory $oldName))
-                if (!$oldPath.StartsWith([IO.Path]::GetFullPath($publishedDirectory) + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw 'Invalid screenshot output path' }
-                if (Test-Path -LiteralPath $oldPath) { Remove-Item -LiteralPath $oldPath }
-            }
-        }
-    }
-    $readme = [regex]::Replace($readme, $pattern, ('docs/images/published/' + $publishedName))
-}
-[IO.File]::WriteAllText($readmePath, $readme, [Text.UTF8Encoding]::new($false))
-[IO.File]::WriteAllText((Join-Path $OutputDirectory 'SCREENSHOTS.md'), (($manifest -join "`n") + "`n"), [Text.UTF8Encoding]::new($false))
-Write-Output "PASS: all twenty-seven guide screenshots regenerated from $version using synthetic accounts and offline fixtures."
+& (Join-Path $PSScriptRoot 'Publish-GuideImages.ps1') -CaptureDirectory $OutputDirectory -Version $version
+Write-Output "PASS: 11 distinct guide images captured from $version with example accounts and offline fixtures."

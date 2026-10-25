@@ -1,33 +1,19 @@
 # Guide screenshot provenance
 
-Generated from AO Nexus 1.1.5.0 using Capture-GuideScreenshots.ps1.
+Captured from AO Nexus 1.1.5.0 using real WinForms controls and offline fixtures.
 
-Synthetic accounts, empty password fields, offline news and an offline update fixture. All twenty-seven README images are rendered from the actual controls.
+One overview and ten task-specific illustrations. Red boxes and numbers are guide annotations; crops omit unrelated controls. Accounts, paths, news and health/update results are examples.
 
-- launch-progress.png: 27f66f3195dd63bf2a65883e93340997a7cbf96a04cbf46c80ee2eed091577b9
-- gui-default-layout.png: d73ad3a0d8e73da4194c5a8b003fb9b2ffcf18eaf5bcec50379dc4e2bdd8a5c6
-- gui-layouts.png: c30c136c5298d309ca68e12568259cccf59ff1b46b03dd82e9c7421ec79c2d39
-- gui-capture.png: 411a317fe8fb04d01a63c0464a667bf3eaa3769ba8943b15a4ec7f7e0df43d95
-- gui-skins.png: a88402fac3a25e3f4ffb5761476de51ea0e489c8d3bce6436ab8674c282f97b0
-- gui-backups.png: fe4f550110aa4db7fe815ce6d132fa1c40a94e93fda10e92d185ab7a64a77c34
-- health-endpoints.png: a91397f29692584f48170ae60fbb43a6c09c8c2c37a3b44d56e0105b13a8a861
-- server-health.png: 0b6b89909604e86d9d037ba677ce4e20fd94472c33d8020836db6c1103ee529a
-- settings-accounts.png: 3991485f41a3a1c2e7e582f737d654323a7b2fbc745762f309b34a08a5f05ca7
-- settings-sidebar.png: 4bfe4cc5872554a570a1d878e77e99f3845d73818f6667ca09729ab968dd82a2
-- settings-updates.png: 93bf185ff1ce15369979d2e4504957b20e6ec8a85135277b55ff02f86b54de81
-- privacy-security.png: 00957a62558100a81b7ae15ebabe15be78295082e29d147034b8d70faaccf433
-- update-available.png: afc7fde419981d4b94c2ff67fea1c6aeb5ee0b6a147cd349ee79e5468a2ec6be
-- launcher-overview.png: b329b877c83eefa96474822c7d79c99fe440b529fb327932c43d9bb69edb762c
-- preset-shortcuts.png: 5cbed8a6de8cb2f4aa8309dab0b33b42656922ab01c1a8cd08a0678a496d469c
-- preset-create.png: a3b13caf7bfd78719a2c0077cca838f5808633bfeed1a24d0ada6f20d1a9a7e1
-- activity-log.png: 8e4684200c212f10111fae4d9d297af0f409e714704da401f0b774bdaec3e790
-- settings.png: c214162fda7d6ed592eee829b686583023f24ef0c754e92a18bb4eb0f55f80fe
-- app-updates.png: 055f16c871a9b6a29536e9268cda1dde82ee6d32ba6e97ca1b07a0979d39c6ca
-- minimize-confirmation.png: 701746ceb76c6e5d20fbb24901304bc5e7e6cbcc1b8f7412937332ac8f091310
-- quit-confirmation.png: d534ea4c5a4bde9d96c2f8742b99cfe092013e12dc68c0e3a6b87813e96c89d9
-- whats-new.png: fcbbcced7f1053bf1105c82b1397cfdc7a0c146698fb307b4252b35b4919f1e9
-- account-setup.png: 68a5f001a28bd5a3a003f42fbda68f197d78226daf95c8dd0a6e7fd12dc4d715
-- game-and-server.png: 1944e3e9206db90965efc1e781e0e182860c5d84513fc18a788ba1692ef3f4ea
-- server-settings.png: 515e6f4b4c4ee4216e31c9aa581c8898927f2668a533712af2bec8ec87240853
-- password-options.png: bd3da56940ddad1db04bde415d5f3cbb671017d4593b989040db685c7306c701
-- update-saved-password.png: 29f27c3a555eab512e94e7818094d1c739bb14ffca01a400e8d54ed2c59b022e
+| Image | Source size | Crop (x, y, width, height) | Callouts | SHA-256 |
+| --- | --- | --- | --- | --- |
+| [launcher-overview.png](published/launcher-overview-9fd4ab70ed9235a2.png) | 1280 x 1000 | Full client area | 0 | `9fd4ab70ed9235a283c4d28c158c572817696f35e5295be50844bc17337aa0cf` |
+| [account-setup.png](published/account-setup-e36b9cc99307d454.png) | 640 x 740 | Full client area | 3 | `e36b9cc99307d4540028f5f02862bc887897dbe9239ce5e80cd102b0665a28a1` |
+| [game-and-server.png](published/game-and-server-b7e740dd647d2351.png) | 640 x 740 | Full client area | 2 | `b7e740dd647d2351ffc4e7701a83091f7dc83a98048140b3ec7a94e3b574018b` |
+| [preset-shortcuts.png](published/preset-shortcuts-69e9a8fd6816179f.png) | 600 x 540 | Full client area | 3 | `69e9a8fd6816179fa1da13b9bd0b901eedd4688995790d984d9580bdf0655ba9` |
+| [launch-progress.png](published/launch-progress-a8956f3b56b90214.png) | 1280 x 1000 | 0, 0, 1280, 134 | 1 | `a8956f3b56b902145ee166e71891654a67f353681ce86ad4f7bb6acbd105240a` |
+| [server-health.png](published/server-health-6f6f6e2239ff44e9.png) | 1280 x 1000 | 900, 145, 355, 550 | 2 | `6f6f6e2239ff44e944f04542e40ef3327369b207f68e4171e9edada5217469c7` |
+| [activity-log.png](published/activity-log-604e00b45ebf9aa4.png) | 900 x 340 | Full client area | 2 | `604e00b45ebf9aa42a17e7aeff93efa72dafa1ab554805e5a797685d4f46cfa2` |
+| [update-available.png](published/update-available-83ad868af8468240.png) | 620 x 600 | Full client area | 2 | `83ad868af846824089d8c4af54904feff425f60ad78dbd83372a76893146ad5c` |
+| [gui-layouts.png](published/gui-layouts-54a87c2e1092525f.png) | 1040 x 700 | Full client area | 3 | `54a87c2e1092525f84089a766c8c7b3c47edf882562f7658778d2cb4c297e5eb` |
+| [gui-skins.png](published/gui-skins-52bf633b9fea0c23.png) | 1040 x 700 | Full client area | 3 | `52bf633b9fea0c23a582b2d7e5078b8922b195ca6913997c21603ca0acda96e2` |
+| [gui-backups.png](published/gui-backups-1e1565f0c6658b60.png) | 1040 x 700 | Full client area | 2 | `1e1565f0c6658b60230a18b9bef4765f4f8ca6e9d20b0b16fcf2027e8462e2a6` |

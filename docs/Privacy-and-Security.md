@@ -1,6 +1,6 @@
 # Privacy and security in AO Nexus
 
-This describes the v1.1.1 implementation, not a claim that software or a game server is risk-free. The same overview is available offline under **Settings → General → Privacy & security**.
+This describes the implementation in this source checkout, not a claim that software or a game server is risk-free. An overview is also available offline under **Settings → General → Privacy & security**.
 
 ## Passwords and account data
 
@@ -23,7 +23,7 @@ This describes the v1.1.1 implementation, not a claim that software or a game se
 | GUI skin download | HTTPS to author-published `drive.google.com` links and `drive.usercontent.google.com` redirects. Pinned SHA-256 packages, bounded downloads and extraction; no game credentials. | Only when Download is chosen in Game GUI. Download installs separate data files; Apply skin is a separate confirmed operation. |
 | Open article, website or release | Opens the selected public URL in your default browser. | User click. Browser cookies/history/extensions and the destination's privacy practices apply. |
 
-Remote services can see your public IP address, request time and normal protocol metadata. Windows DNS/proxy/network configuration can also affect these connections. The launcher does not run a public web server, Discord webhook sender or port scan. Custom server health checks use only their configured login endpoint; names alone do not attach a custom server to another server's public report.
+Remote services can see your public IP address, request time and normal protocol metadata. Windows DNS/proxy/network configuration can also affect these connections. The launcher does not run a public web server, Discord webhook sender or port scan. Custom servers start with a login connection check; you can also configure world/zone and chat checks under **Settings → Accounts → Manage health checks**. A server name alone does not attach a custom server to another server's public report.
 
 ## Update verification and recovery
 
@@ -45,7 +45,7 @@ GUI changes require confirmation and affected clients must exit before preferenc
 | `Gui` beside the game's `Prefs` folder | Installed custom skins remain for reuse. Identical imports reuse matching contents. Temporary download/import staging is cleaned on success or failure. Original game skin files are not replaced. |
 | `%LOCALAPPDATA%\AONexus\News` | Bounded per-source news cache, reused for offline fallback. |
 | `%LOCALAPPDATA%\AONexus\Runtime` | Verified, content-addressed bundled login engine. Reused when the payload is unchanged. Old runtime versions are preserved because open game clients may still use their native components. |
-| In-memory activity log | Current session only. Default 5 MB of UTF-8 text; adjustable 1–100 MB under Settings → Updates. Oldest entries are discarded first. The searchable window shows the same retained log. This is a text limit, not a total RAM limit. |
+| In-memory activity log | Current session only. Default 5 MB of UTF-8 text; adjustable 1–100 MB under Settings → Updates. Oldest entries are discarded first. The searchable window shows the same retained log. **Clear log** asks for confirmation and clears the entire session log, including entries hidden by a search; it does not clear the separate update history. This is a text limit, not a total RAM limit. |
 | `%LOCALAPPDATA%\AONexus\Updates\update-history.log` | Same configurable cap per log, newest entries retained; no accumulating rotated copies. Lowering the cap trims existing history. |
 | `%LOCALAPPDATA%\AONexus\Updates\<GUID>` | Download/extraction failures are cleaned immediately where possible. Completed stages are cleaned after the updated app starts. Abandoned stages are retried on startup once older than 24 hours; failed-update details are also recorded in bounded history. Locked stages are skipped and retried next startup. |
 | `AONexus.exe.previous-<GUID>` next to the app | One most recent previous executable is retained per installation; older verified Nexus backups are removed on startup. |
@@ -57,4 +57,4 @@ For complete removal, close Nexus, disable Start with Windows, finish/close game
 
 ## Source references
 
-The relevant implementation is in `CredentialStore.cs`, `AccountPasswords.cs`, `BackendRunner.cs`, `AppUpdates.cs`, `LocalMaintenance.cs`, `ServerNews.cs`, `ServerHealth.cs`, `ServerSidebar.cs`, and `Models.cs` under `src/Launcher`. The inherited login protocol and client integration are under `src/Backend`.
+The relevant implementation is in `CredentialStore.cs`, `AccountPasswords.cs`, `BackendRunner.cs`, `AppUpdates.cs`, `LocalMaintenance.cs`, `ServerNews.cs`, `ServerHealth.cs`, `HealthEndpoints.cs`, `ServerSidebar.cs`, `GuiLayouts.cs`, `GuiSkins.cs`, `GuiSessions.cs`, `MainForm.GameGui.cs`, and `Models.cs` under `src/Launcher`. The inherited login protocol and client integration are under `src/Backend`.

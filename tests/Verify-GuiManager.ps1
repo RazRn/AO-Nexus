@@ -2,6 +2,7 @@
 $ErrorActionPreference='Stop'
 if([IntPtr]::Size -ne 4){throw 'Use x86 PowerShell -STA'}
 Add-Type -AssemblyName System.Windows.Forms,System.Drawing,System.Web.Extensions
+if($PublicGuideDirectory){. (Join-Path $PSScriptRoot 'Render-GuideCapture.ps1')}
 [Windows.Forms.Application]::EnableVisualStyles()
 [Windows.Forms.Application]::SetUnhandledExceptionMode([Windows.Forms.UnhandledExceptionMode]::ThrowException)
 Add-Type -ReferencedAssemblies System.Windows.Forms,System.Drawing @'
@@ -44,14 +45,17 @@ $json=New-Object Web.Script.Serialization.JavaScriptSerializer
 try{
     $settings=Model 'LauncherSettings'
     for($i=0;$i -lt 3;$i++){
-        $account=Model 'AccountConfig';$account.Label='Example account '+$i;$account.Username='example'+$i;$account.Server='2.24.96.30';$account.Port=7500;$account.GamePath=Join-Path $root ('Game'+[Math]::Min($i,1))
+        $account=Model 'AccountConfig';$account.Label=@('Main account','Weekend account','Ithaca account')[$i];$account.Username='example'+$i;$account.Server='2.24.96.30';$account.Port=7500;$account.GamePath=Join-Path $root ('Game'+[Math]::Min($i,1))
+        $account.ServerProfileId=@('rebirth','live','prk')[$i]
+        $exampleServer=@($settings.LoginServers | Where-Object Id -eq $account.ServerProfileId)[0]
+        $account.Server=$exampleServer.Server;$account.Port=$exampleServer.Port
         $account.PrefsPath=Join-Path $root ('Installation'+[Math]::Min($i,1)+'/Prefs/example'+$i)
         Write-Fixture (Join-Path ([IO.Path]::GetDirectoryName($account.PrefsPath)) 'Prefs.xml') '<Root><Value name="GUIName" value="&quot;Default&quot;"/></Root>'
-        for($j=0;$j -lt 3;$j++){$char=Model 'CharacterConfig';$char.Name='Character '+$i+'-'+$j;$char.CharacterId=100+$i*10+$j;$char.Selected=($j -eq 0);$account.Characters.Add($char);Write-Fixture (Join-Path $account.PrefsPath ('Char'+$char.CharacterId+'/Prefs.xml')) ('<Root><Value name="NumHotbars" value="'+($j+1)+'"/><Value name="PetName1" value="Keep-my-pet"/></Root>')}
+        for($j=0;$j -lt 3;$j++){$char=Model 'CharacterConfig';$char.Name=@('Aster','Orion','Vesper','Nova','Sol','Luna','Atlas','Lyra','Vega')[$i*3+$j];$char.CharacterId=100+$i*10+$j;$char.Selected=($j -eq 0);$account.Characters.Add($char);Write-Fixture (Join-Path $account.PrefsPath ('Char'+$char.CharacterId+'/Prefs.xml')) ('<Root><Value name="NumHotbars" value="'+($j+1)+'"/><Value name="PetName1" value="Keep-my-pet"/></Root>')}
         $settings.Accounts.Add($account)
     }
     $source=Join-Path $settings.Accounts[0].PrefsPath 'Char100'
-    $template=Static 'GuiLayouts' 'Capture' @($library,'Team layout',$source,'Example source','Synthetic')
+    $template=Static 'GuiLayouts' 'Capture' @($library,'Team layout',$source,'Aster','Synthetic')
     Static 'GuiLayouts' 'Apply' @($library,$template.Id,(Join-Path $settings.Accounts[0].PrefsPath 'Char101')) | Out-Null
     $settings.DefaultGuiTemplateId=$template.Id
     $before=$json.Serialize($settings)
@@ -94,7 +98,16 @@ try{
                     if($PublicGuideDirectory -and $language -eq 'en' -and $scale -eq 1){
                         [IO.Directory]::CreateDirectory([IO.Path]::GetFullPath($PublicGuideDirectory))|Out-Null
                         $originalPreview=$PreviewDirectory;$PreviewDirectory=$PublicGuideDirectory
-                        try{(Field $dialog 'skinInfo').Text="Current skin: Default`r`nC:\ExamplePrefs\AO-Rebirth\Prefs";(Field $dialog 'backupInfo').Text="Character 0-1 - Example account 0 / AO Rebirth`r`nC:\ExamplePrefs\AO-Rebirth\Prefs\example0\Char101`r`nApplied";Screenshot $dialog (@('gui-layouts.png','gui-skins.png','gui-backups.png')[$i])}finally{$PreviewDirectory=$originalPreview}
+                        try{
+                            Call $dialog 'SetAllTargets' @($false)
+                            (Field $dialog 'targets').Nodes[0].Nodes[0].Nodes[1].Checked=$true
+                            (Field $dialog 'skinInfo').Text="Current skin: Default`r`nC:\ExamplePrefs\AO-Rebirth\Prefs"
+                            (Field $dialog 'backupInfo').Text="Orion - Main account / AO Rebirth`r`nC:\ExamplePrefs\AO-Rebirth\Prefs\example0\Char101`r`nApplied"
+                            [GuiManagerFixture]::Pump()
+                            $guideName=@('gui-layouts.png','gui-skins.png','gui-backups.png')[$i]
+                            Screenshot $dialog $guideName
+                            Export-GuideCapture $dialog $guideName (Join-Path $PublicGuideDirectory 'curated')
+                        }finally{Call $dialog 'SetAllTargets' @($true);$PreviewDirectory=$originalPreview}
                     }
                 }
                 $tabs.SelectedIndex=0;Call $dialog 'SetAllTargets' @($false)

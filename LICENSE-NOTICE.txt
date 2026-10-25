@@ -15,6 +15,6 @@ Original attribution is preserved in dist/CREDITS.txt. Included dependencies
 retain their respective terms and notices in dist/Licenses. Artwork provenance
 is documented in assets/ARTWORK.txt.
 
-Customized by Luckyspawn.
+Enhanced by Luckyspawn.
 AO Nexus is an independent community project and is not an official Funcom,
 Project Rubi-Ka or AO Rebirth product.
