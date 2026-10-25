@@ -95,6 +95,20 @@ try {
     Assert ($output.Text.Contains('LIVE-FIXTURE entry')) 'Open viewer receives new launcher entries'
     $log = Field $main 'log'
     Assert ($log.Font.Name -eq 'Consolas' -and $log.BackColor.GetBrightness() -lt .1 -and $log.ForeColor.G -gt $log.ForeColor.R) 'Compact log uses the terminal palette and font'
+    $viewer.GetType().GetField('ConfirmClearLog',$flags).SetValue($viewer,[Func[bool]]{return $false})
+    $originalLog=(Field $main 'activityLog').ToString()
+    Call $viewer 'ClearActivity'
+    Assert ((Field $main 'activityLog').ToString() -eq $originalLog) 'Cancel preserves the complete activity log'
+    (Field $viewer 'search').Text='absent';Call $viewer 'RefreshLog'
+    Assert ($viewer.Controls.Find('clearActivityLog',$true)[0].Enabled) 'Clear remains available when a filter hides all entries'
+    $viewer.GetType().GetField('ConfirmClearLog',$flags).SetValue($viewer,[Func[bool]]{return $true})
+    Call $viewer 'ClearActivity'
+    Assert ((Field $main 'activityLog').Length -eq 0 -and (Field $main 'activityLogBytes') -eq 0 -and $log.TextLength -eq 0 -and $output.TextLength -eq 0) 'Confirmed clear resets stored history, byte count and both views'
+    Assert ((Field $viewer 'search').TextLength -eq 0 -and !$viewer.Controls.Find('clearActivityLog',$true)[0].Enabled) 'Confirmed clear removes the filter and disables the empty-log action'
+    $viewer.Close();Call $main 'OpenLog';$viewer=Field $main 'logViewer';Call $viewer 'RefreshLog'
+    Assert ((Field $viewer 'output').TextLength -eq 0) 'Reopening does not restore cleared entries'
+    Call $main 'AppendLog' @('NEW-AFTER-CLEAR');Call $viewer 'RefreshLog'
+    Assert ((Field $viewer 'output').Text.Contains('NEW-AFTER-CLEAR') -and !(Field $viewer 'output').Text.Contains('LIVE-FIXTURE')) 'New activity resumes without old cleared history'
     $viewer.Close(); Call $main 'AppendLog' @('After viewer close')
     Call $main 'OpenLog'
     Assert (![object]::ReferenceEquals($viewer,(Field $main 'logViewer'))) 'A closed viewer can be reopened safely'

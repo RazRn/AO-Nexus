@@ -1888,10 +1888,19 @@ namespace AOLauncher
             if (logViewer == null || logViewer.IsDisposed)
             {
                 logViewer = new LogViewer();
+                logViewer.ClearLogRequested = ClearActivityLog;
                 logViewer.SetLogText(activityLog.ToString());
                 logViewer.Show(this);
             }
             else { if (logViewer.WindowState == FormWindowState.Minimized) logViewer.WindowState = FormWindowState.Normal; logViewer.Activate(); }
+        }
+
+        private void ClearActivityLog()
+        {
+            activityLog = new StringBuilder();
+            activityLogBytes = 0;
+            log.Clear();
+            if (logViewer != null && !logViewer.IsDisposed) logViewer.SetLogText("");
         }
 
         private void AppendLog(string message)

@@ -1,30 +1,30 @@
 # Guide screenshot provenance
 
-Generated from AO Nexus 1.1.3.0 using Capture-GuideScreenshots.ps1.
+Generated from AO Nexus 1.1.4.0 using Capture-GuideScreenshots.ps1.
 
 Synthetic accounts, empty password fields, offline news and an offline update fixture. All twenty-six README images are rendered from the actual controls.
 
 - gui-default-layout.png: d73ad3a0d8e73da4194c5a8b003fb9b2ffcf18eaf5bcec50379dc4e2bdd8a5c6
-- gui-layouts.png: 0e3f3e3aee81dd211afa2cbf4195e27f6500bbb62cbb79c0af23562646de249c
+- gui-layouts.png: 162f595a576102a1188c196326315398bd16370184f36648e99761c95f3a21bf
 - gui-capture.png: 94905ffee7ae65e3c667bf3fbeafb01063430e883655d5524fe59d08250492ee
 - gui-skins.png: a88402fac3a25e3f4ffb5761476de51ea0e489c8d3bce6436ab8674c282f97b0
-- gui-backups.png: 14c7e39c44d917091678d205511497e15d4a01ddce1d55a381a49fed942cc5d1
+- gui-backups.png: 2cc32f922b22936fcd33da35d3fef14b2cede547b35493a74f0b1441337b534b
 - health-endpoints.png: a91397f29692584f48170ae60fbb43a6c09c8c2c37a3b44d56e0105b13a8a861
-- server-health.png: 2cefbd34265f4bd177351893b15f6aa072e94102d2e3f3a6cc5b788f943592bf
+- server-health.png: 73b8e2cdda054e79b4cf9ffd3ffa53c04d4d8a484d129ff6d081156864c9d0f0
 - settings-accounts.png: 3991485f41a3a1c2e7e582f737d654323a7b2fbc745762f309b34a08a5f05ca7
 - settings-sidebar.png: 8b6b44f4c2d4dd9e99f4cf5d8a21bee9808b5e56ee708bd3b687f2a53b68fbb2
 - settings-updates.png: 5273a54583d2fc08e0d4e94a3a08532e5e1954b5c484c90303cfc18217a13205
 - privacy-security.png: ec20ac40549d140bd3fa199aa8fc0e4c7c21949f2a62915c6b75294709a18662
-- update-available.png: 76e45c186b9deedfa55f5a157b4ac313c53976ba343e5abf2f3d62847f8c754e
-- launcher-overview.png: fa896240ed8885b263fec4998c23f98eb214be7d4e3adbbb582bee1b64feb149
+- update-available.png: 59703e53c7a2148b2857db65fbeeec448e8e71dc133b4c60cc6591dd20e1e471
+- launcher-overview.png: 2bad011c9747c386937ba31ac91db88b642f214c82da28d9583223e1301f1b93
 - preset-shortcuts.png: 23c9a34b290b1ad937b660679477e96380b1c2c654fc96d2a9ca94ab7f7f6d9c
 - preset-create.png: 67f56a93bcdda26427876982e181bfde9f5bb58a9fdff19d58d41fc335de81fc
-- activity-log.png: 2a39788bcbc0749915ac16018932f8d2953ffa6690b8a1080b9da0fc7923dd11
+- activity-log.png: 8e4684200c212f10111fae4d9d297af0f409e714704da401f0b774bdaec3e790
 - settings.png: c214162fda7d6ed592eee829b686583023f24ef0c754e92a18bb4eb0f55f80fe
-- app-updates.png: 52c065ebcaa643191e89b116041a456dc468246e0a47792e6db2446e400c34ee
+- app-updates.png: 644e960f4c81f6e191d8af983e03e2eb83413dbefc248514f45102a1dc5ee4de
 - minimize-confirmation.png: 0cb14b5023ddf31f88673330dfd9d8b31d2a963241e4ff883338f8ac4b1696e5
 - quit-confirmation.png: dce9c21828570945006021e83c3b67de735ebc21ac01a79ad89b14113b2a08ec
-- whats-new.png: d47a50d1e0f71dba41b024524f8fa7888474a28fca569f1ec3347e0e065d4553
+- whats-new.png: 52d38b1a1481cad588f15f1426e7e300616f3da0509186d1789ce365af5e87ac
 - account-setup.png: de6013166163a75d62c6a86e7cb6c6742790e5cf84e51e9879d827e6a050e3d9
 - game-and-server.png: ac3a9d7ee12fc564ed667ed75505c90f908ca977eeb4b2d8f158f16e92ed5c22
 - server-settings.png: 515e6f4b4c4ee4216e31c9aa581c8898927f2668a533712af2bec8ec87240853

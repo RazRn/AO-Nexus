@@ -20,6 +20,9 @@ namespace AOLauncher
         private readonly Timer refresh = new Timer { Interval = 150 };
         private string source = "";
         private string lastSearch = "";
+        private readonly Button clearLog = Theme.Button(T("Clear log…"));
+        internal Action ClearLogRequested;
+        internal Func<bool> ConfirmClearLog;
 
         internal LogViewer()
         {
@@ -33,7 +36,7 @@ namespace AOLauncher
             var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(16), ColumnCount = 1, RowCount = 3 };
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
             var toolbar = new TableLayoutPanel { Dock = DockStyle.Fill, Margin = Padding.Empty, ColumnCount = 3, RowCount = 1 };
             toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
@@ -48,10 +51,12 @@ namespace AOLauncher
             var frame = new NexusPanel { Dock = DockStyle.Fill, Padding = new Padding(10), Margin = Padding.Empty, BackColor = TerminalBackground };
             output.AccessibleName = T("Activity log");
             frame.Controls.Add(SlimScrolling.Wrap(output));
-            var footer = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Margin = Padding.Empty };
-            footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); footer.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            var footer = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 1, Margin = Padding.Empty };
+            footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); footer.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); footer.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             follow.Text = T("Follow new entries"); follow.Margin = new Padding(8, 6, 0, 0);
             footer.Controls.Add(count, 0, 0); footer.Controls.Add(follow, 1, 0);
+            clearLog.Name = "clearActivityLog"; clearLog.Margin = new Padding(12, 6, 0, 0); clearLog.Enabled = false;
+            clearLog.Click += (sender, e) => ClearActivity(); footer.Controls.Add(clearLog, 2, 0);
             layout.Controls.Add(toolbar, 0, 0); layout.Controls.Add(frame, 0, 1); layout.Controls.Add(footer, 0, 2);
             Controls.Add(layout);
             search.TextChanged += (sender, e) => QueueRefresh();
@@ -61,6 +66,16 @@ namespace AOLauncher
         }
 
         internal void SetLogText(string text) { source = text ?? ""; QueueRefresh(); }
+        private void ClearActivity()
+        {
+            if (source.Length == 0) return;
+            bool confirmed = ConfirmClearLog != null ? ConfirmClearLog() : NexusMessageBox.Show(this,
+                T("Clear all activity log entries for this session, including entries hidden by the search? This cannot be undone. New activity will continue to appear. The separate update-history file is kept."),
+                T("Clear activity log?"), MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.OK;
+            if (!confirmed) return;
+            ClearLogRequested?.Invoke();
+            source = ""; search.Clear(); RefreshLog();
+        }
         internal void RefreshLanguage() { NexusStrings.Retranslate(this); RefreshLog(); }
         private void QueueRefresh() { if (!refresh.Enabled) refresh.Start(); }
         private void RefreshLog()
@@ -82,6 +97,7 @@ namespace AOLauncher
                 SendMessage(output.Handle, 0x00B6, IntPtr.Zero, new IntPtr(firstLine - currentLine));
             }
             count.Text = F("{0} of {1} log entries", matches.Length, all.Length);
+            clearLog.Enabled = source.Length > 0;
         }
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {

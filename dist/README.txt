@@ -1,4 +1,4 @@
-AO NEXUS 1.1.3
+AO NEXUS 1.1.4
 Based on AOQuickLauncher by never-knows-best and contributors.
 Enhanced by Luckyspawn.
 
@@ -199,3 +199,7 @@ Apply saved default uses your personal default template instead.
 Update release notes now have readable headings, bullets and paragraph spacing.
 
 v1.1.3 fixes stale border and dropdown fragments after resizing or maximizing Nexus.
+
+v1.1.4: Open log > Clear log asks for confirmation before clearing the full session
+activity history, including filtered-out entries. New logging continues normally.
+Activity is kept in memory; the separate update-history file is not deleted.
