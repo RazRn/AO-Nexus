@@ -1,12 +1,13 @@
-# Game GUI: character layouts and skins
+# Game GUI: character layouts, skins, scripts and macros
 
 [Player guide](Player-Guide.md) · [Download](https://github.com/RazRn/AO-Nexus/releases/latest)
 
-Open **Game GUI · Experimental** in AO Nexus. Test changes on one character before a broad rollout. The manager separates three jobs into tabs:
+Open **Game GUI · Experimental** in AO Nexus. Test changes on one character before a broad rollout. The manager separates four jobs into tabs:
 
 - **Layouts** saves a character's setup as a reusable template and applies it to selected characters.
 - **Skins** installs and selects the visual skin for a game installation's shared preferences.
-- **Backups** restores an earlier character layout or skin selection.
+- **Scripts** copies chat scripts (`/name`) between game installations and shows each character's macros.
+- **Backups** restores an earlier character layout, macro, script or skin change.
 
 These are different scopes. A window layout belongs to a character. The game's skin selector belongs to its shared installation preferences, so changing the skin affects every account using those preferences.
 
@@ -31,6 +32,7 @@ For a one-time copy, select targets first and choose **Copy from char…**. The 
 | Hotbars | Shortcut-bar slot assignments. | Item, nano, perk and action references may not be usable by another character or profession. Review the resulting bars in game. |
 | Key bindings | The character's saved keybinding archive. | Replaces the selected keybinding component; enable only when wanted. |
 | Pet names | The character's saved pet-name values. | Optional, because these are personal settings rather than window layout. |
+| Macros | The character's text macros (`TextMacro.bin`): every macro made with `/macro`, with its number. | Replaces all of the target's macros. Hotbars refer to macros by number, so ticking Hotbars also ticks Macros; untick it only if you know the targets' macro numbers match. |
 
 Window layout is the normal starting point. The other components are explicit choices. You can apply only components actually included in a template. Account credentials, character identity, chat history, friends and ignored-player data, backpack contents and other unsupported preferences are not copied.
 
@@ -104,6 +106,21 @@ The author instructs users to exit the game before skin changes and describes sk
 
 Nexus does not redistribute these skin archives inside its executable or GitHub ZIP. Downloads come from the author's published Google Drive links when requested. Each reviewed package has a pinned SHA-256 hash; an unexpected change is rejected instead of silently installing different contents. These hashes identify the reviewed files; they are not publisher signatures. The optional downloaded `ndGUI_Config_Tool.cmd` is omitted and never executed.
 
+## Scripts and macros
+
+**Scripts** are plain text files in the `scripts` folder next to an installation's `Prefs` folder, for example `%LOCALAPPDATA%\Funcom\Anarchy Online\<id>\AORebirth-Live\scripts`. You run one in game with `/name`. Like skins, scripts belong to the installation: every account and character using it shares them.
+
+On **Game GUI → Scripts**, choose the installation at the top. The list shows its scripts and the preview shows the selected one.
+
+- **Copy selected** copies the selected scripts to the installation chosen beside it. **Copy to all…** copies them to every other configured installation. Scripts with the same name and different content are replaced after a confirmation; identical ones are skipped.
+- **Import file…** adds text files from anywhere on your PC, for example scripts shared by another player. **Delete** removes the selected scripts. **Open folder** opens the scripts folder to edit scripts in a text editor.
+
+The game reads a script when you use it, so script changes need no relog and work in running clients. Only plain text files of up to 64 KB with simple names (letters, digits, `-`, `_` and `.`) are handled. Program files such as `.exe`, `.bat` or `.ps1`, binary files, subfolders and linked folders are refused. Every copy, import or delete is backed up first.
+
+**Macros** belong to one character. The right side of the Scripts tab shows the macros of the character you choose. **Copy macros to chars…** opens **Copy from char…** with only Macros ticked: tick the target characters on the Layouts tab first. Macros are copied as a whole file through the normal layout flow, so online targets are relogged and a backup is made. When you copy hotbars, include macros too, so macro buttons keep running the same macros.
+
+Macros and scripts can contain character names, for example `/assist Name`. They stay on your PC: Nexus never adds them to diagnostics or problem reports.
+
 ## Online clients and relogging
 
 For a layout change, Nexus checks the affected characters. For a skin change, it checks the whole affected installation. The confirmation lists the targets and any identified clients that need to relog. It asks for any required login passwords before logging clients out.
@@ -120,10 +137,12 @@ Do not manually launch the affected game or edit its preference files during an 
 
 *1 — Select the recovery record and review its original character or installation. 2 — Restore backup returns that target to the recorded state; it does not copy the record to a different character.*
 
-Layout templates and recovery records are stored locally under `%LOCALAPPDATA%\AONexus\GuiLayouts`. They may contain character labels, local paths and copied GUI settings, so review them before sharing. They are not uploaded by Nexus.
+Layout templates and recovery records are stored locally under `%LOCALAPPDATA%\AONexus\GuiLayouts`; script backups are in its `ScriptBackups` folder. They may contain character labels, local paths and copied GUI settings, so review them before sharing. They are not uploaded by Nexus.
 
 Every applied layout records the previous affected data. Restoring uses that record and preserves unrelated preferences where possible. If the same settings were independently changed afterward, a conflicting restore can be refused rather than overwriting unknown changes. Nexus retains the latest **10 completed layout backups per character**, including the current undo record and records from successful restore or rollback operations. Failed or incomplete recovery records are preserved outside that limit.
 
 Skin changes save a snapshot and the previous `GUIName` selection with a SHA-256 integrity record. Skin restore checks that the backup belongs to the same preference installation and selects the earlier skin. It does not replace the current whole `Prefs.xml`, so later display or other settings are retained. Restoring also creates an undo backup. After a successful selection, Nexus keeps the latest **10 successful skin-selection backups per Prefs root**, including the new undo record. Cleanup only removes recognized, intact Nexus backup folders containing exactly the two expected files. Interrupted, corrupt, unrecognized or extra-content records are retained for recovery or manual inspection; backups for other installations are untouched.
+
+Script changes back up the previous version of every script they replace or delete. Restoring a script backup first backs up the current scripts, so a restore can itself be undone. Nexus keeps the latest **10 completed script backups per installation**.
 
 A rollout touches multiple targets. If one fails, Nexus attempts to restore already changed targets in reverse order and reports any recovery failures. This is recovery across separate file operations, not a single atomic transaction across all installations. Review the reported result and available backups before retrying; do not assume rollback always succeeded. Downloads and import staging folders are cleaned after successful or failed installation. Installed custom skins are retained for reuse; successful selection backups follow the retention limit above.

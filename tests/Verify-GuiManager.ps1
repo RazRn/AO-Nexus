@@ -66,7 +66,7 @@ try{
             try{
                 if($scale -gt 1){$dialog.Scale([Drawing.SizeF]::new($scale,$scale))}
                 Write-Output ($language+' '+$scale);Show $dialog;$tabs=Field $dialog 'tabs'
-                Assert ($tabs.TabCount -eq 3) 'Manager has Layouts, Skins and Backups tabs'
+                Assert ($tabs.TabCount -eq 4) 'Manager has Layouts, Skins, Scripts and Backups tabs'
                 Assert ((Field $dialog 'templates').Items.Count -eq 2) 'Built-in AO default and saved template are listed'
                 Assert (!(Field $dialog 'defaultTemplate').Enabled) 'Built-in reset cannot become a queued personal default'
                 if($PublicGuideDirectory -and $language -eq 'en' -and $scale -eq 1){
@@ -93,7 +93,7 @@ try{
                 Screenshot $dialog ($language+'-'+$scale+'-busy.png')
                 Call $dialog 'SetBusy' @($false)
                 Assert ($dialog.Controls.Find('applyGuiLayout',$true)[0].Enabled -and !$dialog.Controls.Find('applyGuiComponentHotbars',$true)[0].Enabled) 'Idle restores controls while preserving component restrictions'
-                for($i=0;$i -lt 3;$i++){
+                for($i=0;$i -lt 4;$i++){
                     $tabs.SelectedIndex=$i;[GuiManagerFixture]::Pump();Assert ($tabs.GetTabRect($i).Right -le $tabs.ClientSize.Width) 'Tabs fit at normal and enlarged scale';Screenshot $dialog ($language+'-'+$scale+'-tab'+$i+'.png')
                     if($i -eq 1){
                         $target=Field $dialog 'skinTarget';$apply=$dialog.Controls.Find('applyGuiSkin',$true)[0];$skinList=Field $dialog 'skins'
@@ -103,7 +103,15 @@ try{
                         Assert ($targetRect.Top -gt $listRect.Bottom) 'Skin target belongs below its skin list'
                         Assert ($applyRect.Top - $targetRect.Bottom -ge 6*$scale) 'Skin target must have a visible gap before apply actions'
                     }
-                    if($PublicGuideDirectory -and $language -eq 'en' -and $scale -eq 1){
+                    if($i -eq 2){
+                        $page=$tabs.TabPages[2]
+                        foreach($name in @('guiScriptTarget','guiScripts','guiScriptPreview','guiScriptCopyTarget','copyGuiScripts','copyAllGuiScripts','importGuiScript','deleteGuiScripts','openGuiScripts','guiMacroSource','guiMacros','copyGuiMacros')){
+                            $control=$dialog.Controls.Find($name,$true)[0];Assert ($null -ne $control) "Scripts tab has $name"
+                            $rect=$page.RectangleToClient($control.RectangleToScreen($control.ClientRectangle))
+                            Assert ($rect.Right -le $page.ClientSize.Width+1 -and $rect.Bottom -le $page.ClientSize.Height+1 -and $rect.Width -gt 0 -and $rect.Height -gt 0) "$name fits the Scripts tab at $language $scale"
+                        }
+                    }
+                    if($PublicGuideDirectory -and $language -eq 'en' -and $scale -eq 1 -and $i -ne 2){
                         [IO.Directory]::CreateDirectory([IO.Path]::GetFullPath($PublicGuideDirectory))|Out-Null
                         $originalPreview=$PreviewDirectory;$PreviewDirectory=$PublicGuideDirectory
                         try{
@@ -112,7 +120,7 @@ try{
                             (Field $dialog 'skinInfo').Text="Current skin: Default`r`nC:\ExamplePrefs\AO-Rebirth\Prefs"
                             (Field $dialog 'backupInfo').Text="Orion - Main account / AO Rebirth`r`nC:\ExamplePrefs\AO-Rebirth\Prefs\example0\Char101`r`nApplied"
                             [GuiManagerFixture]::Pump()
-                            $guideName=@('gui-layouts.png','gui-skins.png','gui-backups.png')[$i]
+                            $guideName=@('gui-layouts.png','gui-skins.png','','gui-backups.png')[$i]
                             Screenshot $dialog $guideName
                             Export-GuideCapture $dialog $guideName (Join-Path $PublicGuideDirectory 'curated')
                         }finally{Call $dialog 'SetAllTargets' @($true);$PreviewDirectory=$originalPreview}

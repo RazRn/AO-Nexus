@@ -1,3 +1,5 @@
+• Scripts og makroer i Spillets GUI: den nye fane Scripts kopierer chat-scripts (/navn) mellem dine spilinstallationer, importerer script-filer og viser hver chars makroer. Kopiér makroer fra én char til andre med den nye del Makroer under Layouts; den vælges automatisk sammen med Hotbars, så makroknapper bliver ved med at virke. Hver ændring sikkerhedskopieres og kan gendannes under Sikkerhedskopier.
+
 • Hurtigere holdlogin: Nexus bekræfter en char i verden ca. 0,6 s hurtigere og venter 0,25 s i stedet for 1 s, før næste char på samme konto starter. Tilsammen sparer det ca. 1,3 s pr. char.
 
 • Login-forløb pr. char: spilklienten melder nu hvert login-trin (login-skærm, serverforbindelse, char-liste, char valgt) til diagnoseloggen med tider samt teksten i eventuelle Windows-fejldialoger. Rapportér et problem kan så vise præcis, hvor et login stoppede.

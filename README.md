@@ -30,7 +30,7 @@ Requires Windows 10/11, **.NET Framework 4.8 or 4.8.1**, and an installed game c
 | News and server health | Choose news sources and connection checks; optionally monitor in the background and receive tray notifications. | [News and health](docs/Player-Guide.md#server-news-and-health) |
 | Tray, updates and logs | Keep Nexus out of Alt+Tab, opt into update checks, and search the activity log. Update installation always requires confirmation. | [Everyday settings](docs/Player-Guide.md#settings-tray-and-updates) |
 | Problem reports | Anonymised diagnostics and crash reports, shared as a prefilled GitHub issue only when you choose to. | [Report a problem](docs/Player-Guide.md#report-a-problem) |
-| Game GUI · Experimental | Capture selected layout components, apply them to characters, manage skins and restore backups. | [Layouts, skins and recovery](docs/Game-GUI.md) |
+| Game GUI · Experimental | Capture selected layout components and macros, apply them to characters, manage skins and chat scripts, and restore backups. | [Layouts, skins, scripts and recovery](docs/Game-GUI.md) |
 
 The interface supports English and Danish. It initially follows Windows' language, with a manual override in Settings.
 
@@ -55,7 +55,7 @@ Reports from Nexus replace logins, account and character names, IDs and personal
 ## More documentation
 
 - [Player guide](docs/Player-Guide.md): setup and everyday use, with focused red callouts.
-- [Game GUI](docs/Game-GUI.md): experimental character templates, installation skins and backups.
+- [Game GUI](docs/Game-GUI.md): experimental character templates, macros, installation skins, scripts and backups.
 - [Server health](docs/Server-Health.md): endpoints, timing and what check results mean.
 - [Privacy and security](docs/Privacy-and-Security.md): local data and network behavior.
 - [Build and test](docs/Building.md): contributor requirements, commands and source map.

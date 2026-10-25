@@ -11,6 +11,9 @@ function Call($name,[object[]]$values=@()){for($i=0;$i -lt $values.Length;$i++){
 function Reject($action,$message){$failed=$false;try{&$action|Out-Null}catch{$failed=$true};Assert $failed $message}
 function Write-Fixture($path,$text){[IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($path))|Out-Null;[IO.File]::WriteAllText($path,$text,[Text.UTF8Encoding]::new($false))}
 function Read-Fixture($path){[IO.File]::ReadAllText($path)}
+function BE([uint32]$value){$bytes=[BitConverter]::GetBytes($value);[Array]::Reverse($bytes);,$bytes}
+function Macro-Bytes($entries){$list=New-Object Collections.Generic.List[byte];$list.AddRange([byte[]](BE $entries.Count));foreach($entry in $entries){$list.AddRange([byte[]](BE $entry[0]));foreach($text in @($entry[1],$entry[2])){$bytes=[Text.Encoding]::ASCII.GetBytes($text);$list.AddRange([byte[]](BE $bytes.Length));$list.AddRange($bytes)}};,$list.ToArray()}
+function Same-Bytes($path,$bytes){[Convert]::ToBase64String([IO.File]::ReadAllBytes($path)) -eq [Convert]::ToBase64String($bytes)}
 $testRoot=Join-Path ([IO.Path]::GetTempPath()) ('AONexus-GuiLayouts-tests-'+[guid]::NewGuid().ToString('N'))
 $library=Join-Path $testRoot 'Library';$source=Join-Path $testRoot 'Source/Char101';$target=Join-Path $testRoot 'Target/Char202'
 $sourcePrefs='<Root><Value name="NumHotbars" value="2"/><Value name="PetName1" value="SOURCE-PET"/><Archive name="KeyBindings"><Int32 name="secret-key" value="123"/></Archive><Archive name="NanoViewConfig"><Rect name="WindowFrame" value="Rect(1,2,3,4)"/><String name="DockableViewDockName" value="&quot;DockArea0&quot;"/><Archive name="item_position_map"><String name="secret-item" value="SOURCE-ITEM"/></Archive></Archive></Root>'
@@ -82,6 +85,48 @@ try {
     Assert ($barResult.Contains('SOURCE-ACTION') -and !$barResult.Contains('TARGET-ACTION')) 'Explicit hotbar selection replaces action contents'
     Reject {Call ApplyWithOptions @($library,$template.Id,$target,$pets)} 'Cannot select components absent from a template'
     Call DeleteTemplate @($library,$optional.Id)
+    # Text macros: copied whole, only when selected, and restorable.
+    $macros=$assembly.GetType('AOLauncher.TextMacros',$true)
+    $macroFlag=[Enum]::ToObject($components,16);$hotMacro=[Enum]::ToObject($components,18)
+    $sourceMacros=Macro-Bytes @(@(1,'Follow','/follow'),@(2,'ass','/assist SOURCE-MACRO'))
+    $targetMacros=Macro-Bytes (,@(1,'mine','/say TARGET-MACRO'))
+    [IO.File]::WriteAllBytes((Join-Path $source 'TextMacro.bin'),$sourceMacros)
+    [IO.File]::WriteAllBytes((Join-Path $target 'TextMacro.bin'),$targetMacros)
+    $parsed=$macros.GetMethod('Parse',$flags).Invoke($null,@(,$sourceMacros))
+    Assert ($parsed.Count -eq 2 -and $parsed[1].Id -eq 2 -and $parsed[1].Name -eq 'ass' -and $parsed[1].Text -eq '/assist SOURCE-MACRO') 'Macro file format is parsed'
+    foreach($bad in @(([byte[]](0,0,0,2,0,0,0,1)),([byte[]](0,0,0,0,9)),([byte[]](0,0,0,1,0,0,0,1,255,255,255,255)))){$failed=$false;try{$macros.GetMethod('Parse',$flags).Invoke($null,@(,$bad))|Out-Null}catch{$failed=$true};Assert $failed 'Malformed macro files are rejected'}
+    $layoutOnly=Call Capture @($library,'No macros',$source,'Fixture','test')
+    Assert (@($layoutOnly.Files | Where-Object Path -eq 'TextMacro.bin').Count -eq 0) 'Layout-only capture excludes macros'
+    Call DeleteTemplate @($library,$layoutOnly.Id)
+    $withMacros=Call CaptureWithOptions @($library,'With macros',$source,'Fixture','test',$hotMacro)
+    Assert ([int]$withMacros.Components -eq 18 -and @($withMacros.Files | Where-Object Path -eq 'TextMacro.bin').Count -eq 1) 'Macro capture stores the macro file'
+    $barBefore=Read-Fixture (Join-Path $target 'Containers/ShortcutBar_0.xml')
+    Call PreflightApplyWithOptions @($library,$withMacros.Id,$target,$macroFlag)
+    $macroBackup=Call ApplyWithOptions @($library,$withMacros.Id,$target,$macroFlag)
+    Assert (Same-Bytes (Join-Path $target 'TextMacro.bin') $sourceMacros) 'Macros replace the target macro file byte for byte'
+    Assert ((Read-Fixture (Join-Path $target 'Containers/ShortcutBar_0.xml')) -eq $barBefore) 'Macros-only copy leaves hotbars untouched'
+    Assert (@($macroBackup.Changes).Count -eq 1) 'Macros-only copy changes only the macro file'
+    Call Restore @($library,$macroBackup.Id,$target)
+    Assert (Same-Bytes (Join-Path $target 'TextMacro.bin') $targetMacros) 'Macro restore returns the original macros'
+    $macroBackup=Call ApplyWithOptions @($library,$withMacros.Id,$target,$macroFlag)
+    $newer=Macro-Bytes @(@(1,'Follow','/follow'),@(2,'ass','/assist SOURCE-MACRO'),@(3,'new','/say NEWER'))
+    [IO.File]::WriteAllBytes((Join-Path $target 'TextMacro.bin'),$newer)
+    $countBefore=@(Call ListBackups @($library,$target)).Count
+    Call Restore @($library,$macroBackup.Id,$target)
+    Assert (Same-Bytes (Join-Path $target 'TextMacro.bin') $targetMacros) 'Macro restore after a game rewrite returns the original macros'
+    $undo=@(Call ListBackups @($library,$target))[0]
+    Assert (@(Call ListBackups @($library,$target)).Count -eq $countBefore+1 -and $undo.State -eq 'Applied') 'Newer macros are kept in an undo backup'
+    $fresh=Join-Path $testRoot 'Fresh/Char707';Write-Fixture (Join-Path $fresh 'Prefs.xml') '<Root/>'
+    $freshBackup=Call ApplyWithOptions @($library,$withMacros.Id,$fresh,$hotMacro)
+    Assert ((Same-Bytes (Join-Path $fresh 'TextMacro.bin') $sourceMacros) -and (Read-Fixture (Join-Path $fresh 'Containers/ShortcutBar_0.xml')).Contains('SOURCE-ACTION')) 'Hotbars and macros copy together to a char without macros'
+    Call Restore @($library,$freshBackup.Id,$fresh)
+    Assert (!(Test-Path (Join-Path $fresh 'TextMacro.bin'))) 'Restore removes a newly created macro file'
+    $templateMacro=Join-Path $library ('Templates/'+$withMacros.Id+'/Files/TextMacro.bin');[IO.File]::WriteAllBytes($templateMacro,$targetMacros)
+    Reject {Call ApplyWithOptions @($library,$withMacros.Id,$target,$macroFlag)} 'Macro template tampering is rejected'
+    [IO.File]::WriteAllBytes((Join-Path $source 'TextMacro.bin'),[byte[]](0,0,0,5,1))
+    Reject {Call CaptureWithOptions @($library,'Broken macros',$source,'Fixture','test',$macroFlag)} 'Unsupported macro files are not captured'
+    Remove-Item -LiteralPath (Join-Path $source 'TextMacro.bin'),(Join-Path $target 'TextMacro.bin')
+    Call DeleteTemplate @($library,$withMacros.Id)
     for($round=0;$round -lt 6;$round++){
         Write-Fixture (Join-Path $target 'Prefs.xml') $targetPrefs
         $retentionBackup=Call Apply @($library,$template.Id,$target)

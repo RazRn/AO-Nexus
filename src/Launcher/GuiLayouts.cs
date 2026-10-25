@@ -12,7 +12,7 @@ using System.Xml;
 namespace AOLauncher
 {
     [Flags]
-    internal enum GuiLayoutComponents { Layout = 1, Hotbars = 2, Keybindings = 4, PetNames = 8 }
+    internal enum GuiLayoutComponents { Layout = 1, Hotbars = 2, Keybindings = 4, PetNames = 8, Macros = 16 }
     internal sealed class GuiLayoutTemplate
     {
         public string Id { get; set; }
@@ -50,15 +50,16 @@ namespace AOLauncher
     }
 
     // Character layouts only. Callers must establish that the affected game clients are offline.
-    // Layout-only is the default. Hotbar actions, key bindings and pet names require explicit component flags.
-    // Credentials, chat history, arbitrary item maps and macro files are never captured.
+    // Layout-only is the default. Hotbar actions, key bindings, pet names and text macros require explicit component flags.
+    // Credentials, chat history and arbitrary item maps are never captured. Text macros (TextMacro.bin) are
+    // copied whole and only when selected, so hotbar buttons keep pointing at the same macro numbers.
     internal static class GuiLayouts
     {
         internal const int MaxFiles = 256, MaxFileBytes = 1024 * 1024, MaxTotalBytes = 8 * 1024 * 1024;
         internal const string GameDefaultId = "00000000000000000000000000000001";
         internal static string DefaultRoot => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AONexus", "GuiLayouts");
         private static readonly Regex IdPattern = new Regex(@"\A[a-f0-9]{32}\z", RegexOptions.CultureInvariant);
-        private static readonly Regex FilePattern = new Regex(@"\A(?:Prefs\.xml|DockAreas/(?:DockArea[0-9]{1,3}|RollupArea)\.xml|Containers/(?:Inventory|Bank|SpecialActions|ShortcutBar_[0-9]{1,2})\.xml|Chat/Windows/Window[0-9]{1,3}/Config\.xml)\z", RegexOptions.CultureInvariant);
+        private static readonly Regex FilePattern = new Regex(@"\A(?:Prefs\.xml|DockAreas/(?:DockArea[0-9]{1,3}|RollupArea)\.xml|Containers/(?:Inventory|Bank|SpecialActions|ShortcutBar_[0-9]{1,2})\.xml|Chat/Windows/Window[0-9]{1,3}/Config\.xml|TextMacro\.bin)\z", RegexOptions.CultureInvariant);
         private static readonly HashSet<string> Geometry = Set("WindowFrame WindowPinButtonState DockableViewDockName borderless labels_on_top listview_mode selected_tab bar_orientation IsPrimary scroll_offset Minimized is_backmost is_frontmost window_transparency_inactive window_transparency_active show_timestamps hide_input_when_inactive deactivate_on_send is_textinput_enabled is_clickthrough is_message_fading_enabled is_window_open tab_index is_default_window is_startup_window window_name name visual_mode");
         private static readonly HashSet<string> Configs = Set("BattlestationConfig BrowserWindowConfig CCAlienXPBarConfig CCFriendlyHealthBarConfig CCHealthBarConfig CCHostileHealthBarConfig CCNanoBarConfig CCXPBarConfig ChatGroupWindowConfig CityTerminalBuyDlgConfig CityTerminalWindowConfig CompassWindowConfig FactionWindowConfig FightTargetNCUWindowConfig FriendsWindowConfig HelpButtonWindowConfig InfoViewConfig InspectViewConfig ItemShopWindowConfig KnowledgeViewConfig LFTWindowConfig LaserTargetConfig MailIconWindowConfig MailWindowConfig MarketWindowConfig MechSelectConfig MissionSelectionViewConfig MissionViewConfig NCUWindowConfig NPCChatWindowConfig NanoTargetNCUWindowConfig NanoViewConfig NotificationWindowConfig OptionWindowConfig PFMapWindowConfig PerkWindowConfig PetWindowConfig PetitionWindowConfig PlanetMapViewConfig RaidBarConfig RaidConfig ResearchConfig ShopViewConfig SignupTerminalConfig SkillConfig StatViewConfig StatWindowConfig TeamViewConfig TeleportTargetConfig TipViewConfig TowerBuildMenuViewConfig TradeSkillViewConfig TradeViewConfig TweakPanelConfig WearViewConfig");
         private static readonly HashSet<string> Visibility = Set("AutoCloseWindows LockHotbars LockRaidBars NumHotbars IconTimers IconTimerText ShowFightTargetNCU ShowNanoTargetNCU battlestation_window camera_menu cc_alienxp_bar cc_compass cc_control_center cc_friendly_health_bar cc_health_bar cc_hostile_health_bar cc_left_bar cc_left_menu cc_left_target_control cc_left_wing cc_mini_toolbar cc_nano_bar cc_right_bar cc_right_menu cc_right_target_control cc_right_wing cc_rollup_controller_fade_level cc_rollup_panel cc_section1 cc_xp_bar char_menu chat_group_window chat_system_active command_menu control_center_active faction_window friends_window inventory_window itemshop_window knowledge_window lasertarget_window lft_window mail_window map_menu map_window mechselect_window mission_window nano_window ncu_window notification_window perk_window pet_window petition_window planetmap_window raid_window research_window shortcutbar_window signupterminal_window skill_window specialaction_window stat_window team_menu team_view teleport_target_window tradeskill_window wear_window");
@@ -93,6 +94,11 @@ namespace AOLauncher
                 {
                     byte[] original = Read(file, ref total);
                     string relative = Relative(source, file);
+                    if (IsMacroFile(relative))
+                    {
+                        if (components.HasFlag(GuiLayoutComponents.Macros) && TextMacros.Parse(original).Count > 0) data.Add(relative, original);
+                        continue;
+                    }
                     XmlDocument filtered = Filter(Parse(original), relative, components);
                     if (!filtered.DocumentElement.HasChildNodes) continue;
                     data.Add(relative, Encode(filtered));
@@ -123,7 +129,7 @@ namespace AOLauncher
                 if (!defaults.DocumentElement.HasChildNodes) throw new IOException("The game installation has no supported default layout settings.");
                 var originals = new Dictionary<string, byte[]>(StringComparer.Ordinal);
                 var outputs = new Dictionary<string, byte[]>(StringComparer.Ordinal);
-                var files = CharacterFiles(target).Select(file => Relative(target, file)).ToList();
+                var files = CharacterFiles(target).Select(file => Relative(target, file)).Where(relative => !IsMacroFile(relative)).ToList();
                 if (!files.Contains("Prefs.xml")) files.Add("Prefs.xml");
                 foreach (string relative in files)
                 {
@@ -173,12 +179,18 @@ namespace AOLauncher
                 if (template == null || template.Id != templateId || template.Files == null || template.Files.Count == 0 || template.Files.Count > MaxFiles) throw new IOException("Invalid layout template.");
                 if ((components & template.Components) != components) throw new IOException("The template does not contain all selected components.");
                 var inputs = new Dictionary<string, XmlDocument>(StringComparer.Ordinal);
+                byte[] macros = null;
                 int total = 0;
                 foreach (var file in template.Files)
                 {
                     if (file == null) throw new IOException("Invalid template file.");
                     RequireRelative(file.Path); byte[] data = Read(Child(templateFolder, "Files/" + file.Path), ref total);
                     if (Hash(data) != file.Hash) throw new IOException("Template integrity check failed.");
+                    if (IsMacroFile(file.Path))
+                    {
+                        if (components.HasFlag(GuiLayoutComponents.Macros)) { TextMacros.Parse(data); macros = data; }
+                        continue;
+                    }
                     // Re-filter stored templates: metadata and library files are untrusted too.
                     var filtered = Filter(Parse(data), file.Path, components);
                     if (filtered.DocumentElement.HasChildNodes) inputs.Add(file.Path, filtered);
@@ -195,6 +207,13 @@ namespace AOLauncher
                     byte[] after = Encode(destination);
                     if (before != null && Hash(before) == Hash(after)) continue;
                     originals[input.Key] = before; outputs[input.Key] = after;
+                }
+                if (macros != null)
+                {
+                    // Macros are replaced as a unit: hotbars refer to them by number.
+                    string path = Child(target, MacroFile);
+                    byte[] before = File.Exists(path) ? Read(path, ref total) : null;
+                    if (before == null || Hash(before) != Hash(macros)) { originals[MacroFile] = before; outputs[MacroFile] = macros; }
                 }
                 if (components.HasFlag(GuiLayoutComponents.Layout)) RemoveDuplicateDockMemberships(target, inputs, originals, outputs, ref total);
                 return CommitLayout(root, templateId, target, components, originals, outputs);
@@ -253,6 +272,7 @@ namespace AOLauncher
                     if (!names.Add(file.Path)) throw new IOException("Duplicate template file.");
                     byte[] data = Read(Child(folder, "Files/" + file.Path), ref total);
                     if (Hash(data) != file.Hash) throw new IOException("Template integrity check failed.");
+                    if (IsMacroFile(file.Path)) { if (components.HasFlag(GuiLayoutComponents.Macros)) TextMacros.Parse(data); continue; }
                     var source = Filter(Parse(data), file.Path, components);
                     string destination = Child(target, file.Path);
                     if (File.Exists(destination))
@@ -266,7 +286,7 @@ namespace AOLauncher
         }
         private static void ValidateComponents(GuiLayoutComponents components)
         {
-            if (components == 0 || ((int)components & ~15) != 0) throw new ArgumentException("Select at least one supported GUI component.");
+            if (components == 0 || ((int)components & ~31) != 0) throw new ArgumentException("Select at least one supported GUI component.");
         }
         internal static void Restore(string storeRoot, string backupId, string targetCharPath)
         {
@@ -286,7 +306,8 @@ namespace AOLauncher
                     string currentHash = now == null ? null : Hash(now);
                     if (currentHash == change.BeforeHash) continue;
                     byte[] restored = before;
-                    if (currentHash != change.AfterHash)
+                    // Macros are restored as a unit; the undo backup below keeps any newer macros.
+                    if (currentHash != change.AfterHash && !IsMacroFile(change.Path))
                     {
                         // The game normally rewrites these files on logout. Reverse only the
                         // portable fields changed by this operation, preserving newer personal data.
@@ -560,6 +581,8 @@ namespace AOLauncher
         }
         private static bool ValidId(string id) => id != null && IdPattern.IsMatch(id);
         private static string Item(string root, string category, string id) { if (!ValidId(id)) throw new IOException("Invalid layout identifier."); return Child(root, category + "/" + id); }
+        internal const string MacroFile = "TextMacro.bin";
+        private static bool IsMacroFile(string relative) => relative == MacroFile;
         private static void RequireRelative(string path) { if (path == null || !FilePattern.IsMatch(path)) throw new IOException("Unsupported layout file path."); }
         private static string Relative(string root, string path) => Path.GetFullPath(path).Substring(root.Length + 1).Replace('\\', '/');
         private static string Child(string root, string relative)

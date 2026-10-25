@@ -59,6 +59,7 @@
     <Compile Include="HealthEndpoints.cs" />
     <Compile Include="GuiLayouts.cs" />
     <Compile Include="GuiSkins.cs" />
+    <Compile Include="GuiScripts.cs" />
     <Compile Include="GuiManagerDialog.cs" />
     <Compile Include="GuiSessions.cs" />
     <Compile Include="MainForm.GameGui.cs" />

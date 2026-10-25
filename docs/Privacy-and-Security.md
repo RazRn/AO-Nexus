@@ -44,7 +44,7 @@ Installation requires confirmation and write access to the app folder; it does n
 
 ## Local files and retention
 
-Game GUI templates contain only selected supported preferences, never the whole account folder. Templates and backups can contain character labels, local paths and personal GUI settings. They are not encrypted or uploaded automatically. Skin imports reject executable/script entries and unsafe archive paths; the author download's optional command script is omitted and never executed. Package hashes identify reviewed contents, not a publisher signature. Data validation cannot guarantee compatibility or appearance in every game client.
+Game GUI templates contain only selected supported preferences, never the whole account folder. The optional Macros component copies a character's text macros, which can contain character names. Script copies handle only plain text files in an installation's `scripts` folder and refuse program, binary and linked files. Macros and scripts are never added to diagnostics or problem reports. Templates and backups can contain character labels, local paths and personal GUI settings. They are not encrypted or uploaded automatically. Skin imports reject executable/script entries and unsafe archive paths; the author download's optional command script is omitted and never executed. Package hashes identify reviewed contents, not a publisher signature. Data validation cannot guarantee compatibility or appearance in every game client.
 
 GUI changes require confirmation and affected clients must exit before preference writes. Nexus can ask to relog known clients via `/quit`, waits for actual process exit, and rechecks before writing. Unknown clients block the change. Character-only operations match affected character identities and preference paths. For shared skin changes, an unverified Prefs-to-game mapping can expand the confirmation to all identified running AO clients. Cancellation cannot undo an already completed logout. File transactions back up changes and attempt rollback on failure; unresolved recovery data is preserved. Do not manually launch affected clients or edit their preferences during an operation.
 
@@ -52,7 +52,7 @@ GUI changes require confirmation and affected clients must exit before preferenc
 | --- | --- |
 | `%LOCALAPPDATA%\AONexus\AONexus.json` and profile recovery files | Saved settings; preserved across updates. |
 | `%LOCALAPPDATA%\AONexus\Credentials` | Encrypted passwords until removed through account settings/Forget passwords. |
-| `%LOCALAPPDATA%\AONexus\GuiLayouts` | Templates until deleted. Latest 10 completed layout backups per character and 10 successful skin-selection backups per Prefs installation; interrupted/unrecognized recovery records remain for inspection. |
+| `%LOCALAPPDATA%\AONexus\GuiLayouts` | Templates until deleted. Latest 10 completed layout backups per character, 10 completed script backups per installation (`ScriptBackups`) and 10 successful skin-selection backups per Prefs installation; interrupted/unrecognized recovery records remain for inspection. |
 | `Gui` beside the game's `Prefs` folder | Installed custom skins remain for reuse. Identical imports reuse matching contents. Temporary download/import staging is cleaned on success or failure. Original game skin files are not replaced. |
 | `%LOCALAPPDATA%\AONexus\News` | Bounded per-source news cache, reused for offline fallback. |
 | `%LOCALAPPDATA%\AONexus\Runtime` | Verified, content-addressed bundled login engine. Reused when the payload is unchanged. Old runtime versions are preserved because open game clients may still use their native components. |
@@ -69,4 +69,4 @@ For complete removal, close Nexus, disable Start with Windows, finish/close game
 
 ## Source references
 
-The relevant implementation is in `CredentialStore.cs`, `AccountPasswords.cs`, `BackendRunner.cs`, `AppUpdates.cs`, `LocalMaintenance.cs`, `ServerNews.cs`, `ServerHealth.cs`, `HealthEndpoints.cs`, `ServerSidebar.cs`, `GuiLayouts.cs`, `GuiSkins.cs`, `GuiSessions.cs`, `MainForm.GameGui.cs`, `Diagnostics.cs`, `ReportProblemDialog.cs` and `Models.cs` under `src/Launcher`. The inherited login protocol and client integration are under `src/Backend`.
+The relevant implementation is in `CredentialStore.cs`, `AccountPasswords.cs`, `BackendRunner.cs`, `AppUpdates.cs`, `LocalMaintenance.cs`, `ServerNews.cs`, `ServerHealth.cs`, `HealthEndpoints.cs`, `ServerSidebar.cs`, `GuiLayouts.cs`, `GuiSkins.cs`, `GuiScripts.cs`, `GuiSessions.cs`, `MainForm.GameGui.cs`, `Diagnostics.cs`, `ReportProblemDialog.cs` and `Models.cs` under `src/Launcher`. The inherited login protocol and client integration are under `src/Backend`.

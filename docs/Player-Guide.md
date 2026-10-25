@@ -264,7 +264,7 @@ The activity log is held in memory. **Clear log** also clears the main-window pr
 
 ## Layouts, skins and local data
 
-**Game GUI · Experimental** manages character layout templates and installation-wide skins. You can choose layout components separately, capture/copy from a character, apply to selected targets, and restore backups. Skins can affect multiple characters sharing an installation.
+**Game GUI · Experimental** manages character layout templates, macros, installation-wide skins and chat scripts. You can choose layout components separately (including macros), capture/copy from a character, apply to selected targets, copy scripts between installations and restore backups. Skins and scripts can affect multiple characters sharing an installation.
 
 Use the [Game GUI guide](Game-GUI.md) before applying a layout: it explains saving source changes through logout, waiting for target clients to exit before writing Prefs, the difference between an AO default reset and your personal default, and recovery. Start with one character and keep backups.
 

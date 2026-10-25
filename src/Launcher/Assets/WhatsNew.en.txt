@@ -1,3 +1,5 @@
+• Scripts and macros in Game GUI: the new Scripts tab copies chat scripts (/name) between your game installations, imports script files and shows each char's macros. Copy macros from one char to others with the new Macros component under Layouts; it is ticked automatically with Hotbars, so macro buttons keep working. Every change is backed up and can be restored under Backups.
+
 • Faster team logins: Nexus confirms a character in the world about 0.6 s sooner and waits 0.25 s instead of 1 s before starting the next character on the same account. Together that saves about 1.3 s per character.
 
 • Login progress per character: the game client now reports each login stage (login screen, server connection, character list, character requested) to the diagnostics log with timings, and any Windows error dialog text it shows. Report a problem can then show exactly where a login stopped.
