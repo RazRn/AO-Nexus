@@ -217,6 +217,12 @@ namespace AOQuickLauncher
             var request = new LaunchRequest { Characters = new List<CharacterLaunch> { Char("alpha", 1) }, ReadyTimeoutSeconds = 10, StartSpacingMs = 20000 };
             bool rejected = false;
             try { LaunchQueue.ValidateRequest(request); } catch (ArgumentException) { rejected = true; }
+            var seen = new List<string>();
+            Pass(!ZoneHandoff.Observe(seen, new[] { "2.24.96.30:7500" }, "2.24.96.30:7500") && seen.Count == 0, "The login connection is not a handoff");
+            Pass(!ZoneHandoff.Observe(seen, new[] { "2.24.96.30:7500", "2.24.96.31:7501" }, "2.24.96.30:7500"), "A zone connection alone is not enough");
+            Pass(ZoneHandoff.Observe(seen, new[] { "2.24.96.31:7501", "2.24.96.31:7012" }, "2.24.96.30:7500") && ZoneHandoff.Ports(seen) == "7501,7012", "Zone then chat completes the handoff, reported as ports only");
+            Pass(ZoneHandoff.Format(0x1E601802u, 0x4D1Du) == "2.24.96.30:7501", "TCP table addresses and ports are decoded");
+            Pass(!new LaunchRequest().StartAfterHandoff, "Early start is off unless the launcher requests it");
             Pass(rejected && new LaunchRequest().StartSpacingMs == 1500 && !new LaunchRequest().QuietLaunch, "Start spacing defaults to 1.5 s and is bounded; quiet launch is opt-in");
             StartSpacing.Reset();
             var watch = Stopwatch.StartNew();

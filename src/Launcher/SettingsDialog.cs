@@ -13,8 +13,9 @@ namespace AOLauncher
         private readonly ComboBox languageInput;
         private readonly NumericUpDown logSizeInput;
         public int MaxLogSizeMb => (int)logSizeInput.Value;
-        private readonly CheckBox startWithWindowsInput, checkUpdatesInput, confirmTrayInput, confirmQuitInput, keepDiagnosticsInput, quietLaunchInput;
+        private readonly CheckBox startWithWindowsInput, checkUpdatesInput, confirmTrayInput, confirmQuitInput, keepDiagnosticsInput, quietLaunchInput, fastSameAccountInput;
         public bool QuietLaunch => quietLaunchInput.Checked;
+        public bool FastSameAccountLogins => fastSameAccountInput.Checked;
         public bool KeepDiagnostics => keepDiagnosticsInput.Checked;
         public Action ReportProblemAction { private get; set; }
         public Func<bool> ClearDiagnosticsAction { private get; set; }
@@ -101,6 +102,11 @@ namespace AOLauncher
             serverFields.Controls.Add(quietLaunchInput);
             Note(serverFields, L("On by default. The game client goes straight to the selected character without showing the login and character list, about 1.5 seconds faster per character. Login errors are then not shown in the game window; the activity log and Report a problem show where a login stopped. Turn it off to see the game's own login screens.",
                 "Slået til som standard. Spilklienten går direkte til den valgte char uden at vise login og char-liste, ca. 1,5 sekund hurtigere pr. char. Login-fejl vises så ikke i spilvinduet; aktivitetsloggen og Rapportér et problem viser, hvor et login stoppede. Slå den fra for at se spillets egne login-skærme."));
+            fastSameAccountInput = new NexusCheckBox { Name = "fastSameAccountLogins", Text = L("Fast logins on one account", "Hurtige logins på én konto"),
+                Checked = settings.FastSameAccountLogins, AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 4, 0, 8) };
+            serverFields.Controls.Add(fastSameAccountInput);
+            Note(serverFields, L("For servers that allow several characters per account, such as AO Rebirth: the next character starts as soon as the previous one has been handed over to the game world, while it is still loading. Turn it off if characters are disconnected while loading.",
+                "For servere, der tillader flere chars pr. konto, som AO Rebirth: næste char starter, så snart den forrige er overdraget til spilverdenen, mens den stadig indlæser. Slå det fra, hvis chars bliver smidt ud under indlæsning."));
             var passwordsHeading = Note(serverFields, T("Saved passwords"));
             passwordsHeading.Font = new Font(settingsTabs.Font, FontStyle.Bold);
             passwordsHeading.Margin = new Padding(0, 16, 0, 8);
