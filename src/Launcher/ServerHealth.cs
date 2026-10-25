@@ -44,17 +44,19 @@ namespace AOLauncher
         }
         internal static string EndpointKey(LoginServerProfile server) => server.Server + ":" + server.Port;
         internal static HealthResult Unknown(string key, string detail, DateTime now) => new HealthResult { Key = key, Detail = detail, State = HealthState.Unknown, CheckedUtc = now };
-        internal static async Task<HealthResult[]> CheckAsync(LoginServerProfile server, CancellationToken cancellation)
+        internal static Task<HealthResult[]> CheckAsync(LoginServerProfile server, CancellationToken cancellation)
+            => CheckConfiguredAsync(server, HealthEndpoints.Defaults(server), cancellation);
+        internal static async Task<HealthResult[]> CheckConfiguredAsync(LoginServerProfile server, HealthEndpoints endpoints, CancellationToken cancellation)
         {
-            string kind = Kind(server);
-            var tasks = new List<Task<HealthResult>> { TcpAsync("login", server.Server, server.Port, cancellation) };
-            tasks.Add(kind == "rebirth" ? TcpAsync("zone", server.Server, 7501, cancellation)
-                : Task.FromResult(Unknown("zone", SidebarText.L("No verified public zone check.", "Intet verificeret offentligt zone-check."), DateTime.UtcNow)));
-            tasks.Add(kind == "rebirth" ? TcpAsync("chat", server.Server, 7012, cancellation)
-                : kind == "live" ? TcpAsync("chat", "chat.d1.funcom.com", server.Port == 7506 ? 7106 : 7105, cancellation)
-                : Task.FromResult(Unknown("chat", SidebarText.L("No verified public chat check.", "Intet verificeret offentligt chat-check."), DateTime.UtcNow)));
+            var tasks = new List<Task<HealthResult>> { ProbeAsync("login", endpoints.Login, cancellation), ProbeAsync("zone", endpoints.Zone, cancellation), ProbeAsync("chat", endpoints.Chat, cancellation) };
             tasks.Add(ReportAsync(server, cancellation));
             return await Task.WhenAll(tasks).ConfigureAwait(false);
+        }
+        private static Task<HealthResult> ProbeAsync(string key, HealthEndpoint endpoint, CancellationToken cancellation)
+        {
+            if (endpoint == null || !endpoint.Enabled) return Task.FromResult(Unknown(key, SidebarText.L("Check disabled or not configured.", "Tjek slået fra eller ikke konfigureret."), DateTime.UtcNow));
+            if (!endpoint.Valid) return Task.FromResult(Unknown(key, SidebarText.L("Invalid endpoint. Edit it in Settings.", "Ugyldig adresse. Ret den i Indstillinger."), DateTime.UtcNow));
+            return TcpAsync(key, endpoint.Host, endpoint.Port, cancellation);
         }
         internal static async Task<HealthResult> TcpAsync(string key, string host, int port, CancellationToken cancellation)
         {

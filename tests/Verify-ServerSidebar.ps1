@@ -103,7 +103,7 @@ try {
     $checkField=$health.GetType().GetField('Check',$f)
     $method=[HealthProbeFixture].GetMethod('Probe').MakeGenericMethod($a.GetType('AOLauncher.HealthResult'))
     $checkField.SetValue($health,[Delegate]::CreateDelegate($checkField.FieldType,$method))
-    [HealthProbeFixture]::Results=$health.GetType().GetMethod('Preview',$s).Invoke($null,[object[]]@($server))
+    [HealthProbeFixture]::Results=$health.GetType().GetMethod('Preview',$f).Invoke($health,[object[]]@($server))
     Call $health 'Configure' @($config.LoginServers,[string[]]@('rebirth'))
     Show-Fixture $hostForm
     Assert ([HealthProbeFixture]::Calls -eq 0) 'Hidden health panel sends no requests'

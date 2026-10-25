@@ -1,6 +1,6 @@
 # Privacy and security in AO Nexus
 
-This describes the v1.0.20 implementation, not a claim that software or a game server is risk-free. The same overview is available offline under **Settings → General → Privacy & security**.
+This describes the v1.0.21 implementation, not a claim that software or a game server is risk-free. The same overview is available offline under **Settings → General → Privacy & security**.
 
 ## Passwords and account data
 
@@ -17,7 +17,7 @@ This describes the v1.0.20 implementation, not a claim that software or a game s
 | --- | --- | --- |
 | Game login | The configured account address and port, through the bundled login backend and game client. Authentication belongs to the selected server. | After a user launch action and confirmation. Game clients make their own world/chat/other connections independently of Nexus. |
 | Server news | HTTPS to `www.anarchy-online.com/news`, `project-rk.com/feed.xml`, and `www.ao-rebirth.com/index.php`, restricted to the selected publishers. Standard HTTP metadata, no account credentials. | While Server news is visible, initially and every 15 minutes, or Refresh. Choose sources/disable in Settings → Sidebar; hidden/tray stops automatic requests and cancels in-flight work. |
-| Server health | TCP connect-and-close to verified login/zone/chat endpoints for the currently displayed server; no login or application payload. Public HTTPS reports from `www.ao-rebirth.com/server-status.php` or `project-rk.com/api/status` when applicable. Normal DNS resolution may occur. | Visible health view only, every 60 seconds. Manual refresh and switching are globally throttled to at least 15 seconds; no overlapping batches. Configure/disable under Settings → Sidebar. See [endpoints and limitations](Server-Health.md). |
+| Server health | TCP connect-and-close to the built-in or user-configured login/zone/chat endpoints for the currently displayed server; no login or application payload. Public HTTPS reports from `www.ao-rebirth.com/server-status.php` or `project-rk.com/api/status` when applicable. Normal DNS resolution may occur. | Visible health view only, every 60 seconds. Server switches are globally throttled to at least 15 seconds; no overlapping batches. Choose/disable servers under Settings → Sidebar; edit connection targets under Settings → Accounts → Manage health checks. Public report URLs are not editable. See [endpoints and limitations](Server-Health.md). |
 | Update check | HTTPS to `api.github.com/repos/RazRn/AO-Nexus/releases/latest`. User-Agent includes Nexus version; no GitHub login/token, game profile or password. | Once per startup if opted in, or manually from Settings → Updates. First start asks for the preference; it remains changeable. No repeating background check. |
 | Update download | HTTPS to GitHub; redirects limited to `github.com`, `release-assets.githubusercontent.com`, `objects.githubusercontent.com`. | Only after choosing Install and restart. |
 | Open article, website or release | Opens the selected public URL in your default browser. | User click. Browser cookies/history/extensions and the destination's privacy practices apply. |

@@ -45,6 +45,7 @@ namespace AOLauncher
         private readonly TextBox log = new TextBox();
         private int activityLogBytes;
         private StringBuilder activityLog = new StringBuilder();
+        private int missingStartupCharacters;
         private readonly ComboBox presetPicker = new NexusComboBox();
         private readonly List<Control> editingControls = new List<Control>();
         private Button startButton;
@@ -130,6 +131,7 @@ namespace AOLauncher
             }
 
             foreach (var account in settings.Accounts) AccountTargets.Initialize(settings, account);
+            if (!smoke) missingStartupCharacters = PresetService.ApplyStartupSelection(settings).MissingCount;
             settings.MaxLogSizeMb = LogRetention.NormalizeMb(settings.MaxLogSizeMb);
             if (!smoke) UpdateJournal.Configure(settings.MaxLogSizeMb);
             if (smoke) settings.Language = "en";
@@ -158,6 +160,7 @@ namespace AOLauncher
                 if (startupError != null) NexusMessageBox.Show(this, startupError, T("Could not open settings"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 if (smoke) AppendLog(T("UI preview uses sample data. It does not log in or change your settings."));
                 else AppendLog(T("Ready. Add your accounts and characters, check the ones you want, then choose “Log in selected”."));
+                if (missingStartupCharacters > 0) AppendLog(F("{0} saved characters no longer exist in the list and were skipped.", missingStartupCharacters));
                 if (!smoke && LauncherBootstrap.ImportedThisSession) AppendLog(T("Copied your AO Launcher profile. AO Nexus now saves changes separately."));
                 if (!smoke && UpdateJournal.ConsumeInstalledNotice(AppUpdates.UpdateRoot))
                 {
@@ -797,8 +800,9 @@ namespace AOLauncher
         private sealed class PresetChoice
         {
             internal LaunchPreset Preset { get; }
-            internal PresetChoice(LaunchPreset preset) { Preset = preset; }
-            public override string ToString() => Preset?.Name ?? T("Choose preset…");
+            private readonly bool startupDefault;
+            internal PresetChoice(LaunchPreset preset, bool startupDefault = false) { Preset = preset; this.startupDefault = startupDefault; }
+            public override string ToString() => Preset == null ? T("No preset selected") : Preset.Name + (startupDefault ? " · " + T("Startup default") : "");
         }
 
         private void RefreshPresetPicker()
@@ -811,7 +815,7 @@ namespace AOLauncher
                 presetPicker.SelectedIndex = 0;
                 foreach (var preset in settings.Presets)
                 {
-                    var choice = new PresetChoice(preset);
+                    var choice = new PresetChoice(preset, string.Equals(preset.Id, settings.DefaultPresetId, StringComparison.OrdinalIgnoreCase));
                     presetPicker.Items.Add(choice);
                     if (string.Equals(preset.Id, settings.SelectedPresetId, StringComparison.OrdinalIgnoreCase))
                         presetPicker.SelectedItem = choice;
@@ -883,6 +887,7 @@ namespace AOLauncher
                     preset?.Name ?? "", settings.Presets.Where(item => !ReferenceEquals(item, preset)).Select(item => item.Name),
                     preset?.StartHotkey, preset?.CampHotkey, settings.Accounts.Sum(account => account.Characters.Count(character => character.Selected)), preset != null))
                 {
+                    dialog.UseAsStartupDefault = preset != null && string.Equals(preset.Id, settings.DefaultPresetId, StringComparison.OrdinalIgnoreCase);
                     dialog.ValidateShortcuts = (start, logout) => ValidatePresetHotkeys(preset, start, logout);
                     if (dialog.ShowDialog(this) != DialogResult.OK) return;
                     ChangePreset(() =>
@@ -894,6 +899,7 @@ namespace AOLauncher
                         }
                         target.StartHotkey = dialog.StartHotkey;
                         target.CampHotkey = dialog.LogoutHotkey;
+                        PresetService.SetStartupDefault(settings, target, dialog.UseAsStartupDefault);
                     });
                 }
             }
@@ -1382,6 +1388,7 @@ namespace AOLauncher
                 settings.ShowServerHealth = dialog.ShowServerHealth;
                 settings.NewsSourceIds = dialog.NewsSourceIds;
                 settings.HealthServerIds = dialog.HealthServerIds;
+                settings.HealthCheckEndpoints = dialog.HealthCheckEndpoints;
                 SaveSettings();
                 ApplyLanguage();
                 UpdateSelection();

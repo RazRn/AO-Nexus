@@ -2,15 +2,15 @@
 
 **A launcher for your accounts, characters and teams across Anarchy Online servers.**
 
-AO Nexus **v1.0.20** brings separate game installations, login servers, saved character selections and server news into one Windows app. It includes presets for Funcom AO, Project Rubi-Ka and AO Rebirth, and lets you add your own server entries.
+AO Nexus **v1.0.21** brings separate game installations, login servers, saved character selections and server news into one Windows app. It includes presets for Funcom AO, Project Rubi-Ka and AO Rebirth, and lets you add your own server entries.
 
 Based on [AOQuickLauncher](https://gitlab.com/never-knows-best/aoquicklauncher) by **never-knows-best and contributors**. Enhanced by **Luckyspawn**.
 
 [Download a release](https://github.com/RazRn/AO-Nexus/releases) · [Source repository](https://github.com/RazRn/AO-Nexus) · [Player guide](dist/README.txt)
 
-![AO Nexus dashboard with a saved team, accounts grouped by server, account details and server news](docs/images/published/launcher-overview-d2c845f399f12ed9.png)
+![AO Nexus dashboard with a saved team, accounts grouped by server, account details and server news](docs/images/published/launcher-overview-4405607347f213fb.png)
 
-Screenshots use example accounts and offline news fixtures, with no personal accounts or passwords. All guide screenshots were regenerated from v1.0.20.
+Screenshots use example accounts and offline news fixtures, with no personal accounts or passwords. All guide screenshots were regenerated from v1.0.21.
 
 ## What it does
 
@@ -140,7 +140,7 @@ Open **Settings → Accounts → Manage login servers…** to rename servers, ed
 
 ![Login server editor showing connection settings, simultaneous account and character limits, and total character slots](docs/images/published/server-settings-515e6f4b4c4ee421.png)
 
-These are the defaults in the **v1.0.20 source**, rather than a live statement of each server's current rules or availability. Existing profiles can retain their saved values.
+These are the defaults in the **v1.0.21 source**, rather than a live statement of each server's current rules or availability. Existing profiles can retain their saved values.
 
 | Server preset | Login address | Max. accounts | Chars per account | Character slots |
 | --- | --- | ---: | ---: | ---: |
@@ -179,9 +179,11 @@ To save a setup:
 3. Later, choose that setup in the picker to restore its selection.
 4. Review the selected characters and choose **Log in selected** when ready.
 
-Selecting a team changes checkboxes; it does not immediately start games. After changing the checkboxes, choose **Update** to save that selection to the current team. Update is disabled when the saved selection already matches. **Edit…** changes only the name and shortcuts; **Save new…** keeps a separate team; **Delete** removes a preset. **Cancel** discards changes in the editor.
+**Use as startup default** in Create/Edit selects that saved team whenever Nexus starts. Choosing another replaces the default. With no default, startup shows **No preset selected** and preserves your last manual character checkboxes. No automatic login occurs. Deleting the default clears it.
 
-![Create a team preset with a name and optional start and logout shortcuts](docs/images/published/preset-create-667dd10f7a9b3a58.png)
+Selecting a team changes checkboxes; it does not immediately start games. After changing the checkboxes, choose **Update** to save that selection to the current team. Update is disabled when the saved selection already matches. **Edit…** changes the name, shortcuts and startup default; **Save new…** keeps a separate team; **Delete** removes a preset. **Cancel** discards changes in the editor.
+
+![Create a team preset with a name and optional start and logout shortcuts](docs/images/published/preset-create-67f56a93bcdda264.png)
 
 A team stores character references, not a second copy of the account settings. Account changes still apply. Missing characters are reported and skipped; newly imported or created characters do not silently join existing teams.
 
@@ -200,7 +202,7 @@ Serial login does not mean the first character closes when the next starts. Succ
 
 ## Preset shortcuts and logout
 
-![Separate start and logout shortcut fields for the selected team](docs/images/published/preset-shortcuts-0f8348016120ba0b.png)
+![Separate start and logout shortcut fields for the selected team](docs/images/published/preset-shortcuts-23c9a34b290b1ad9.png)
 
 1. Select a saved team under **Team presets** and choose **Edit…**. The same shortcut fields appear when you choose **Save new…**.
 2. Click a field, then press your combination, for example **Ctrl + Alt + F6** to start and **Ctrl + Alt + F7** to log out. Use Ctrl or Alt with a letter, number or function key. F12 and Windows-key combinations are reserved.
@@ -216,7 +218,7 @@ The game handles its normal logout countdown. Combat, zoning, movement or cancel
 
 **Existing game windows need one normal restart through v1.0.15 or later** to enable quit control. The same applies to a client opened through **Create new char**: save/import the character and start it normally once. Unsupported or untracked clients are skipped with an explanation. AOSharp is not required. Closing Nexus itself still leaves all game windows open.
 
-For implementation details and test coverage, see [Quit control](docs/Camp-Control.md). See [What's new in v1.0.20](docs/Whats-New-1.0.20.md) for the English feature list.
+For implementation details and test coverage, see [Quit control](docs/Camp-Control.md). See [What's new in v1.0.21](docs/Whats-New-1.0.21.md) for the English feature list.
 
 ## Create a new character
 
@@ -273,15 +275,19 @@ The **Server news** panel reads Funcom AO, Project Rubi-Ka and AO Rebirth's offi
 
 Use **Refresh** to fetch again; automatic refresh runs every 15 minutes while Server news is visible. Switching tabs or hiding Nexus pauses requests. Headlines open the original article in your browser. Article dates and refresh times are different; unavailable news does not prevent login. Cached news provides a fallback. See [news sources](NEWS-SOURCES.md).
 
-**Server health** is independently optional in Settings. When both are enabled they share tabs on the right; turning both off gives the account list more space. Choose the displayed server to see login, world/zone, chat and official-report checks. It refreshes every 60 seconds while visible, with a 15-second minimum between manual refreshes. **Reachable** means a TCP connection from your PC, not a successful game login. Missing checks or stale reports are **Unknown**. See [endpoints, sources and limitations](docs/Server-Health.md).
+**Server health** is independently optional in Settings. When both are enabled they share tabs on the right; turning both off gives the account list more space. Choose the displayed server to see login, world/zone, chat and official-report checks. It refreshes every 60 seconds while visible, with a 15-second minimum between server switches. There is no manual Refresh button; one enabled server is shown as a plain name. **Reachable** means a TCP connection from your PC, not a successful game login. Missing checks or stale reports are **Unknown**. See [endpoints, sources and limitations](docs/Server-Health.md).
 
-![Server health with synthetic reachability and official-report examples](docs/images/published/server-health-feaf2796f7f1911c.png)
+![Server health with synthetic reachability and official-report examples](docs/images/published/server-health-c7f7426bc845b32f.png)
 
 Settings are divided into four tabs:
 
 ![General settings with language, startup, confirmations and privacy](docs/images/published/settings-c214162fda7d6ed5.png)
 
-![Account settings with server catalog and saved-password removal](docs/images/published/settings-accounts-340be37d8c3ed40e.png)
+Edit TCP monitoring hosts, ports and enabled checks under **Settings → Accounts → Manage health checks…**. These settings do not change account login addresses. Unverified zone/chat services start disabled. Save the table and Settings to apply; restore defaults per server when needed.
+
+![Editable health connection endpoints](docs/images/published/health-endpoints-a91397f29692584f.png)
+
+![Account settings with server catalog and saved-password removal](docs/images/published/settings-accounts-3991485f41a3a1c2.png)
 
 ![Sidebar settings with optional news, health and source choices](docs/images/published/settings-sidebar-c2b7fa7ce155d7f3.png)
 
@@ -303,24 +309,24 @@ From v1.0.18, use **Settings → Updates → Check for updates…**. You can als
 
 Choose **Install and restart** after reviewing the version and release notes. Nexus downloads the release ZIP from `RazRn/AO-Nexus`, verifies GitHub's SHA-256 digest, the executable checksum and version, and stages the EXE. A separate staged copy waits for Nexus to close, replaces the installed executable, keeps a backup beside it, and reopens it. Active launcher logins or character detection must finish or be stopped first; existing game windows stay open. Updates require write access to the installation folder and do not request administrator privileges. Save pending Settings edits before installing.
 
-![Update dialog showing the installed version and stable release check](docs/images/published/app-updates-8c256f4791ffb1a1.png)
+![Update dialog showing the installed version and stable release check](docs/images/published/app-updates-599f596f704d25c8.png)
 
 Update checks and downloads are reported in the activity log. After a successful installation, the restarted app reports the new version and opens a **What's new** window once. Its release summary is bundled with that version in English and Danish, works offline, and does not appear on ordinary startups. A persistent history is kept in `%LOCALAPPDATA%\AONexus\Updates\update-history.log`. Both the session activity log and update history default to 5 MB each, adjustable from 1–100 MB under **Settings → Updates**. Oldest entries are trimmed; reducing the limit also trims existing update history. Completed update stages are removed after startup; abandoned stages are retried once older than 24 hours. Active or locked stages are left alone and retried on a later startup. Only the latest previous executable is retained for recovery. Cached login runtimes remain because game clients may still use them. Checks happen once per startup when enabled, or when you press Check for updates; there is no periodic background poll.
 
-![One-time release summary after a successful update](docs/images/published/whats-new-058e79a396f920c2.png)
+![One-time release summary after a successful update](docs/images/published/whats-new-e67eba942a7f6ce2.png)
 
 The updater uses public GitHub Releases without a GitHub login or token. It ignores prereleases and does not downgrade. Network or verification failures leave the installed executable untouched. Installation uses atomic replacement; the old EXE remains as an `AONexus.exe.previous-*` backup. Staging files and the installation result are under `%LOCALAPPDATA%\AONexus\Updates`. Profiles and credentials are not included in downloads or sent to GitHub. The SHA-256 check authenticates the download against GitHub's release metadata; it is not a separate publisher signature. Trust remains with this repository and its release permissions.
 
 Older versions need one manual update to v1.0.18 or later before they can use this feature. Manual ZIP installation remains available.
 
 
-![Readable update notes using an offline example of a future release](docs/images/published/update-available-17ed4b252efa333a.png)
+![Readable update notes using an offline example of a future release](docs/images/published/update-available-f8dce63bb0fbbc6e.png)
 
 ### Privacy and security
 
 Open **Settings → General → Privacy & security** for an offline explanation of optional password storage, local data, network connections and update verification. The [full privacy and security document](docs/Privacy-and-Security.md) describes exact destinations, controls, retention and limitations. Passwords are encrypted locally for your Windows user; this does not add transport encryption to the game's protocol. Account names, paths and presets are not encrypted. Nexus has no analytics integration or automatic log/crash upload.
 
-![Offline privacy and security overview](docs/images/published/privacy-security-4ff257e4fa4c8c26.png)
+![Offline privacy and security overview](docs/images/published/privacy-security-be0e3f42ba0ace45.png)
 ### Profile and distribution files
 
 The executable can live in a folder of your choice, but profile data is stored per Windows user rather than next to it.

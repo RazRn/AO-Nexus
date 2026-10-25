@@ -22,6 +22,9 @@ namespace AOLauncher
         private readonly FlowLayoutPanel cards = new FlowLayoutPanel();
         private readonly LinkLabel sourceLink = new LinkLabel();
         private readonly System.Windows.Forms.Timer automaticRefresh = new System.Windows.Forms.Timer();
+        private readonly System.Windows.Forms.Timer interactionRefresh = new System.Windows.Forms.Timer { Interval = 250 };
+        private bool deferredRender, deferredRefresh;
+        private bool InteractionOpen => BackgroundUi.DropdownOpen() || ownedMenus.Any(menu => !menu.IsDisposed && menu.Visible);
         private readonly Font headingFont = new Font("Segoe UI", 10F, FontStyle.Bold);
         private readonly Font titleFont = new Font("Segoe UI", 11F, FontStyle.Bold);
         private NewsSnapshot[] snapshots;
@@ -71,6 +74,14 @@ namespace AOLauncher
             Controls.Add(layout);
             automaticRefresh.Interval = 15 * 60 * 1000;
             automaticRefresh.Tick += async (sender, args) => await RefreshNewsAsync();
+            interactionRefresh.Tick += async (sender, args) =>
+            {
+                if (!Visible || IsDisposed) { interactionRefresh.Stop(); return; }
+                if (InteractionOpen) return;
+                interactionRefresh.Stop();
+                if (deferredRender) Render();
+                if (deferredRefresh) { deferredRefresh = false; await RefreshNewsAsync(); }
+            };
             RefreshLanguage();
             Load += (sender, e) => ActivityChanged();
             VisibleChanged += (sender, e) => ActivityChanged();
@@ -80,7 +91,8 @@ namespace AOLauncher
         private DateTime lastRefreshUtc = DateTime.MinValue;
         private void ActivityChanged()
         {
-            if (!Visible) { automaticRefresh.Stop(); refreshCancellation?.Cancel(); return; }
+            if (!Visible) { automaticRefresh.Stop(); interactionRefresh.Stop(); refreshCancellation?.Cancel(); return; }
+            if (deferredRender) Render();
             if (offlinePreview || !IsHandleCreated || IsDisposed) return;
             started = true; automaticRefresh.Start();
             if (DateTime.UtcNow - lastRefreshUtc >= TimeSpan.FromMinutes(15)) _ = RefreshNewsAsync();
@@ -134,6 +146,7 @@ namespace AOLauncher
         public async Task RefreshNewsAsync()
         {
             if (refreshing || IsDisposed || lifetime.IsCancellationRequested || !Visible) return;
+            if (InteractionOpen) { deferredRefresh = true; interactionRefresh.Start(); return; }
             if (offlinePreview || !ServerNews.Sources.Any(source => selectedSources.Contains(source.Id))) { Render(); return; }
             refreshing = true;
             var cancellation = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
@@ -152,13 +165,20 @@ namespace AOLauncher
                 refreshing = false;
                 if (ReferenceEquals(refreshCancellation, cancellation)) refreshCancellation = null;
                 cancellation.Dispose();
-                if (!IsDisposed && !lifetime.IsCancellationRequested) { refresh.Enabled = ServerNews.Sources.Any(source => selectedSources.Contains(source.Id)); UpdateStatus(); }
+                if (!IsDisposed && !lifetime.IsCancellationRequested)
+                {
+                    if (InteractionOpen) { deferredRender = true; interactionRefresh.Start(); }
+                    else { refresh.Enabled = ServerNews.Sources.Any(source => selectedSources.Contains(source.Id)); UpdateStatus(); }
+                }
             }
         }
 
         private void Render()
         {
             if (IsDisposed) return;
+            if (InteractionOpen) { deferredRender = true; interactionRefresh.Start(); return; }
+            deferredRender = false;
+            refresh.Enabled = !refreshing && ServerNews.Sources.Any(source => selectedSources.Contains(source.Id));
             cards.SuspendLayout();
             foreach (Control child in cards.Controls.Cast<Control>().ToArray()) child.Dispose();
             cards.Controls.Clear();
@@ -432,7 +452,7 @@ namespace AOLauncher
         {
             if (disposing && !resourcesDisposed)
             {
-                lifetime.Cancel(); automaticRefresh.Stop(); automaticRefresh.Dispose();
+                lifetime.Cancel(); automaticRefresh.Stop(); automaticRefresh.Dispose(); interactionRefresh.Stop(); interactionRefresh.Dispose();
                 foreach (var menu in ownedMenus.ToArray()) menu.Dispose();
             }
             base.Dispose(disposing);

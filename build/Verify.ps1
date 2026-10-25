@@ -1,4 +1,4 @@
-﻿param([switch]$LiveNews)
+param([switch]$LiveNews)
 $ErrorActionPreference = 'Stop'
 $projectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $testRoot = Join-Path $projectRoot 'tests'
@@ -7,7 +7,7 @@ $launcher = Join-Path $projectRoot 'dist\AONexus.exe'
 [IO.Directory]::CreateDirectory($logRoot) | Out-Null
 $x86 = Join-Path $env:WINDIR 'SysWOW64\WindowsPowerShell\v1.0\powershell.exe'
 $compiler = & (Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe') -latest -products '*' -find 'MSBuild\Current\Bin\Roslyn\csc.exe' | Select-Object -First 1
-foreach ($test in @('Verify-Launcher', 'Verify-ServerAccountLimits', 'Verify-CharacterSlots', 'Verify-CharacterCreation', 'Verify-CreatedCharacters', 'Verify-ProfileImport', 'Verify-NewsPanel', 'Verify-CompactDetails', 'Verify-SlimScrolling', 'Verify-DialogTheme', 'Verify-PasswordPreferences', 'Verify-SavedPasswordUpdate', 'Verify-Tray', 'Verify-PresetHotkeys', 'Verify-PresetEditorLog', 'Verify-AppUpdates', 'Verify-WindowConfirmations', 'Verify-ServerSidebar', 'Verify-LocalMaintenance')) {
+foreach ($test in @('Verify-Launcher', 'Verify-ServerAccountLimits', 'Verify-CharacterSlots', 'Verify-CharacterCreation', 'Verify-CreatedCharacters', 'Verify-ProfileImport', 'Verify-NewsPanel', 'Verify-CompactDetails', 'Verify-SlimScrolling', 'Verify-DialogTheme', 'Verify-PasswordPreferences', 'Verify-SavedPasswordUpdate', 'Verify-Tray', 'Verify-PresetHotkeys', 'Verify-PresetEditorLog', 'Verify-AppUpdates', 'Verify-WindowConfirmations', 'Verify-ServerSidebar', 'Verify-HealthEndpoints', 'Verify-StartupPreset', 'Verify-LocalMaintenance')) {
     & $x86 -NoProfile -ExecutionPolicy Bypass -STA -File (Join-Path $testRoot ($test + '.ps1')) -AssemblyPath $launcher *> (Join-Path $logRoot ($test + '.txt'))
     if ($LASTEXITCODE -ne 0) { throw "Failed: $test. See logs." }
     Write-Host "PASS: $test"

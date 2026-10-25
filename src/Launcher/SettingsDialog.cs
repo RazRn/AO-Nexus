@@ -25,6 +25,7 @@ namespace AOLauncher
         public Func<bool> ForgetPasswordsAction { private get; set; }
         public string Language => languageInput.SelectedIndex == 1 ? "da" : languageInput.SelectedIndex == 2 ? "en" : "auto";
         public List<LoginServerProfile> LoginServers { get; private set; }
+        public Dictionary<string, HealthEndpoints> HealthCheckEndpoints { get; private set; }
         internal bool ShowServerNews => sidebarOptions.ShowNews;
         internal bool ShowServerHealth => sidebarOptions.ShowHealth;
         internal List<string> NewsSourceIds => sidebarOptions.NewsIds;
@@ -33,6 +34,7 @@ namespace AOLauncher
         public SettingsDialog(LauncherSettings settings) : base(T("Settings"), 580)
         {
             ClientSize = new Size(640, 580);
+            HealthCheckEndpoints = HealthEndpoints.Clone(settings.HealthCheckEndpoints);
             LoginServers = settings.LoginServers.Select(item => new LoginServerProfile { Id = item.Id, Name = item.Name, Server = item.Server, Port = item.Port, MaxAccounts = item.MaxAccounts, MaxCharactersPerAccount = item.MaxCharactersPerAccount, CharacterSlots = item.CharacterSlots }).ToList();
             settingsTabs = new NexusTabControl { Name = "settingsTabs", Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9F) };
             var general = new TabPage(L("General", "Generelt")) { BackColor = Theme.Background, Padding = new Padding(12) };
@@ -72,6 +74,14 @@ namespace AOLauncher
                     }
             };
             serverFields.Controls.Add(serversButton);
+            var healthEndpoints = Theme.Button(L("Manage health checks…", "Administrer statustjek…"));
+            healthEndpoints.Name = "manageHealthChecks";
+            healthEndpoints.Click += (sender, e) =>
+            {
+                using (var dialog = new HealthEndpointsDialog(LoginServers, HealthCheckEndpoints))
+                    if (dialog.ShowDialog(this) == DialogResult.OK) HealthCheckEndpoints = dialog.Endpoints;
+            };
+            serverFields.Controls.Add(healthEndpoints);
             Note(serverFields, T("Saved passwords"));
             Note(serverFields, T("Clear saved passwords for all AO Nexus accounts immediately. You will be asked again at the next login."));
             var forget = Theme.Button(T("Forget passwords")); forget.Name = "forgetSavedPasswords";
@@ -100,6 +110,7 @@ namespace AOLauncher
             {
                 string startupError = SaveStartupAction?.Invoke(StartWithWindows);
                 if (!string.IsNullOrEmpty(startupError)) { ErrorLabel.Text = startupError; return; }
+                HealthCheckEndpoints = HealthCheckEndpoints.Where(pair => LoginServers.Any(profile => profile.Id == pair.Key)).ToDictionary(pair => pair.Key, pair => pair.Value);
                 DialogResult = DialogResult.OK;
             };
             ActiveControl = SaveButton;

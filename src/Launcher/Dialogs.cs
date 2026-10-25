@@ -689,6 +689,8 @@ namespace AOLauncher
     {
         private readonly TextBox nameInput;
         private readonly HotkeyCapture startHotkeyField, campHotkeyField;
+        private readonly CheckBox defaultPresetInput;
+        public bool UseAsStartupDefault { get => defaultPresetInput.Checked; set => defaultPresetInput.Checked = value; }
         public string PresetName { get; private set; }
         public HotkeyBinding StartHotkey => startHotkeyField.Binding;
         public HotkeyBinding LogoutHotkey => campHotkeyField.Binding;
@@ -698,11 +700,15 @@ namespace AOLauncher
             : this(title, initialName, reservedNames, null, null, 0, false) { }
 
         public PresetNameDialog(string title, string initialName, IEnumerable<string> reservedNames,
-            HotkeyBinding start, HotkeyBinding logout, int selectedCount, bool editing) : base(title, 410)
+            HotkeyBinding start, HotkeyBinding logout, int selectedCount, bool editing) : base(title, 500)
         {
             nameInput = AddTextField(T("Preset name"), initialName);
             nameInput.MaxLength = 80;
             var reserved = new HashSet<string>(reservedNames ?? new string[0], StringComparer.OrdinalIgnoreCase);
+            defaultPresetInput = new NexusCheckBox { Name = "startupDefaultPreset", Text = T("Use as startup default"),
+                AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 2, 0, 6) };
+            Fields.Controls.Add(defaultPresetInput);
+            AddWrappedNote(T("Selects this team when Nexus starts. Replaces any other startup default. It does not log anyone in automatically."), "startupDefaultGuide");
             startHotkeyField = AddShortcut(T("Start shortcut"), "presetStartHotkey", start);
             campHotkeyField = AddShortcut(T("Logout shortcut"), "presetCampHotkey", logout);
             foreach (var field in new[] { startHotkeyField, campHotkeyField })

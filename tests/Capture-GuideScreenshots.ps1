@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string]$AssemblyPath = (Join-Path $PSScriptRoot '..\dist\AONexus.exe'),
     [string]$OutputDirectory = (Join-Path $PSScriptRoot '..\docs\images')
 )
@@ -92,12 +92,17 @@ try {
     $dashboard.ClientSize = [Drawing.Size]::new(1280, 1000)
     Show-Fixture $dashboard
     $preset = (Field $dashboard 'settings').Presets[0]
+    (Field $dashboard 'settings').DefaultPresetId=$preset.Id
+    $dashboard.GetType().GetMethod('RefreshPresetPicker',$flags).Invoke($dashboard,@()) | Out-Null
     $preset.StartHotkey = New-Model 'HotkeyBinding'; $preset.StartHotkey.Key = 117; $preset.StartHotkey.Modifiers = 3
     $preset.CampHotkey = New-Model 'HotkeyBinding'; $preset.CampHotkey.Key = 118; $preset.CampHotkey.Modifiers = 3
     $tree = Field $dashboard 'tree'
     $tree.SelectedNode = $tree.Nodes[0].Nodes[0]
     Save-GuideScreenshot $dashboard 'launcher-overview.png'
     $sidebar = Field $dashboard 'serverSidebar'
+    (Field $dashboard 'settings').HealthServerIds.Clear()
+    (Field $dashboard 'settings').HealthServerIds.Add('rebirth')
+    $dashboard.GetType().GetMethod('ConfigureSidebar',$flags).Invoke($dashboard,@()) | Out-Null
     $tabs = $sidebar.GetType().GetProperty('Tabs',$flags).GetValue($sidebar)
     $tabs.SelectedIndex=1
     Save-GuideScreenshot $dashboard 'server-health.png'
@@ -106,6 +111,7 @@ try {
         $title = if ($editing) { 'Edit team preset' } else { 'Create team preset' }
         $editor = New-Dialog 'PresetNameDialog' ([object[]]@($title, $preset.Name, [string[]]@(), $preset.StartHotkey, $preset.CampHotkey, 3, $editing))
         try {
+            $editor.UseAsStartupDefault=$editing
             Show-Fixture $editor
             $name = if ($editing) { 'preset-shortcuts.png' } else { 'preset-create.png' }
             Save-GuideScreenshot $editor $name
@@ -142,7 +148,7 @@ try {
     Show-Fixture $updatesPreview
     Save-GuideScreenshot $updatesPreview 'app-updates.png'
 } finally { $updatesPreview.Dispose() }
-$releasePreview.GetType().GetField('Version', $flags).SetValue($releasePreview, [version]'1.0.21.0')
+$releasePreview.GetType().GetField('Version', $flags).SetValue($releasePreview, [version]'1.0.22.0')
 $releasePreview.GetType().GetField('Notes', $flags).SetValue($releasePreview, "# Example release notes`n`n- **Clear headings** and readable spacing.`n- Review the changes before installing.`n`nThis screenshot uses an offline fixture, not a published update.")
 $updatesPreview = New-Dialog 'UpdateDialog' ([object[]]@([Func[bool]]{ return $false }, $releasePreview))
 try { Show-Fixture $updatesPreview; Save-GuideScreenshot $updatesPreview 'update-available.png' } finally { $updatesPreview.Dispose() }
@@ -192,6 +198,10 @@ try {
     Save-GuideScreenshot $dialog 'server-settings.png'
 } finally { $dialog.Dispose(); [GuideScreenshotNative]::Pump() }
 
+$dialog = New-Dialog 'HealthEndpointsDialog' ([object[]]@($settings.LoginServers,$settings.HealthCheckEndpoints))
+try { Show-Fixture $dialog; (Field $dialog 'grid').ClearSelection(); Save-GuideScreenshot $dialog 'health-endpoints.png' }
+finally { $dialog.Dispose(); [GuideScreenshotNative]::Pump() }
+
 foreach ($fixture in @(
     @{ Type = 'PasswordDialog'; File = 'password-options.png' },
     @{ Type = 'SavedPasswordDialog'; File = 'update-saved-password.png' }
@@ -207,8 +217,8 @@ $readmePath = Join-Path $PSScriptRoot '..\README.md'
 $readme = [IO.File]::ReadAllText($readmePath)
 $publishedDirectory = Join-Path $OutputDirectory 'published'
 [IO.Directory]::CreateDirectory($publishedDirectory) | Out-Null
-$manifest = @("# Guide screenshot provenance", "", "Generated from AO Nexus $version using Capture-GuideScreenshots.ps1.", "", "Synthetic accounts, empty password fields, offline news and an offline update fixture. All twenty README images are rendered from the actual controls.", "")
-foreach ($name in @('server-health.png','settings-accounts.png','settings-sidebar.png','settings-updates.png','privacy-security.png','update-available.png','launcher-overview.png','preset-shortcuts.png','preset-create.png','activity-log.png','settings.png','app-updates.png','minimize-confirmation.png','quit-confirmation.png','whats-new.png','account-setup.png','game-and-server.png','server-settings.png','password-options.png','update-saved-password.png')) {
+$manifest = @("# Guide screenshot provenance", "", "Generated from AO Nexus $version using Capture-GuideScreenshots.ps1.", "", "Synthetic accounts, empty password fields, offline news and an offline update fixture. All twenty-one README images are rendered from the actual controls.", "")
+foreach ($name in @('health-endpoints.png','server-health.png','settings-accounts.png','settings-sidebar.png','settings-updates.png','privacy-security.png','update-available.png','launcher-overview.png','preset-shortcuts.png','preset-create.png','activity-log.png','settings.png','app-updates.png','minimize-confirmation.png','quit-confirmation.png','whats-new.png','account-setup.png','game-and-server.png','server-settings.png','password-options.png','update-saved-password.png')) {
     $hash = (Get-FileHash -LiteralPath (Join-Path $OutputDirectory $name) -Algorithm SHA256).Hash.ToLowerInvariant()
     $manifest += ('- ' + $name + ': ' + $hash)
     # GitHub's raw redirect can drop a query-string cache key. Give the file
@@ -232,4 +242,4 @@ foreach ($name in @('server-health.png','settings-accounts.png','settings-sideba
 }
 [IO.File]::WriteAllText($readmePath, $readme, [Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText((Join-Path $OutputDirectory 'SCREENSHOTS.md'), (($manifest -join "`n") + "`n"), [Text.UTF8Encoding]::new($false))
-Write-Output "PASS: all twenty guide screenshots regenerated from $version using synthetic accounts and offline fixtures."
+Write-Output "PASS: all twenty-one guide screenshots regenerated from $version using synthetic accounts and offline fixtures."

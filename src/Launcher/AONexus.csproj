@@ -53,6 +53,7 @@
     <Compile Include="ServerNews.cs" />
     <Compile Include="NewsPanel.cs" />
     <Compile Include="ServerHealth.cs" />
+    <Compile Include="HealthEndpoints.cs" />
     <Compile Include="ServerSidebar.cs" />
     <Compile Include="Models.cs" />
     <Compile Include="Presets.cs" />

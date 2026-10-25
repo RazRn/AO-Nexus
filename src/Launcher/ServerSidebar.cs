@@ -77,6 +77,7 @@ namespace AOLauncher
             if (Tabs != null) { Tabs.Dispose(); Tabs = null; }
             Controls.Clear();
             News.ApplySelectionPreferences(settings.NewsSourceIds);
+            Health.Endpoints = HealthEndpoints.Clone(settings.HealthCheckEndpoints);
             Health.Configure(settings.LoginServers, settings.HealthServerIds);
             News.RefreshLanguage(); Health.RefreshLanguage();
             if (settings.ShowServerNews && settings.ShowServerHealth)
@@ -104,38 +105,37 @@ namespace AOLauncher
     {
         private readonly bool preview;
         private readonly ComboBox picker = new NexusComboBox();
-        private readonly Button refresh = Theme.Button("Refresh");
-        private readonly Label heading = new Label(), status = new Label(), guide = new Label();
+        private readonly Label heading = new Label(), status = new Label(), serverName = new Label();
+        private readonly Panel serverChoice = new Panel();
         private readonly FlowLayoutPanel cards = new FlowLayoutPanel();
         private readonly System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer { Interval = 1000 };
         private readonly Dictionary<string, List<HealthResult[]>> history = new Dictionary<string, List<HealthResult[]>>();
         private CancellationTokenSource pending;
-        private bool busy, disposed;
+        private bool busy, disposed, deferredRender;
         private DateTime lastAttempt = DateTime.MinValue;
         internal Func<LoginServerProfile, CancellationToken, Task<HealthResult[]>> Check = ServerHealth.CheckAsync;
+        internal Dictionary<string, HealthEndpoints> Endpoints = new Dictionary<string, HealthEndpoints>();
         internal HealthPanel(bool preview)
         {
             this.preview = preview; Name = "serverHealthPanel"; BackColor = Theme.Surface; ForeColor = Theme.Foreground;
+            Check = (server, cancellation) => ServerHealth.CheckConfiguredAsync(server, HealthEndpoints.Resolve(server, Endpoints), cancellation);
             Font = new Font("Segoe UI", 9F); Padding = new Padding(14);
-            var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 5, BackColor = BackColor };
+            var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 4, BackColor = BackColor };
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
-            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 106));
-            var header = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, Margin = Padding.Empty };
-            header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 78));
+            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
             heading.Dock = DockStyle.Fill; heading.ForeColor = Theme.Accent; heading.TextAlign = ContentAlignment.MiddleLeft;
-            refresh.Dock = DockStyle.Fill; refresh.MinimumSize = Size.Empty; refresh.Margin = Padding.Empty; refresh.AutoSize = false;
-            refresh.Click += async (sender, e) => await RefreshAsync(true);
-            header.Controls.Add(heading, 0, 0); header.Controls.Add(refresh, 1, 0);
             picker.DropDownStyle = ComboBoxStyle.DropDownList; picker.Dock = DockStyle.Fill; picker.Margin = new Padding(0, 5, 0, 5);
-            ((NexusComboBox)picker).MatchHeight(refresh);
+            serverChoice.Dock = DockStyle.Fill; serverChoice.Margin = Padding.Empty;
+            serverName.Name = "healthServerName"; serverName.Dock = DockStyle.Fill; serverName.ForeColor = Theme.Foreground;
+            serverName.TextAlign = ContentAlignment.MiddleLeft;
+            serverChoice.Controls.Add(picker); serverChoice.Controls.Add(serverName);
             picker.SelectedIndexChanged += (sender, e) => { pending?.Cancel(); Render(); _ = RefreshAsync(false); };
             cards.Dock = DockStyle.Fill; cards.FlowDirection = FlowDirection.TopDown; cards.WrapContents = false; cards.AutoScroll = true;
             cards.ClientSizeChanged += (sender, e) => { foreach (Control card in cards.Controls) card.Width = Math.Max(100, cards.ClientSize.Width - 4); };
             status.Dock = DockStyle.Fill; status.ForeColor = Theme.Muted;
-            guide.Dock = DockStyle.Fill; guide.ForeColor = Theme.Muted;
-            layout.Controls.Add(header, 0, 0); layout.Controls.Add(picker, 0, 1); layout.Controls.Add(SlimScrolling.Wrap(cards), 0, 2);
-            layout.Controls.Add(status, 0, 3); layout.Controls.Add(guide, 0, 4); Controls.Add(layout);
-            timer.Tick += async (sender, e) => { UpdateStatus(); await RefreshAsync(false); };
+            layout.Controls.Add(heading, 0, 0); layout.Controls.Add(serverChoice, 0, 1); layout.Controls.Add(SlimScrolling.Wrap(cards), 0, 2);
+            layout.Controls.Add(status, 0, 3); Controls.Add(layout);
+            timer.Tick += async (sender, e) => { if (BackgroundUi.DropdownOpen()) return; if (deferredRender) Render(); UpdateStatus(); await RefreshAsync(false); };
             VisibleChanged += (sender, e) => { if (Visible) { timer.Start(); Render(); _ = RefreshAsync(false); } else { timer.Stop(); pending?.Cancel(); } };
             Load += async (sender, e) => { if (Visible) { timer.Start(); await RefreshAsync(false); } };
             RefreshLanguage();
@@ -149,24 +149,27 @@ namespace AOLauncher
                 picker.Items.Add(new LoginServerProfile { Id = item.Id, Name = item.Name, Server = item.Server, Port = item.Port });
             picker.SelectedItem = picker.Items.Cast<LoginServerProfile>().FirstOrDefault(item => item.Id == current);
             if (picker.SelectedIndex < 0 && picker.Items.Count > 0) picker.SelectedIndex = 0;
+            picker.Visible = picker.Items.Count > 1;
+            serverName.Visible = picker.Items.Count == 1;
+            serverName.Text = picker.Items.Count == 1 ? picker.Items[0].ToString() : "";
+            serverChoice.Visible = picker.Items.Count > 0;
             Render();
         }
         internal void RefreshLanguage()
         {
-            heading.Text = L("SERVER HEALTH", "SERVERSTATUS"); refresh.Text = L("Refresh", "Opdater");
-            guide.Text = L("TCP shows reachability from your PC, not a successful login. Unreachable can mean a local connection problem. Official reports are separate.\r\n\r\nBars: recent checks this session. Checks pause when hidden.", "TCP viser adgang fra din pc, ikke et vellykket login. Manglende adgang kan skyldes din forbindelse. Officielle rapporter vises separat.\r\n\r\nSøjler: seneste tjek i denne session. Pause når skjult.");
+            heading.Text = L("SERVER HEALTH", "SERVERSTATUS");
             Render();
         }
         internal async Task RefreshAsync(bool manual)
         {
             var server = picker.SelectedItem as LoginServerProfile;
-            if (disposed || busy || !Visible || !IsHandleCreated || server == null) return;
+            if (disposed || busy || !Visible || !IsHandleCreated || server == null || BackgroundUi.DropdownOpen()) return;
             var samples = Samples(server);
             DateTime last = samples.Count == 0 ? DateTime.MinValue : samples.Last()[0].CheckedUtc;
             if (!manual && DateTime.UtcNow - last < TimeSpan.FromSeconds(60)) return;
-            // Global throttle also covers switching server repeatedly or clicking Refresh.
+            // Global throttle also covers switching servers repeatedly.
             if (DateTime.UtcNow - lastAttempt < TimeSpan.FromSeconds(15)) return;
-            lastAttempt = DateTime.UtcNow; busy = true; refresh.Enabled = false;
+            lastAttempt = DateTime.UtcNow; busy = true;
             var cancellation = new CancellationTokenSource(); pending = cancellation;
             try
             {
@@ -180,7 +183,7 @@ namespace AOLauncher
         }
         private List<HealthResult[]> Samples(LoginServerProfile server)
         {
-            string key = ServerHealth.EndpointKey(server);
+            string key = ServerHealth.EndpointKey(server) + "|" + HealthEndpoints.Resolve(server, Endpoints).Key;
             if (!history.TryGetValue(key, out var result))
             {
                 if (history.Count >= 32) history.Remove(history.Keys.First());
@@ -188,14 +191,26 @@ namespace AOLauncher
             }
             return result;
         }
-        private static HealthResult[] Preview(LoginServerProfile server) => new[] {
-            new HealthResult { Key = "login", State = HealthState.Reachable, Detail = server.Server + ":" + server.Port + " · TCP", Milliseconds = 18, CheckedUtc = DateTime.UtcNow },
-            new HealthResult { Key = "zone", State = HealthState.Reachable, Detail = "2.24.96.30:7501 · TCP", Milliseconds = 19, CheckedUtc = DateTime.UtcNow },
-            new HealthResult { Key = "chat", State = HealthState.Reachable, Detail = "2.24.96.30:7012 · TCP", Milliseconds = 17, CheckedUtc = DateTime.UtcNow },
-            new HealthResult { Key = "report", State = HealthState.ReportedOnline, Detail = L("Login: online · Zones: online · Chat: online · Accounts: online", "Login: online · Zoner: online · Chat: online · Konti: online"), CheckedUtc = DateTime.UtcNow } };
+        private HealthResult[] Preview(LoginServerProfile server)
+        {
+            var endpoints = HealthEndpoints.Resolve(server, Endpoints);
+            var checks = new[] { endpoints.Login, endpoints.Zone, endpoints.Chat };
+            var keys = new[] { "login", "zone", "chat" };
+            var results = checks.Select((endpoint, index) => endpoint.Enabled && endpoint.Valid
+                ? new HealthResult { Key = keys[index], State = HealthState.Reachable, Detail = endpoint.Host + ":" + endpoint.Port + " · TCP", Milliseconds = 18, CheckedUtc = DateTime.UtcNow }
+                : ServerHealth.Unknown(keys[index], L("Check disabled or not configured.", "Tjek slået fra eller ikke konfigureret."), DateTime.UtcNow)).ToList();
+            string kind = ServerHealth.Kind(server);
+            results.Add(new HealthResult { Key = "report", CheckedUtc = DateTime.UtcNow, State = kind == "rebirth" || kind == "prk" ? HealthState.ReportedOnline : HealthState.Unknown,
+                Detail = kind == "rebirth" ? L("Login: online · Zones: online · Chat: online · Accounts: online", "Login: online · Zoner: online · Chat: online · Konti: online")
+                    : kind == "prk" ? L("Listed by PRK. No per-service status or source timestamp supplied.", "Rapporteret af PRK. Ingen særskilt servicestatus eller tidsstempel fra kilden.")
+                    : L("No verified public service report.", "Ingen verificeret offentlig servicestatus.") });
+            return results.ToArray();
+        }
         private void Render()
         {
             if (disposed) return;
+            if (BackgroundUi.DropdownOpen()) { deferredRender = true; return; }
+            deferredRender = false;
             cards.SuspendLayout(); foreach (Control control in cards.Controls.Cast<Control>().ToArray()) control.Dispose();
             var server = picker.SelectedItem as LoginServerProfile;
             if (server == null) cards.Controls.Add(new Label { Text = L("Choose health servers in Settings → Sidebar.", "Vælg statusservere i Indstillinger → Sidepanel."), AutoSize = true, MaximumSize = new Size(280, 0), ForeColor = Theme.Muted });
@@ -213,8 +228,8 @@ namespace AOLauncher
         }
         private void UpdateStatus()
         {
+            if (BackgroundUi.DropdownOpen()) return;
             var server = picker.SelectedItem as LoginServerProfile;
-            refresh.Enabled = server != null && !busy && DateTime.UtcNow - lastAttempt >= TimeSpan.FromSeconds(15);
             var sample = server == null ? null : Samples(server).LastOrDefault();
             status.Text = busy ? L("Checking…", "Tjekker…") : sample == null ? L("Waiting for a check", "Venter på et tjek")
                 : (preview ? L("Example data", "Eksempeldata") : L("Checked ", "Tjekket ") + sample[0].CheckedUtc.ToLocalTime().ToString("HH:mm:ss")) + L(" · every 60s while visible", " · hvert 60. sekund når synlig");
@@ -258,7 +273,7 @@ namespace AOLauncher
             HealthState state = stale ? HealthState.Unknown : result.State;
             using (var pen = new Pen(Theme.Border)) e.Graphics.DrawRectangle(pen, 0, 0, Width - 1, Height - 1);
             TextRenderer.DrawText(e.Graphics, Title(result.Key), Font, new Rectangle(inset, inset, Width - inset * 2, line), Theme.Foreground, TextFormatFlags.EndEllipsis);
-            string label = stale ? L("Outdated — refresh to check", "Forældet — opdater for at tjekke") : Caption(state) + (result.Milliseconds.HasValue ? " · " + result.Milliseconds + " ms" : "");
+            string label = stale ? L("Outdated — waiting for next check", "Forældet — afventer næste tjek") : Caption(state) + (result.Milliseconds.HasValue ? " · " + result.Milliseconds + " ms" : "");
             TextRenderer.DrawText(e.Graphics, label, Font, new Rectangle(inset, inset + line, Width - inset * 2, line), ColorFor(state), TextFormatFlags.EndEllipsis);
             TextRenderer.DrawText(e.Graphics, result.Detail, Font, new Rectangle(inset, inset + line * 2, Width - inset * 2, line * 3), Theme.Muted, TextFormatFlags.WordBreak | TextFormatFlags.EndEllipsis);
             int barWidth = Math.Max(2, (Width - inset * 2) / 24 - 2), barHeight = NexusChrome.Scale(this, 8);

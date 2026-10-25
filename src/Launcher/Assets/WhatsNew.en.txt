@@ -1,11 +1,9 @@
-• Settings now has General, Accounts, Sidebar and Updates tabs.
+• Choose a startup default in Create/Edit team preset. With no default, no preset is selected at startup. This never starts games automatically.
 
-• Optional Server news and Server health share sidebar tabs. Pick sources in Settings. Health checks the displayed server every 60 seconds while visible; unverified information is Unknown.
+• Server health is more compact: one server uses a plain name, without a dropdown, and checks update automatically without a Refresh button.
 
-• News pauses when hidden and refreshes only selected sources. Update release notes now have readable formatting.
+• Health and news updates wait while dropdowns are open, keeping your selection uninterrupted.
 
-• Logs default to 5 MB each, adjustable in Settings. Oldest entries are trimmed. Completed update staging files are cleaned up; one previous EXE is kept for recovery.
+• Edit monitoring IP addresses/hostnames, ports and enabled checks in Settings → Accounts → Manage health checks. Account login settings are separate. Restore defaults per server when needed.
 
-• Privacy & security in Settings explains passwords, connections, local files and update verification. Credits now read Enhanced by Luckyspawn.
-
-Downloads and installation still require confirmation. Accounts and team presets are preserved.
+• Funcom and Project Rubi-Ka defaults have been rechecked. Unverified zone/chat endpoints stay unconfigured. The guide and screenshots are refreshed.

@@ -55,6 +55,26 @@ namespace AOLauncher
             settings.Presets.Remove(preset);
             if (string.Equals(settings.SelectedPresetId, preset.Id, StringComparison.OrdinalIgnoreCase))
                 settings.SelectedPresetId = null;
+            if (string.Equals(settings.DefaultPresetId, preset.Id, StringComparison.OrdinalIgnoreCase))
+                settings.DefaultPresetId = null;
+        }
+
+        internal static void SetStartupDefault(LauncherSettings settings, LaunchPreset preset, bool enabled)
+        {
+            RequirePreset(settings, preset);
+            if (enabled) settings.DefaultPresetId = preset.Id;
+            else if (string.Equals(settings.DefaultPresetId, preset.Id, StringComparison.OrdinalIgnoreCase)) settings.DefaultPresetId = null;
+        }
+
+        internal static PresetApplyResult ApplyStartupSelection(LauncherSettings settings)
+        {
+            EnsureSettings(settings);
+            var preset = settings.Presets.FirstOrDefault(item => string.Equals(item.Id, settings.DefaultPresetId, StringComparison.OrdinalIgnoreCase));
+            settings.SelectedPresetId = null;
+            if (preset != null) return Apply(settings, preset);
+            // A last-used preset does not become an implicit startup default. Preserve manual character checks.
+            settings.DefaultPresetId = null;
+            return new PresetApplyResult();
         }
 
         internal static PresetApplyResult Apply(LauncherSettings settings, LaunchPreset preset)
@@ -116,6 +136,7 @@ namespace AOLauncher
             settings.Presets = valid;
             var selectedPreset = valid.FirstOrDefault(preset => string.Equals(preset.Id, settings.SelectedPresetId, StringComparison.OrdinalIgnoreCase));
             settings.SelectedPresetId = selectedPreset?.Id;
+            settings.DefaultPresetId = valid.FirstOrDefault(preset => string.Equals(preset.Id, settings.DefaultPresetId, StringComparison.OrdinalIgnoreCase))?.Id;
         }
 
         private static List<PresetCharacter> CaptureSelection(LauncherSettings settings)

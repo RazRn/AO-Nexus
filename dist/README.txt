@@ -1,4 +1,4 @@
-AO NEXUS 1.0.20
+AO NEXUS 1.0.21
 Based on AOQuickLauncher by never-knows-best and contributors.
 Enhanced by Luckyspawn.
 
@@ -82,7 +82,7 @@ New accounts default to asking each time. Existing accounts retain their remembe
 When unchecked, enter the password once per account for each login or character-creation action.
 The same entry is used for all selected chars on that account, without saving it for later use.
 Uncheck Remember password and save the account to remove its saved password.
-Use Settings > Forget passwords to clear saved passwords for all AO Nexus accounts.
+Use Settings > Accounts > Forget passwords to clear saved passwords for all AO Nexus accounts.
 To replace one saved password, select its account row and choose Update saved
 password in the Details panel. Enter the existing game-account password once and choose Save password.
 This updates only the encrypted copy in AO Nexus, without logging in or changing
@@ -104,16 +104,16 @@ See CREDITS.txt and Licenses for upstream attribution and dependency notices.
 
 TEAM PRESETS
 Use Update to save the checked characters to the selected team. It is disabled
-when the saved selection already matches. Edit changes only the name and shortcuts.
+when the saved selection already matches. Edit changes the name, shortcuts and startup default.
 Save new creates a separate team.
 
 ACTIVITY LOG
 Open log opens a larger read-only window with live updates and text search.
 Ctrl+F focuses search. Clear search restores all lines. Disable Follow new entries
-to read older lines. The current session log is bounded to about 100,000 characters.
+to read older lines. The current session log uses the size limit in Settings > Updates (5 MB by default).
 
 GITHUB UPDATES
-Settings > Check for updates checks stable releases from RazRn/AO-Nexus on GitHub.
+Settings > Updates > Check for updates checks stable releases from RazRn/AO-Nexus on GitHub.
 First launch asks whether to enable startup checks and remembers your answer. You can change it in Settings.
 Install and restart downloads, verifies and replaces the EXE after Nexus exits.
 Your profile and game windows stay intact. Finish launcher activity first.
@@ -134,7 +134,7 @@ Persistent history: %LOCALAPPDATA%\AONexus\Updates\update-history.log
 A What's new window appears once after a successful update, with bundled release
 notes in your selected language. It works offline and does not appear on normal starts.
 
-SETTINGS, LOGS AND PRIVACY (v1.0.20)
+SETTINGS, LOGS AND PRIVACY (v1.0.21)
 Settings has General, Accounts, Sidebar and Updates tabs. Manage login servers
 and Forget passwords are under Accounts. News and health are optional sidebar
 tabs; both can be hidden. Health checks only the displayed server every 60 seconds
@@ -154,3 +154,14 @@ network connections and update checks offline. Nexus has no analytics or automat
 log/crash upload. Remote services still see your IP and normal request metadata.
 The full public documentation is at:
 https://github.com/RazRn/AO-Nexus/blob/main/docs/Privacy-and-Security.md
+STARTUP TEAM AND HEALTH ENDPOINTS (v1.0.21)
+Create/Edit team has Use as startup default. Only one default is selected at
+startup; without one, no preset is selected and manual checkboxes are preserved.
+A default never logs anyone in automatically.
+
+Settings > Accounts > Manage health checks edits each connection host, port
+and enabled state. These are monitoring settings, separate from game login.
+Save the table and Settings. Restore selected server defaults resets its checks.
+Unverified zone/chat endpoints start disabled; public report sources stay fixed.
+The health panel has no manual Refresh or footer guide. One enabled server
+uses a plain name. Updates wait while dropdowns are open.

@@ -2,11 +2,17 @@
 
 Enable **Settings → Sidebar → Show Server health**, choose the servers to offer in its picker, and Save. Server news has an independent toggle and source selection. With both panels enabled they share tabs; with both disabled accounts reclaim the sidebar width.
 
-Only the currently displayed health server is checked. Every batch has four rows: login connection, world/zone connection, chat connection and official service report. Checks run every 60 seconds while visible, pause in the tray/on the news tab, and cancel when hidden. Refresh and server switching have a global 15-second throttle; batches never overlap. At most four operations run together, with a 3-second TCP timeout and 5-second HTTP timeout. JSON responses are limited to 64 KiB; redirects are not followed.
+Only the currently displayed health server is checked. Every batch has four rows: login connection, world/zone connection, chat connection and official service report. Checks run every 60 seconds while visible, pause in the tray/on the news tab, and cancel when hidden. There is no manual Refresh button. Server switching has a global 15-second throttle; batches never overlap. New checks and background rendering wait while a dropdown is open. At most four operations run together, with a 3-second TCP timeout and 5-second HTTP timeout. JSON responses are limited to 64 KiB; redirects are not followed. With one server enabled, its name replaces the dropdown.
+
+## Edit endpoints
+
+Open **Settings → Accounts → Manage health checks…**. Each server has three connection rows with an Enabled checkbox, IP address/hostname and port. Enabled checks require a valid host and a port from 1 to 65535. Blank unverified checks start disabled. Choose **Restore selected server defaults** to reset that server's connection rows. Save the table, then Save Settings; cancelling Settings discards the draft.
+
+Changes are saved per server profile and do not change its login address, account passwords or game configuration. Renaming a server preserves its overrides. Removed servers' overrides are discarded when Settings is saved. Changing a monitored endpoint starts a separate history so old samples are not attributed to the new target. Unchanged rows use the built-in defaults. Public report URLs remain restricted to the verified sources below; editing a TCP target does not redirect those reports.
 
 **Reachable** means a TCP connection succeeded from this PC, not that authentication or zoning will succeed. **Unreachable** can also mean local routing, DNS, firewall or internet trouble. **Reported online/issue** comes from the server's public API. **Unknown** is explicit when there is no verified check, the report is missing/stale, or it cannot be read. Old samples become outdated rather than continuing to claim current health. History bars are up to 24 observed batches in this session, not a continuous uptime record or historical incident feed.
 
-## Verified endpoints used in v1.0.20
+## Default endpoints, rechecked for v1.0.21 on 25 October 2026
 
 | Server | Login TCP | World/zone TCP | Chat TCP | Public report |
 | --- | --- | --- | --- | --- |
@@ -16,7 +22,7 @@ Only the currently displayed health server is checked. Every batch has four rows
 | Funcom Rubi-Ka 2019 | `37.18.192.41:7506` | Unknown | `chat.d1.funcom.com:7106` | Unknown |
 | Custom/local | Its configured address and port | Unknown | Unknown | Unknown |
 
-Known-service association uses the actual login address and port, not an editable display name or profile ID. A changed endpoint therefore gets a conservative custom-server view. Service endpoints may change; this is a versioned catalog, not discovery by scanning.
+Known-service association for defaults and public reports uses the actual login address and port, not an editable display name or profile ID. A changed login endpoint therefore gets a conservative custom-server view unless you configure connection checks explicitly. Service endpoints may change; this is a versioned catalog with local overrides, not discovery by scanning.
 
 AO Rebirth reports must say `ok`, not be stale, include all four flags, have an age of no more than 180 seconds and a matching recent generation timestamp (30 seconds future clock tolerance). Explicit false flags are reported issues. Incomplete or malformed data is Unknown. PRK's public list is interpreted only as a reported server listing, not proof that every service works.
 

@@ -1,11 +1,9 @@
-• Indstillinger er nu opdelt i Generelt, Konti, Sidepanel og Opdateringer.
+• Vælg et standardhold ved opstart under Opret/Rediger hold. Uden et standardhold vælges intet hold ved opstart. Spil startes aldrig automatisk.
 
-• Valgfrie Servernyheder og Serverstatus deler faner i sidepanelet. Vælg kilder i Indstillinger. Status tjekker den viste server hvert 60. sekund, når panelet vises. Ubekræftede oplysninger vises som Ukendt.
+• Serverstatus er mere kompakt: én server vises som navn uden rullemenu, og tjek opdateres automatisk uden en Opdater-knap.
 
-• Nyheder sættes på pause, når de er skjult, og hentes kun fra valgte kilder. Opdateringsnoter har nu læsbare linjeskift og punktopstillinger.
+• Status og nyheder venter, mens rullemenuer er åbne, så dit valg ikke afbrydes.
 
-• Logge er som standard højst 5 MB hver; grænsen kan ændres i Indstillinger. Ældste poster fjernes først. Færdige opdateringsmapper ryddes op; én tidligere EXE beholdes til gendannelse.
+• Ret overvågningens IP-adresser/værtsnavne, porte og aktive tjek under Indstillinger → Konti → Administrer statustjek. Kontoens loginindstillinger er separate. Gendan standarder pr. server efter behov.
 
-• Privatliv og sikkerhed forklarer adgangskoder, forbindelser, lokale filer og kontrol af opdateringer. Krediteringen er nu Forbedret af Luckyspawn.
-
-Download og installation kræver stadig bekræftelse. Konti og hold bevares.
+• Standarderne for Funcom og Project Rubi-Ka er kontrolleret igen. Ikke-verificerede zone-/chatadresser forbliver ukonfigurerede. Guide og skærmbilleder er opdateret.

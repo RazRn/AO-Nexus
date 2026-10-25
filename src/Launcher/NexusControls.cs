@@ -7,6 +7,22 @@ using System.Windows.Forms;
 
 namespace AOLauncher
 {
+    internal static class BackgroundUi
+    {
+        internal static bool DropdownOpen()
+        {
+            foreach (Form form in Application.OpenForms)
+                if (HasDropdown(form)) return true;
+            return false;
+        }
+        private static bool HasDropdown(Control parent)
+        {
+            if (parent is ComboBox combo && combo.DroppedDown) return true;
+            foreach (Control child in parent.Controls) if (HasDropdown(child)) return true;
+            return false;
+        }
+    }
+
     // Keep the native control implementations for editing, keyboard navigation and
     // accessibility. Only their chrome is drawn with the launcher's palette.
     internal sealed class NexusTabControl : TabControl

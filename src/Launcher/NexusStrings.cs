@@ -9,6 +9,10 @@ namespace AOLauncher
     {
         private static readonly Dictionary<string, string> Danish = new Dictionary<string, string>(StringComparer.Ordinal)
         {
+            { "Use as startup default", "Brug som standard ved opstart" },
+            { "Startup default", "Standard ved opstart" },
+            { "No preset selected", "Intet preset valgt" },
+            { "Selects this team when Nexus starts. Replaces any other startup default. It does not log anyone in automatically.", "Vælger dette hold, når Nexus starter. Erstatter et eventuelt andet standardhold. Ingen logges automatisk ind." },
             { "What's new in AO Nexus {0}", "Nyheder i AO Nexus {0}" },
             { "Update installed successfully. Your accounts, passwords and team presets are preserved.", "Opdateringen er installeret. Dine konti, adgangskoder og team-presets er bevaret." },
             { "View release on GitHub", "Se udgivelsen på GitHub" },
