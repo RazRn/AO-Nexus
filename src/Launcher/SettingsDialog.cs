@@ -13,8 +13,9 @@ namespace AOLauncher
         private readonly ComboBox languageInput;
         private readonly NumericUpDown logSizeInput;
         public int MaxLogSizeMb => (int)logSizeInput.Value;
-        private readonly CheckBox startWithWindowsInput, checkUpdatesInput, confirmTrayInput, confirmQuitInput, keepDiagnosticsInput, quietLaunchInput;
+        private readonly CheckBox startWithWindowsInput, checkUpdatesInput, confirmTrayInput, confirmQuitInput, keepDiagnosticsInput, quietLaunchInput, overlapLoginsInput;
         public bool QuietLaunch => quietLaunchInput.Checked;
+        public bool OverlapLogins => overlapLoginsInput.Checked;
         public bool KeepDiagnostics => keepDiagnosticsInput.Checked;
         public Action ReportProblemAction { private get; set; }
         public Func<bool> ClearDiagnosticsAction { private get; set; }
@@ -101,6 +102,11 @@ namespace AOLauncher
             serverFields.Controls.Add(quietLaunchInput);
             Note(serverFields, L("On by default. The game client goes straight to the selected character without showing the login and character list, about 1.5 seconds faster per character. Login errors are then not shown in the game window; the activity log and Report a problem show where a login stopped. Turn it off to see the game's own login screens.",
                 "Slået til som standard. Spilklienten går direkte til den valgte char uden at vise login og char-liste, ca. 1,5 sekund hurtigere pr. char. Login-fejl vises så ikke i spilvinduet; aktivitetsloggen og Rapportér et problem viser, hvor et login stoppede. Slå den fra for at se spillets egne login-skærme."));
+            overlapLoginsInput = new NexusCheckBox { Name = "overlapLogins", Text = L("Start the next character as soon as the previous one is selected (experimental)", "Start næste char, så snart den forrige er valgt (eksperimentel)"),
+                Checked = settings.OverlapLogins, AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 4, 0, 8) };
+            serverFields.Controls.Add(overlapLoginsInput);
+            Note(serverFields, L("Characters on the same account normally start one by one after the previous one is in the world. With this on, the next starts while the previous one is still loading, so a team logs in much faster. If the server rejects overlapping logins, turn it off again.",
+                "Chars på samme konto starter normalt én ad gangen, når den forrige står i verden. Med dette slået til starter den næste, mens den forrige stadig indlæser, så et hold logger meget hurtigere ind. Hvis serveren afviser overlappende logins, så slå det fra igen."));
             var passwordsHeading = Note(serverFields, T("Saved passwords"));
             passwordsHeading.Font = new Font(settingsTabs.Font, FontStyle.Bold);
             passwordsHeading.Margin = new Padding(0, 16, 0, 8);

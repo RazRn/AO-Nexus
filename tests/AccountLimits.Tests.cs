@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AOQuickLauncher
@@ -226,6 +227,27 @@ namespace AOQuickLauncher
             var parallel = Task.WhenAll(Enumerable.Range(0, 3).Select(_ => StartSpacing.WaitTurnAsync("C:\\C", 200))).GetAwaiter().GetResult().OrderBy(value => value).ToArray();
             Pass(parallel[0] < 100 && parallel[1] >= 150 && parallel[2] >= 350, "Parallel queues get distinct start slots");
             StartSpacing.Reset();
+            var clock = Stopwatch.StartNew();
+            var stages = new List<string>();
+            using (var channel = LoginStatusChannel.TryStart(clock, (stage, ms) => { lock (stages) stages.Add(stage); }))
+            {
+                Pass(channel != null && channel.PipeName.StartsWith(LoginStatusChannel.PipePrefix, StringComparison.Ordinal) && !channel.Requested.IsCompleted, "Status channel starts without a request");
+                using (var writer = new System.IO.Pipes.NamedPipeClientStream(".", channel.PipeName, System.IO.Pipes.PipeDirection.Out, System.IO.Pipes.PipeOptions.CurrentUserOnly))
+                {
+                    writer.Connect(2000);
+                    var bytes = System.Text.Encoding.ASCII.GetBytes("AO_NEXUS_STATUS_V1 10 login-screen\nAO_NEXUS_STATUS_V1 20 user=Secret\nAO_NEXUS_STATUS_V1 30 character-list\nAO_NEXUS_STATUS_V1 31 charac");
+                    writer.Write(bytes, 0, bytes.Length); writer.Flush();
+                    Thread.Sleep(200);
+                    Pass(!channel.Requested.IsCompleted, "A partial line does not count as requested");
+                    bytes = System.Text.Encoding.ASCII.GetBytes("ter-requested\n");
+                    writer.Write(bytes, 0, bytes.Length); writer.Flush();
+                    Pass(channel.Requested.Wait(2000), "Character requested completes the overlap signal");
+                }
+                string summary = channel.Summary();
+                Pass(summary.Contains("s login-screen") && summary.Contains("s character-requested") && !summary.Contains("Secret") && !summary.Contains("@"), "Timeline keeps valid stages only, without '@'");
+                lock (stages) Pass(stages.SequenceEqual(new[] { "login-screen", "character-list", "character-requested" }), "Stages are reported in order");
+            }
+            Pass(new LaunchRequest().OverlapLogins == false, "Overlapping logins are opt-in");
         }
 
         private static void Check(string name, CharacterLaunch[] selected, ClientSessions.ClientRecord[] records, string error = null, string language = "en")
