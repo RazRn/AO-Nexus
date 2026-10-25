@@ -1,4 +1,4 @@
-AO NEXUS 1.1.2
+AO NEXUS 1.1.3
 Based on AOQuickLauncher by never-knows-best and contributors.
 Enhanced by Luckyspawn.
 
@@ -197,3 +197,5 @@ This uses that installation's defaults and backs up changes. Actions, bar count,
 bindings, pet names, chat subscriptions and the current skin are kept.
 Apply saved default uses your personal default template instead.
 Update release notes now have readable headings, bullets and paragraph spacing.
+
+v1.1.3 fixes stale border and dropdown fragments after resizing or maximizing Nexus.

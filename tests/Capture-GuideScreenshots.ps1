@@ -148,7 +148,7 @@ try {
     Show-Fixture $updatesPreview
     Save-GuideScreenshot $updatesPreview 'app-updates.png'
 } finally { $updatesPreview.Dispose() }
-$releasePreview.GetType().GetField('Version', $flags).SetValue($releasePreview, [version]'1.1.3.0')
+$releasePreview.GetType().GetField('Version', $flags).SetValue($releasePreview, [version]'1.1.4.0')
 $releasePreview.GetType().GetField('Notes', $flags).SetValue($releasePreview, "# Example release notes`n`n- **Clear headings** and readable spacing.`n- Review the changes before installing.`n`nThis screenshot uses an offline fixture, not a published update.")
 $updatesPreview = New-Dialog 'UpdateDialog' ([object[]]@([Func[bool]]{ return $false }, $releasePreview))
 try { Show-Fixture $updatesPreview; Save-GuideScreenshot $updatesPreview 'update-available.png' } finally { $updatesPreview.Dispose() }

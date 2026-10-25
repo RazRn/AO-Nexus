@@ -1,3 +1,5 @@
+• Fixed leftover borders and dropdown fragments when maximizing or resizing Nexus. Custom panels, buttons, the header and news cards now repaint fully.
+
 • Game GUI is marked Experimental. A built-in AO default layout resets supported windows while keeping actions, bindings, pets and the active skin. Test one character first.
 
 • Update notes now have highlighted headings, separate bullets and more room to read.

@@ -1,3 +1,5 @@
+• Rettet efterladte kanter og dropdown-fragmenter ved maksimering eller ændring af Nexus-vinduets størrelse. Paneler, knapper, header og nyhedskort gentegnes nu helt.
+
 • Spil-GUI er markeret Eksperimentel. Et indbygget AO-standardlayout nulstiller understøttede vinduer og bevarer handlinger, taster, kæledyr og aktuelt skin. Prøv først én char.
 
 • Opdateringsnoter har tydelige overskrifter, adskilte punkter og mere læseplads.

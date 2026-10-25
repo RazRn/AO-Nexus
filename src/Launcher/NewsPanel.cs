@@ -255,8 +255,7 @@ namespace AOLauncher
 
         private Panel NewCard()
         {
-            var card = new Panel { BackColor = Theme.SurfaceRaised, Margin = new Padding(0, 0, 0, 10), Width = Math.Max(100, cards.ClientSize.Width - 22) };
-            card.Paint += (sender, args) => { using (var pen = new Pen(Theme.Border)) args.Graphics.DrawRectangle(pen, 0, 0, card.Width - 1, card.Height - 1); };
+            var card = new NexusPanel { BackColor = Theme.SurfaceRaised, Margin = new Padding(0, 0, 0, 10), Width = Math.Max(100, cards.ClientSize.Width - 22) };
             return card;
         }
 

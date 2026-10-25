@@ -182,6 +182,8 @@ namespace AOLauncher
         {
             int message = m.Msg;
             base.WndProc(ref m);
+            // Invalidate after the native combo has completed its resize and pixel-copy work.
+            if (message == 0x0005) Invalidate(); // WM_SIZE
             if (message == NexusChrome.WmPaint || message == NexusChrome.WmPrint || message == NexusChrome.WmPrintClient)
                 NexusChrome.Paint(this, message == NexusChrome.WmPaint ? IntPtr.Zero : m.WParam, false, PaintChrome);
         }
@@ -393,7 +395,7 @@ namespace AOLauncher
     {
         private bool hover;
         private bool pressed;
-        internal NexusButton() { DoubleBuffered = true; }
+        internal NexusButton() { DoubleBuffered = true; SetStyle(ControlStyles.ResizeRedraw, true); }
         protected override void OnMouseEnter(EventArgs e) { hover = true; Invalidate(); base.OnMouseEnter(e); }
         protected override void OnMouseLeave(EventArgs e) { hover = false; pressed = false; Invalidate(); base.OnMouseLeave(e); }
         protected override void OnMouseDown(MouseEventArgs e) { pressed = e.Button == MouseButtons.Left; Invalidate(); base.OnMouseDown(e); }
@@ -421,6 +423,7 @@ namespace AOLauncher
         internal NexusHero()
         {
             DoubleBuffered = true;
+            SetStyle(ControlStyles.ResizeRedraw, true);
             BackColor = Theme.Background;
             backdrop = AppArtwork.CreateBackdrop();
         }
@@ -456,6 +459,8 @@ namespace AOLauncher
         internal NexusPanel()
         {
             DoubleBuffered = true;
+            // Windows otherwise preserves the old right/bottom border inside a grown panel.
+            SetStyle(ControlStyles.ResizeRedraw, true);
             BackColor = Theme.Surface;
         }
         protected override void OnPaint(PaintEventArgs e)
