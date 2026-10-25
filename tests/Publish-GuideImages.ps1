@@ -7,7 +7,7 @@ $published=[IO.Path]::GetFullPath((Join-Path $images 'published'))
 [IO.Directory]::CreateDirectory($published)|Out-Null
 $documents=@('README.md','docs/Player-Guide.md','docs/Game-GUI.md')
 $text=@{};foreach($document in $documents){$text[$document]=[IO.File]::ReadAllText((Join-Path $repo $document))}
-$manifest=@('# Guide screenshot provenance','',('Captured from AO Nexus '+$Version+' using real WinForms controls and offline fixtures.'),'','One overview and ten task-specific illustrations. Red boxes and numbers are guide annotations; crops omit unrelated controls. Accounts, paths, news and health/update results are examples.','','| Image | Source size | Crop (x, y, width, height) | Callouts | SHA-256 |','| --- | --- | --- | --- | --- |')
+$manifest=@('# Guide screenshot provenance','',('Captured from AO Nexus '+$Version+' using real WinForms controls and offline fixtures.'),'','One overview and eleven task-specific illustrations. Red boxes and numbers are guide annotations; crops omit unrelated controls. Accounts, paths, news and health/update results are examples.','','| Image | Source size | Crop (x, y, width, height) | Callouts | SHA-256 |','| --- | --- | --- | --- | --- |')
 $keep=@()
 foreach($name in $GuideImagePlan.Keys){
     $source=Join-Path $CaptureDirectory ('curated/'+$name)
@@ -36,4 +36,4 @@ foreach($candidate in @(Get-ChildItem -LiteralPath $images -Filter '*.png')+@(Ge
     if($candidate.DirectoryName -eq $published -and $keep -contains $candidate.Name){continue}
     Remove-Item -LiteralPath $absolute
 }
-Write-Output 'Published 11 uniquely placed content-addressed screenshots.'
+Write-Output 'Published 12 uniquely placed content-addressed screenshots.'

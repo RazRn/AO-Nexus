@@ -15,6 +15,7 @@ namespace AOLauncher
         public string Language { get; set; } = "auto";
         public bool CheckForUpdatesOnStartup { get; set; }
         public bool HasChosenUpdatePreference { get; set; }
+        public bool HasCompletedSetup { get; set; }
         public bool SkipTrayConfirmation { get; set; }
         public bool SkipQuitConfirmation { get; set; }
         public int MaxLogSizeMb { get; set; } = 5;
@@ -429,6 +430,10 @@ namespace AOLauncher
             var value = new JavaScriptSerializer().Deserialize<LauncherSettings>(json);
             if (value == null || (value.Version != 1 && value.Version != 2) || value.Accounts == null)
                 throw new InvalidDataException(Texts.T("The settings file has an unsupported format."));
+            // Profiles from before the wizard are already configured. Never force
+            // existing or imported users through setup, or replace their preferences.
+            var fields = new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(json);
+            if (!fields.ContainsKey(nameof(LauncherSettings.HasCompletedSetup))) value.HasCompletedSetup = true;
             if (value.LoginServers == null) value.LoginServers = LoginServerProfile.Defaults();
             value.CollapsedServers = (value.CollapsedServers ?? new List<string>())
                 .Where(endpoint => !string.IsNullOrWhiteSpace(endpoint)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();

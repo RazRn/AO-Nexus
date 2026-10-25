@@ -2,6 +2,7 @@
 # when a source size changes, so callouts cannot silently drift after a redesign.
 $GuideImagePlan = [ordered]@{
     'launcher-overview.png' = @{ Size=@(1280,1000); Boxes=@() }
+    'setup-preferences.png' = @{ Size=@(680,640); Boxes=@(@(25,61,627,64),@(25,132,627,64),@(25,203,627,112)) }
     'account-setup.png' = @{ Size=@(640,740); Boxes=@(@(35,65,570,130),@(35,204,570,150),@(35,380,570,117)) }
     'game-and-server.png' = @{ Size=@(640,740); Boxes=@(@(35,65,570,58),@(35,129,570,110)) }
     'preset-shortcuts.png' = @{ Size=@(600,540); Boxes=@(@(25,99,550,34),@(25,173,550,132),@(473,479,98,39)) }
@@ -10,6 +11,6 @@ $GuideImagePlan = [ordered]@{
     'activity-log.png' = @{ Size=@(900,340); Boxes=@(@(18,12,744,43),@(778,284,107,41)) }
     'update-available.png' = @{ Size=@(620,600); Boxes=@(@(29,146,562,274),@(438,539,152,39)) }
     'gui-layouts.png' = @{ Size=@(1040,700); Boxes=@(@(38,157,407,51),@(463,120,538,336),@(461,529,116,40)) }
-    'gui-skins.png' = @{ Size=@(1040,700); Boxes=@(@(38,127,964,39),@(38,164,612,38),@(35,529,268,41)) }
+    'gui-skins.png' = @{ Size=@(1040,700); Boxes=@(@(38,481,964,47),@(38,127,612,42),@(35,529,268,41)) }
     'gui-backups.png' = @{ Size=@(1040,700); Boxes=@(@(38,126,963,28),@(35,529,150,41)) }
 }

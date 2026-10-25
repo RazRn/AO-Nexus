@@ -1,27 +1,7 @@
-• Compact border legends group team presets, account actions and details. Short dialogs have more room and avoid unnecessary scrollbars.
+• First-run setup now guides you through language, servers, app preferences and optional accounts. No game is started by setup. Passwords are requested at login.
 
-• The header line shows login/logout progress and waiting activity. Logout uses /quit and watches actual client exit for up to 90 seconds; clients are never forcibly closed.
+• News, health and GitHub connections wait until fresh setup finishes. Skip leaves optional online features off. Existing profiles keep their settings; Settings → General → Run setup again revisits the wizard.
 
-• Click the log preview to open its searchable window. Clickable controls use a hand cursor. Choosing No preset selected clears current checkboxes while keeping saved teams.
+• The skin destination is now labelled Target installation and sits above the apply buttons. The listed accounts share that installation; the selection also controls skin downloads and imports.
 
-• Clear log in the activity-log window asks for confirmation, then clears all session entries and the dashboard preview. New logging continues; the separate update-history file is kept.
-
-• Fixed leftover borders and dropdown fragments when maximizing or resizing Nexus. Custom panels, buttons, the header and news cards now repaint fully.
-
-• Game GUI is marked Experimental. A built-in AO default layout resets supported windows while keeping actions, bindings, pets and the active skin. Test one character first.
-
-• Update notes now have highlighted headings, separate bullets and more room to read.
-
-• Optional background server checks and tray notifications are available under Settings → Sidebar. Two failed checks confirm an issue; a successful check confirms recovery. The tray retains unresolved issues.
-
-• Game GUI headings stay readable during operations. Capture/copy now explicitly identifies the source and confirms normal logout before reading its saved preferences.
-
-• Game GUI now manages character layouts, shared installation skins and backups in three tabs.
-
-• Capture a template or copy from another character. Choose window layout, hotbars, keybindings and pet names separately. Apply to selected characters or review a rollout to all.
-
-• Set a default template for new characters. It waits for saved preferences and an offline client before applying. Existing characters can receive the default explicitly.
-
-• Select the default AO skin, import a complete skin ZIP, or download Notum Dovvetech/Darktech themes from the author. Choose the correct classic/new-engine variant and test one installation first.
-
-• Online changes ask to relog using /quit and wait for actual exit. Backups support recovery; failed batches attempt rollback. Keep affected clients closed during the operation.
+• Section headings use consistent typography. Legend backgrounds and Settings button spacing have been corrected. The player guide and annotated screenshots are refreshed.

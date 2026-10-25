@@ -179,9 +179,10 @@ namespace AOLauncher
 
         private void BuildSkins()
         {
-            var page = Page(L("Skins", "Skins")); var layout = Stack(Auto(), Auto(), Auto(), Fill(), Auto(), Auto()); page.Controls.Add(layout);
+            var page = Page(L("Skins", "Skins")); var layout = Stack(Auto(), Auto(), Fill(), Auto(), Auto(), Auto(), Auto()); page.Controls.Add(layout);
             layout.Controls.Add(Note(L("Skins are shared by accounts using the same Prefs installation. Download/import adds a skin; Apply activates it after clients close. Select the matching classic/new-engine package. Try a skin before rolling it out to every installation.", "Skins deles af konti med samme Prefs-installation. Download/import tilføjer et skin; Anvend aktiverer det, når klienterne er lukket. Vælg den rigtige klassiske/nye grafikmotor. Prøv et skin, før du udruller det til alle installationer.")), 0, 0);
             skinTarget.Name = "guiSkinTarget"; skinTarget.DropDownStyle = ComboBoxStyle.DropDownList; skinTarget.Dock = DockStyle.Top;
+            skinTarget.Margin = Padding.Empty;
             foreach (var account in settings.Accounts)
             {
                 try
@@ -195,8 +196,17 @@ namespace AOLauncher
                 }
                 catch (Exception error) when (error is IOException || error is InvalidDataException || error is ArgumentException || error is UnauthorizedAccessException) { unavailableSkinAccounts++; }
             }
-            skinTarget.SelectedIndexChanged += (sender, e) => RefreshSkins(); layout.Controls.Add(skinTarget, 0, 1);
-            var downloads = Actions(); layout.Controls.Add(downloads, 0, 2);
+            skinTarget.SelectedIndexChanged += (sender, e) => RefreshSkins();
+            var targetHeading = Note(L("Target installation · shared by the accounts listed below", "Målinstallation · deles af kontiene nedenfor"));
+            targetHeading.Name = "guiSkinTargetHeading"; targetHeading.Margin = new Padding(0, 8, 0, 6);
+            layout.Controls.Add(targetHeading, 0, 4);
+            // Native ComboBox preferred height can lag its owner-drawn height.
+            // Reserve its actual height so the following actions cannot touch it.
+            var targetRow = new Panel { Dock = DockStyle.Top, Height = 42, Margin = Padding.Empty };
+            targetRow.Controls.Add(skinTarget);
+            skinTarget.SizeChanged += (sender, e) => targetRow.Height = skinTarget.Height + NexusChrome.Scale(this, 8);
+            layout.Controls.Add(targetRow, 0, 5);
+            var downloads = Actions(); layout.Controls.Add(downloads, 0, 1);
             catalog.Name = "guiSkinCatalog"; catalog.DropDownStyle = ComboBoxStyle.DropDownList; catalog.Width = 235;
             foreach (var entry in GuiSkins.Catalog) catalog.Items.Add(new CatalogChoice { Value = entry }); if (catalog.Items.Count > 0) catalog.SelectedIndex = 0;
             clientEngine.Name = "guiSkinEngine"; clientEngine.DropDownStyle = ComboBoxStyle.DropDownList; clientEngine.Width = 150;
@@ -206,9 +216,9 @@ namespace AOLauncher
             skinActions.Add(download);
             skinActions.Add(ActionButton(downloads, L("Import ZIP…", "Importér ZIP…"), "importGuiSkin", ImportSkin));
             if (catalog is NexusComboBox catalogBox) catalogBox.MatchHeight(download); if (clientEngine is NexusComboBox engineBox) engineBox.MatchHeight(download); if (skinTarget is NexusComboBox targetBox) targetBox.MatchHeight(download);
-            ListStyle(skins, "guiInstalledSkins"); skins.SelectedIndexChanged += (sender, e) => UpdateSelection(); layout.Controls.Add(SlimScrolling.Wrap(skins), 0, 3);
-            skinInfo.Name = "guiSkinInfo"; skinInfo.Dock = DockStyle.Fill; skinInfo.Height = 88; skinInfo.ForeColor = Theme.Muted; skinInfo.Margin = new Padding(0, 10, 0, 4); layout.Controls.Add(skinInfo, 0, 4);
-            var apply = Actions(); layout.Controls.Add(apply, 0, 5); applySkin = ActionButton(apply, L("Apply skin", "Anvend skin"), "applyGuiSkin", ApplySkin, true);
+            ListStyle(skins, "guiInstalledSkins"); skins.SelectedIndexChanged += (sender, e) => UpdateSelection(); layout.Controls.Add(SlimScrolling.Wrap(skins), 0, 2);
+            skinInfo.Name = "guiSkinInfo"; skinInfo.Dock = DockStyle.Fill; skinInfo.Height = 88; skinInfo.ForeColor = Theme.Muted; skinInfo.Margin = new Padding(0, 10, 0, 4); layout.Controls.Add(skinInfo, 0, 3);
+            var apply = Actions(); layout.Controls.Add(apply, 0, 6); applySkin = ActionButton(apply, L("Apply skin", "Anvend skin"), "applyGuiSkin", ApplySkin, true);
             skinActions.Add(ActionButton(apply, L("Use default AO skin", "Brug AO-standardskin"), "defaultGuiSkin", () => ApplySkinName("Default")));
             skinActions.Add(ActionButton(apply, L("Roll out to all…", "Udrul til alle…"), "rolloutAllGuiSkins", RolloutSkin));
             ActionButton(apply, L("Skin website ↗", "Skin-hjemmeside ↗"), "guiSkinWebsite", () => { if (catalog.SelectedItem is CatalogChoice entry && !preview) Process.Start(new ProcessStartInfo(entry.Value.SourceUrl) { UseShellExecute = true }); return Task.CompletedTask; });

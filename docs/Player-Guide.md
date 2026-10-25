@@ -28,7 +28,17 @@ The login engine and its runtime are bundled inside Nexus. Players do not need a
 2. Under **Assets**, download **AO-Nexus-Luckyspawn.zip**. The automatically generated **Source code** archives are for developers, not ready-to-run downloads.
 3. Extract the whole ZIP to a folder you can write to, such as `%LOCALAPPDATA%\Programs\AO Nexus`. Avoid protected locations such as Program Files if you want Nexus to update itself without administrator access.
 4. Open the extracted folder and run **AONexus.exe**. You can create a normal Windows shortcut to it.
-5. Choose whether Nexus may check for updates at startup. You can change this later; installation always requires confirmation.
+5. On a fresh installation, complete the four-step setup: language, servers, app preferences, then review and optionally add accounts. No game is started by setup.
+
+![Setup wizard with update checks, Windows startup and background monitoring choices marked in red](images/published/setup-preferences-c028152ae82ba803.png)
+
+*1 — Optional update checks run once at startup; downloads and installation still require confirmation. 2 — Windows startup opens Nexus in the tray without logging in characters. 3 — Background checks continue while Nexus is hidden; outage/recovery notifications also enable background checks.*
+
+Select the servers you use to choose their news sources and health checks. These choices do not remove server presets or restrict account logins. Nothing connects to news, health services or GitHub until fresh setup finishes. **Skip setup** leaves those optional features off and does not keep changes staged in the wizard. You can enable them later in Settings.
+
+The final step offers **Add first account…** or **Add another account…**. The account editor lets you choose its server/game folder, find Prefs, import character IDs and opt into remembering its password. Password entry waits until login. Accounts added here are saved with the other choices only when you press **Finish**.
+
+Existing and imported profiles keep their configuration and are not forced through the wizard. To revisit it, use **Settings → General → Run setup again…**. Cancel discards wizard changes. Finish preserves existing accounts and team presets while saving your revised preferences.
 
 The current executable is unsigned, so Windows may show an unfamiliar-app or SmartScreen warning. Confirm that you downloaded it from **RazRn/AO-Nexus** and verify the download before deciding whether to proceed. If you trust that download and your Windows policy permits it, the warning may offer **More info → Run anyway**. Do not disable Windows security protections to run it.
 
@@ -159,7 +169,7 @@ Independent accounts can start in parallel. Multiple characters on the **same ac
 
 Recognized characters already open are skipped. If an account fails, its remaining queue stops while other account queues can continue. Check the log and game window rather than repeatedly starting the same failed selection.
 
-![Header progress line highlighted during a launch](images/published/launch-progress-a8956f3b56b90214.png)
+![Header progress line highlighted during a launch](images/published/launch-progress-146d64df6c3afc95.png)
 
 *The red outline marks the header progress line. Confirmed logins or actual client exits advance it; moving activity shows waiting. It is not an estimate of seconds remaining.*
 
@@ -219,7 +229,7 @@ Minimize and Quit have separate confirmation dialogs with **Don't show this agai
 
 **Settings → Updates → Check for updates…** checks manually. If enabled, automatic checking happens **once when Nexus starts**, not repeatedly on a background timer. An available version also appears as a link in the header. Checks look for newer stable GitHub releases, not prereleases or downgrades.
 
-![Update dialog with release notes and installation action highlighted](images/published/update-available-83ad868af8468240.png)
+![Update dialog with release notes and installation action highlighted](images/published/update-available-af47e7cec690a3eb.png)
 
 *Red callouts: **1** release notes to review, **2** Install and restart. Checking for updates does not authorize installation.*
 

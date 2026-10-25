@@ -70,6 +70,8 @@
     <Compile Include="AppArtwork.cs" />
     <Compile Include="Dialogs.cs" />
     <Compile Include="SettingsDialog.cs" />
+    <Compile Include="SetupWizard.cs" />
+    <Compile Include="MainForm.Setup.cs" />
     <Compile Include="LogViewer.cs" />
     <Compile Include="AppUpdates.cs" />
     <Compile Include="LocalMaintenance.cs" />

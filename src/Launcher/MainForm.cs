@@ -157,6 +157,7 @@ namespace AOLauncher
             InitializeTray();
             Shown += (sender, e) =>
             {
+                if (!smoke && !storageBlocked && !settings.HasCompletedSetup) RunSetup();
                 if (!smoke) _ = UpdateCleanup.AfterStartup(Application.ExecutablePath);
                 RegisterPresetHotkeys();
                 BeginInvoke((Action)HideCreationCheckboxes);
@@ -176,7 +177,7 @@ namespace AOLauncher
                         whatsNew.Show(this);
                     }));
                 }
-                if (!smoke && !storageBlocked && !settings.HasChosenUpdatePreference)
+                if (!smoke && !storageBlocked && settings.HasCompletedSetup && !settings.HasChosenUpdatePreference)
                 {
                     var answer = NexusMessageBox.Show(this, T("Check GitHub for updates automatically when Nexus starts?\r\n\r\nYou can change this in Settings at any time. Updates are only downloaded and installed after you choose Install and restart."),
                         T("Automatic update checks"), MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
@@ -184,7 +185,7 @@ namespace AOLauncher
                     settings.HasChosenUpdatePreference = true;
                     SaveSettings();
                 }
-                if (!smoke && settings.CheckForUpdatesOnStartup) CheckStartupUpdate();
+                if (!smoke && !storageBlocked && settings.HasCompletedSetup && settings.CheckForUpdatesOnStartup) CheckStartupUpdate();
             };
             FormClosing += OnFormClosing;
         }
@@ -195,6 +196,14 @@ namespace AOLauncher
 
         private void ConfigureSidebar()
         {
+            // Do not create a visible news/health view (or start its timers) until
+            // a fresh user has finished or explicitly skipped setup.
+            if (!smoke && (!settings.HasCompletedSetup || storageBlocked))
+            {
+                serverSidebar.Visible = false;
+                sidebarLayout.ColumnStyles[1].Width = 0;
+                return;
+            }
             serverSidebar.Configure(settings);
             ConfigureHealthAlerts();
             bool shown = settings.ShowServerNews || settings.ShowServerHealth;
@@ -1370,7 +1379,9 @@ namespace AOLauncher
                 };
                 dialog.ForgetPasswordsAction = () => ForgetPasswords(null, EventArgs.Empty);
                 dialog.CheckUpdatesAction = () => { if (smoke) return; OpenUpdates(dialog); };
-                if (dialog.ShowDialog(this) != DialogResult.OK) return;
+                var settingsResult = dialog.ShowDialog(this);
+                if (settingsResult == DialogResult.Retry) { RunSetup(); return; }
+                if (settingsResult != DialogResult.OK) return;
                 var previousTargets = settings.Accounts.ToDictionary(account => account.Id, AccountTargets.Endpoint);
                 try { AccountTargets.ChangeProfiles(settings, dialog.LoginServers); }
                 catch (ArgumentException ex) { ShowInfo(ex.Message); return; }

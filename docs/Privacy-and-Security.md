@@ -13,6 +13,8 @@ This describes the implementation in this source checkout, not a claim that soft
 
 ## Connections made by the app
 
+For a fresh profile, the setup wizard runs before optional news, health or GitHub checks. Finish saves the selected preferences; Skip leaves these features off. Adding accounts during setup does not log in, request passwords or contact a game server. Existing/imported profiles retain their prior choices and are not forced through setup again.
+
 | Feature | Destination and data | When / control |
 | --- | --- | --- |
 | Game login | The configured account address and port, through the bundled login backend and game client. Authentication belongs to the selected server. | After a user launch action and confirmation. Game clients make their own world/chat/other connections independently of Nexus. |

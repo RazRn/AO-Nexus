@@ -1,6 +1,6 @@
 # Guide images
 
-The README has one unmarked overview. The player guide and Game GUI guide use ten distinct task illustrations. Red numbered boxes identify controls described in the adjacent caption. Progress and health are cropped to avoid repeating the dashboard.
+The README has one unmarked overview. The player guide and Game GUI guide use eleven distinct task illustrations. Red numbered boxes identify controls described in the adjacent caption. Progress and health are cropped to avoid repeating the dashboard.
 
 All images come from actual AO Nexus controls with example accounts, empty passwords and offline results. They do not show live server health or announce an unpublished release. No personal profile or game client is opened by the capture workflow.
 

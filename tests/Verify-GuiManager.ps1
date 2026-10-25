@@ -95,6 +95,14 @@ try{
                 Assert ($dialog.Controls.Find('applyGuiLayout',$true)[0].Enabled -and !$dialog.Controls.Find('applyGuiComponentHotbars',$true)[0].Enabled) 'Idle restores controls while preserving component restrictions'
                 for($i=0;$i -lt 3;$i++){
                     $tabs.SelectedIndex=$i;[GuiManagerFixture]::Pump();Assert ($tabs.GetTabRect($i).Right -le $tabs.ClientSize.Width) 'Tabs fit at normal and enlarged scale';Screenshot $dialog ($language+'-'+$scale+'-tab'+$i+'.png')
+                    if($i -eq 1){
+                        $target=Field $dialog 'skinTarget';$apply=$dialog.Controls.Find('applyGuiSkin',$true)[0];$skinList=Field $dialog 'skins'
+                        $targetRect=$dialog.RectangleToClient($target.RectangleToScreen($target.ClientRectangle))
+                        $applyRect=$dialog.RectangleToClient($apply.RectangleToScreen($apply.ClientRectangle))
+                        $listRect=$dialog.RectangleToClient($skinList.RectangleToScreen($skinList.ClientRectangle))
+                        Assert ($targetRect.Top -gt $listRect.Bottom) 'Skin target belongs below its skin list'
+                        Assert ($applyRect.Top - $targetRect.Bottom -ge 6*$scale) 'Skin target must have a visible gap before apply actions'
+                    }
                     if($PublicGuideDirectory -and $language -eq 'en' -and $scale -eq 1){
                         [IO.Directory]::CreateDirectory([IO.Path]::GetFullPath($PublicGuideDirectory))|Out-Null
                         $originalPreview=$PreviewDirectory;$PreviewDirectory=$PublicGuideDirectory

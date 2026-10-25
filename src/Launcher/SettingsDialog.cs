@@ -63,6 +63,9 @@ namespace AOLauncher
             privacy.UseMnemonic = false;
             privacy.Click += (sender, e) => { using (var dialog = new PrivacyDialog()) dialog.ShowDialog(this); };
             Fields.Controls.Add(privacy);
+            var setup = Theme.Button(L("Run setup again…", "Kør opsætning igen…")); setup.Name = "runSetupAgain";
+            setup.Click += (sender, e) => { DialogResult = DialogResult.Retry; };
+            Fields.Controls.Add(setup);
 
             Note(serverFields, T("Set the game folder and login server under each account: Edit → Game and server."));
             var serversButton = Theme.Button(T("Manage login servers…")); serversButton.Name = "manageLoginServers";

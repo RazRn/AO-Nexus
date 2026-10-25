@@ -19,7 +19,7 @@ These are different scopes. A window layout belongs to a character. The game's s
 
 For a one-time copy, select targets first and choose **Copy from char…**. The temporary captured template is removed afterward; the target backups remain available.
 
-![Layout manager with the template list, one target character and Apply layout marked in red](images/published/gui-layouts-302650f45f5b0612.png)
+![Layout manager with the template list, one target character and Apply layout marked in red](images/published/gui-layouts-d1330207b8c5e8ef.png)
 
 *1 — Choose a personal template or the built-in AO default layout. 2 — Select the target character; start with one. 3 — Apply the selected layout. These are example accounts; the red marks are guide annotations.*
 
@@ -56,7 +56,7 @@ For ideas to try, see [five starter layout templates](Starter-GUI-Layouts.md). T
 
 ## Skins
 
-Choose a target installation in **Skins**. The list includes **Default**, which selects the original AO skin, plus detected complete custom skins.
+Choose **Target installation** near the bottom of **Skins**, immediately above the apply buttons. It lists the accounts sharing that Prefs installation. Changing it changes the installed-skin list and the destination for downloads/imports as well as Apply. The list includes **Default**, which selects the original AO skin, plus detected complete custom skins.
 
 For Notum Dovvetech:
 
@@ -65,7 +65,7 @@ For Notum Dovvetech:
 3. Downloading installs a separate skin folder; it does not activate it. Choose the installed skin and **Apply skin** to activate it.
 4. **Roll out to all…** copies that skin to the other configured installations and applies it after reviewing the affected clients.
 
-![Skins tab with the installation selector, import and download controls, and apply controls marked in red](images/published/gui-skins-52bf633b9fea0c23.png)
+![Skins tab with the installation selector, import and download controls, and apply controls marked in red](images/published/gui-skins-433191841d74fd8f.png)
 
 *1 — Choose the installation whose shared skin will change. 2 — Import a complete skin or download a catalogue theme. 3 — Apply an installed skin, or return to the default AO skin. Download and Apply are separate actions.*
 
@@ -116,7 +116,7 @@ Do not manually launch the affected game or edit its preference files during an 
 
 ## Backups and recovery
 
-![Backups tab with an example recovery record and Restore backup marked in red](images/published/gui-backups-3836bc9101bf2778.png)
+![Backups tab with an example recovery record and Restore backup marked in red](images/published/gui-backups-a68cecbff5d668da.png)
 
 *1 — Select the recovery record and review its original character or installation. 2 — Restore backup returns that target to the recorded state; it does not copy the record to a different character.*
 

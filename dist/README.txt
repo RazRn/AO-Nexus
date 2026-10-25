@@ -5,7 +5,8 @@ Enhanced by Luckyspawn.
 GET STARTED
 1. Extract the complete release ZIP into a folder you can write to, then start
    AONexus.exe. The game must be installed separately for your chosen server.
-2. Choose Add account. Enter a display name and the actual game login username.
+2. Complete the first-run setup (language, servers and app preferences), then use
+   Add first account or Add account. Enter its name and game login username.
 3. In Game and server, choose the server and folder containing AnarchyOnline.exe.
 4. Import character IDs from the account's Prefs folder, or save the account and
    use Add character. Check the characters you want to play.
@@ -14,6 +15,13 @@ GET STARTED
 Requires Windows 10/11 and .NET Framework 4.8. The login engine and its runtime
 are bundled; players do not need a .NET SDK or a separate AOQuickLauncher folder.
 The app version appears in the header. The source download is not the runnable ZIP.
+
+SETUP WIZARD
+Fresh profiles get four short steps. Optional news, health and GitHub connections
+wait until Finish. Skip setup leaves those features off. Accounts added in the
+wizard are saved only on Finish; game passwords are requested at login.
+Existing profiles are kept. Settings > General > Run setup again revisits the
+wizard; Cancel discards its changes. Installation of updates always asks first.
 
 ACCOUNTS, PREFS AND CHARACTERS
 Prefs are optional. Find Prefs folders helps identify existing installations.

@@ -86,6 +86,14 @@ foreach ($registration in @('GuiStrings', 'NexusStrings')) {
 }
 $assembly.GetType('AOLauncher.Localization.Texts', $true).GetMethod('SetLanguage', $staticFlags).Invoke($null, [object[]]@('en')) | Out-Null
 
+$setupSettings = New-Model 'LauncherSettings'; $setupSettings.Language = 'en'
+$setup = New-Dialog 'SetupWizard' ([object[]]@($setupSettings,$false,$true))
+try {
+    Show-Fixture $setup
+    $setup.Controls.Find('setupNext',$true)[0].PerformClick()
+    $setup.Controls.Find('setupNext',$true)[0].PerformClick()
+    Save-GuideScreenshot $setup 'setup-preferences.png'
+} finally { $setup.Dispose(); [GuideScreenshotNative]::Pump() }
 $dashboard = New-Dialog 'MainForm' ([object[]]@($true))
 try {
     if (!(Field $dashboard 'smoke') -or !(Field (Field $dashboard 'newsPanel') 'offlinePreview')) {
@@ -161,7 +169,8 @@ try {
     Show-Fixture $updatesPreview
     Save-GuideScreenshot $updatesPreview 'app-updates.png'
 } finally { $updatesPreview.Dispose() }
-$releasePreview.GetType().GetField('Version', $flags).SetValue($releasePreview, [version]'1.1.6.0')
+$currentVersion=$assembly.GetName().Version
+$releasePreview.GetType().GetField('Version', $flags).SetValue($releasePreview, [version]::new($currentVersion.Major,$currentVersion.Minor,$currentVersion.Build+1,0))
 $releasePreview.GetType().GetField('Notes', $flags).SetValue($releasePreview, "# Example release notes`n`n- **Clear headings** and readable spacing.`n- Review the changes before installing.`n`nThis screenshot uses an offline fixture, not a published update.")
 $updatesPreview = New-Dialog 'UpdateDialog' ([object[]]@([Func[bool]]{ return $false }, $releasePreview))
 try { Show-Fixture $updatesPreview; Save-GuideScreenshot $updatesPreview 'update-available.png' } finally { $updatesPreview.Dispose() }
@@ -226,4 +235,4 @@ $guiCaptureHost = Join-Path $env:WINDIR 'SysWOW64\WindowsPowerShell\v1.0\powersh
 if ($LASTEXITCODE -ne 0) { throw 'Game GUI screenshot verification failed.' }
 $version = $assembly.GetName().Version.ToString()
 & (Join-Path $PSScriptRoot 'Publish-GuideImages.ps1') -CaptureDirectory $OutputDirectory -Version $version
-Write-Output "PASS: 11 distinct guide images captured from $version with example accounts and offline fixtures."
+Write-Output "PASS: 12 distinct guide images captured from $version with example accounts and offline fixtures."
