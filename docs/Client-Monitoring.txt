@@ -1,0 +1,136 @@
+AO NEXUS: CLIENT RESPONSIVENESS AND EXIT REPORTS
+AO Nexus 1.2, 26 October 2026.
+
+TRY IT
+1. Open AONexus.exe. The monitoring companion is included in the executable.
+2. In the new-options wizard, enable "Show AOSharp responsiveness in header and
+   tray" and optionally "Keep local client exit reports". These are opt-in.
+   The same choices are in Settings > Accounts, and in the full setup wizard.
+3. In the Nexus client-status dialog, click "Open measurement plugin folder".
+   Add NexusHealthPlugin.dll from that folder using AOSharp's Add Plugin.
+   Select each character and tick "Nexus Health Monitor" alongside your usual
+   plugins, then Inject. Adding the DLL alone does not enable it per character.
+   If already injected, Eject first when it is safe to restart those plugins.
+   Keep NexusTelemetry.Protocol.dll next to it. Do not load the old lab probe.
+   Nexus does not inject another bootstrapper or unload your existing plugins.
+4. Launch a character through Nexus and load that AOSharp profile normally.
+   The header/tray status appears after a pulse is detected. Click the header
+   or right-click the tray > Clients to see the per-character measurements.
+
+AOSharp being open is not enough: the plugin must run inside each measured
+game client. Clients without a plugin are "not measured", never "healthy".
+With monitoring off, unmeasured clients do not create a header indicator.
+With monitoring enabled and clients open, the header and tray show "not measured
+— click to set up" until the plugin is enabled. An unexplained silence
+remains visible. Explicit plugin teardown is distinguished from missing replies.
+Only verified, registered Nexus sessions are discovered. Nexus must remain open.
+Turning off monitoring stops the Nexus helper. Unload the measurement plugin
+through AOSharp as well to stop its in-client counters and heartbeat files.
+
+MEASUREMENTS
+The plugin observes Game.OnUpdate using Stopwatch timestamps. The game thread
+only updates bounded in-memory counters; a worker publishes an atomic JSON
+snapshot twice per second. A recent maximum covers up to 10 seconds / 2048
+tick intervals. The all-session maximum and count over 100 ms are retained.
+No game actions, graphics changes, FPS changes or power-policy overrides.
+
+One external helper sends one targeted ping per second per measured process,
+using AOSharp's actual IPCChannelBase transport. The AOSharp callback replies
+inside the game loop. The helper pumps independently of both the game and
+Nexus UI. It uses channel 238, opcode 32002, host ID/random epoch/sequence and
+target PID/start time. No usernames, passwords or gameplay commands are sent.
+AOSharp's existing transport is UDP multicast (224.0.0.111:1911), not a private
+named pipe. It can be affected by firewall/network configuration and can reach
+the local network. Nexus makes no firewall changes. A firewall prompt, if any,
+must be handled by the user. A blocked helper is never shown as healthy.
+
+RTT includes helper scheduling/polling (~5 ms requested sleep); it is not pure
+wire latency. Timeout means no reply within 2 seconds, not proven packet loss.
+A late reply increments both the historical timeout and late counters. Pending
+requests are separate. Late replies are retained for up to 30 seconds.
+Counters reset when the helper restarts. This tests the monitor's IPC path,
+not delivery of every message sent by every other AOSharp plugin/channel.
+
+Thresholds in this preview: recent tick gap or reply >=100 ms is delayed;
+no game update for >=2 s in a fresh snapshot, or no IPC reply for >=3 s
+with a fresh helper report, is no response. Snapshot/helper data >=3 s old
+is measurement unavailable, not proof of a game stall. Initial measurement
+gets a 4 s grace period. Snapshot delivery age is shown separately from the
+observed gap between publication and the latest game update. Warning logs,
+details and diagnostic samples include the reason and separate ages.
+The reader allows atomic file replacement and samples its validation clock
+after reading, so a newly published file is not rejected as being in the future.
+Zoning may stall
+the game loop; the last observed zoning state is context, not proof of cause.
+Fresh IPC cannot hide a stopped OnUpdate callback, or vice versa.
+
+EXIT / CRASH DIAGNOSTICS
+While report collection is on, Nexus retains the last 120 samples (~2 min)
+for each observed client. It holds the process handle to preserve exit status
+and guard against PID reuse. Every observed exit can create a report, including
+normal logout: an exit code alone cannot reliably distinguish logout and crash.
+Reports are saved under %LocalAppData%/AONexus/ClientReports, newest 20 retained.
+Disabling collection stops new reports; previously saved reports are retained.
+
+Save diagnostic ZIP from the Clients dialog. It includes current measurements,
+saved exit reports, basic OS/Nexus information, and matching Windows Application
+Error/Hang fields when available. Matching requires executable, process ID,
+process lifetime and an exit-time window. Only allowed event fields are copied;
+raw event XML, account names, paths, credentials, chat and full memory dumps
+are excluded. Names use aliases; process IDs and timestamps remain included.
+Aliases in historical files are based on PID and should be paired with start
+time, not interpreted as a permanent account identity. Nothing is uploaded.
+
+Windows events may arrive late or be absent. The ZIP is a diagnostic evidence
+bundle, not a guaranteed root-cause determination. Faulting module/exception
+can guide further investigation; a stack/memory dump may still be necessary.
+Clients that start and exit between discovery polls, or exit while Nexus is
+closed, cannot have their pre-exit measurements recovered by this feature.
+
+NEW-OPTIONS WIZARD
+OptionsReviewVersion tracks reviewed feature groups independently of app version.
+Existing profiles receive only options introduced since their saved marker.
+Saving records the marker even if all options remain off. Later/cancel and save
+failure preserve the saved profile and do not mark review completed. The full
+setup wizard and Settings expose the same current choices. Existing selections
+are preserved; older binaries do not lower a newer marker.
+For future settings add a SetupNewOptions entry with a higher Introduced value
+and bump CurrentVersion. Do not reuse a version for newly introduced options.
+
+BUILD / TEST
+build/Build-Telemetry.ps1 restores a pinned AOSharp Framework 4.8 source build;
+pass -AOSharpRuntime for another compatible build. It creates dist/Monitoring
+without bundling the AOSharp injector, bootstrapper or game libraries.
+build/Build.ps1 -RebuildTelemetry rebuilds the companion. Build.ps1 embeds its
+allowlisted files in AONexus.exe. Package.ps1 verifies extraction from a lone
+executable, matching the automatic updater. Files are verified and extracted
+on demand beneath %LocalAppData%/AONexus/Monitoring in immutable folders named
+by payload checksum. Existing plugin files are never overwritten by an update.
+
+tests/Verify-ClientMonitoring.ps1: status, stale data, recovery, wizard migration,
+profile isolation, event correlation, export allowlisting and header UI.
+tests/Verify-TelemetrySnapshots.ps1: concurrent atomic publications against the
+production reader, complete monotonic snapshots and size limit.
+tests/Verify-EmbeddedMonitoring.ps1: portable extraction, per-file hashes,
+cache reuse and rejection of modified cache contents after single-file update.
+tests/Verify-TelemetryTransport.ps1: inert game-loop fixture using production
+plugin code and real AOSharp IPC. No game injection or real gameplay. Tests
+healthy replies, pauses, late replies, recovery, independent failures, explicit
+unload and a deliberate non-zero exit of the fixture process only.
+Live game/plugin combinations still need local user validation before release.
+
+26 OCTOBER: FALSE WARNING INVESTIGATION
+A 50-second audit of six running clients reproduced Delayed warnings in five
+clients while their independent fresh snapshots were at most 506 ms old.
+At warning samples Nexus could retain a snapshot about 1.5 seconds old while
+the actual file was only 17-92 ms old. All six had zero IPC timeouts; their
+recorded all-session Game.OnUpdate maxima were below 100 ms. This proves a
+false-delay path, not the precise cause of every earlier log entry.
+The old reader validated against a timestamp taken before the read and did
+not allow File.Replace sharing. Both are corrected. Stale observer data is
+also distinguished from fresh evidence of a stalled update or missing reply.
+Validation: 73 status/UI/export/migration checks, 14 production-plugin and
+real-IPC fixture checks, and 1000 concurrent atomic publications/reads passed.
+The six game clients had closed before the corrected live audit, so there is
+no live after-fix comparison yet. No game/plugin changes are needed for this
+launcher-only correction; existing measurement plugins remain compatible.

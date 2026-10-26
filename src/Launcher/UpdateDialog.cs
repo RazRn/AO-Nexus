@@ -40,9 +40,10 @@ namespace AOLauncher
     }
     internal sealed class WhatsNewDialog : EditorDialog
     {
-        internal WhatsNewDialog() : base(F("What's new in AO Nexus {0}", AppUpdates.CurrentVersion.ToString(3)), 520)
+        internal WhatsNewDialog() : this(true) { }
+        internal WhatsNewDialog(bool installedNotice) : base(F("What's new in AO Nexus {0}", AppUpdates.CurrentVersion.ToString(3)), 520)
         {
-            AddWrappedNote(T("Update installed successfully. Your accounts, passwords and team presets are preserved."), "updateSuccess");
+            if (installedNotice) AddWrappedNote(T("Update installed successfully. Your accounts, passwords and team presets are preserved."), "updateSuccess");
             var notes = new NexusTextBox { Name = "installedReleaseNotes", ReadOnly = true, Multiline = true,
                 Dock = DockStyle.Top, Height = 300, ScrollBars = ScrollBars.Vertical, BorderStyle = BorderStyle.None, TabStop = false,
                 BackColor = Theme.Surface, ForeColor = Theme.Foreground, Font = new Font("Segoe UI", 10F) };

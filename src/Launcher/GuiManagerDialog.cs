@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -20,7 +20,7 @@ namespace AOLauncher
         public override string ToString() => Label;
     }
 
-    internal sealed class GuiManagerDialog : EditorDialog
+    internal sealed partial class GuiManagerDialog : EditorDialog
     {
         private readonly LauncherSettings settings;
         private readonly string libraryRoot;
@@ -36,7 +36,7 @@ namespace AOLauncher
         private readonly List<Button> skinActions = new List<Button>();
         private readonly ListBox scriptList = new ListBox(), macroList = new ListBox();
         private readonly ComboBox scriptTarget = new NexusComboBox(), scriptCopyTarget = new NexusComboBox(), macroSource = new NexusComboBox();
-        private readonly TextBox scriptPreview = new TextBox();
+        private readonly TextBox scriptPreview = new NexusTextBox();
         private readonly Label scriptInfo = new Label(), macroInfo = new Label();
         private readonly List<Button> scriptActions = new List<Button>();
         private Button copyMacros;
@@ -61,9 +61,10 @@ namespace AOLauncher
             this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
             this.libraryRoot = libraryRoot ?? throw new ArgumentNullException(nameof(libraryRoot)); this.preview = preview;
             DefaultTemplateId = settings.DefaultGuiTemplateId;
-            ClientSize = new Size(1040, 700); MinimumSize = new Size(900, 620);
+            ClientSize = new Size(1120, 740); MinimumSize = new Size(980, 700);
             FormBorderStyle = FormBorderStyle.Sizable; MaximizeBox = true;
-            DialogLayout.Padding = new Padding(18); DialogLayout.RowStyles[1].Height = 52;
+            DialogLayout.Padding = new Padding(18); DialogLayout.RowStyles[1].Height = 30;
+            DialogLayout.ColumnStyles.Clear(); DialogLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             DialogLayout.Controls.Remove(FieldsViewport); FieldsViewport.Dispose();
             tabs.Name = "gameGuiTabs"; tabs.Dock = DockStyle.Fill; DialogLayout.Controls.Add(tabs, 0, 0);
             SaveButton.Visible = false; CancelAction.Text = L("Close", "Luk"); CancelAction.DialogResult = DialogResult.None;
@@ -96,7 +97,7 @@ namespace AOLauncher
         private static RowStyle Auto() => new RowStyle(SizeType.AutoSize);
         private static RowStyle Fill() => new RowStyle(SizeType.Percent, 100);
         private static Label Note(string text) => new Label { Text = text, AutoSize = true, Dock = DockStyle.Top, ForeColor = Theme.Muted, MaximumSize = new Size(800, 0), Margin = new Padding(0, 6, 0, 10) };
-        private static FlowLayoutPanel Actions() => new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, WrapContents = true, Margin = new Padding(0, 4, 0, 8) };
+        private static FlowLayoutPanel Actions() => new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, WrapContents = true, Margin = new Padding(0, 2, 0, 4) };
         private Button ActionButton(FlowLayoutPanel row, string text, string name, Func<Task> action, bool primary = false)
         {
             var button = Theme.Button(text, primary); button.Name = name;
@@ -116,173 +117,11 @@ namespace AOLauncher
                 if ((e.State & DrawItemState.Focus) != 0) e.DrawFocusRectangle();
             };
         }
-        private void BuildLayouts()
-        {
-            var page = Page(L("Layouts", "Layouts"));
-            var columns = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1 };
-            columns.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 44)); columns.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 56)); page.Controls.Add(columns);
-            var left = Stack(Auto(), Auto(), Fill(), Auto(), Auto(), Auto(), Auto()); left.Padding = new Padding(0, 0, 16, 0); columns.Controls.Add(left, 0, 0);
-            left.Controls.Add(Note(L("LAYOUT TEMPLATES", "LAYOUTSKABELONER")), 0, 0);
-            var actions = Actions(); left.Controls.Add(actions, 0, 1);
-            ActionButton(actions, L("Capture from char…", "Gem fra char…"), "captureGuiLayout", () => CaptureLayout(false));
-            ActionButton(actions, L("Copy from char…", "Kopiér fra char…"), "copyGuiLayout", () => CaptureLayout(true, lastMacroSource != null ? GuiLayoutComponents.Macros : GuiLayoutComponents.Layout));
-            ListStyle(templates, "guiTemplates"); templates.SelectedIndexChanged += (sender, e) => UpdateSelection(); left.Controls.Add(SlimScrolling.Wrap(templates), 0, 2);
-            templateInfo.Name = "guiTemplateInfo"; templateInfo.Dock = DockStyle.Fill; templateInfo.Height = 78; templateInfo.ForeColor = Theme.Muted; templateInfo.Margin = new Padding(0, 10, 0, 4); left.Controls.Add(templateInfo, 0, 3);
-            defaultTemplate.Name = "defaultGuiTemplate"; defaultTemplate.Text = L("Use for new chars", "Brug til nye chars"); defaultTemplate.AutoSize = false; defaultTemplate.Height = 28; defaultTemplate.Dock = DockStyle.Top;
-            defaultTemplate.CheckedChanged += (sender, e) =>
-            {
-                if (updating || preview || busy || !(templates.SelectedItem is TemplateChoice choice)) return;
-                try
-                {
-                    string value = defaultTemplate.Checked ? choice.Value.Id : null;
-                    SaveDefaultTemplate?.Invoke(value); DefaultTemplateId = value;
-                    Status(L("Default changed for future chars. Existing layouts are unchanged.", "Standard ændret for fremtidige chars. Eksisterende layouts er uændrede."));
-                }
-                catch (Exception error) { Fail(error); }
-                UpdateSelection();
-            };
-            var components = GuiComponentChoices.Create(componentChecks, "applyGuiComponent", () => { if (!updating) UpdateSelection(); }); left.Controls.Add(components, 0, 4);
-            left.Controls.Add(defaultTemplate, 0, 5);
-            var manage = Actions(); left.Controls.Add(manage, 0, 6);
-            selectionActions.Add(ActionButton(manage, L("Rename…", "Omdøb…"), "renameGuiTemplate", RenameTemplate));
-            selectionActions.Add(ActionButton(manage, L("Delete", "Slet"), "deleteGuiTemplate", DeleteTemplate));
-
-            var right = Stack(Auto(), Fill(), Auto(), Auto()); columns.Controls.Add(right, 1, 0);
-            var header = Actions(); header.Controls.Add(Note(L("TARGET CHARACTERS", "MÅL-CHARS")));
-            var select = new LinkLabel { Text = L("Select all", "Vælg alle"), AutoSize = true, Margin = new Padding(12, 6, 6, 6), DisabledLinkColor = Theme.Muted };
-            var clear = new LinkLabel { Text = L("Clear", "Fravælg"), AutoSize = true, Margin = new Padding(6), DisabledLinkColor = Theme.Muted };
-            select.Click += (sender, e) => { if (!busy) SetAllTargets(true); }; clear.Click += (sender, e) => { if (!busy) SetAllTargets(false); }; header.Controls.Add(select); header.Controls.Add(clear); right.Controls.Add(header, 0, 0);
-            targets.Name = "guiTargets"; targets.Dock = DockStyle.Fill; targets.CheckBoxes = true; targets.BorderStyle = BorderStyle.None; targets.BackColor = Theme.Surface;
-            targets.ForeColor = Theme.Foreground; targets.ItemHeight = 28; targets.HideSelection = false; targets.ShowNodeToolTips = false;
-            foreach (var server in characters.GroupBy(choice => AccountTargets.ServerName(settings, choice.Account)).OrderBy(group => group.Key))
-            {
-                var serverNode = new TreeNode(server.Key) { ForeColor = Theme.Accent };
-                foreach (var account in server.GroupBy(choice => choice.Account.Id))
-                {
-                    var accountNode = new TreeNode(account.First().Account.Label);
-                    foreach (var choice in account) accountNode.Nodes.Add(new TreeNode(choice.Character.Name + (string.IsNullOrEmpty(choice.Character.PendingGuiTemplateId) ? "" : L(" · default pending", " · afventer standard"))) { Tag = choice });
-                    serverNode.Nodes.Add(accountNode);
-                }
-                targets.Nodes.Add(serverNode);
-            }
-            targets.ExpandAll(); targets.AfterCheck += (sender, e) =>
-            {
-                if (updating) return; updating = true;
-                try { foreach (var node in Descendants(e.Node)) node.Checked = e.Node.Checked; for (var parent = e.Node.Parent; parent != null; parent = parent.Parent) parent.Checked = parent.Nodes.Cast<TreeNode>().All(node => node.Checked); }
-                finally { updating = false; }
-                UpdateSelection();
-            };
-            right.Controls.Add(SlimScrolling.Wrap(targets), 0, 1);
-            selectedSummary.Name = "guiTargetSummary"; selectedSummary.Dock = DockStyle.Fill; selectedSummary.Height = 60; selectedSummary.ForeColor = Theme.Muted; selectedSummary.Margin = new Padding(0, 8, 0, 2); right.Controls.Add(selectedSummary, 0, 2);
-            var apply = Actions(); right.Controls.Add(apply, 0, 3);
-            applyLayout = ActionButton(apply, L("Apply layout", "Anvend layout"), "applyGuiLayout", () => ApplyTemplate((templates.SelectedItem as TemplateChoice)?.Value.Id), true);
-            applyDefault = ActionButton(apply, L("Apply saved default", "Anvend gemt standard"), "applyDefaultGui", () => ApplyTemplate(DefaultTemplateId));
-            ActionButton(apply, L("Roll out to all…", "Udrul til alle…"), "rolloutAllGuiLayouts", () => ApplyTemplate((templates.SelectedItem as TemplateChoice)?.Value.Id, true));
-        }
         private static IEnumerable<TreeNode> Descendants(TreeNode parent) { foreach (TreeNode child in parent.Nodes) { yield return child; foreach (var nested in Descendants(child)) yield return nested; } }
         private IEnumerable<TreeNode> Leaves() => targets.Nodes.Cast<TreeNode>().SelectMany(node => Descendants(node)).Where(node => node.Tag is GuiCharacterChoice);
         internal List<GuiCharacterChoice> SelectedCharacters() => Leaves().Where(node => node.Checked).Select(node => (GuiCharacterChoice)node.Tag).ToList();
         private void SetAllTargets(bool value) { updating = true; foreach (TreeNode node in targets.Nodes) { node.Checked = value; foreach (var child in Descendants(node)) child.Checked = value; } updating = false; UpdateSelection(); }
 
-        private void BuildSkins()
-        {
-            var page = Page(L("Skins", "Skins")); var layout = Stack(Auto(), Auto(), Fill(), Auto(), Auto(), Auto(), Auto()); page.Controls.Add(layout);
-            layout.Controls.Add(Note(L("Skins are shared by accounts using the same Prefs installation. Download/import adds a skin; Apply activates it after clients close. Select the matching classic/new-engine package. Try a skin before rolling it out to every installation.", "Skins deles af konti med samme Prefs-installation. Download/import tilføjer et skin; Anvend aktiverer det, når klienterne er lukket. Vælg den rigtige klassiske/nye grafikmotor. Prøv et skin, før du udruller det til alle installationer.")), 0, 0);
-            skinTarget.Name = "guiSkinTarget"; skinTarget.DropDownStyle = ComboBoxStyle.DropDownList; skinTarget.Dock = DockStyle.Top;
-            skinTarget.Margin = Padding.Empty;
-            foreach (var account in settings.Accounts)
-            {
-                try
-                {
-                    string root = GuiSkins.ResolvePrefsRoot(account.PrefsPath);
-                    var existing = skinTarget.Items.Cast<SkinTargetChoice>().FirstOrDefault(item => string.Equals(item.Root, root, StringComparison.OrdinalIgnoreCase));
-                    if (existing == null) { existing = new SkinTargetChoice { Root = root, Name = Path.GetFileName(Path.GetDirectoryName(root)) }; skinTarget.Items.Add(existing); }
-                    var owned = characters.Where(choice => choice.Account.Id == account.Id).ToList();
-                    if (owned.Count == 0) owned.Add(new GuiCharacterChoice { Account = account, CharacterPath = "", Label = account.Label });
-                    existing.Characters.AddRange(owned);
-                }
-                catch (Exception error) when (error is IOException || error is InvalidDataException || error is ArgumentException || error is UnauthorizedAccessException) { unavailableSkinAccounts++; }
-            }
-            skinTarget.SelectedIndexChanged += (sender, e) => RefreshSkins();
-            var targetHeading = Note(L("Target installation · shared by the accounts listed below", "Målinstallation · deles af kontiene nedenfor"));
-            targetHeading.Name = "guiSkinTargetHeading"; targetHeading.Margin = new Padding(0, 8, 0, 6);
-            layout.Controls.Add(targetHeading, 0, 4);
-            // Native ComboBox preferred height can lag its owner-drawn height.
-            // Reserve its actual height so the following actions cannot touch it.
-            var targetRow = new Panel { Dock = DockStyle.Top, Height = 42, Margin = Padding.Empty };
-            targetRow.Controls.Add(skinTarget);
-            skinTarget.SizeChanged += (sender, e) => targetRow.Height = skinTarget.Height + NexusChrome.Scale(this, 8);
-            layout.Controls.Add(targetRow, 0, 5);
-            var downloads = Actions(); layout.Controls.Add(downloads, 0, 1);
-            catalog.Name = "guiSkinCatalog"; catalog.DropDownStyle = ComboBoxStyle.DropDownList; catalog.Width = 235;
-            foreach (var entry in GuiSkins.Catalog) catalog.Items.Add(new CatalogChoice { Value = entry }); if (catalog.Items.Count > 0) catalog.SelectedIndex = 0;
-            clientEngine.Name = "guiSkinEngine"; clientEngine.DropDownStyle = ComboBoxStyle.DropDownList; clientEngine.Width = 150;
-            clientEngine.Items.AddRange(new object[] { L("Classic client", "Klassisk klient"), L("New engine", "Ny grafikmotor") }); clientEngine.SelectedIndex = 0;
-            downloads.Controls.Add(catalog); downloads.Controls.Add(clientEngine);
-            var download = ActionButton(downloads, L("Download", "Download"), "downloadGuiSkin", DownloadSkin);
-            skinActions.Add(download);
-            skinActions.Add(ActionButton(downloads, L("Import ZIP…", "Importér ZIP…"), "importGuiSkin", ImportSkin));
-            if (catalog is NexusComboBox catalogBox) catalogBox.MatchHeight(download); if (clientEngine is NexusComboBox engineBox) engineBox.MatchHeight(download); if (skinTarget is NexusComboBox targetBox) targetBox.MatchHeight(download);
-            ListStyle(skins, "guiInstalledSkins"); skins.SelectedIndexChanged += (sender, e) => UpdateSelection(); layout.Controls.Add(SlimScrolling.Wrap(skins), 0, 2);
-            skinInfo.Name = "guiSkinInfo"; skinInfo.Dock = DockStyle.Fill; skinInfo.Height = 88; skinInfo.ForeColor = Theme.Muted; skinInfo.Margin = new Padding(0, 10, 0, 4); layout.Controls.Add(skinInfo, 0, 3);
-            var apply = Actions(); layout.Controls.Add(apply, 0, 6); applySkin = ActionButton(apply, L("Apply skin", "Anvend skin"), "applyGuiSkin", ApplySkin, true);
-            skinActions.Add(ActionButton(apply, L("Use default AO skin", "Brug AO-standardskin"), "defaultGuiSkin", () => ApplySkinName("Default")));
-            skinActions.Add(ActionButton(apply, L("Roll out to all…", "Udrul til alle…"), "rolloutAllGuiSkins", RolloutSkin));
-            ActionButton(apply, L("Skin website ↗", "Skin-hjemmeside ↗"), "guiSkinWebsite", () => { if (catalog.SelectedItem is CatalogChoice entry && !preview) Process.Start(new ProcessStartInfo(entry.Value.SourceUrl) { UseShellExecute = true }); return Task.CompletedTask; });
-            if (skinTarget.Items.Count > 0) skinTarget.SelectedIndex = 0;
-        }
-        private void BuildScripts()
-        {
-            var page = Page(L("Scripts", "Scripts"));
-            var columns = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1 };
-            columns.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 56)); columns.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 44)); page.Controls.Add(columns);
-            var left = Stack(Auto(), Auto(), Auto(), Fill(), Auto(), Auto(), Auto()); left.Padding = new Padding(0, 0, 16, 0); columns.Controls.Add(left, 0, 0);
-            left.Controls.Add(Note(L("SCRIPTS PER INSTALLATION", "SCRIPTS PR. INSTALLATION")), 0, 0);
-            left.Controls.Add(Note(L("Chat scripts (/name) are text files shared by every char using the installation. Changes work right away, also in running clients. Each change is backed up.", "Chat-scripts (/navn) er tekstfiler, som deles af alle chars på installationen. Ændringer virker med det samme, også i kørende klienter. Hver ændring sikkerhedskopieres.")), 0, 1);
-            scriptTarget.Name = "guiScriptTarget"; scriptTarget.DropDownStyle = ComboBoxStyle.DropDownList; scriptTarget.Dock = DockStyle.Top; scriptTarget.Margin = new Padding(0, 0, 0, 8);
-            foreach (var item in skinTarget.Items.Cast<SkinTargetChoice>()) { scriptTarget.Items.Add(item); scriptCopyTarget.Items.Add(item); }
-            scriptTarget.SelectedIndexChanged += (sender, e) => RefreshScripts();
-            var targetRow = new Panel { Dock = DockStyle.Top, Height = 42, Margin = Padding.Empty }; targetRow.Controls.Add(scriptTarget);
-            scriptTarget.SizeChanged += (sender, e) => targetRow.Height = scriptTarget.Height + NexusChrome.Scale(this, 8);
-            left.Controls.Add(targetRow, 0, 2);
-            var lists = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Margin = Padding.Empty };
-            lists.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40)); lists.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 60));
-            ListStyle(scriptList, "guiScripts"); scriptList.SelectionMode = SelectionMode.MultiExtended; scriptList.SelectedIndexChanged += (sender, e) => ShowScript();
-            var listHost = SlimScrolling.Wrap(scriptList); listHost.Margin = new Padding(0, 0, 8, 0); lists.Controls.Add(listHost, 0, 0);
-            scriptPreview.Name = "guiScriptPreview"; scriptPreview.Dock = DockStyle.Fill; scriptPreview.Multiline = true; scriptPreview.ReadOnly = true; scriptPreview.WordWrap = false;
-            scriptPreview.ScrollBars = ScrollBars.Both; scriptPreview.BorderStyle = BorderStyle.None; scriptPreview.BackColor = Theme.Surface; scriptPreview.ForeColor = Theme.Foreground;
-            scriptPreview.Font = new Font(FontFamily.GenericMonospace, 9.5F); lists.Controls.Add(scriptPreview, 1, 0);
-            left.Controls.Add(lists, 0, 3);
-            scriptInfo.Name = "guiScriptInfo"; scriptInfo.Dock = DockStyle.Fill; scriptInfo.Height = 46; scriptInfo.ForeColor = Theme.Muted; scriptInfo.Margin = new Padding(0, 8, 0, 2); left.Controls.Add(scriptInfo, 0, 4);
-            var copyRow = Actions(); left.Controls.Add(copyRow, 0, 5);
-            scriptCopyTarget.Name = "guiScriptCopyTarget"; scriptCopyTarget.DropDownStyle = ComboBoxStyle.DropDownList; scriptCopyTarget.Width = 230;
-            copyRow.Controls.Add(scriptCopyTarget);
-            var copy = ActionButton(copyRow, L("Copy selected", "Kopiér valgte"), "copyGuiScripts", () => CopyScripts(false), true); scriptActions.Add(copy);
-            scriptActions.Add(ActionButton(copyRow, L("Copy to all…", "Kopiér til alle…"), "copyAllGuiScripts", () => CopyScripts(true)));
-            if (scriptCopyTarget is NexusComboBox copyBox) copyBox.MatchHeight(copy); if (scriptTarget is NexusComboBox targetBox) targetBox.MatchHeight(copy);
-            var manage = Actions(); left.Controls.Add(manage, 0, 6);
-            scriptActions.Add(ActionButton(manage, L("Import file…", "Importér fil…"), "importGuiScript", ImportScript));
-            scriptActions.Add(ActionButton(manage, L("Delete", "Slet"), "deleteGuiScripts", DeleteScripts));
-            scriptActions.Add(ActionButton(manage, L("Open folder", "Åbn mappe"), "openGuiScripts", OpenScriptFolder));
-
-            var right = Stack(Auto(), Auto(), Auto(), Fill(), Auto(), Auto()); columns.Controls.Add(right, 1, 0);
-            right.Controls.Add(Note(L("MACROS PER CHAR", "MAKROER PR. CHAR")), 0, 0);
-            right.Controls.Add(Note(L("Macros are the buttons you make with /macro. Hotbars refer to them by number, so copy macros together with hotbars.", "Makroer er knapperne, du laver med /macro. Hotbars henviser til dem med nummer, så kopiér makroer sammen med hotbars.")), 0, 1);
-            macroSource.Name = "guiMacroSource"; macroSource.DropDownStyle = ComboBoxStyle.DropDownList; macroSource.Dock = DockStyle.Top; macroSource.Margin = new Padding(0, 0, 0, 8);
-            foreach (var choice in characters) macroSource.Items.Add(choice);
-            macroSource.SelectedIndexChanged += (sender, e) => RefreshMacros();
-            var sourceRow = new Panel { Dock = DockStyle.Top, Height = 42, Margin = Padding.Empty }; sourceRow.Controls.Add(macroSource);
-            macroSource.SizeChanged += (sender, e) => sourceRow.Height = macroSource.Height + NexusChrome.Scale(this, 8);
-            right.Controls.Add(sourceRow, 0, 2);
-            ListStyle(macroList, "guiMacros"); macroList.SelectionMode = SelectionMode.None; right.Controls.Add(SlimScrolling.Wrap(macroList), 0, 3);
-            macroInfo.Name = "guiMacroInfo"; macroInfo.Dock = DockStyle.Fill; macroInfo.Height = 46; macroInfo.ForeColor = Theme.Muted; macroInfo.Margin = new Padding(0, 8, 0, 2); right.Controls.Add(macroInfo, 0, 4);
-            var macroActions = Actions(); right.Controls.Add(macroActions, 0, 5);
-            copyMacros = ActionButton(macroActions, L("Copy macros to chars…", "Kopiér makroer til chars…"), "copyGuiMacros", CopyMacros, true);
-            if (macroSource is NexusComboBox sourceBox) sourceBox.MatchHeight(copyMacros);
-            if (scriptTarget.Items.Count > 0) scriptTarget.SelectedIndex = 0;
-            if (scriptCopyTarget.Items.Count > 1) scriptCopyTarget.SelectedIndex = 1; else if (scriptCopyTarget.Items.Count > 0) scriptCopyTarget.SelectedIndex = 0;
-            if (macroSource.Items.Count > 0) macroSource.SelectedIndex = 0;
-        }
         private List<string> SelectedScripts() => scriptList.SelectedItems.Cast<GuiScriptInfo>().Select(item => item.Name).ToList();
         private void RefreshScripts(IEnumerable<string> select = null)
         {
@@ -296,7 +135,8 @@ namespace AOLauncher
                     foreach (var item in items) scriptList.Items.Add(item);
                     for (int i = 0; i < scriptList.Items.Count; i++) if (keep.Contains(((GuiScriptInfo)scriptList.Items[i]).Name)) scriptList.SetSelected(i, true);
                     if (scriptList.SelectedIndex < 0 && scriptList.Items.Count > 0) scriptList.SetSelected(0, true);
-                    scriptInfo.Text = items.Count + (items.Count == 1 ? L(" script · ", " script · ") : L(" scripts · ", " scripts · ")) + GuiScripts.ScriptsRoot(target.Root);
+                    scriptInfo.Text = items.Count + (items.Count == 1 ? L(" script in ", " script i ") : L(" scripts in ", " scripts i ")) + target.Name
+                        + " · " + L("shared by: ", "deles af: ") + string.Join(", ", target.Characters.Select(choice => choice.Account.Label).Distinct());
                 }
                 else scriptInfo.Text = L("Choose an account Prefs folder first in Edit account.", "Vælg først kontoens Prefs-mappe under Rediger konto.");
             }
@@ -400,28 +240,7 @@ namespace AOLauncher
             try { await Task.Run(action); Status(done); }
             finally { SetBusy(false); RefreshScripts(select); RefreshBackups(); }
         }
-        private Task CopyMacros()
-        {
-            if (!(macroSource.SelectedItem is GuiCharacterChoice source)) return Task.CompletedTask;
-            if (UniqueTargets(SelectedCharacters()).All(choice => string.Equals(choice.CharacterPath, source.CharacterPath, StringComparison.OrdinalIgnoreCase)))
-            {
-                tabs.SelectedIndex = 0;
-                Status(L("Tick the target chars on the right, then choose Copy from char… (Macros is preselected).", "Sæt flueben ved mål-chars til højre, og vælg derefter Kopiér fra char… (Makroer er forvalgt)."));
-                lastMacroSource = source; return Task.CompletedTask;
-            }
-            return CaptureLayout(true, GuiLayoutComponents.Macros, source);
-        }
-        private GuiCharacterChoice lastMacroSource;
-        private void BuildBackups()
-        {
-            var page = Page(L("Backups", "Sikkerhedskopier")); var layout = Stack(Auto(), Fill(), Auto(), Auto()); page.Controls.Add(layout);
-            layout.Controls.Add(Note(L("A backup is created before each layout, macro, script or skin selection change. Restore affects only the original target and asks about relogging when needed.", "Der laves en sikkerhedskopi før hver ændring af layout, makroer, scripts eller skin-valg. Gendan ændrer kun det oprindelige mål og spørger om genlogin efter behov.")), 0, 0);
-            ListStyle(backups, "guiBackups"); backups.SelectedIndexChanged += (sender, e) => UpdateSelection(); layout.Controls.Add(SlimScrolling.Wrap(backups), 0, 1);
-            backupInfo.Name = "guiBackupInfo"; backupInfo.Dock = DockStyle.Fill; backupInfo.Height = 70; backupInfo.ForeColor = Theme.Muted; backupInfo.Margin = new Padding(0, 10, 0, 4); layout.Controls.Add(backupInfo, 0, 2);
-            var actions = Actions(); layout.Controls.Add(actions, 0, 3); restoreBackup = ActionButton(actions, L("Restore backup", "Gendan sikkerhedskopi"), "restoreGuiBackup", RestoreBackup, true);
-            ActionButton(actions, L("Refresh list", "Opdater liste"), "refreshGuiBackups", () => { RefreshBackups(); return Task.CompletedTask; });
-        }
-
+        private Task CopyMacros() => CopyMacroSelection();
         private async Task Safe(Func<Task> action)
         {
             if (busy) return;
@@ -471,7 +290,7 @@ namespace AOLauncher
         private async Task CaptureLayout(bool copy, GuiLayoutComponents initial = GuiLayoutComponents.Layout, GuiCharacterChoice initialSource = null)
         {
             var selected = UniqueTargets(SelectedCharacters()); if (copy && selected.Count == 0) { Status(L("Select target chars first.", "Vælg mål-chars først.")); return; }
-            using (var dialog = new GuiCaptureDialog(characters, copy, initial, initialSource ?? lastMacroSource))
+            using (var dialog = new GuiCaptureDialog(characters, copy, initial, initialSource))
             {
                 if (dialog.ShowDialog(this) != DialogResult.OK) return;
                 var source = dialog.Source; if (source == null) return;
@@ -495,7 +314,6 @@ namespace AOLauncher
                 finally { CaptureSource = null; }
                 if (success && copy) { foreach (var target in selected) target.Character.PendingGuiTemplateId = null; SaveProfile?.Invoke(); }
                 if (success && !copy && dialog.UseForNewCharacters) { SaveDefaultTemplate?.Invoke(captured.Id); DefaultTemplateId = captured.Id; }
-                lastMacroSource = null;
                 RefreshLibrary(captured?.Id); RefreshMacros();
             }
         }
@@ -631,15 +449,18 @@ namespace AOLauncher
         }
         private void RefreshSkins(string selectedName = null)
         {
+            activeSkinName = null;
             try
             {
                 skins.Items.Clear();
                 if (skinTarget.SelectedItem is SkinTargetChoice target)
                 {
                     foreach (string name in GuiSkins.InstalledSkins(target.Root)) skins.Items.Add(name);
-                    skins.SelectedItem = selectedName ?? GuiSkins.CurrentSkin(target.Root);
+                    activeSkinName = GuiSkins.CurrentSkin(target.Root);
+                    skins.SelectedItem = selectedName ?? activeSkinName;
                     if (skins.SelectedIndex < 0 && skins.Items.Count > 0) skins.SelectedIndex = 0;
-                    skinInfo.Text = L("Current skin: ", "Aktuelt skin: ") + GuiSkins.CurrentSkin(target.Root) + "\r\n" + target.Root;
+                    skinInfo.Text = L("Active skin: ", "Aktivt skin: ") + activeSkinName
+                        + "\r\n" + L("Select a different skin, then review the change below.", "Vælg et andet skin, og gennemse ændringen nedenfor.");
                     if (unavailableSkinAccounts > 0) skinInfo.Text += "\r\n" + unavailableSkinAccounts + L(" account(s) need an initialized Prefs folder. Choose it under Edit account.", " konti mangler en initialiseret Prefs-mappe. Vælg den under Rediger konto.");
                 }
                 else skinInfo.Text = L("Choose an account Prefs folder first in Edit account. No valid Prefs installation is available.", "Vælg først kontoens Prefs-mappe under Rediger konto. Ingen gyldig Prefs-installation er tilgængelig.");
@@ -649,7 +470,7 @@ namespace AOLauncher
         }
         private void RefreshBackups()
         {
-            backups.Items.Clear(); var entries = new List<BackupChoice>();
+            var entries = new List<BackupChoice>();
             foreach (var choice in characters.Where(item => !string.IsNullOrEmpty(item.CharacterPath) && Directory.Exists(item.CharacterPath)).GroupBy(item => item.CharacterPath, StringComparer.OrdinalIgnoreCase).Select(group => group.First()))
                 foreach (var backup in GuiLayouts.ListBackups(libraryRoot, choice.CharacterPath)) entries.Add(new BackupChoice { Layout = backup, Character = choice, When = backup.CreatedUtc });
             foreach (var target in skinTarget.Items.Cast<SkinTargetChoice>())
@@ -657,8 +478,8 @@ namespace AOLauncher
             foreach (var target in skinTarget.Items.Cast<SkinTargetChoice>())
                 try { foreach (var backup in GuiScripts.ListBackups(target.Root, ScriptBackupRoot)) entries.Add(new BackupChoice { Script = backup, SkinTarget = target, When = backup.CreatedUtc }); }
                 catch (Exception error) when (error is IOException || error is InvalidDataException || error is UnauthorizedAccessException || error is ArgumentException) { }
-            foreach (var entry in entries.OrderByDescending(entry => entry.When).Take(200)) backups.Items.Add(entry);
-            if (backups.Items.Count > 0) backups.SelectedIndex = 0; UpdateSelection();
+            backupChoices.Clear(); backupChoices.AddRange(entries.OrderByDescending(entry => entry.When).Take(200));
+            FilterBackups();
         }
         private void UpdateSelection()
         {
@@ -673,8 +494,9 @@ namespace AOLauncher
                 if (leaf.Text != text) leaf.Text = text;
             }
             bool builtIn = template?.Id == GuiLayouts.GameDefaultId;
-            templateInfo.Text = builtIn ? L("Built in · Uses the target's game defaults. Resets supported window positions and visibility. Keeps hotbar actions/count, bindings, pets, chat channels and skin.", "Indbygget · Bruger målets spilstandarder. Nulstiller understøttede vinduesplaceringer og synlighed. Bevarer hotbar-handlinger/antal, taster, kæledyr, chatkanaler og skin.") : template == null ? L("Capture a character layout to create your first template.", "Gem et char-layout for at oprette din første skabelon.")
-                : template.Name + "\r\n" + L("Source: ", "Kilde: ") + template.SourceCharacter + "\r\n" + template.CreatedUtc.ToLocalTime().ToString("g") + " · " + template.FileCount + (template.FileCount == 1 ? L(" file", " fil") : L(" files", " filer"));
+            templateInfo.Text = builtIn ? L("Reset window positions and visibility to AO defaults. Hotbars, keys, macros and skin stay unchanged.", "Nulstil vinduesplaceringer og synlighed til AO-standard. Hotbars, taster, makroer og skin bevares.") : template == null ? L("Save a character's layout to create your first reusable setup.", "Gem en karakters layout for at oprette din første genbrugelige opsætning.")
+                : L("Saved from: ", "Gemt fra: ") + template.SourceCharacter + " · " + template.CreatedUtc.ToLocalTime().ToString("g")
+                    + "\r\n" + L("Only settings included in this layout can be selected.", "Kun indstillinger gemt i dette layout kan vælges.");
             bool previousUpdating = updating; updating = true;
             foreach (var pair in componentChecks)
             {
@@ -683,11 +505,15 @@ namespace AOLauncher
             }
             componentTemplateId = template?.Id; defaultTemplate.Checked = template != null && template.Id == DefaultTemplateId; updating = previousUpdating;
             defaultTemplate.Enabled = !busy && !preview && template != null && !builtIn;
-            selectedSummary.Text = selected.Count + L(" chars selected. Login selections and team presets are unchanged.", " chars valgt. Loginvalg og hold er uændrede.")
-                + "\r\n" + (selected.Any(choice => string.IsNullOrEmpty(choice.CharacterPath) || !Directory.Exists(choice.CharacterPath))
+            selectedSummary.Text = selected.Count == 0 ? L("Choose the characters you want to change. Your login selection stays separate.", "Vælg de karakterer, du vil ændre. Dine loginvalg holdes adskilt.")
+                : selected.Count + L(" characters will receive: ", " karakterer modtager: ") + (template?.Name ?? L("no layout selected", "intet layout valgt"));
+            selectedSummary.Text += "\r\n" + (selected.Any(choice => string.IsNullOrEmpty(choice.CharacterPath) || !Directory.Exists(choice.CharacterPath))
                     ? L("Missing Prefs: log in once, then choose the account folder in Edit account.", "Manglende Prefs: log ind én gang, og vælg derefter kontomappen under Rediger konto.")
-                    : L("Running clients are handled before any layout is replaced.", "Aktive klienter håndteres, før et layout erstattes."));
-            applyLayout.Enabled = !busy && template != null && selected.Count > 0; applyDefault.Enabled = !busy && !string.IsNullOrEmpty(DefaultTemplateId) && selected.Count > 0;
+                    : L("Review affected characters before applying. Previous settings are backed up automatically.", "Gennemse berørte karakterer før ændringen. Tidligere indstillinger sikkerhedskopieres automatisk."));
+            if (selected.Count > 0 && GuiComponentChoices.Selected(componentChecks) == 0)
+                selectedSummary.Text = L("Choose at least one part to replace in step 3.", "Vælg mindst én del, der skal erstattes, i trin 3.");
+            applyLayout.Enabled = !busy && template != null && selected.Count > 0 && GuiComponentChoices.Selected(componentChecks) != 0;
+            applyDefault.Enabled = !busy && !string.IsNullOrEmpty(DefaultTemplateId) && selected.Count > 0;
             foreach (var button in selectionActions) button.Enabled = !busy && template != null && !builtIn;
             if (applySkin != null) applySkin.Enabled = !busy && skinTarget.SelectedItem != null && skins.SelectedItem != null;
             foreach (var button in skinActions) button.Enabled = !busy && skinTarget.SelectedItem != null;
@@ -699,6 +525,7 @@ namespace AOLauncher
                 : backup.Layout != null ? backup.Character.Label + "\r\n" + backup.Layout.TargetPath + "\r\n" + backup.Layout.State
                 : backup.Script != null ? backup.Script.ScriptsRoot + "\r\n" + ScriptAction(backup.Script.Action) + ": " + string.Join(", ", backup.Script.Changes.Take(8).Select(change => change.Name)) + (backup.Script.Changes.Count > 8 ? " …" : "") + "\r\n" + backup.Script.State
                 : backup.SkinTarget.Root + "\r\n" + L("Previous skin: ", "Tidligere skin: ") + backup.Skin.SkinName;
+            DesignSelectionUpdate(); ScriptWorkflowUpdate(); BackupWorkflowUpdate();
         }
         private static string ScriptAction(string action)
             => action == "Copy" ? L("Copied", "Kopieret") : action == "Import" ? L("Imported", "Importeret") : action == "Delete" ? L("Deleted", "Slettet") : action == "Restore" ? L("Restored", "Gendannet") : action;
@@ -728,24 +555,26 @@ namespace AOLauncher
         internal bool UseForNewCharacters => useDefault.Checked;
         internal GuiLayoutComponents Components => GuiComponentChoices.Selected(components);
         internal GuiCaptureDialog(IEnumerable<GuiCharacterChoice> characters, bool copy) : this(characters, copy, GuiLayoutComponents.Layout, null) { }
-        internal GuiCaptureDialog(IEnumerable<GuiCharacterChoice> characters, bool copy, GuiLayoutComponents initial, GuiCharacterChoice initialSource) : base(copy ? L("Copy layout from char", "Kopiér layout fra char") : L("Capture GUI layout", "Gem GUI-layout"), 520)
+        internal GuiCaptureDialog(IEnumerable<GuiCharacterChoice> characters, bool copy, GuiLayoutComponents initial, GuiCharacterChoice initialSource) : base(copy ? L("Copy a character's setup", "Kopiér en karakters opsætning") : L("Save a character's layout", "Gem en karakters layout"), 520)
         {
             ClientSize = new Size(620, 600);
-            AddWrappedNote(L("AO saves layout changes on normal logout. A running source must /quit before capture or copy; Nexus can relog it for you. If it is already closed, confirm that its latest changes were saved by a normal logout.", "AO gemmer layoutændringer ved normalt logout. En aktiv kilde skal afslutte med /quit før kopiering; Nexus kan genlogge den for dig. Er den allerede lukket, skal du bekræfte, at de seneste ændringer blev gemt ved normalt logout."), "captureGuiGuide");
+            AddWrappedNote(L("Choose the character whose setup you want to reuse. AO saves changes on normal logout; Nexus will review any required logout with you before copying.", "Vælg den karakter, hvis opsætning du vil genbruge. AO gemmer ved normalt logout; Nexus gennemgår eventuelt logout med dig før kopiering."), "captureGuiGuide");
+            Fields.Controls.Add(new Label { Text = L("Source character", "Kildekarakter"), AutoSize = true, Dock = DockStyle.Top, ForeColor = Theme.Accent, Margin = new Padding(0, 8, 0, 6) });
             source = new NexusComboBox { Name = "guiCaptureSource", Dock = DockStyle.Top, DropDownStyle = ComboBoxStyle.DropDownList };
             foreach (var character in characters) source.Items.Add(character); Fields.Controls.Add(source);
             if (initialSource != null && source.Items.Contains(initialSource)) source.SelectedItem = initialSource;
-            name = AddTextField(L("Template name", "Skabelonnavn"), copy ? "Character copy" : ""); name.MaxLength = 80;
+            name = AddTextField(L("Name for this saved layout", "Navn på dette gemte layout"), copy ? "Character copy" : ""); name.MaxLength = 80;
             if (copy) name.Parent.Visible = false;
+            Fields.Controls.Add(new Label { Text = L("Include in the copy", "Medtag i kopien"), AutoSize = true, Dock = DockStyle.Top, ForeColor = Theme.Accent, Margin = new Padding(0, 8, 0, 6) });
             Fields.Controls.Add(GuiComponentChoices.Create(components, "captureGuiComponent", null));
             foreach (var pair in components) pair.Value.Checked = (initial & pair.Key) != 0;
             // Hotbar macro buttons point at macro numbers; keep both together by default.
             components[GuiLayoutComponents.Hotbars].CheckedChanged += (sender, e) => { if (components[GuiLayoutComponents.Hotbars].Checked) components[GuiLayoutComponents.Macros].Checked = true; };
             AddWrappedNote(L("Hotbars can refer to nanos or items that another char does not have. Macros replace the target's macros, so hotbar buttons keep working. Include these only when you want to replace them.", "Hotbars kan henvise til nanoer eller genstande, som en anden char ikke har. Makroer erstatter målets makroer, så hotbar-knapper bliver ved med at virke. Medtag dem kun, når du vil erstatte dem."), "captureGuiComponentsGuide");
-            useDefault = new NexusCheckBox { Name = "newGuiTemplateDefault", Text = L("Use for new chars", "Brug til nye chars"), AutoSize = false, Height = 28, Dock = DockStyle.Top, Visible = !copy };
+            useDefault = new NexusCheckBox { Name = "newGuiTemplateDefault", Text = L("Use for new characters", "Brug til nye karakterer"), AutoSize = false, Height = 28, Dock = DockStyle.Top, Visible = !copy };
             Fields.Controls.Add(useDefault);
             AddWrappedNote(L("Only supported interface settings are copied. Existing characters are changed only when you select them as targets.", "Kun understøttede interfaceindstillinger kopieres. Eksisterende chars ændres kun, når du vælger dem som mål."), "captureGuiScope");
-            SaveButton.Text = copy ? L("Copy to selected", "Kopiér til valgte") : L("Capture", "Gem layout");
+            SaveButton.Text = copy ? L("Review copy…", "Gennemse kopi…") : L("Save layout…", "Gem layout…");
             SaveButton.Click += (sender, e) =>
             {
                 if (Source == null || string.IsNullOrWhiteSpace(TemplateName) || Components == 0) { ErrorLabel.Text = L("Choose a source, template name and at least one component.", "Vælg kilde, skabelonnavn og mindst én del."); return; }

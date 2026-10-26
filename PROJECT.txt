@@ -8,8 +8,8 @@ PROJECT MAP
 src\Launcher           WinForms interface, settings, encrypted credentials,
                        import/discovery, news reader and portable-runtime loader
 src\Common             Localization and shared server account policy
-src\Backend            AOQuickLauncher managed backend and native LoginHandler
-runtime\AOQuickLauncher  Self-contained Windows x86 login engine for embedding
+src\Backend            NexusEngine managed backend and native LoginHandler
+runtime\NexusEngine  Self-contained Windows x86 login engine for embedding
 assets                 Original artwork provenance, SVG and icon builder
 tests                  Isolated regression fixtures; no real game logins
 logs                   Build/test reports and synthetic UI previews

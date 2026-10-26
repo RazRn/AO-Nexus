@@ -23,6 +23,11 @@ namespace AOLauncher
         // The login handler skips drawing the login and character screens (measured ~1.5 s faster per character).
         // Missing in older profiles: they get the faster default as well.
         public bool QuietLaunch { get; set; } = true;
+        public bool FastStartup { get; set; } = true;
+        public bool MinimizeInactiveClients { get; set; }
+        public bool MonitorClientHealth { get; set; }
+        public bool CollectClientExitReports { get; set; }
+        public int OptionsReviewVersion { get; set; }
         public string GamePath { get; set; } = string.Empty;
         public string Server { get; set; } = "2.24.96.30";
         public int Port { get; set; } = 7500;
@@ -134,6 +139,7 @@ namespace AOLauncher
         public int Port { get; set; }
         public int ReadyTimeoutSeconds { get; set; } = 120;
         public bool QuietLaunch { get; set; }
+        public bool FastStartup { get; set; }
         public List<LaunchCharacter> Characters { get; set; } = new List<LaunchCharacter>();
     }
 
@@ -395,14 +401,13 @@ namespace AOLauncher
 
     internal static class SettingsStore
     {
-        // Nexus owns its profile. The original launcher is only read during first-run import.
+        // Nexus reads only its own profile directory.
         internal static string DirectoryPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AONexus");
         public static string FilePath => Path.Combine(DirectoryPath, "AONexus.json");
         internal static string ReadFilePath => GetReadPath(DirectoryPath);
 
         public static LauncherSettings Read()
         {
-            LauncherBootstrap.ImportExistingProfile();
             return ReadFromDirectory(DirectoryPath);
         }
 

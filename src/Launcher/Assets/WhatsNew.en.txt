@@ -1,19 +1,15 @@
-• Scripts and macros in Game GUI: the new Scripts tab copies chat scripts (/name) between your game installations, imports script files and shows each char's macros. Copy macros from one char to others with the new Macros component under Layouts; it is ticked automatically with Hotbars, so macro buttons keep working. Every change is backed up and can be restored under Backups.
+﻿WHAT'S NEW IN 1.2.0
 
-• Faster team logins: Nexus confirms a character in the world about 0.6 s sooner and waits 0.25 s instead of 1 s before starting the next character on the same account. Together that saves about 1.3 s per character.
+• Game GUI redesigned around clear tasks. Layouts walks through a saved setup, target characters and the parts to replace. Less common actions are under More actions.
+• Skins starts with the installation and shared accounts. Adding a skin and activating it are separate, clearly labelled steps.
+• Scripts has separate Script files and Character macros views. Preview files before copying; macro copies have their own destination selection and explain what is replaced.
+• Backups can be filtered by type. Each restore shows the original target, date and affected settings before you continue.
+• Faster classic-client startup and team logins using Nexus's integrated launch engine. Each character and the whole team's loading time appear in the activity log.
+• AOQuickLauncher is no longer required. The integrated engine gives Nexus direct control of startup and login scheduling; inherited work remains credited.
+• Optional AOSharp responsiveness in the header and tray. Measurement components are included; enable Nexus Health Monitor in your AOSharp profiles. Stale measurements are distinguished from actual update pauses or missing IPC replies, with reasons and timings in the log.
+• Optional client exit reports collect recent measurements and matching Windows errors in a ZIP you can save and share. An exit alone does not prove a crash. Nothing is uploaded automatically.
+• Existing users get a short review of new options. Choices remain available in Settings and the setup wizard.
+• Optional background minimization switches only between managed AO windows. Switching to a browser or another app does not minimize your active AO client.
+• Dark opening of windows and dialogs, a smoother header activity line, version-linked changelog and a GitHub link under Settings → Updates.
 
-• Login progress per character: the game client now reports each login stage (login screen, server connection, character list, character requested) to the diagnostics log with timings, and any Windows error dialog text it shows. Report a problem can then show exactly where a login stopped.
-
-• Clients started from the same game folder are now at least 1.5 seconds apart. AO briefly locks files while starting, and simultaneous starts could fail with "No write access to the main AO folder".
-
-• Faster logins: the game client now skips drawing the login and character screens and goes straight to the selected character, about 1.5 seconds faster per character in testing. It is on by default; turn it off under Settings → Accounts → Skip login screens.
-
-• Fix: character IDs written just before punctuation, such as “ID 123456789...” while waiting for the game window, are now anonymised in diagnostics and problem reports too. Choose Delete diagnostics now under Settings → Updates to clear entries saved by 1.1.7.
-
-• Report a problem: Settings → General → Report a problem… (also in the activity window) builds an anonymised report and opens a prefilled GitHub issue. You review everything first; nothing is sent until you submit it. Copy or save the report if you do not use GitHub.
-
-• Logins, account and character names, character IDs, team names, custom servers and personal folders are replaced with codes such as Char-3fa2c1. Passwords are never recorded.
-
-• A local diagnostics log now records login steps per character, client exits, timeouts and errors, so problems such as one character in a team failing to log in can be traced. It is capped at 2 MB and can be turned off or deleted under Settings → Updates.
-
-• If Nexus closes unexpectedly, it saves an anonymised crash report and offers to report it at the next start.
+Monitoring checks the local AOSharp update loop and its test IPC path. It does not measure game-server packet loss or guarantee delivery for other plugins.

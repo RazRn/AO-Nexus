@@ -40,15 +40,17 @@ namespace AOLauncher
         {
             if (trayIcon == null || trayHealthItem == null || closing) return;
             bool enabled = settings.BackgroundHealthChecks || settings.HealthTrayNotifications;
-            trayIcon.Visible = hiddenInTray || settings.HealthTrayNotifications;
-            trayIcon.Icon = enabled && healthAlerts.IssueCount > 0 ? SystemIcons.Warning : Icon;
+            trayIcon.Visible = hiddenInTray || settings.HealthTrayNotifications || MeasuredClients.Any() || NewClientExit
+                || settings.MonitorClientHealth && clientObservations.Any(c => !c.ExitedUtc.HasValue);
+            trayIcon.Icon = enabled && healthAlerts.IssueCount > 0 || ClientWarning ? SystemIcons.Warning : Icon;
             string summary = !enabled ? L("Background checks off", "Baggrundstjek slået fra")
                 : healthAlerts.IssueCount > 0 ? healthAlerts.IssueCount + L(" unresolved issue(s)", " uafklarede problemer")
                 : !healthAlerts.Observations.Any() ? L("Waiting for checks", "Venter på tjek")
                 : healthAlerts.Observations.Any(item => item.State == HealthState.Unknown || item.Failures > 0 || DateTime.UtcNow - item.CheckedUtc > TimeSpan.FromSeconds(150))
                     ? L("Some checks unknown or pending", "Nogle tjek ukendte eller afventer") : L("Checked services reachable", "Tjekkede tjenester tilgængelige");
-            string tip = "AO Nexus · " + summary;
-            trayIcon.Text = tip.Length > 63 ? tip.Substring(0, 62) + "…" : tip;
+            string clientSummary = ClientSummary();
+            string tip = "AO Nexus · " + (clientSummary ?? summary);
+            trayIcon.Text = LimitTrayText(tip);
             trayHealthItem.Text = L("Server health · ", "Serverstatus · ") + summary;
         }
         private void PopulateHealthMenu()

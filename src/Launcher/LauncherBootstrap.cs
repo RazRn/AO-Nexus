@@ -9,14 +9,6 @@ namespace AOLauncher
     // Copy, never move: both applications retain independent settings and encrypted credentials.
     internal static class LauncherBootstrap
     {
-        internal static bool ImportedThisSession { get; private set; }
-
-        internal static void ImportExistingProfile()
-        {
-            string local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            ImportedThisSession = ImportFromDirectory(Path.Combine(local, "AOQuickLauncher"), SettingsStore.DirectoryPath);
-        }
-
         internal static bool ImportFromDirectory(string source, string destination)
         {
             source = Path.GetFullPath(source);

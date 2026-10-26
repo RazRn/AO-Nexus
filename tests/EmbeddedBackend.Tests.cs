@@ -71,7 +71,7 @@ internal static class EmbeddedBackendTests
         Bundle bundle = GoodBundle();
         string cache = NewRoot("space and \u00e6\u00f8\u00e5");
         string executable = Extract(cache, bundle);
-        Check(executable == Path.Combine(cache, bundle.Hash, "AOQuickLauncher.exe"), "content-addressed path");
+        Check(executable == Path.Combine(cache, bundle.Hash, "NexusEngine.exe"), "content-addressed path");
         Check(File.ReadAllText(executable) == "inert fake backend", "exact extracted content");
         Check(File.ReadAllText(Path.Combine(Path.GetDirectoryName(executable), "nested", "dependency.dll")) == "inert dependency", "nested DLL");
         DateTime originalWrite = File.GetLastWriteTimeUtc(executable);
@@ -135,7 +135,7 @@ internal static class EmbeddedBackendTests
         }
 
         Bundle duplicateZip = GoodBundle();
-        AddEntry(duplicateZip, "aoquicklauncher.EXE", "inert fake backend");
+        AddEntry(duplicateZip, "nexusengine.EXE", "inert fake backend");
         ExpectRejected(() => Extract(NewRoot("duplicate-zip"), duplicateZip), "case-insensitive ZIP duplicate");
         Bundle unlisted = GoodBundle();
         AddEntry(unlisted, "extra.dll", "extra");
@@ -218,8 +218,8 @@ internal static class EmbeddedBackendTests
     private static Bundle GoodBundle(string backend = "inert fake backend")
     {
         var content = new Dictionary<string, string> {
-            { "AOQuickLauncher.exe", backend }, { "LoginHandler.dll", "inert fake login handler" },
-            { "nested/dependency.dll", "inert dependency" }, { "AOQuickLauncher.runtimeconfig.json", "{}" }
+            { "NexusEngine.exe", backend }, { "LoginHandler.dll", "inert fake login handler" },
+            { "nested/dependency.dll", "inert dependency" }, { "NexusEngine.runtimeconfig.json", "{}" }
         };
         using (var bytes = new MemoryStream())
         {

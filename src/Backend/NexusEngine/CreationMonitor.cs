@@ -12,7 +12,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AOQuickLauncher
+namespace NexusEngine
 {
     internal sealed class CreatedCharacter
     {
@@ -25,7 +25,7 @@ namespace AOQuickLauncher
     internal sealed class CreationMonitor : IDisposable
     {
         internal const int MaximumFrameBytes = 512;
-        internal const string PipePrefix = "AOQuickLauncher.Created.";
+        internal const string PipePrefix = "AONexus.Created.";
         private readonly CharacterLaunch entry;
         private readonly LaunchTarget target;
         private readonly NamedPipeServerStream pipe;
@@ -52,7 +52,7 @@ namespace AOQuickLauncher
                 // already copied at Start, so do not retain another password reference.
                 client.StartInfo.Environment.Remove("AOPass");
                 ClientSessions.RecordPending(entry, target, client, true);
-                Console.WriteLine("AOQL_CREATION_STARTED " + JsonSerializer.Serialize(new {
+                Console.WriteLine("NEXUS_CREATION_STARTED " + JsonSerializer.Serialize(new {
                     AccountId = entry.AccountId, ProcessId = processId, StartTimeUtcTicks = startTimeUtcTicks
                 }));
                 Console.WriteLine(Texts.T("Client started for character creation. Continue in the game window; the new character will be added automatically when it enters the game."));
@@ -90,7 +90,7 @@ namespace AOQuickLauncher
                         Console.Error.WriteLine(Texts.T("The new character could not be saved to the active client list. The game remains open; add the character manually."));
                         return 1;
                     }
-                    Console.WriteLine("AOQL_CHARACTER " + JsonSerializer.Serialize(new {
+                    Console.WriteLine("NEXUS_CHARACTER " + JsonSerializer.Serialize(new {
                         AccountId = entry.AccountId, CharacterId = created.Id, CharacterName = created.Name, Created = true
                     }));
                     return 0;

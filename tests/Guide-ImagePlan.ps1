@@ -10,7 +10,10 @@ $GuideImagePlan = [ordered]@{
     'server-health.png' = @{ Size=@(1280,1000); Crop=@(900,145,355,550); Boxes=@(@(918,270,314,299),@(918,576,314,109)) }
     'activity-log.png' = @{ Size=@(900,340); Boxes=@(@(18,12,744,43),@(778,284,107,41)) }
     'update-available.png' = @{ Size=@(620,600); Boxes=@(@(29,146,562,274),@(438,539,152,39)) }
-    'gui-layouts.png' = @{ Size=@(1040,700); Boxes=@(@(38,157,407,51),@(463,120,538,336),@(461,529,116,40)) }
-    'gui-skins.png' = @{ Size=@(1040,700); Boxes=@(@(38,481,964,47),@(38,127,612,42),@(35,529,268,41)) }
-    'gui-backups.png' = @{ Size=@(1040,700); Boxes=@(@(38,126,963,28),@(35,529,150,41)) }
+    # Full client areas from Verify-GameGuiUsability: synthetic data, no crops or annotations.
+    'gui-layouts-1.2.png' = @{ Size=@(1120,740); Boxes=@(); Versioned=$true; Source='en-1-default-tab0.png' }
+    'gui-skins-1.2.png' = @{ Size=@(1120,740); Boxes=@(); Versioned=$true; Source='en-1-default-tab1.png' }
+    'gui-scripts-1.2.png' = @{ Size=@(1120,740); Boxes=@(); Versioned=$true; Source='en-1-default-tab2.png' }
+    'gui-macros-1.2.png' = @{ Size=@(1120,740); Boxes=@(); Versioned=$true; Source='en-1-default-macros.png' }
+    'gui-backups-1.2.png' = @{ Size=@(1120,740); Boxes=@(); Versioned=$true; Source='en-1-default-tab3.png' }
 }

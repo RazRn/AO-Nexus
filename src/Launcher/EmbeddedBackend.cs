@@ -21,7 +21,7 @@ namespace AOLauncher
         private const long MaximumPayloadBytes = 128L * 1024 * 1024;
         private const long MaximumExpandedBytes = 256L * 1024 * 1024;
         private const int MaximumFiles = 2048;
-        private const string BackendFileName = "AOQuickLauncher.exe";
+        private const string BackendFileName = "NexusEngine.exe";
 
         internal static string EnsureAvailable()
         {
@@ -57,13 +57,20 @@ namespace AOLauncher
         internal static string EnsureAvailable(string cacheRoot, Stream payloadStream, Stream manifestStream,
             CancellationToken cancellationToken = default(CancellationToken))
         {
+            return EnsureBundleAvailable(cacheRoot, payloadStream, manifestStream, BackendFileName, cancellationToken);
+        }
+
+        // Monitoring uses the same bounded, verified, immutable extraction path.
+        internal static string EnsureBundleAvailable(string cacheRoot, Stream payloadStream, Stream manifestStream,
+            string requiredFile, CancellationToken cancellationToken = default(CancellationToken))
+        {
             if (string.IsNullOrWhiteSpace(cacheRoot)) throw new ArgumentException("A cache folder is required.", nameof(cacheRoot));
             if (payloadStream == null) throw new ArgumentNullException(nameof(payloadStream));
             if (manifestStream == null) throw new ArgumentNullException(nameof(manifestStream));
 
             cancellationToken.ThrowIfCancellationRequested();
             PayloadManifest manifest = ReadManifest(manifestStream, cancellationToken);
-            Dictionary<string, PayloadFile> files = ValidateManifest(manifest);
+            Dictionary<string, PayloadFile> files = ValidateManifest(manifest, requiredFile);
             using (var payload = new MemoryStream())
             {
                 CopyBounded(payloadStream, payload, MaximumPayloadBytes, cancellationToken);
@@ -104,7 +111,7 @@ namespace AOLauncher
                         if (Directory.Exists(version) || File.Exists(version))
                         {
                             VerifyExistingVersion(version, files, cancellationToken);
-                            return Path.Combine(version, BackendFileName);
+                            return Path.Combine(version, requiredFile);
                         }
 
                         // A failed or interrupted extraction can never be mistaken for a complete version.
@@ -120,7 +127,7 @@ namespace AOLauncher
                             EnsureNoReparseAncestors(root);
                             EnsureNoReparseAncestors(version);
                             Directory.Move(staging, version);
-                            return Path.Combine(version, BackendFileName);
+                            return Path.Combine(version, requiredFile);
                         }
                         finally
                         {
@@ -152,7 +159,7 @@ namespace AOLauncher
             }
         }
 
-        private static Dictionary<string, PayloadFile> ValidateManifest(PayloadManifest manifest)
+        private static Dictionary<string, PayloadFile> ValidateManifest(PayloadManifest manifest, string requiredFile)
         {
             if (manifest == null || !IsHash(manifest.PayloadSha256) || manifest.Files == null ||
                 manifest.Files.Length == 0 || manifest.Files.Length > MaximumFiles) throw InvalidBundle();
@@ -166,7 +173,7 @@ namespace AOLauncher
                 if (total > MaximumExpandedBytes) throw InvalidBundle();
                 files.Add(file.Path, file);
             }
-            if (!files.ContainsKey(BackendFileName)) throw InvalidBundle();
+            if (!IsSafeRelativePath(requiredFile) || !files.ContainsKey(requiredFile)) throw InvalidBundle();
             foreach (string path in files.Keys)
             {
                 int slash = path.IndexOf('/');

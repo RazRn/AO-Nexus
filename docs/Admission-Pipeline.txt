@@ -1,0 +1,138 @@
+AO Nexus: acceptance-controlled Rebirth login
+===========================================
+
+Evidence
+--------
+Inspected upstream server revision 2d4edfded3bfee27f5c89753e1250e9c94b107e7
+in the separate server-source checkout. WorldState was inspected with
+git show HEAD, so this conclusion does not rely on the local pending-grants
+patch in that separate repository. No server files or deployment were changed.
+
+In WorldEngine/State/WorldState.cs, BeginLogin replaces the account's pending
+generation. Claim rejects a login ticket whose generation is no longer current.
+Successful Claim creates/refreshes an independent character lease and removes
+the ticket. Starting the next authentication after Claim avoids that race.
+
+ZoneEngine_New/Core/MessageHandlers/ZoneLoginHandler.cs awaits ClaimAsync at
+line 116, closes rejected sessions at 123-131, and only after successful admission
+and hydration sends InitiateCompression, ChatServerInfo, then PlayfieldAnarchyF
+at 216-218. ChatServerInfo is therefore evidence of completed admission on this
+path. It is not a promise that later rendering, spawn or networking cannot fail.
+The exact revision deployed on the public endpoint has not been independently
+verified. Live tests corroborated the observed response and successful sequencing.
+
+Client implementation
+---------------------
+The version-pinned MessageProtocol.dll DataBlockToMessage export exposes decoded
+frames after decompression. The hook calls the original decoder first, then
+recognizes a successful SystemMessage 0x43 addressed to the requested character.
+It checks the complete frame length and only reports once after character
+selection. It neither logs packet payloads nor changes the game protocol.
+
+Each preloaded client waits on private local ready/cancel events before its
+normal ConnectToLH call. A UI-thread timer checks readiness; the UI thread is
+never blocked waiting for the previous client. Readiness is released on receipt
+of ChatServerInfo. Cancellation, launcher exit, missing gate handles and gate
+timeout leave the manual login UI available without authenticating automatically.
+There is no configured delay between successive authentications. A timer dispatch
+and normal scheduling latency remain; the timer is not a server-readiness guess.
+
+The queue retains final character-window confirmation, session identity checks,
+account limits and normal /quit. Missing acceptance telemetry falls back to full
+confirmation. Failed confirmation stops further starts in that account queue.
+Already-preloaded clients whose prerequisite fails are cancelled, not force-killed.
+
+Scope and controls
+------------------
+Enabled by default only for 2.24.96.30:7500 with FastStartup enabled and all six
+classic-client hashes verified. Unknown builds, Funcom and PRK retain serial
+behavior. Turning off Fast loading also disables preloading. Internal stdin
+request controls AcceptancePipeline=false and MaxConcurrentPreloads=1..6 allow
+bounded local comparison. Unsafe fixed-delay experiment controls were removed.
+No UI setting or saved profile was rewritten by the experiments.
+
+Local testing
+-------------
+A six-character preset; one saved Rebirth account and one installation.
+Tests used saved credentials in memory, private worker stdin, the normal injector,
+normal confirmation and normal /quit. No forced client termination. These are
+warm-machine observations at the characters' current location, not an absolute
+minimum or a guarantee for another machine, zone, server load or cold cache.
+
+Timing starts at the helper stopwatch before request preparation. The headline
+time is the last client's native world-ready event (initial overlay removal).
+It is distinct from the later queue confirmation/worker exit and not a measured
+physical screen-present timestamp. All six clients were matched by the production
+session registry; do not interpret this as manual visual inspection of every client.
+
+See logs/acceptance-results.json for measured runs and event-order checks.
+Original serial run: 31.908 s. Fixed 1000 ms / two-in-flight run: 18.065 s.
+Fixed 500 ms run: first client exited before world-ready; test stopped early.
+Acceptance before spawning next: 25.928 s, 6/6.
+Acceptance with three preloads / 500 ms start gap: 15.645 s, 6/6.
+Acceptance with six preloads / 500 ms start gap: 14.142 s, 6/6.
+Acceptance with six preloads / zero added gap: 13.505 s, 6/6.
+Acceptance with four preloads / zero added gap: 14.802 s, 6/6.
+Final default repeats: 13.481 s and 13.265 s, both 6/6. Including the matching
+zero-gap exploratory run, the chosen configuration completed 18/18 logins across
+three runs. The fastest observed result is about 58% below the earlier serial
+baseline. These runs were not randomized or a statistical latency guarantee.
+Preloading trades first-character latency for team completion: the first world
+was ready at 7.921/7.870 s in the final runs versus 4.587 s in the serial run.
+It also puts more startup CPU, memory and I/O demand on the machine at once.
+All recorded gate releases followed the preceding character's acceptance event.
+Final client reuse skipped all six existing sessions without spawning duplicates;
+the helper exited in 0.539 s. Normal preset logout completed after each run.
+Exact binary hashes are recorded in the JSON results.
+
+Offline tests cover truncated/wrong-character/wrong-opcode frames, guarded-page
+reads, once-only gate release, cancellation precedence, timeout and parent exit,
+missing telemetry, failed confirmation, late acceptance after disposal, endpoint
+restrictions and existing session/account policies. The launcher's first-paint
+changes are separately checked for theme/handle creation and composed painting.
+
+These measurements were captured during local development before release.
+
+Regression verification note
+----------------------------
+The first broad preview verification run failed one AccountDialog Space-key
+checkbox assertion at English 150% scale. An unchanged rerun passed all 525
+dialog-theme/input checks; the earlier first-paint build also passed them.
+The precise cause of this intermittent test failure is not established. Both
+the failing log and passing retry are preserved rather than hiding the failure.
+All remaining checks in build/Verify.ps1 subsequently passed, including account
+limits, creation monitoring, backend lifecycle, normal camp control, scripts,
+macros, diagnostics, updates and embedded payload verification. The preview
+contains the same NexusEngine.dll and LoginHandler.dll hashes as the final live
+tests. All 200 embedded backend files were verified and the real payload was
+extracted and verified twice. All live test game processes were logged out.
+
+Current release entry point: dist/AONexus.exe.
+Close the existing AO Nexus instance before opening a newer build. Select the
+usual preset and keep Fast loading enabled. Quiet launch was enabled in the
+timing runs. The existing dist/AONexus.exe was not overwritten while it was open.
+
+Visible loading timers
+----------------------
+Each newly confirmed client now gets a readable activity-log line, for example
+"Character loaded in 9.56 s." The interval starts immediately before client spawn
+and ends at its native world-ready report. It includes preload/admission waits.
+The final team time runs from launch-queue entry to the last new client's
+world-ready event. It includes gaps between starts; it does not add overlapping
+per-client times or include initial launcher-component preparation.
+
+Existing clients are excluded from new-client loading time. An entirely reused
+preset reports that no clients needed loading. Missing world-ready reports use
+explicitly labelled login-confirmation times instead. Partial/failed runs report
+elapsed run time and the confirmed/selected counts rather than claiming that
+all clients loaded. English and Danish text and number formats are supported.
+
+The timing-log verification run confirmed all six individual displayed values
+against native events. The visible team total was 9.92 s; the external helper's
+last world-ready timestamp was 10.088 s, including earlier request preparation.
+This subsequent warm run had different timing from the earlier benchmark;
+the logging change does not itself establish a performance improvement.
+Reuse and normal logout also passed. See logs/aor-visible-timing*.txt.
+112 policy/admission/timing checks and 51 creation-monitor checks passed; the
+200-file payload was verified. A synthetic UI render checked the left-aligned
+credit and delivery of timing messages into the visible activity log.

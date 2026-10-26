@@ -1,5 +1,5 @@
 param(
-    [string]$BackendDirectory = (Join-Path $PSScriptRoot '..\runtime\AOQuickLauncher'),
+    [string]$BackendDirectory = (Join-Path $PSScriptRoot '..\runtime\NexusEngine'),
     [string]$OutputDirectory = (Join-Path $PSScriptRoot '..\src\Launcher\obj\EmbeddedBackend'),
     [switch]$ValidateOnly,
     [string]$VerifyExecutable,
@@ -61,9 +61,9 @@ function Get-StreamHash([IO.Stream]$Stream) {
 }
 
 Assert-Ancestors $backendRoot
-foreach ($name in @('AOQuickLauncher.deps.json', 'AOQuickLauncher.runtimeconfig.json')) { Assert-OrdinaryPath (Join-Path $backendRoot $name) -File }
-$deps = Get-Content -LiteralPath (Join-Path $backendRoot 'AOQuickLauncher.deps.json') -Raw | ConvertFrom-Json
-$runtimeConfig = Get-Content -LiteralPath (Join-Path $backendRoot 'AOQuickLauncher.runtimeconfig.json') -Raw | ConvertFrom-Json
+foreach ($name in @('NexusEngine.deps.json', 'NexusEngine.runtimeconfig.json')) { Assert-OrdinaryPath (Join-Path $backendRoot $name) -File }
+$deps = Get-Content -LiteralPath (Join-Path $backendRoot 'NexusEngine.deps.json') -Raw | ConvertFrom-Json
+$runtimeConfig = Get-Content -LiteralPath (Join-Path $backendRoot 'NexusEngine.runtimeconfig.json') -Raw | ConvertFrom-Json
 if ($runtimeConfig.runtimeOptions.tfm -ne 'net10.0' -or
     !($runtimeConfig.runtimeOptions.PSObject.Properties.Name -contains 'includedFrameworks')) {
     throw 'Publish the win-x86 backend with --self-contained true before bundling it.'
@@ -74,7 +74,7 @@ if ($deps.runtimeTarget.name -notmatch '/win-x86$') { throw 'The embedded backen
 # handler and Reloaded.Assembler native content, which are not runtime entries.
 # Do not enumerate arbitrary binaries or JSON from a used installation.
 $relativePaths = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
-foreach ($name in @('AOQuickLauncher.exe', 'AOQuickLauncher.deps.json', 'AOQuickLauncher.runtimeconfig.json',
+foreach ($name in @('NexusEngine.exe', 'NexusEngine.deps.json', 'NexusEngine.runtimeconfig.json',
     'LoginHandler.dll', 'FASM.DLL', 'FASMX64.DLL', 'FASM-LICENSE.TXT')) { [void]$relativePaths.Add($name) }
 foreach ($target in $deps.targets.PSObject.Properties) {
     foreach ($library in $target.Value.PSObject.Properties) {
@@ -110,7 +110,7 @@ $files = @($orderedPaths | ForEach-Object {
     $expected[$_] = $entry
     $entry
 })
-foreach ($required in @('AOQuickLauncher.dll', 'coreclr.dll', 'hostfxr.dll', 'hostpolicy.dll', 'System.Private.CoreLib.dll', 'CommandLine.dll', 'Reloaded.Injector.dll')) {
+foreach ($required in @('NexusEngine.dll', 'coreclr.dll', 'hostfxr.dll', 'hostpolicy.dll', 'System.Private.CoreLib.dll', 'Reloaded.Injector.dll')) {
     if (!$expected.ContainsKey($required)) { throw "Required backend runtime asset is missing: $required" }
 }
 

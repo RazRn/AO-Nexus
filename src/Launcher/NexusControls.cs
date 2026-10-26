@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
@@ -410,15 +411,16 @@ namespace AOLauncher
         protected override void OnMouseLeave(EventArgs e) { hover = false; pressed = false; Invalidate(); base.OnMouseLeave(e); }
         protected override void OnMouseDown(MouseEventArgs e) { pressed = e.Button == MouseButtons.Left; Invalidate(); base.OnMouseDown(e); }
         protected override void OnMouseUp(MouseEventArgs e) { pressed = false; Invalidate(); base.OnMouseUp(e); }
+        protected override void OnEnabledChanged(EventArgs e) { base.OnEnabledChanged(e); Invalidate(); }
         protected override void OnPaint(PaintEventArgs e)
         {
-            Color background = Enabled && pressed ? FlatAppearance.MouseDownBackColor : Enabled && hover ? FlatAppearance.MouseOverBackColor : BackColor;
+            Color background = !Enabled ? Theme.Surface : pressed ? FlatAppearance.MouseDownBackColor : hover ? FlatAppearance.MouseOverBackColor : BackColor;
             if (background.IsEmpty) background = BackColor;
             using (var brush = new SolidBrush(background)) e.Graphics.FillRectangle(brush, ClientRectangle);
-            using (var pen = new Pen(FlatAppearance.BorderColor.IsEmpty ? Theme.Border : FlatAppearance.BorderColor))
+            using (var pen = new Pen(!Enabled || FlatAppearance.BorderColor.IsEmpty ? Theme.Border : FlatAppearance.BorderColor))
                 e.Graphics.DrawRectangle(pen, 0, 0, Math.Max(0, Width - 1), Math.Max(0, Height - 1));
             var textBounds = new Rectangle(Padding.Left + 3, Padding.Top, Math.Max(1, Width - Padding.Horizontal - 6), Math.Max(1, Height - Padding.Vertical));
-            Color textColor = Enabled ? ForeColor : BackColor.GetBrightness() > .45F ? Theme.Background : Theme.Muted;
+            Color textColor = Enabled ? ForeColor : Theme.Muted;
             TextRenderer.DrawText(e.Graphics, Text, Font, textBounds, textColor,
                 TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
             if (Focused && ShowFocusCues)
@@ -430,23 +432,28 @@ namespace AOLauncher
     internal sealed class NexusHero : Panel
     {
         private readonly Image backdrop;
-        private readonly Timer activityTimer = new Timer { Interval = 50 };
+        private readonly Timer activityTimer = new Timer { Interval = 16 };
+        private readonly Stopwatch activityClock = new Stopwatch();
+        private readonly ActivityStrip activityStrip = new ActivityStrip();
         private bool activity;
-        private int completed, total, phase;
+        private int completed, total;
         internal bool ActivityRunning => activity;
         internal int Completed => completed;
         internal void BeginActivity(int count = 0)
         {
-            total = Math.Max(0, count); completed = phase = 0; activity = true;
-            activityTimer.Enabled = Visible; Invalidate();
+            total = Math.Max(0, count); completed = 0; activity = true;
+            activityClock.Restart();
+            activityTimer.Enabled = Visible; activityStrip.Invalidate();
         }
         internal void ReportActivity(int count)
         {
-            completed = Math.Max(0, Math.Min(total, count)); Invalidate();
+            int next = Math.Max(0, Math.Min(total, count));
+            if (completed == next) return;
+            completed = next; activityStrip.Invalidate();
         }
         internal void EndActivity()
         {
-            activity = false; activityTimer.Stop(); completed = total = 0; Invalidate();
+            activity = false; activityTimer.Stop(); activityClock.Reset(); completed = total = 0; activityStrip.Invalidate();
         }
         internal NexusHero()
         {
@@ -454,8 +461,34 @@ namespace AOLauncher
             SetStyle(ControlStyles.ResizeRedraw, true);
             BackColor = Theme.Background;
             backdrop = AppArtwork.CreateBackdrop();
-            activityTimer.Tick += (sender, e) => { phase = (phase + 1) % 100; Invalidate(new Rectangle(0, Math.Max(0, Height - 4), Width, 4)); };
+            activityStrip.Name = "headerActivityStrip";
+            activityStrip.Paint += (sender, e) => PaintActivity(e.Graphics, activityClock.ElapsedMilliseconds);
+            Controls.Add(activityStrip);
+            PositionActivityStrip();
+            // Repaint only the opaque strip, not the artwork or transparent header labels.
+            activityTimer.Tick += (sender, e) => activityStrip.Invalidate();
         }
+
+        private sealed class ActivityStrip : Control
+        {
+            internal ActivityStrip()
+            {
+                SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint |
+                    ControlStyles.OptimizedDoubleBuffer | ControlStyles.Opaque | ControlStyles.ResizeRedraw, true);
+                TabStop = false;
+            }
+        }
+
+        private void PositionActivityStrip()
+        {
+            if (activityStrip == null) return;
+            activityStrip.SetBounds(0, Math.Max(0, ClientSize.Height - 3), ClientSize.Width, Math.Min(3, ClientSize.Height));
+            activityStrip.BringToFront();
+        }
+        protected override void OnSizeChanged(EventArgs e)
+        { base.OnSizeChanged(e); PositionActivityStrip(); }
+        protected override void OnControlAdded(ControlEventArgs e)
+        { base.OnControlAdded(e); activityStrip?.BringToFront(); }
 
         protected override void OnVisibleChanged(EventArgs e)
         { base.OnVisibleChanged(e); activityTimer.Enabled = activity && Visible; }
@@ -475,19 +508,34 @@ namespace AOLauncher
                 e.Graphics.FillRectangle(shade, ClientRectangle);
             using (var shade = new LinearGradientBrush(ClientRectangle, Color.Transparent, Color.FromArgb(110, 8, 18, 28), 90F))
                 e.Graphics.FillRectangle(shade, ClientRectangle);
-            using (var line = new Pen(Theme.Border)) e.Graphics.DrawLine(line, 0, Height - 1, Width, Height - 1);
+        }
+
+        private void PaintActivity(Graphics graphics, long elapsedMilliseconds)
+        {
+            int width = activityStrip.Width, height = activityStrip.Height;
+            if (width <= 0 || height <= 0) return;
+            graphics.Clear(Theme.Background);
+            using (var brush = new SolidBrush(Theme.Border)) graphics.FillRectangle(brush, 0, height - 1, width, 1);
             if (!activity)
             {
-                using (var line = new Pen(Theme.Accent, 2)) e.Graphics.DrawLine(line, 24, Height - 1, 150, Height - 1);
+                using (var brush = new SolidBrush(Theme.Accent)) graphics.FillRectangle(brush, 0, Math.Max(0, height - 2), Math.Min(150, width), Math.Min(2, height));
             }
             else
             {
-                int filled = total > 0 ? (int)((long)Width * completed / total) : 0;
-                using (var brush = new SolidBrush(Theme.Accent)) e.Graphics.FillRectangle(brush, 0, Height - 3, filled, 3);
-                int remaining = Width - filled, segment = Math.Min(remaining, Math.Max(30, Width / 10));
-                int offset = (int)((remaining + segment) * phase / 100.0) - segment;
-                int left = Math.Max(filled, filled + offset), right = Math.Min(Width, filled + offset + segment);
-                if (right > left) using (var brush = new SolidBrush(Theme.Amber)) e.Graphics.FillRectangle(brush, left, Height - 3, right - left, 3);
+                int filled = total > 0 ? (int)((long)width * completed / total) : 0;
+                using (var brush = new SolidBrush(Theme.Accent)) graphics.FillRectangle(brush, 0, 0, filled, height);
+                int remaining = width - filled;
+                if (remaining == 0) return;
+                int segment = Math.Min(remaining, Math.Max(30, width / 10));
+                // Elapsed time avoids timer-delay stutter; wrapping preserves the
+                // same amber area at both edges instead of blinking out each lap.
+                int offset = (int)(remaining * (elapsedMilliseconds % 5000) / 5000);
+                int first = Math.Min(segment, remaining - offset);
+                using (var brush = new SolidBrush(Theme.Amber))
+                {
+                    graphics.FillRectangle(brush, filled + offset, 0, first, height);
+                    if (first < segment) graphics.FillRectangle(brush, filled, 0, segment - first, height);
+                }
             }
         }
 

@@ -7,7 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AOQuickLauncher
+namespace NexusEngine
 {
     // Compiled with the production policy, queue and session sources. The spawn
     // stub makes accidentally starting a real game impossible in this test binary.
@@ -23,6 +23,8 @@ namespace AOQuickLauncher
             internal string CampToken { get; set; }
             internal string StatusPipe { get; set; }
             internal bool Quiet { get; set; }
+            internal bool FastStartup { get; set; }
+            internal string LoginGate { get; set; }
         }
         internal static Process SpawnAOProcess(Options options, LaunchTarget target)
         {
@@ -39,6 +41,8 @@ namespace AOQuickLauncher
         {
             gamePath = args.Single();
             Texts.SetLanguage("en");
+            Pass(!FastStartup.IsSupported(gamePath), "Empty or unknown client files never enable private startup hooks");
+            Pass(!FastStartup.IsSupported(Path.Combine(gamePath, "missing")), "Missing client directories safely fall back to normal loading");
             Check("PRK active accounts block a third account", new[] { Char("gamma", 3) },
                 new[] { Record("alpha", 1), Record("beta", 2) }, "3 accounts");
             Check("Selected running account is counted once", new[] { Char(" ALPHA ", 1), Char("beta", 2) },
@@ -164,6 +168,8 @@ namespace AOQuickLauncher
             creation = CreationRecord("alpha"); creation.CreateCharacter = false;
             Observed("Legacy zero-ID records are not accepted", creation, false);
             LoginStatusChecks();
+            AcceptanceChecks();
+            LaunchTimingChecks();
             Console.WriteLine("PASS: " + checks + " tracked-session and two-cap policy checks using synthetic records only.");
             return 0;
         }
@@ -246,6 +252,105 @@ namespace AOQuickLauncher
                 string summary = channel.Summary();
                 Pass(summary.Contains("s login-screen") && summary.Contains("s character-requested") && !summary.Contains("Secret") && !summary.Contains("@"), "Timeline keeps valid stages only, without '@'");
                 lock (stages) Pass(stages.SequenceEqual(new[] { "login-screen", "character-list", "character-requested" }), "Stages are reported in order");
+            }
+        }
+
+        private static void LaunchTimingChecks()
+        {
+            Texts.SetLanguage("en");
+            var a = new CharacterLaunch { CharacterId = 1 };
+            var b = new CharacterLaunch { CharacterId = 1 }; // Same numeric ID on a different target is still distinct.
+            var times = new LaunchTimings(2);
+            times.Begin(a, 0); times.Begin(b, 500);
+            times.Observe(a, "world-ready meshes=20", 2000);
+            times.Observe(a, "world-ready meshes=20", 9999);
+            times.Observe(b, "world-ready meshes=20", 3000);
+            Pass(times.Confirmed(a, "First", 2400) == "First loaded in 2.00 s.", "Client timing uses first world-ready signal, not later window confirmation");
+            Pass(times.Confirmed(b, "Second", 3400) == "Second loaded in 3.00 s.", "Different targets with identical character IDs keep independent timing");
+            Pass(times.Summary(true, 4200) == "All 2 clients loaded in 3.50 s total.", "Team time is the last absolute readiness time, not sum or worker shutdown time");
+            Pass(times.Confirmed(a, "First", 9999) == null, "Repeated confirmation does not duplicate timing lines");
+            Pass(times.Summary(false, 4200).StartsWith("Login run finished in 4.20 s;"), "An errored run cannot claim all clients loaded");
+
+            times = new LaunchTimings(2); times.AlreadyOpen(a); times.Begin(b, 1000);
+            times.Observe(b, "world-ready meshes=0", 4000); times.Confirmed(b, "Second", 4500);
+            Pass(times.Summary(true, 6000) == "1 new client loaded in 5.00 s total; 1 already open.", "Reused clients are excluded from new-client loading time");
+            times = new LaunchTimings(2); times.AlreadyOpen(a); times.AlreadyOpen(a); times.AlreadyOpen(b);
+            Pass(times.Summary(true, 500) == "No clients needed loading; 2 already open.", "All-reused run reports reuse instead of a misleading zero load time");
+
+            times = new LaunchTimings(3); times.Begin(a, 0); times.Begin(b, 10);
+            times.Observe(a, "world-ready meshes=invalid", 3000);
+            times.Observe(a, "world-ready meshes=20", -1);
+            times.Observe(a, "zone-accepted source=chat-server-info", 1000);
+            Pass(times.Confirmed(a, "First", 4000).Contains("login confirmed after 4.00 s (world-ready timing unavailable)"), "Admission and invalid reports cannot be presented as world-ready timing");
+            times.Observe(a, "world-ready meshes=20", 5000);
+            Pass(times.Summary(false, 7000) == "Login run finished in 7.00 s; 1/3 clients confirmed.", "Failed and unstarted clients remain visible in partial-run totals");
+            times = new LaunchTimings(1); times.Begin(a, 0); times.Confirmed(a, "First", 4000);
+            Pass(times.Summary(true, 4500) == "Login run finished in 4.50 s; 1/1 clients confirmed.", "Missing world-ready telemetry retains an explicitly labelled run time");
+            Texts.SetLanguage("da"); times = new LaunchTimings(1); times.Begin(a, 0);
+            times.Observe(a, "world-ready meshes=20", 1250);
+            Pass(times.Confirmed(a, "First", 1700) == "First blev indlæst på 1,25 s.", "Load times use the selected Danish language and decimal format");
+            Texts.SetLanguage("en");
+        }
+
+        private static void AcceptanceChecks()
+        {
+            var request = new LaunchRequest { FastStartup = true };
+            var rebirth = LaunchTarget.Create(gamePath, "2.24.96.30", 7500);
+            Pass(LaunchQueue.CanPipeline(request, rebirth, true), "Verified Rebirth client enables acceptance pipeline");
+            Pass(!LaunchQueue.CanPipeline(request, rebirth, false), "Unknown client retains serial queue");
+            Pass(!LaunchQueue.CanPipeline(request, LaunchTarget.Create(gamePath, "37.18.192.41", 7500), true), "Funcom never inherits Rebirth admission assumptions");
+            Pass(!LaunchQueue.CanPipeline(request, LaunchTarget.Create(gamePath, "5.161.243.214", 7000), true), "PRK never inherits Rebirth admission assumptions");
+            request.FastStartup = false;
+            Pass(!LaunchQueue.CanPipeline(request, rebirth, true), "Fast loading opt-out retains serial queue");
+            request.FastStartup = true; request.AcceptancePipeline = false;
+            Pass(!LaunchQueue.CanPipeline(request, rebirth, true), "Pipeline opt-out retains serial queue");
+            using (var channel = LoginStatusChannel.TryStart(Stopwatch.StartNew(), null))
+            using (var writer = new System.IO.Pipes.NamedPipeClientStream(".", channel.PipeName, System.IO.Pipes.PipeDirection.Out, System.IO.Pipes.PipeOptions.CurrentUserOnly))
+            {
+                var confirmation = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                var admission = LaunchQueue.AdmissionOrConfirmationAsync(confirmation.Task, channel);
+                writer.Connect(2000);
+                Action<string> send = stage => { var data = System.Text.Encoding.ASCII.GetBytes("AO_NEXUS_STATUS_V1 1 " + stage + "\n"); writer.Write(data); writer.Flush(); };
+                send("character-requested");
+                Pass(channel.Requested.Wait(2000) && !admission.IsCompleted, "Character request never releases acceptance gate");
+                send("zone-accepted source=wrong");
+                send("zone-accepted source=chat-server-info");
+                Pass(admission.Wait(2000) && admission.Result && !confirmation.Task.IsCompleted, "Exact acceptance response releases before world confirmation");
+                Pass(!LaunchQueue.AdmissionOrConfirmationAsync(Task.FromResult(false), channel).GetAwaiter().GetResult(), "Known failure wins over acceptance");
+                confirmation.SetResult(true);
+            }
+            using (var channel = LoginStatusChannel.TryStart(Stopwatch.StartNew(), null))
+            {
+                Pass(LaunchQueue.AdmissionOrConfirmationAsync(Task.FromResult(true), channel).Result, "Missing signal falls back to full confirmation");
+                Pass(!LaunchQueue.AdmissionOrConfirmationAsync(Task.FromResult(false), channel).Result, "Missing signal does not bypass failure");
+            }
+            Pass(!LaunchQueue.AdmissionOrConfirmationAsync(Task.FromResult(false), null).Result, "Missing pipe does not bypass failure");
+            var previous = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            using (var gate = new LoginGate(previous.Task))
+            using (var ready = EventWaitHandle.OpenExisting(gate.Name + ".ready"))
+            using (var cancel = EventWaitHandle.OpenExisting(gate.Name + ".cancel"))
+            {
+                Pass(!ready.WaitOne(0) && !cancel.WaitOne(0), "Preloaded client waits on unopened gate");
+                previous.SetResult(true);
+                Pass(ready.WaitOne(2000) && !cancel.WaitOne(0), "Previous admission releases only readiness");
+            }
+            previous = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            using (var gate = new LoginGate(previous.Task))
+            using (var ready = EventWaitHandle.OpenExisting(gate.Name + ".ready"))
+            using (var cancel = EventWaitHandle.OpenExisting(gate.Name + ".cancel"))
+            {
+                previous.SetResult(false);
+                Pass(cancel.WaitOne(2000) && !ready.WaitOne(0), "Previous failure cancels without authenticating");
+            }
+            previous = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            using (var gate = new LoginGate(previous.Task))
+            using (var ready = EventWaitHandle.OpenExisting(gate.Name + ".ready"))
+            using (var cancel = EventWaitHandle.OpenExisting(gate.Name + ".cancel"))
+            {
+                gate.Dispose();
+                Pass(cancel.WaitOne(0) && !ready.WaitOne(0), "Disposing a waiting gate cancels immediately without deadlocking");
+                previous.SetResult(true);
+                Pass(!ready.WaitOne(50), "Late acceptance cannot reopen an abandoned gate");
             }
         }
 

@@ -23,7 +23,7 @@ Set up your accounts once, choose the characters you want to play, and save reus
 
 You need Windows 10/11, **.NET Framework 4.8 or 4.8.1**, and a separately installed AO game client prepared for your chosen server. Windows 10 version 1903 and later include Framework 4.8; Windows 11 includes 4.8 or 4.8.1. Older Windows 10 installations may need the runtime installed first. See [Microsoft's installation guide](https://learn.microsoft.com/en-us/dotnet/framework/install/on-windows-10).
 
-The login engine and its runtime are bundled inside Nexus. Players do not need a .NET SDK or a separate AOQuickLauncher folder.
+The login engine and its runtime are bundled inside Nexus. Players do not need a .NET SDK or a separate launcher installation.
 
 1. Open the [latest release](https://github.com/RazRn/AO-Nexus/releases/latest).
 2. Under **Assets**, download **AO-Nexus-Luckyspawn.zip**. The automatically generated **Source code** archives are for developers, not ready-to-run downloads.
@@ -264,7 +264,13 @@ The activity log is held in memory. **Clear log** also clears the main-window pr
 
 ## Layouts, skins and local data
 
-**Game GUI · Experimental** manages character layout templates, macros, installation-wide skins and chat scripts. You can choose layout components separately (including macros), capture/copy from a character, apply to selected targets, copy scripts between installations and restore backups. Skins and scripts can affect multiple characters sharing an installation.
+Open **Game GUI · Experimental** for layouts, skins, scripts and recovery. Each view explains its scope and guides you toward a review step before changing existing settings:
+
+- **Layouts:** choose a saved layout, choose destination characters, then choose which components to replace. **Save from a character…** adds a reusable layout; **Review and apply…** reviews the change. Personal defaults and applying to all characters are under **More actions**.
+- **Skins:** choose the installation first, then an installed skin. Download/import adds a skin; **Review and apply skin…** activates it. Every account sharing that installation's preferences is affected.
+- **Scripts → Script files:** choose a source installation, select files and read their contents, then choose another installation below and **Review copy…**. Import and Delete act on the source installation shown above.
+- **Scripts → Character macros:** choose a source character and select destinations in this view's own tree. **Review macro copy…** copies the entire macro set with backups; it leaves hotbars unchanged.
+- **Backups:** filter by change type, select a dated record, review its original destination and affected settings, then choose **Review restore…**. Restore acts on the original character or installation.
 
 Use the [Game GUI guide](Game-GUI.md) before applying a layout: it explains saving source changes through logout, waiting for target clients to exit before writing Prefs, the difference between an AO default reset and your personal default, and recovery. Start with one character and keep backups.
 

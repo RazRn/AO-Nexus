@@ -30,15 +30,26 @@ Requires Windows 10/11, **.NET Framework 4.8 or 4.8.1**, and an installed game c
 | News and server health | Choose news sources and connection checks; optionally monitor in the background and receive tray notifications. | [News and health](docs/Player-Guide.md#server-news-and-health) |
 | Tray, updates and logs | Keep Nexus out of Alt+Tab, opt into update checks, and search the activity log. Update installation always requires confirmation. | [Everyday settings](docs/Player-Guide.md#settings-tray-and-updates) |
 | Problem reports | Anonymised diagnostics and crash reports, shared as a prefilled GitHub issue only when you choose to. | [Report a problem](docs/Player-Guide.md#report-a-problem) |
-| Game GUI · Experimental | Capture selected layout components and macros, apply them to characters, manage skins and chat scripts, and restore backups. | [Layouts, skins, scripts and recovery](docs/Game-GUI.md) |
+| Game GUI · Experimental | Follow clear steps to reuse layouts, select skins, copy script files or character macros, and review backups before restoring. | [Layouts, skins, scripts and recovery](docs/Game-GUI.md) |
+| Client responsiveness | Optional AOSharp update and IPC measurements in the header/tray, with local exit reports you can save as a diagnostic ZIP. | [Monitoring and reports](docs/Client-Monitoring.txt) |
 
 The interface supports English and Danish. It initially follows Windows' language, with a manual override in Settings.
 
+### Faster loading
+
+**Settings → Accounts → Faster game loading** enables the measured startup improvements on the verified classic 18.8.62 client: zero-duration initial logo fades and faster initial texture filtering. With **Skip login screens** enabled, cosmetic login-scene models are skipped too. Login errors remain visible. The setting is on by default and can be disabled independently of quiet login.
+
+Nexus checks the client files before enabling these version-specific hooks. Other builds and character creation retain normal loading. Game executables and DLLs are not patched on disk. Client preparation can overlap while account login claims are serialized; the log shows each character's loading time and total team time. These changes do not remove network latency or the work needed to load a zone.
+
+AO Nexus now ships NexusEngine, its maintained login worker, with the tested client-loading optimizations. No AOQuickLauncher executable or installation is used. Nexus owns the queue, session storage and communication protocol. The worker accepts launch requests only through private standard input; the former standalone command line and its parser dependency have been removed. See [integration and validation notes](docs/Fast-Startup.txt) for scope and test coverage.
+
+We moved to a Nexus-maintained launch engine to give us direct control over startup performance and future improvements. The measured gains come from changes to client loading; renaming the engine alone does not make it faster. Upstream source attribution is preserved in the credits.
+
 ## Scope and privacy
 
-Nexus launches supported Windows AO clients. It does not install or patch the game, include AOSharp, or automatically support replacement clients with a different login protocol. The server controls which logins are allowed; configurable launcher limits help prevent invalid selections. Same-account parallel login is not included in the public build.
+Nexus launches supported Windows AO clients. It does not install or patch the game, include the AOSharp injector, or automatically support replacement clients with a different login protocol. The server controls which logins are allowed; configurable launcher limits help prevent invalid selections. Optional monitoring includes an AOSharp plugin and helper; you choose whether to enable it in your existing AOSharp profiles.
 
-Accounts, settings, saved passwords and GUI templates stay on your PC. The app connects to your chosen game servers, enabled news/health sources, GitHub for requested update checks/downloads, and skin sources when you request a download. It has no analytics or cloud account sync, and problem reports are only shared when you submit them yourself. Read [Privacy and security](docs/Privacy-and-Security.md) for storage, connections, retention and update verification.
+Accounts, settings, saved passwords and GUI templates stay on your PC. The app connects to your chosen game servers, enabled news/health sources, GitHub for requested update checks/downloads, and skin sources when you request a download. Optional client monitoring uses AOSharp's UDP multicast IPC; it can reach the local network. It has no analytics or cloud account sync, and problem reports are only shared when you submit them yourself. Read [Privacy and security](docs/Privacy-and-Security.md) for storage, connections, retention and update verification.
 
 ## Need help?
 

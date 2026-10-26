@@ -56,7 +56,7 @@ namespace AOLauncher
                 lock (sync)
                 {
                     if (stopRequested || disposed) return StoppedExitCode;
-                    if (!child.Start()) throw new InvalidOperationException(Texts.T("AOQuickLauncher could not be started."));
+                    if (!child.Start()) throw new InvalidOperationException(Texts.T("NexusEngine could not be started."));
                     process = child;
                     acceptOutput = true;
                 }

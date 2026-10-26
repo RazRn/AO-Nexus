@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.31313.79
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LoginHandler", "LoginHandler\LoginHandler.vcxproj", "{429A8C07-427E-4CA6-892D-18B84E966CAD}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AOQuickLauncher", "AOQuickLauncher\AOQuickLauncher.csproj", "{8A38690C-71CB-4C57-8606-2ABDD005C4BE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NexusEngine", "NexusEngine\NexusEngine.csproj", "{8A38690C-71CB-4C57-8606-2ABDD005C4BE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

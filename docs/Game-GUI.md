@@ -2,11 +2,11 @@
 
 [Player guide](Player-Guide.md) · [Download](https://github.com/RazRn/AO-Nexus/releases/latest)
 
-Open **Game GUI · Experimental** in AO Nexus. Test changes on one character before a broad rollout. The manager separates four jobs into tabs:
+Open **Game GUI · Experimental** in AO Nexus. Each tab shows what you are changing, who it affects and the next step. Start with one character or installation before applying a change more widely.
 
 - **Layouts** saves a character's setup as a reusable template and applies it to selected characters.
 - **Skins** installs and selects the visual skin for a game installation's shared preferences.
-- **Scripts** copies chat scripts (`/name`) between game installations and shows each character's macros.
+- **Scripts** has separate **Script files** and **Character macros** views. Script files are shared by an installation; macros belong to a character.
 - **Backups** restores an earlier character layout, macro, script or skin change.
 
 These are different scopes. A window layout belongs to a character. The game's skin selector belongs to its shared installation preferences, so changing the skin affects every account using those preferences.
@@ -14,15 +14,17 @@ These are different scopes. A window layout belongs to a character. The game's s
 ## Create and use a layout
 
 1. Arrange the GUI on a character in game.
-2. Open **Game GUI → Layouts → Capture from char…**. Pick that source character, give the template a name and choose its components.
+2. Open **Game GUI → Layouts → Save from a character…**. Pick that source character, give the saved layout a name and choose its components.
 3. The confirmation identifies the source character. If it is online, Nexus requests `/quit` and waits for actual exit before reading the newly saved preferences, then relogs it after success. If it is already closed, confirm that its latest layout changes were saved by a normal logout. Cancel and reopen/rearrange the character first if they were not saved.
-4. Select target characters in the server/account tree. Select a saved template and choose **Apply layout**. **Roll out to all…** includes all configured target characters and still asks for confirmation.
+4. Under **1 Choose a saved layout**, select the layout you want to reuse.
+5. Under **2 Choose characters to change**, tick the destination characters in the server/account tree.
+6. Under **3 Choose what to replace**, choose the components to transfer. Read the selection summary, then choose **Review and apply…**. The next confirmation explains affected characters and any required relog before files change.
 
-For a one-time copy, select targets first and choose **Copy from char…**. The temporary captured template is removed afterward; the target backups remain available.
+For a one-time copy, select destination characters first and choose **Copy from a character…**. Pick the source in the dialog. The temporary saved layout is removed afterward; the destination backups remain available. **More actions → Apply to all configured characters…** is the broader operation and still asks for confirmation.
 
-![Layout manager with the template list, one target character and Apply layout marked in red](images/published/gui-layouts-d1330207b8c5e8ef.png)
+![Layouts with saved layouts on the left, destination characters and components on the right, and a review action below](images/gui-layouts-1.2.png)
 
-*1 — Choose a personal template or the built-in AO default layout. 2 — Select the target character; start with one. 3 — Apply the selected layout. These are example accounts; the red marks are guide annotations.*
+*Choose a saved layout, select destination characters, then choose what to replace. The screenshots in this guide use synthetic example accounts.*
 
 ### Components
 
@@ -36,19 +38,19 @@ For a one-time copy, select targets first and choose **Copy from char…**. The 
 
 Window layout is the normal starting point. The other components are explicit choices. You can apply only components actually included in a template. Account credentials, character identity, chat history, friends and ignored-player data, backpack contents and other unsupported preferences are not copied.
 
-Templates are local snapshots, not live links: changing the source character afterward does not silently change an existing template. Capture a new template when you want a new reference setup. **Rename** changes its label; **Delete** removes the stored template without resetting characters already using its layout.
+Saved layouts are local snapshots, not live links: changing the source character afterward does not silently change an existing saved layout. Use **Save from a character…** again when you want a new reference setup. **Manage → Rename…** changes its label; **Manage → Delete saved layout** removes the stored layout without resetting characters already using it.
 
 ### Reset to the game's standard layout
 
-The built-in **AO default layout** is always shown in the template list. Select it, choose target characters and press **Apply layout**. Nexus reads `cd_image/gui/Default/CharPrefs.xml` from each target's installation and clears supported saved position/docking overrides so the game can use its defaults. The normal logout, backup and relog flow applies. Missing or invalid default files block the operation.
+The built-in **AO default layout** is always shown in the saved-layout list. Select it, choose destination characters and press **Review and apply…**. Nexus reads `cd_image/gui/Default/CharPrefs.xml` from each destination's installation and clears supported saved position/docking overrides so the game can use its defaults. The normal logout, backup and relog flow applies. Missing or invalid default files block the operation.
 
-This reset keeps hotbar actions/count, key bindings, pet names, chat subscriptions, backpack contents and the active skin. It resets supported presentation settings, not the whole character folder. With a custom skin the result still uses that skin; use **Skins → Use default AO skin** separately if desired. Reset is not a portable personal template and cannot be renamed, deleted or queued for new characters, which already start with their game's defaults.
+This reset keeps hotbar actions/count, key bindings, pet names, chat subscriptions, backpack contents and the active skin. It resets supported presentation settings, not the whole character folder. With a custom skin the result still uses that skin; use **Skins → Restore AO's original skin…** separately if desired. Reset is not a portable personal template and cannot be renamed, deleted or queued for new characters, which already start with their game's defaults.
 
-**Apply saved default** refers to the personal template chosen below, not the built-in AO reset.
+**More actions → Apply saved default to selected characters…** refers to the personal layout chosen below, not the built-in AO reset.
 
 ### Use a personal default for new characters
 
-Choose **Use for new chars** on a template to make it the default for newly added characters. This does not immediately overwrite existing characters. **Apply saved default** explicitly applies it to selected existing characters.
+Choose **Use for new characters** on a personal saved layout to make it the default for newly added characters. This does not immediately overwrite existing characters. To apply it to existing characters, select them and use **More actions → Apply saved default to selected characters…**.
 
 A new character must first have a real, saved `Char<ID>` preferences folder. When it does not exist yet, Nexus queues the default until the game has created it and closed normally. Nexus applies the queued template before a later launch when the character is offline. It does not write preferences over a running game or invent a new character's saved state.
 
@@ -58,18 +60,18 @@ For ideas to try, see [five starter layout templates](Starter-GUI-Layouts.md). T
 
 ## Skins
 
-Choose **Target installation** near the bottom of **Skins**, immediately above the apply buttons. It lists the accounts sharing that Prefs installation. Changing it changes the installed-skin list and the destination for downloads/imports as well as Apply. The list includes **Default**, which selects the original AO skin, plus detected complete custom skins.
+Start at **1 Choose the installation to change**, at the top of **Skins**. The selector identifies the accounts sharing that installation's preferences. It controls the installed-skin list, where downloads/imports are stored, and where a skin is applied. Under **2 Choose an installed skin**, the list includes **Default** plus detected complete custom skins. The summary below identifies the accounts affected by your choice.
 
 For Notum Dovvetech:
 
-1. Choose a theme and explicitly select **Classic client** or **New engine**.
-2. Choose **Download**. Nexus retrieves the reviewed core, theme and, for the new engine, its additional patch from the author's published links.
-3. Downloading installs a separate skin folder; it does not activate it. Choose the installed skin and **Apply skin** to activate it.
-4. **Roll out to all…** copies that skin to the other configured installations and applies it after reviewing the affected clients.
+1. In **Add another skin**, choose a theme and select **Classic client package** or **New engine package** to match your game client.
+2. Choose **Download skin**. Nexus retrieves the reviewed core, theme and, for the new engine, its additional patch from the author's published links.
+3. Downloading installs a separate skin folder; it does not activate it. Select the installed skin on the left, then choose **Review and apply skin…** to review activation.
+4. **Apply to all installations…** copies that skin to the other configured installations and applies it after reviewing the affected clients.
 
-![Skins tab with the installation selector, import and download controls, and apply controls marked in red](images/published/gui-skins-433191841d74fd8f.png)
+![Skins with the installation selector first, installed skins on the left, download and import options on the right, and affected accounts below](images/gui-skins-1.2.png)
 
-*1 — Choose the installation whose shared skin will change. 2 — Import a complete skin or download a catalogue theme. 3 — Apply an installed skin, or return to the default AO skin. Download and Apply are separate actions.*
+*Choose the installation first. Adding a skin makes it available; the separate review action activates it.*
 
 **Import ZIP…** accepts a complete local skin archive containing `Graphics.uvga` and `Graphics.uvgi`. Supported contents are XML, UVGA/UVGI graphics, PNG/JPEG images and text files. Executables and scripts are not installed. Importing an author's core-only patch is not the same as importing a complete skin.
 
@@ -96,7 +98,7 @@ For the supported modern AO preference layout, custom skins live beside `Prefs`:
 
 Nexus changes only the `GUIName` value in that installation's `Prefs/Prefs.xml` to select a skin. It does not replace the game's built-in `cd_image/gui/Default` directory. Imported/downloaded skins receive separate names, so existing skin folders are not overwritten. Repeating an identical import or rollout reuses verified matching contents instead of making duplicate folders. Copying between installations creates a separate destination copy; later edits to the source do not propagate automatically.
 
-**Use default AO skin** reselects the game's original skin. It does not delete custom files or reset all per-character preferences. If you previously used ndGUI's compact raid elements, the author recommends resetting those elements through ndGUI's options. If necessary afterward, the documented in-game commands are `/setoption RaidConfig false` and `/setoption RaidBarConfig false`.
+**Restore AO's original skin…** reselects the game's original skin. It does not delete custom files or reset all per-character preferences. If you previously used ndGUI's compact raid elements, the author recommends resetting those elements through ndGUI's options. If necessary afterward, the documented in-game commands are `/setoption RaidConfig false` and `/setoption RaidBarConfig false`.
 
 ### Sources, attribution and compatibility
 
@@ -110,14 +112,29 @@ Nexus does not redistribute these skin archives inside its executable or GitHub 
 
 **Scripts** are plain text files in the `scripts` folder next to an installation's `Prefs` folder, for example `%LOCALAPPDATA%\Funcom\Anarchy Online\<id>\AORebirth-Live\scripts`. You run one in game with `/name`. Like skins, scripts belong to the installation: every account and character using it shares them.
 
-On **Game GUI → Scripts**, choose the installation at the top. The list shows its scripts and the preview shows the selected one.
+On **Game GUI → Scripts → Script files**:
 
-- **Copy selected** copies the selected scripts to the installation chosen beside it. **Copy to all…** copies them to every other configured installation. Scripts with the same name and different content are replaced after a confirmation; identical ones are skipped.
-- **Import file…** adds text files from anywhere on your PC, for example scripts shared by another player. **Delete** removes the selected scripts. **Open folder** opens the scripts folder to edit scripts in a text editor.
+1. Choose the **source installation** at the top.
+2. Select script files in the list. Use Ctrl-click to select several. The read-only preview shows the selected file's contents.
+3. Choose a different **destination installation** below the preview and select **Review copy…**. **Copy to all others…** sends the selected files to every other configured installation. Same-name scripts with different content are replaced after a confirmation; identical ones are skipped.
+
+**Import files…** adds text files to the source installation currently shown, for example scripts shared by another player. **Delete selected…** removes the selected scripts from that installation. **Open folder** opens its scripts folder so you can edit files in a text editor.
+
+![Script files with a source installation, file list and preview, and a separate copy destination](images/gui-scripts-1.2.png)
+
+*The upper selector is where files come from. The lower selector is where a copy goes. Import and Delete act on the upper installation.*
 
 The game reads a script when you use it, so script changes need no relog and work in running clients. Only plain text files of up to 64 KB with simple names (letters, digits, `-`, `_` and `.`) are handled. Program files such as `.exe`, `.bat` or `.ps1`, binary files, subfolders and linked folders are refused. Every copy, import or delete is backed up first.
 
-**Macros** belong to one character. The right side of the Scripts tab shows the macros of the character you choose. **Copy macros to chars…** opens **Copy from char…** with only Macros ticked: tick the target characters on the Layouts tab first. Macros are copied as a whole file through the normal layout flow, so online targets are relogged and a backup is made. When you copy hotbars, include macros too, so macro buttons keep running the same macros.
+### Copy character macros
+
+Open **Scripts → Character macros**. Choose the source character at the top to see its macros saved at the last logout. Tick destination characters in the tree on the right, then choose **Review macro copy…**. This view has its own destination selection: you do not need to select characters on the Layouts tab, and its selections are kept separate.
+
+![Character macros with a source character, saved macro list, destination-character tree and review action](images/gui-macros-1.2.png)
+
+*The whole saved macro set is copied. Choosing a destination replaces all of that character's macros, with a backup first.*
+
+Macros are copied as a whole file through the normal layout safety flow. The source is saved through a normal logout when needed, affected online clients are relogged, and destination backups are kept. Macro-only copying leaves hotbars unchanged; an existing hotbar button may therefore run a different macro afterward because hotbars refer to macros by number. To transfer hotbars and matching macros together, use **Layouts** and include both components.
 
 Macros and scripts can contain character names, for example `/assist Name`. They stay on your PC: Nexus never adds them to diagnostics or problem reports.
 
@@ -133,9 +150,13 @@ Do not manually launch the affected game or edit its preference files during an 
 
 ## Backups and recovery
 
-![Backups tab with an example recovery record and Restore backup marked in red](images/published/gui-backups-a68cecbff5d668da.png)
+Backups appear automatically after changes; there is no manual backup step to complete first. Choose **All changes**, **Layouts & macros**, **Skins** or **Scripts** to narrow the history. Records show their type, date and original character or installation, newest first.
 
-*1 — Select the recovery record and review its original character or installation. 2 — Restore backup returns that target to the recorded state; it does not copy the record to a different character.*
+Select a record under **1 Choose a saved change**. Under **2 Review what will be restored**, read its status, original destination and affected settings or script filenames. Choose **Review restore…** to review the operation before restoring. Restore always uses the original character or installation; it does not copy a backup to another destination. **Refresh** reloads the history, and an empty-filter message explains when to switch back to All changes.
+
+![Backups with a type filter, dated history, restore details and review action](images/gui-backups-1.2.png)
+
+*Review the recorded destination and settings before restoring. Incomplete changes and recovery-needed records are identified in the details.*
 
 Layout templates and recovery records are stored locally under `%LOCALAPPDATA%\AONexus\GuiLayouts`; script backups are in its `ScriptBackups` folder. They may contain character labels, local paths and copied GUI settings, so review them before sharing. They are not uploaded by Nexus.
 

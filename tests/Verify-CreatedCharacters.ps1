@@ -38,7 +38,7 @@ function Notice($Fixture, [int]$Id = 980123, [string]$Name = 'Createdhero') {
     return @{ AccountId = $Fixture.Account.Id; CharacterId = $Id; CharacterName = $Name; Created = $true }
 }
 function Apply($Fixture, $Notification) {
-    $line = if ($Notification -is [string]) { $Notification } else { 'AOQL_CHARACTER ' + $serializer.Serialize($Notification) }
+    $line = if ($Notification -is [string]) { $Notification } else { 'NEXUS_CHARACTER ' + $serializer.Serialize($Notification) }
     $arguments = [object[]]@($line, $Fixture.Request, $Fixture.Settings, $null)
     $accepted = [bool]$apply.Invoke($null, $arguments)
     return [pscustomobject]@{ Accepted = $accepted; Updated = $arguments[3] }
@@ -104,7 +104,7 @@ foreach ($id in @(0,-1,[int]::MinValue)) {
 foreach ($name in @('', '   ', ('N' * 65), "New`nName", ('Bad' + [char]0 + 'Name'))) {
     $fixture = Fixture; Reject $fixture (Notice $fixture 980123 $name) 'Invalid char name'
 }
-foreach ($raw in @('AOQL_CHARACTER {', 'AOQL_CHARACTER null', 'AOQL_CHARACTER []', 'AOQL_CHARACTER {"Created":true,"CharacterId":2147483648,"CharacterName":"Hero"}', 'AOQL_CHARACTER {"Created":true,"CharacterId":"bad","CharacterName":"Hero"}', ('AOQL_CHARACTER ' + ('x' * 2050)), 'AOQL_CHARACTER_BAD {}', 'Other output')) {
+foreach ($raw in @('NEXUS_CHARACTER {', 'NEXUS_CHARACTER null', 'NEXUS_CHARACTER []', 'NEXUS_CHARACTER {"Created":true,"CharacterId":2147483648,"CharacterName":"Hero"}', 'NEXUS_CHARACTER {"Created":true,"CharacterId":"bad","CharacterName":"Hero"}', ('NEXUS_CHARACTER ' + ('x' * 2050)), 'NEXUS_CHARACTER_BAD {}', 'Other output')) {
     $fixture = Fixture; Reject $fixture $raw 'Malformed or unrelated backend output'
 }
 foreach ($identifier in @($null, '', 'different-account-id')) {
@@ -194,11 +194,11 @@ try {
     Set-Field $main 'preparationCancellation' $firstPreparation
     Call-Instance $main 'SetRunning' ([object[]]@($true)) | Out-Null
     $started = @{ AccountId = $fixture.Account.Id; ProcessId = 1234; StartTimeUtcTicks = [DateTime]::UtcNow.Ticks }
-    foreach ($invalid in @('AOQL_CREATION_STARTED {', 'AOQL_CREATION_STARTED {"AccountId":"synthetic-created-account","ProcessId":0,"StartTimeUtcTicks":1}', 'AOQL_CREATION_STARTED {"AccountId":"wrong-account","ProcessId":1234,"StartTimeUtcTicks":1}')) {
+    foreach ($invalid in @('NEXUS_CREATION_STARTED {', 'NEXUS_CREATION_STARTED {"AccountId":"synthetic-created-account","ProcessId":0,"StartTimeUtcTicks":1}', 'NEXUS_CREATION_STARTED {"AccountId":"wrong-account","ProcessId":1234,"StartTimeUtcTicks":1}')) {
         Call-Instance $main 'HandleOperationLine' ([object[]]@($invalid, $fixture.Request, $first, $true)) | Out-Null
         Assert ([object]::ReferenceEquals((Get-Field $main 'backendRunner'), $first) -and (Get-Field $main 'running')) 'Malformed creation-start events must not unlock or detach a foreground operation.'
     }
-    $startedLine = 'AOQL_CREATION_STARTED ' + $serializer.Serialize($started)
+    $startedLine = 'NEXUS_CREATION_STARTED ' + $serializer.Serialize($started)
     Call-Instance $main 'HandleOperationLine' ([object[]]@($startedLine, $fixture.Request, $first, $true)) | Out-Null
     Assert ($null -eq (Get-Field $main 'backendRunner') -and !(Get-Field $main 'running') -and $null -eq (Get-Field $main 'preparationCancellation')) 'Opening the creation client must release the foreground operation while its monitor remains active.'
     Assert ($monitors.Contains($first) -and !(Get-Field $first 'disposed') -and !(Get-Field $first 'stopRequested')) 'Detaching the foreground must keep its creation monitor alive.'
@@ -210,7 +210,7 @@ try {
     $status = (Get-Field $main 'statusText')
     Call-Instance $main 'HandleOperationLine' ([object[]]@($startedLine, $fixture.Request, $first, $true)) | Out-Null
     Assert ([object]::ReferenceEquals((Get-Field $main 'backendRunner'), $second) -and (Get-Field $main 'running') -and [object]::ReferenceEquals((Get-Field $main 'preparationCancellation'), $secondPreparation)) 'A delayed old creation-start event must not detach a newer foreground login.'
-    $createdLine = 'AOQL_CHARACTER ' + $serializer.Serialize((Notice $fixture))
+    $createdLine = 'NEXUS_CHARACTER ' + $serializer.Serialize((Notice $fixture))
     Call-Instance $main 'HandleOperationLine' ([object[]]@($createdLine, $fixture.Request, $first, $true)) | Out-Null
     Assert ($fixture.Account.Characters.Count -eq 1 -and !(Get-Field $main 'log').Text.Contains('synthetic-password-only')) 'A background creation result must update the list without logging credentials.'
     Assert ([object]::ReferenceEquals((Get-Field $main 'backendRunner'), $second) -and (Get-Field $main 'running') -and (Get-Field $main 'statusText') -ceq $status) 'A background creation result must preserve a newer foreground login and its status.'

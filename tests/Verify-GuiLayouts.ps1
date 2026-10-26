@@ -111,11 +111,14 @@ try {
     $macroBackup=Call ApplyWithOptions @($library,$withMacros.Id,$target,$macroFlag)
     $newer=Macro-Bytes @(@(1,'Follow','/follow'),@(2,'ass','/assist SOURCE-MACRO'),@(3,'new','/say NEWER'))
     [IO.File]::WriteAllBytes((Join-Path $target 'TextMacro.bin'),$newer)
-    $countBefore=@(Call ListBackups @($library,$target)).Count
+    $backupsBefore=@(Call ListBackups @($library,$target))
+    $countBefore=$backupsBefore.Count
     Call Restore @($library,$macroBackup.Id,$target)
     Assert (Same-Bytes (Join-Path $target 'TextMacro.bin') $targetMacros) 'Macro restore after a game rewrite returns the original macros'
-    $undo=@(Call ListBackups @($library,$target))[0]
-    Assert (@(Call ListBackups @($library,$target)).Count -eq $countBefore+1 -and $undo.State -eq 'Applied') 'Newer macros are kept in an undo backup'
+    $backupsAfter=@(Call ListBackups @($library,$target))
+    $undo=@($backupsAfter | Where-Object { $_.Id -notin @($backupsBefore | ForEach-Object Id) })
+    Assert ($backupsAfter.Count -eq [Math]::Min(10,$countBefore+1) -and $undo.Count -eq 1 -and $undo[0].State -eq 'Applied') 'Newer macros get an undo backup within the ten-backup retention limit'
+    Assert (Same-Bytes (Join-Path $library ('Backups/'+$undo[0].Id+'/Files/TextMacro.bin')) $newer) 'The undo backup preserves the newer macro bytes exactly'
     $fresh=Join-Path $testRoot 'Fresh/Char707';Write-Fixture (Join-Path $fresh 'Prefs.xml') '<Root/>'
     $freshBackup=Call ApplyWithOptions @($library,$withMacros.Id,$fresh,$hotMacro)
     Assert ((Same-Bytes (Join-Path $fresh 'TextMacro.bin') $sourceMacros) -and (Read-Fixture (Join-Path $fresh 'Containers/ShortcutBar_0.xml')).Contains('SOURCE-ACTION')) 'Hotbars and macros copy together to a char without macros'

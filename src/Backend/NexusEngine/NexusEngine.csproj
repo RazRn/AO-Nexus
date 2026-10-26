@@ -2,6 +2,9 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+    <AssemblyName>NexusEngine</AssemblyName>
+    <RootNamespace>NexusEngine</RootNamespace>
+    <Product>AO Nexus Launch Engine</Product>
     <TargetFramework>net10.0</TargetFramework>
     <BaseOutputPath>..\Build\Managed</BaseOutputPath>
   </PropertyGroup>
@@ -9,15 +12,9 @@
   <ItemGroup>
     <Compile Include="..\..\Common\Texts.cs" Link="Localization\Texts.cs" />
     <Compile Include="..\..\Common\ServerAccountPolicy.cs" Link="ServerAccountPolicy.cs" />
-    <PackageReference Include="CommandLineParser" Version="2.9.1" />
     <PackageReference Include="Reloaded.Injector" Version="1.2.5" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="Login.bat">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
-    </None>
-  </ItemGroup>
+
 
 </Project>

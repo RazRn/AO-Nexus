@@ -1,0 +1,126 @@
+AO NEXUS: EXPERIMENTAL BACKGROUND CLIENTS
+Development measurements, 26 October 2026. Included in AO Nexus 1.2.
+
+USING THE BUILD
+Close the old Nexus instance, then open dist/AONexus.exe.
+Settings > Accounts > Minimize inactive game clients (experimental).
+The option is off by default, and was switched off again after this test.
+Keep Nexus running, including in its tray. Switch to a game normally using
+Alt-Tab or its taskbar button. Nexus minimizes inactive recognized clients
+only when another verified Nexus-managed AO client has stable focus. Switching
+to a browser, Nexus, or any other app leaves game windows unchanged.
+Windows restores their existing geometry.
+Disabling the option stops management; it does not restore every game at once.
+Closing Nexus also stops management. No game graphics preferences are changed.
+
+WHAT SHIPS
+Window management only. No new injected rendering hook, AOSharp dependency,
+FPS cap, timer-resolution request, power-policy override, or resolution switch.
+Only named, non-pending Nexus sessions matching configured accounts/characters
+are eligible. PID/start time/executable/title are checked before minimization.
+The classic randy31.dll SHA-256 below is recognized; installations containing
+Cheetah.dll and unrecognized renderer versions are left alone.
+The controller checks focus every 250 ms, with a stable-focus check, and
+discovers sessions every two seconds. It uses SW_SHOWMINNOACTIVE.
+
+MEASURED CLIENT
+AO Rebirth classic client; six characters from one saved team preset.
+AOSharp reported IsNewEngine=false and MaxFramerate=100 for all six clients.
+This renderer exposes classic DirectDraw/Direct3D 7 APIs. D3D9 device-reset or
+Present-hook assumptions from the pasted advice do not describe this client.
+
+SHA-256:
+Gamecode.dll 654969A6B65946CB161F0E60AED8589260FC5ECA1795488F66BB56F8FFF73726
+AFCM.dll     A67F783086B9A221578C2243AFC44E1448CB9A3C61EF292AE29BE2C3DA92E2E8
+randy31.dll  9D9E0DA25AC6F8C7ECDCE7A47A2409575945966A29E3B77850F7C62033A04BE3
+
+METHOD
+The separate tools/BackgroundLab plugin subscribed to Game.OnUpdate and
+answered AOSharp IPC messages. No user combat/automation plugins were loaded.
+An external probe used AOSharp's IPCChannelBase transport, sent approximately
+ten pings/second, and processed replies independently of the game loop.
+The timeout accounting therefore cannot hide a completely stalled game loop.
+Reported RTT includes the host's scheduler/polling delay (5 ms requested sleep,
+typically about 15.6 ms on this machine); it is not pure transport latency.
+Six simultaneous probes produce broadcasts answered by all six plugins;
+each host reports only its own target's replies, with no character actions.
+
+Tick intervals use Stopwatch timestamps. Results include p50/p95/p99/max,
+observed silence, CPU time, foreground/minimized fractions, and IPC timeouts.
+Game-thread samples stay in memory; summaries are written by a worker thread.
+The initial unlabelled phase and idle intervals are excluded from comparisons.
+Single-client phases lasted 25 seconds. Team phases lasted 35, 35, and 50 seconds.
+The team switching phase included normal Alt-Tab and restores of all six windows.
+The desktop remained interactive: one client was foreground for 70% of its first team
+phase, and minimized for 28%. Use recorded state fractions, not phase names, for
+exact state attribution. The five other clients were minimized throughout it.
+
+SINGLE CLIENT RESULTS
+Condition                     Update Hz   Tick p99 ms   Tick max ms   CPU/core %
+Foreground baseline            100.03         10.42         23.42        48.80
+Background, not minimized      100.02         10.46         10.92        52.47
+Minimized, original policy     100.02         10.43         10.86        20.90
+Minimized, timer opt-out       100.01         10.43         12.10        22.52
+Minimized, EcoQoS opt-out       100.01         10.46         19.18        22.64
+Minimized, both opt-outs        99.98         10.43         10.95        23.11
+Minimized, timeBeginPeriod(1)   100.00         10.43         10.82        23.80
+Minimized, both + 1 ms request  100.03         10.46         10.90        26.95
+Foreground restored            100.02         10.48         10.83        55.65
+
+CPU percentages are relative to ONE logical CPU, not the whole machine.
+The single-client baseline reduction was approximately 57%. These are short
+sequential samples, not randomized repetitions or a universal savings promise.
+No tick/IPC benefit from the Windows policy overrides was established here.
+The Windows APIs succeeded. Original ControlMask=0, StateMask=0 was restored
+and independently read back for every process before normal logout.
+Each successful timeBeginPeriod request was matched with timeEndPeriod.
+
+SIX CLIENT RESULTS (AUTOMATIC MINIMIZING ENABLED)
+Phase               Lowest update Hz   Worst client p99 ms   Longest tick ms
+Client 1 active             99.99                11.43               25.80
+Active client               99.80                11.47               29.73
+Window switching           99.94                12.55               30.96
+
+Across these three phases: 6,600 requests, 6,600 replies, zero two-second
+timeouts, zero outstanding requests at phase end. Worst per-client RTT p99:
+16.66 ms; longest measured RTT: 35.91 ms. No measured tick interval exceeded
+50 ms. The single-client all-flags phase had one request still outstanding
+at its sampling boundary; this is recorded separately, not called packet loss.
+
+GPU Engine performance counters: three active single-client 3D samples were
+2.60%, 2.70%, 2.76%; three minimized samples were all 0%. During the team sample,
+all five minimized clients reported 0% 3D activity. These short counter samples
+do not establish zero CPU cost, released VRAM, or zero energy use.
+
+DECISION AND LIMITS
+Use ordinary automatic minimization for this local prototype. It already
+stopped measured background 3D work while preserving the measured update rate.
+An additional render-suppression hook or persistent Windows power override
+has no demonstrated need on this setup. Graphics/profile swapping is avoided.
+This does not prove every AOSharp plugin, combat/zoning workload, renderer,
+Windows installation, or long-running session behaves identically. The option
+remains experimental and off by default. Real plugin workloads are the next
+useful user test; the measurements here used telemetry-only AOSharp plugins.
+
+OTHER UI CHANGES
+The header credit was removed. The version number opens the bundled changelog
+without an inaccurate 'update installed' notice. The automatic post-update
+dialog retains that notice. Settings > Updates contains the repository link:
+https://github.com/RazRn/AO-Nexus
+
+EVIDENCE (LOCAL, GENERATED, NOT PART OF DISTRIBUTION)
+logs/background-results.json
+logs/background-gpu-foreground.json
+logs/background-gpu-minimized.json
+logs/background-gpu-team.json
+logs/background-restored-power.json
+logs/background-team-launch.txt
+logs/background-team-logout.txt
+tools/BackgroundLab/bin/ticks-<pid>.jsonl and ipc-<pid>.jsonl
+
+WINDOWS REFERENCE
+https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setprocessinformation
+Windows may ignore timer-resolution requests for invisible/inaudible processes.
+ControlMask selects an override; clearing the corresponding StateMask bit
+disables that throttling mechanism. The experiment tested masks 4, 1, and 5
+separately and restored the original policy. No global power plan was changed.

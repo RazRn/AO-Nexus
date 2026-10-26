@@ -37,10 +37,10 @@ namespace AOLauncher
         }
         internal static List<Client> Find(LauncherSettings settings, LaunchPreset preset)
         {
-            string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AOQuickLauncher", "ActiveClients.json");
+            string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AONexus", "Sessions", "ActiveClients.json");
             if (!File.Exists(path)) return new List<Client>();
             string json;
-            using (var mutex = new Mutex(false, @"Local\AOQuickLauncher.ActiveClients"))
+            using (var mutex = new Mutex(false, @"Local\AONexus.ActiveClients"))
             {
                 bool acquired;
                 try { acquired = mutex.WaitOne(250); } catch (AbandonedMutexException) { acquired = true; }

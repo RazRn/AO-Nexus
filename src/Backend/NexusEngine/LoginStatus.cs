@@ -8,11 +8,12 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AOQuickLauncher
+namespace NexusEngine
 {
     /// <summary>
     /// Receives the login stages LoginHandler.dll reports from inside one game client. The channel
-    /// is diagnostic only: a missing, slow or malformed report never changes the login itself.
+    /// can release the next preloaded Rebirth client's authentication after acceptance.
+    /// Missing telemetry falls back to full character-window confirmation.
     /// </summary>
     internal sealed class LoginStatusChannel : IDisposable
     {
@@ -27,9 +28,11 @@ namespace AOQuickLauncher
         private readonly object sync = new object();
         private readonly List<string> timeline = new List<string>();
         private readonly TaskCompletionSource<bool> requested = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource<bool> accepted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         /// <summary>Completes when the client has requested the character from the character list.</summary>
         internal Task Requested => requested.Task;
+        internal Task Accepted => accepted.Task;
         private Task reader = Task.CompletedTask;
 
         internal string PipeName { get; }
@@ -91,8 +94,9 @@ namespace AOQuickLauncher
                 // "1.9s character-list": no '@', which anonymisation would read as an e-mail address.
                 timeline.Add((at / 1000.0).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + "s " + stage);
             }
-            if (stage == "character-requested") requested.TrySetResult(true);
             try { onEvent?.Invoke(stage, at); } catch (Exception) { }
+            if (stage == "character-requested") requested.TrySetResult(true);
+            if (stage == "zone-accepted source=chat-server-info") accepted.TrySetResult(true);
         }
 
         /// <summary>Accepts only the fixed stage vocabulary: lowercase words, numbers and '=' / '-'.</summary>

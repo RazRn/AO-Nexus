@@ -46,7 +46,6 @@ namespace AOLauncher
             { "The bundled login files failed verification. Download the complete launcher again.", "De indbyggede loginfiler kunne ikke verificeres. Hent den komplette launcher igen." },
             { "The login cache cannot use a linked file or folder: {0}", "Loginfilerne kan ikke gemmes i en sammenkædet fil eller mappe: {0}" },
             { "Your accounts. Your characters. Ready for Rubi-Ka.", "Dine konti. Dine chars. Klar til Rubi-Ka." },
-            { "Based on AOQuickLauncher by never-knows-best & contributors · Enhanced by Luckyspawn", "Baseret på AOQuickLauncher af never-knows-best og bidragydere · Forbedret af Luckyspawn" },
             { "Confirm login", "Bekræft login" },
             { "Log in", "Log ind" },
             { "Log in {0} {1} on {2} {3}?\r\n\r\n{4} {5} selected.", "Log ind med {0} {1} på {2} {3}?\r\n\r\n{4} {5} valgt." },

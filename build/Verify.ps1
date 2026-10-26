@@ -1,4 +1,4 @@
-param([switch]$LiveNews, [string]$AssemblyPath)
+param([switch]$LiveNews, [switch]$TelemetryTransport, [string]$AssemblyPath)
 $ErrorActionPreference = 'Stop'
 $projectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $testRoot = Join-Path $projectRoot 'tests'
@@ -7,12 +7,34 @@ $launcher = if ($AssemblyPath) { (Resolve-Path -LiteralPath $AssemblyPath).Path 
 [IO.Directory]::CreateDirectory($logRoot) | Out-Null
 $x86 = Join-Path $env:WINDIR 'SysWOW64\WindowsPowerShell\v1.0\powershell.exe'
 $compiler = & (Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe') -latest -products '*' -find 'MSBuild\Current\Bin\Roslyn\csc.exe' | Select-Object -First 1
-foreach ($test in @('Verify-Launcher', 'Verify-ServerAccountLimits', 'Verify-CharacterSlots', 'Verify-CharacterCreation', 'Verify-CreatedCharacters', 'Verify-ProfileImport', 'Verify-SetupWizard', 'Verify-NewsPanel', 'Verify-CompactDetails', 'Verify-SlimScrolling', 'Verify-ResizePainting', 'Verify-DialogTheme', 'Verify-DialogSizing', 'Verify-PasswordPreferences', 'Verify-SavedPasswordUpdate', 'Verify-Tray', 'Verify-PresetHotkeys', 'Verify-PresetEditorLog', 'Verify-AppUpdates', 'Verify-WindowConfirmations', 'Verify-ServerSidebar', 'Verify-HealthEndpoints', 'Verify-HealthAlerts', 'Verify-GuiLayouts', 'Verify-StarterGuiLayouts', 'Verify-GuiManager', 'Verify-GuiSessions', 'Verify-GuiSkins', 'Verify-GuiScripts', 'Verify-StartupPreset', 'Verify-LocalMaintenance', 'Verify-Diagnostics')) {
+& $x86 -NoProfile -ExecutionPolicy Bypass -STA -File (Join-Path $testRoot 'Verify-ClientMonitoring.ps1') -AssemblyPath $launcher *> (Join-Path $logRoot 'Verify-ClientMonitoring.txt')
+if ($LASTEXITCODE -ne 0) { throw 'Failed: Verify-ClientMonitoring. See logs.' }
+Write-Host 'PASS: Verify-ClientMonitoring'
+& $x86 -NoProfile -ExecutionPolicy Bypass -File (Join-Path $testRoot 'Verify-TelemetrySnapshots.ps1') -AssemblyPath $launcher *> (Join-Path $logRoot 'Verify-TelemetrySnapshots.txt')
+if ($LASTEXITCODE -ne 0) { throw 'Failed: Verify-TelemetrySnapshots. See logs.' }
+Write-Host 'PASS: Verify-TelemetrySnapshots'
+& $x86 -NoProfile -ExecutionPolicy Bypass -File (Join-Path $testRoot 'Verify-EmbeddedMonitoring.ps1') -AssemblyPath $launcher *> (Join-Path $logRoot 'Verify-EmbeddedMonitoring.txt')
+if ($LASTEXITCODE -ne 0) { throw 'Failed: Verify-EmbeddedMonitoring. See logs.' }
+Write-Host 'PASS: Verify-EmbeddedMonitoring'
+if ($TelemetryTransport) {
+    & $x86 -NoProfile -ExecutionPolicy Bypass -STA -File (Join-Path $testRoot 'Verify-TelemetryTransport.ps1') -AssemblyPath $launcher *> (Join-Path $logRoot 'Verify-TelemetryTransport.txt')
+    if ($LASTEXITCODE -ne 0) { throw 'Failed: Verify-TelemetryTransport. See logs.' }
+    Write-Host 'PASS: Verify-TelemetryTransport (real local IPC, inert fixture only)'
+}
+& $x86 -NoProfile -ExecutionPolicy Bypass -STA -File (Join-Path $testRoot 'Verify-FastStartup.ps1') -AssemblyPath $launcher *> (Join-Path $logRoot 'Verify-FastStartup.txt')
+if ($LASTEXITCODE -ne 0) { throw 'Failed: Verify-FastStartup. See logs.' }
+Write-Host 'PASS: Verify-FastStartup'
+& $x86 -NoProfile -ExecutionPolicy Bypass -STA -File (Join-Path $testRoot 'Verify-FirstPaint.ps1') -AssemblyPath $launcher *> (Join-Path $logRoot 'Verify-FirstPaint.txt')
+if ($LASTEXITCODE -ne 0) { throw 'Failed: Verify-FirstPaint. See logs.' }
+Write-Host 'PASS: Verify-FirstPaint'
+& (Join-Path $testRoot 'Verify-ZoneAcceptance.ps1') *> (Join-Path $logRoot 'Verify-ZoneAcceptance.txt')
+& (Join-Path $testRoot 'Verify-LoginGate.ps1') *> (Join-Path $logRoot 'Verify-LoginGate.txt')
+foreach ($test in @('Verify-HeaderActivity', 'Verify-BackgroundClients', 'Verify-Launcher', 'Verify-ServerAccountLimits', 'Verify-CharacterSlots', 'Verify-CharacterCreation', 'Verify-CreatedCharacters', 'Verify-ProfileImport', 'Verify-SetupWizard', 'Verify-NewsPanel', 'Verify-CompactDetails', 'Verify-SlimScrolling', 'Verify-ResizePainting', 'Verify-DialogTheme', 'Verify-DialogSizing', 'Verify-PasswordPreferences', 'Verify-SavedPasswordUpdate', 'Verify-Tray', 'Verify-PresetHotkeys', 'Verify-PresetEditorLog', 'Verify-AppUpdates', 'Verify-WindowConfirmations', 'Verify-ServerSidebar', 'Verify-HealthEndpoints', 'Verify-HealthAlerts', 'Verify-GuiLayouts', 'Verify-StarterGuiLayouts', 'Verify-GuiManager', 'Verify-GameGuiUsability', 'Verify-GuiSessions', 'Verify-GuiSkins', 'Verify-GuiScripts', 'Verify-StartupPreset', 'Verify-LocalMaintenance', 'Verify-Diagnostics')) {
     & $x86 -NoProfile -ExecutionPolicy Bypass -STA -File (Join-Path $testRoot ($test + '.ps1')) -AssemblyPath $launcher *> (Join-Path $logRoot ($test + '.txt'))
     if ($LASTEXITCODE -ne 0) { throw "Failed: $test. See logs." }
     Write-Host "PASS: $test"
 }
-foreach ($test in @('Verify-AccountLaunchLimits', 'Verify-TrackedAccountLimits', 'Verify-CreationMonitor')) {
+foreach ($test in @('Verify-NexusEngine', 'Verify-AccountLaunchLimits', 'Verify-TrackedAccountLimits', 'Verify-CreationMonitor')) {
     & (Join-Path $testRoot ($test + '.ps1')) *> (Join-Path $logRoot ($test + '.txt'))
     Write-Host "PASS: $test"
 }

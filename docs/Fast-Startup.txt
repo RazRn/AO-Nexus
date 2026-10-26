@@ -1,0 +1,142 @@
+AO Nexus fast startup integration — development measurements, 26 October 2026
+
+Base: cff85ee (origin/feature/scripts-macros), including e96a610 from main.
+Work is isolated from the older uncommitted AO-Nexus checkout and the release
+checkout. The following measurements were made before the 1.2 release.
+
+Implemented
+-----------
+Settings > Accounts > Faster game loading is enabled by default, with a saved
+opt-out. The UI request carries the preference to NexusEngine.
+Character creation never enables these optimizations.
+
+Before spawn, SHA-256 verifies the exact AnarchyOnline.exe, GUI.dll,
+Interfaces.dll, Utils.dll, MessageProtocol.dll and randy31.dll tested in the classic 18.8.62 client.
+A missing, modified, unreadable or unsupported image retains normal loading.
+The native hook additionally checks PE timestamp/image size, exported RVAs,
+fade constants and the private pixel routine's prologue before attachment.
+One failed attachment aborts the optional detour transaction.
+
+On the initial game-thread login callback, the handler installs:
+- zero-duration initial 4 s fade-in and 7 s fade-out transitions;
+- omission of cosmetic login-world AddMesh calls when quiet login is enabled;
+- a scalar bilinear row filter retaining the client's format/color-key decoder.
+
+The pixel routine matches original clipping, rounding, packed arithmetic,
+state mutation and the null-terminated decoder-input contract. Optimization
+ends at initial loading-overlay removal; later zones use the original row
+routine and normal fades. Installed detours keep the DLL resident so they
+cannot jump into freed code. Game files are unchanged on disk.
+
+Quiet mode suppresses only known automatic-login states 0, 1, 3 and 4.
+Other states, including errors, are visible. Creation retains its original UI.
+Rebirth now preloads up to six clients and sequences same-account authentication
+using the preceding character's zone-acceptance response. Supported Rebirth
+starts have no added process-start gap. Other endpoints and unsupported clients
+retain serial confirmation and the configured per-folder start spacing.
+Session reservations, character creation, normal /quit and Claude's scripts/macros
+changes remain. See Admission-Pipeline.txt for the evidence and local tests.
+
+Validation
+----------
+The local lab previously compared 100,000 random rows / 25,533,619 pixels
+and full mutable state against the original randy31.dll function. A live
+shadow run compared 506,754 rows with zero differences. Its first prototype
+had a missing null sentinel; that was corrected before this integration.
+The slower SIMD alternative is not included.
+
+LiveFastStartupProbe calls the production backend SpawnAOProcess with a
+private stdin request and its normal injector. It listens to the normal
+status pipe until world-ready and leaves the game open. It is an explicit
+live test, never part of the offline Verify.ps1 suite. Run it with its publish
+directory as the working directory, as the production BackendRunner does.
+Two initial probe attempts failed before login because its working directory
+was wrong for Reloaded.Assembler. No successful startup time is attributed
+to those attempts. The corrected probe reached the weapons shop in 3.537 s
+from SpawnAOProcess entry, including hash validation and injection; reported
+both shortened fades and 20 skipped meshes. This is one exploratory warm
+run, not a cold-start guarantee or a click-to-world UI benchmark.
+
+A second live check used the production --launch-stdin queue itself. Its
+world-ready report arrived at 3.679 s, the character was tracked and reported
+correctly, and the backend exited 0 while the game stayed open. The first
+integrated client also passed a visual and F10 input check and normal logout.
+The ported Verify-FastBilinear.ps1 test passed another 100,000 cases and
+25,533,619 pixels against the pinned DLL, including complete state equality.
+
+Settings regression tests caught a scrollbar after the password-result text
+appeared. The dialog now refits that content and constrains the two loading
+checkboxes to the viewport. English/Danish and simulated 150% checks passed.
+The inherited macro-recovery fixture assumed backups could grow past the
+ten-backup cap; it now checks bounded retention and the preserved newer bytes.
+Macro production code was not changed.
+
+The ChatServerInfo stage now releases the next Rebirth authentication. A stable
+character-window title remains the queue's final confirmation and fallback;
+it is not the same as rendered-world readiness.
+The timing probe keeps its status channel open through world-ready so it can
+measure the latter independently of queue completion.
+
+Final NexusEngine live validation
+--------------------------------
+The rebuilt Nexus-only worker reached world-ready in 3.751 s from its client
+spawn timer, including hash validation and injection. Both shortened fades
+and 20 skipped meshes were reported. This is one exploratory warm run while
+the offline maintenance stress test was also running, not a controlled
+performance comparison or a cold-start guarantee. Whole worker process
+startup through queue completion took 4.584 s; this includes confirmation.
+
+A repeated request reused the same client in 0.174 s and started no second
+game. The rendered shop and F10 input response were visually checked. The
+production Nexus preset-logout code discovered the exact test session in its
+new registry, validated the process identity, received native /quit approval,
+and observed the game's normal exit within 45 s. No forced close was used.
+NexusEngine transition
+----------------------
+The preview now bundles NexusEngine.exe. Its project, namespace, worker
+protocol, creation pipes and session locks belong to Nexus. Session records
+are stored in %LOCALAPPDATA%\AONexus\Sessions\ActiveClients.json. The launcher
+no longer automatically imports another launcher's profile. Existing Nexus
+profiles and credentials remain in place.
+
+The former standalone credential-bearing CLI and Login.bat are removed,
+along with CommandLineParser. Only --launch-stdin and --validate-stdin remain.
+The GUI and worker are packaged together, so both sides use the new protocol.
+The x86 worker still hosts .NET 10 and uses Reloaded.Injector; LoginHandler
+remains native. This is a maintained fork, not an independent rewrite of all
+inherited code. Original source attribution and notices remain in the credits.
+
+Statement: We moved to a Nexus-maintained launch engine to give us direct
+control over startup performance and future improvements. Our measured gains
+come from client-loading changes; they do not establish that the former
+launcher executable itself was the performance bottleneck.
+
+Before switching from an older build, finish logging out its game clients.
+The new session registry does not adopt live sessions owned by older builds
+or other launchers; do not mix versions when relying on account limits or
+preset logout. Existing Nexus settings are unaffected. Old app data and
+extracted caches are not erased from the user's machine.
+
+The existing backend-to-client credential environment transport is unchanged;
+the lab's restricted shared-memory transport is not yet migrated here.
+These are development measurements, with the live-test limits below retained
+for the 1.2 release. They are not promises about every machine or location.
+
+Final offline verification
+--------------------------
+build/Verify.ps1 completed successfully against the NexusEngine preview,
+including the new worker-entry-point checks, launcher/profile/UI coverage,
+Claude's scripts/macros tests, account limits, tracked sessions, creation,
+backend lifetime, native camp control and embedded payload integrity.
+The embedded executable matches all 200 published runtime files.
+Executable SHA-256:
+6F44BACD4C9C42B11993E863807EAF24E6B4DE8A9483192DA4AFE5FBD1E9E589
+Logs: logs/nexus-engine-verify.txt and logs/Verify-*.txt.
+Live logout: logs/nexus-engine-live-logout.txt.
+Live launch/reuse logs: ../launcher-lab/results/nexus-engine-live-*.txt.
+Unverified cases
+----------------
+Cold boot, other client builds, additional locations/accounts, reconnect and
+all failure/recovery flows have not been live-tested with this integration.
+Unsupported builds fall back; this is not a claim of fast-mode support for
+New Engine or all Rebirth/Project Rubi-Ka builds. Server authentication is unchanged.

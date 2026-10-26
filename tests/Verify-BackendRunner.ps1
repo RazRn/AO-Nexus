@@ -2,7 +2,7 @@
     [string]$Compiler = 'C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\Roslyn\csc.exe'
 )
 $ErrorActionPreference = 'Stop'
-$testDirectory = Join-Path ([IO.Path]::GetTempPath()) ('AOQuickLauncher-BackendTest-' + [Guid]::NewGuid().ToString('N'))
+$testDirectory = Join-Path ([IO.Path]::GetTempPath()) ('NexusEngine-BackendTest-' + [Guid]::NewGuid().ToString('N'))
 [IO.Directory]::CreateDirectory($testDirectory) | Out-Null
 $sourcePath = Join-Path $testDirectory 'BackendRunnerTest.cs'
 $exePath = Join-Path $testDirectory 'BackendRunnerTest.exe'

@@ -1,5 +1,4 @@
 AO NEXUS — OFFLINE QUICK GUIDE
-Based on AOQuickLauncher by never-knows-best and contributors.
 Enhanced by Luckyspawn.
 
 GET STARTED
@@ -13,7 +12,10 @@ GET STARTED
 5. Choose Log in selected, review the confirmation and enter passwords as needed.
 
 Requires Windows 10/11 and .NET Framework 4.8. The login engine and its runtime
-are bundled; players do not need a .NET SDK or a separate AOQuickLauncher folder.
+are bundled; players do not need a .NET SDK or a separate launcher installation.
+This local preview uses NexusEngine for launch, tracking and the tested
+fast-loading hooks. See CREDITS.txt for source attribution. Close game clients
+launched by an older build before testing this preview.
 The app version appears in the header. The source download is not the runnable ZIP.
 
 SETUP WIZARD

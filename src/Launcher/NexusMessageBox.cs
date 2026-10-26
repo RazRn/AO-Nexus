@@ -24,7 +24,7 @@ namespace AOLauncher
         }
     }
 
-    internal sealed class NexusMessageDialog : Form
+    internal sealed class NexusMessageDialog : NexusForm
     {
         private readonly List<Button> actionButtons = new List<Button>();
         private readonly Button defaultAction;
@@ -132,13 +132,13 @@ namespace AOLauncher
             Controls.Add(layout);
         }
 
-        protected override void OnLoad(EventArgs e)
+        protected override void OnHandleCreated(EventArgs e)
         {
             Theme.Apply(this);
             // Theme.Apply sets the general textbox border; message text already has
             // its own inset panel and should not gain an additional input outline.
             MessageControl.BorderStyle = BorderStyle.None;
-            base.OnLoad(e);
+            base.OnHandleCreated(e);
         }
 
         protected override void OnShown(EventArgs e)

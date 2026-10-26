@@ -7,14 +7,14 @@ namespace AOLauncher
 {
     internal sealed partial class MainForm
     {
-        private void RunSetup()
+        private void RunSetup(bool newOptionsOnly = false)
         {
             if (storageBlocked || running || guiOperationBusy) return;
             bool startup;
             try { startup = !smoke && WindowsStartup.IsEnabled; }
             catch (Exception error) when (error is IOException || error is UnauthorizedAccessException || error is System.Security.SecurityException)
             { ShowInfo(error.Message); return; }
-            using (var wizard = new SetupWizard(settings, startup, !settings.HasCompletedSetup))
+            using (var wizard = new SetupWizard(settings, startup, !settings.HasCompletedSetup, newOptionsOnly))
             {
                 wizard.Commit = (choice, windowsStartup) =>
                 {
@@ -41,6 +41,7 @@ namespace AOLauncher
                 settings = wizard.Result;
             }
             ApplyLanguage(); UpdateSelection();
+            backgroundClients?.SetEnabled(settings.MinimizeInactiveClients);
         }
     }
 }

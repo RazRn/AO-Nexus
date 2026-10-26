@@ -47,6 +47,23 @@ typedef void* (__thiscall* Utils_Assign_t) (std::string* string, const char* new
 Utils_Assign_t Utils_Assign;
 
 #include "StatusReport.h"
+#include "FastStartup.h"
+#include "LoginGate.h"
+
+static void* deferredLoginModule = nullptr;
+static bool automaticLoginCancelled = false;
+void SubmitAutomaticLogin() {
+    Utils_Assign(Client_GetPlayerName(), std::getenv("AOUser"));
+    Utils_Assign(Client_GetPassword(), std::getenv("AOPass"));
+    NexusFastStartup::submitted = true;
+    int connected = Client_ConnectToLH(Client_GetInstanceIfAny());
+    StatusSend("connect rc=%d", connected);
+}
+void CancelAutomaticLogin() {
+    automaticLoginCancelled = true;
+    LoginModule_Show(deferredLoginModule, 0);
+    LoggedIn = true; // Detach automatic-login hooks; leave the manual UI usable.
+}
 
 void NopCall(PVOID address) {
     DWORD d, ds;
@@ -56,18 +73,19 @@ void NopCall(PVOID address) {
 
 void __fastcall LoginModule_Initialize_Hook(void* pLoginModule, int edx, bool loginAccount)
 {
+    NexusFastStartup::Install(CreateCharacterMode, EnvironmentIs("QuietLaunch", "True"));
     LoginModule_Initialize(pLoginModule, loginAccount);
     StatusSend("login-screen");
 
-    Utils_Assign(Client_GetPlayerName(), std::getenv("AOUser"));
-    Utils_Assign(Client_GetPassword(), std::getenv("AOPass"));
-    int connected = Client_ConnectToLH(Client_GetInstanceIfAny());
-    StatusSend("connect rc=%d", connected);
+    deferredLoginModule = pLoginModule;
+    if (!CreateCharacterMode && NexusLoginGate::Begin(SubmitAutomaticLogin, CancelAutomaticLogin)) return;
+    SubmitAutomaticLogin();
 }
 
 void __fastcall LoginModule_Show_Hook(void* pLoginModule, int edx, int state)
 {
     StatusScreen(state);
+    if (automaticLoginCancelled) { LoginModule_Show(pLoginModule, state); return; }
     if (CreateCharacterMode)
     {
         // Keep the game's normal login/error/selection UI visible. ID 0 is never
@@ -88,12 +106,15 @@ void __fastcall LoginModule_Show_Hook(void* pLoginModule, int edx, int state)
     {
         StatusSend("character-list");
         Client_SetCharID(atoi(std::getenv("AOCharId")));
+        InterlockedExchange(&NexusFastStartup::characterRequested, 1);
         Client_LoginCharacter(Client_GetInstanceIfAny());
         StatusSend("character-requested");
         LoggedIn = true;
     }
 
-    if (EnvironmentIs("QuietLaunch", "False"))
+    // Quiet mode hides only the known automatic-login states. Errors and new
+    // client states must remain visible so a failed login can be recovered.
+    if (!EnvironmentIs("QuietLaunch", "True") || (state != 0 && state != 1 && state != 3 && state != 4))
         LoginModule_Show(pLoginModule, state);
 }
 
@@ -136,7 +157,7 @@ int FindAndAttach(LPCSTR pszModule, LPCSTR pszFunction, PVOID* ppPointer, PVOID 
 // Its only output is one bounded, non-credential message to this launch's pipe.
 bool IsCreationPipeName(const std::wstring& name)
 {
-    const std::wstring prefix = L"AOQuickLauncher.Created.";
+    const std::wstring prefix = L"AONexus.Created.";
     if (name.size() != prefix.size() + 32 || name.compare(0, prefix.size(), prefix) != 0)
         return false;
     for (size_t index = prefix.size(); index < name.size(); ++index)
@@ -353,7 +374,7 @@ void ThreadMain(HMODULE hModule)
     DetourDetach((PVOID*)&LoginModule_Show, (PVOID)LoginModule_Show_Hook);
     DetourTransactionCommit();
     StatusSend("hooks-removed");
-    StatusClose();
+    if (!NexusFastStartup::Active()) StatusClose();
 
     // Detection failure must never terminate an otherwise healthy game client.
     if (CreateCharacterMode)
@@ -367,6 +388,15 @@ void ThreadMain(HMODULE hModule)
     bool campInstalled = false;
     try { campInstalled = InstallCampControl(); }
     catch (...) { }
+    if (NexusFastStartup::Active()) {
+        // The optimized routines pass through after the initial world is ready.
+        // Never unload a module while any installed detour still references it.
+        ULONGLONG until = GetTickCount64() + 120000;
+        while (!NexusFastStartup::Complete() && GetTickCount64() < until) Sleep(50);
+        InterlockedExchange(&NexusFastStartup::complete, 1);
+        StatusClose();
+        ExitThread(0);
+    }
     if (campInstalled) ExitThread(0);
     FreeLibraryAndExitThread(hModule, NULL);
 }

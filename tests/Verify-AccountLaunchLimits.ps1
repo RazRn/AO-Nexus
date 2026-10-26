@@ -1,5 +1,5 @@
 ﻿param(
-    [string]$BackendPath = (Join-Path $PSScriptRoot '..\runtime\AOQuickLauncher\AOQuickLauncher.exe')
+    [string]$BackendPath = (Join-Path $PSScriptRoot '..\runtime\NexusEngine\NexusEngine.exe')
 )
 $ErrorActionPreference = 'Stop'
 $backend = (Resolve-Path -LiteralPath $BackendPath).Path

@@ -160,7 +160,7 @@ namespace AOLauncher
         }
     }
 
-    internal class EditorDialog : Form
+    internal class EditorDialog : NexusForm
     {
         protected readonly TableLayoutPanel Fields;
         protected readonly TableLayoutPanel DialogLayout;
@@ -214,9 +214,14 @@ namespace AOLauncher
             CancelButton = CancelAction;
         }
 
-        protected override void OnLoad(EventArgs e)
+        protected override void OnHandleCreated(EventArgs e)
         {
             Theme.Apply(this);
+            base.OnHandleCreated(e);
+        }
+
+        protected override void OnLoad(EventArgs e)
+        {
             foreach (var tabs in Descendants(this).OfType<TabControl>())
                 tabs.SelectedIndexChanged += (sender, args) => QueueContentFit();
             base.OnLoad(e);

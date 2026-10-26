@@ -9,15 +9,18 @@ $game = Join-Path $testRoot 'game fixture'
 try {
     $sources = @(
         (Join-Path $PSScriptRoot 'AccountLimits.Tests.cs'),
-        (Join-Path $repo 'src\Backend\AOQuickLauncher\LaunchQueue.cs'),
-        (Join-Path $repo 'src\Backend\AOQuickLauncher\ClientSessions.cs'),
-        (Join-Path $repo 'src\Backend\AOQuickLauncher\LoginStatus.cs'),
-        (Join-Path $repo 'src\Backend\AOQuickLauncher\CreationMonitor.cs'),
+        (Join-Path $repo 'src\Backend\NexusEngine\LaunchQueue.cs'),
+        (Join-Path $repo 'src\Backend\NexusEngine\ClientSessions.cs'),
+        (Join-Path $repo 'src\Backend\NexusEngine\LoginStatus.cs'),
+        (Join-Path $repo 'src\Backend\NexusEngine\LoginGate.cs'),
+        (Join-Path $repo 'src\Backend\NexusEngine\LaunchTimings.cs'),
+        (Join-Path $repo 'src\Backend\NexusEngine\FastStartup.cs'),
+        (Join-Path $repo 'src\Backend\NexusEngine\CreationMonitor.cs'),
         (Join-Path $repo 'src\Common\ServerAccountPolicy.cs'),
         (Join-Path $repo 'src\Common\Texts.cs')
     )
     $compile = ($sources | ForEach-Object { '<Compile Include="' + [Security.SecurityElement]::Escape($_) + '" />' }) -join [Environment]::NewLine
-    $project = '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><EnableDefaultCompileItems>false</EnableDefaultCompileItems><StartupObject>AOQuickLauncher.AccountLimitsTests</StartupObject></PropertyGroup><ItemGroup>' + $compile + '</ItemGroup></Project>'
+    $project = '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><EnableDefaultCompileItems>false</EnableDefaultCompileItems><StartupObject>NexusEngine.AccountLimitsTests</StartupObject></PropertyGroup><ItemGroup>' + $compile + '</ItemGroup></Project>'
     $projectPath = Join-Path $testRoot 'TrackedLimits.csproj'
     [IO.File]::WriteAllText($projectPath, $project)
     & $DotNetPath build $projectPath --configuration Release --output $output --nologo --verbosity quiet

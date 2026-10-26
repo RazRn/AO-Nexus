@@ -13,6 +13,7 @@
     <LangVersion>7.3</LangVersion>
     <ApplicationIcon>Assets\Launcher.ico</ApplicationIcon>
     <EmbeddedBackendDirectory Condition=" '$(EmbeddedBackendDirectory)' == '' ">$(MSBuildProjectDirectory)\obj\EmbeddedBackend</EmbeddedBackendDirectory>
+    <EmbeddedMonitoringDirectory Condition=" '$(EmbeddedMonitoringDirectory)' == '' ">$(MSBuildProjectDirectory)\obj\EmbeddedMonitoring</EmbeddedMonitoringDirectory>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -41,10 +42,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
+    <Compile Include="NexusForm.cs" />
     <Compile Include="DesktopLifetime.cs" />
     <Compile Include="PresetHotkeys.cs" />
     <Compile Include="MainForm.Hotkeys.cs" />
     <Compile Include="PresetCamping.cs" />
+    <Compile Include="BackgroundClients.cs" />
+    <Compile Include="ClientMonitor.cs" />
+    <Compile Include="ClientReport.cs" />
+    <Compile Include="MainForm.ClientMonitor.cs" />
     <Compile Include="LauncherBootstrap.cs" />
     <Compile Include="NexusControls.cs" />
     <Compile Include="NexusMessageBox.cs" />
@@ -61,6 +67,8 @@
     <Compile Include="GuiSkins.cs" />
     <Compile Include="GuiScripts.cs" />
     <Compile Include="GuiManagerDialog.cs" />
+    <Compile Include="GuiManagerDialog.Design.cs" />
+    <Compile Include="GuiManagerDialog.Workflows.cs" />
     <Compile Include="GuiSessions.cs" />
     <Compile Include="MainForm.GameGui.cs" />
     <Compile Include="ServerSidebar.cs" />
@@ -73,6 +81,7 @@
     <Compile Include="Dialogs.cs" />
     <Compile Include="SettingsDialog.cs" />
     <Compile Include="SetupWizard.cs" />
+    <Compile Include="SetupNewOptions.cs" />
     <Compile Include="MainForm.Setup.cs" />
     <Compile Include="LogViewer.cs" />
     <Compile Include="AppUpdates.cs" />
@@ -87,6 +96,7 @@
     <Compile Include="BackendRunner.cs" />
     <Compile Include="GameLogFilter.cs" />
     <Compile Include="EmbeddedBackend.cs" />
+    <Compile Include="EmbeddedMonitoring.cs" />
     <Compile Include="PrefsImporter.cs" />
     <Compile Include="PrefsDiscovery.cs" />
     <Compile Include="PrefsPickerDialog.cs" />
@@ -109,8 +119,11 @@
     <EmbeddedResource Include="$(EmbeddedBackendDirectory)\Backend.manifest.json">
       <LogicalName>AOLauncher.Backend.manifest.json</LogicalName>
     </EmbeddedResource>
+    <EmbeddedResource Include="$(EmbeddedMonitoringDirectory)\Monitoring.zip"><LogicalName>AOLauncher.Monitoring.zip</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="$(EmbeddedMonitoringDirectory)\Monitoring.manifest.json"><LogicalName>AOLauncher.Monitoring.manifest.json</LogicalName></EmbeddedResource>
   </ItemGroup>
   <Target Name="ValidateEmbeddedBackend" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('$(EmbeddedMonitoringDirectory)\Monitoring.zip') Or !Exists('$(EmbeddedMonitoringDirectory)\Monitoring.manifest.json')" Text="Bundled monitoring files are missing. Run build/Build.ps1 to prepare them." />
     <Error Condition="!Exists('$(EmbeddedBackendDirectory)\Backend.zip') Or !Exists('$(EmbeddedBackendDirectory)\Backend.manifest.json')" Text="The compressed launcher backend is missing. Run build/Build.ps1 to prepare the bundled login engine." />
   </Target>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

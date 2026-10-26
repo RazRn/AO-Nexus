@@ -100,16 +100,23 @@ try{
                         $targetRect=$dialog.RectangleToClient($target.RectangleToScreen($target.ClientRectangle))
                         $applyRect=$dialog.RectangleToClient($apply.RectangleToScreen($apply.ClientRectangle))
                         $listRect=$dialog.RectangleToClient($skinList.RectangleToScreen($skinList.ClientRectangle))
-                        Assert ($targetRect.Top -gt $listRect.Bottom) 'Skin target belongs below its skin list'
-                        Assert ($applyRect.Top - $targetRect.Bottom -ge 6*$scale) 'Skin target must have a visible gap before apply actions'
+                        Assert ($targetRect.Bottom -lt $listRect.Top) 'Installation scope is chosen before selecting an installed skin'
+                        Assert ($applyRect.Top - $listRect.Bottom -ge 6*$scale) 'Skin review actions remain separate below the installed list'
                     }
                     if($i -eq 2){
                         $page=$tabs.TabPages[2]
-                        foreach($name in @('guiScriptTarget','guiScripts','guiScriptPreview','guiScriptCopyTarget','copyGuiScripts','copyAllGuiScripts','importGuiScript','deleteGuiScripts','openGuiScripts','guiMacroSource','guiMacros','copyGuiMacros')){
+                        foreach($name in @('guiScriptTarget','guiScripts','guiScriptPreview','guiScriptCopyTarget','copyGuiScripts','copyAllGuiScripts','importGuiScript','deleteGuiScripts','openGuiScripts')){
                             $control=$dialog.Controls.Find($name,$true)[0];Assert ($null -ne $control) "Scripts tab has $name"
                             $rect=$page.RectangleToClient($control.RectangleToScreen($control.ClientRectangle))
                             Assert ($rect.Right -le $page.ClientSize.Width+1 -and $rect.Bottom -le $page.ClientSize.Height+1 -and $rect.Width -gt 0 -and $rect.Height -gt 0) "$name fits the Scripts tab at $language $scale"
                         }
+                        $modes=$dialog.Controls.Find('guiScriptModes',$true)[0];$modes.SelectedIndex=1;[GuiManagerFixture]::Pump()
+                        foreach($name in @('guiMacroSource','guiMacros','guiMacroTargets','copyGuiMacros')){
+                            $control=$dialog.Controls.Find($name,$true)[0];Assert ($null -ne $control -and $control.Visible) "Character macros mode has $name"
+                            $rect=$page.RectangleToClient($control.RectangleToScreen($control.ClientRectangle))
+                            Assert ($rect.Right -le $page.ClientSize.Width+1 -and $rect.Bottom -le $page.ClientSize.Height+1 -and $rect.Width -gt 0 -and $rect.Height -gt 0) "$name fits the macros mode at $language $scale"
+                        }
+                        Screenshot $dialog ($language+'-'+$scale+'-macros.png');$modes.SelectedIndex=0;[GuiManagerFixture]::Pump()
                     }
                     if($PublicGuideDirectory -and $language -eq 'en' -and $scale -eq 1 -and $i -ne 2){
                         [IO.Directory]::CreateDirectory([IO.Path]::GetFullPath($PublicGuideDirectory))|Out-Null

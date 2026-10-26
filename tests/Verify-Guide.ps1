@@ -15,6 +15,7 @@ function Anchors([string]$body){
 $documents=@('README.md','docs/Player-Guide.md','docs/Game-GUI.md','docs/Building.md','docs/Privacy-and-Security.md','docs/Server-Health.md','docs/images/README.md','docs/images/SCREENSHOTS.md')
 $narrative=@('README.md','docs/Player-Guide.md','docs/Game-GUI.md')
 $imageRefs=@()
+. (Join-Path $PSScriptRoot 'Guide-ImagePlan.ps1')
 foreach($document in $documents){
     $path=Join-Path $repo $document
     $body=[IO.File]::ReadAllText($path)
@@ -30,26 +31,33 @@ foreach($document in $documents){
             Assert ((Anchors ([IO.File]::ReadAllText($destination))) -contains $parts[1]) "Missing anchor $target in $document"
         }
         if($narrative -contains $document -and $link.Value.StartsWith('!')){
-            Assert ($target -match 'images/published/.+-[a-f0-9]{16}\.png$') "Unversioned guide image: $target"
+            $imageName=[IO.Path]::GetFileName($destination)
+            $versionedPlan=$GuideImagePlan[$imageName]
+            Assert (($target -match 'images/published/.+-[a-f0-9]{16}\.png$') -or ($null -ne $versionedPlan -and $versionedPlan.Versioned -and $target -eq ('images/'+$imageName))) "Unversioned or unplanned guide image: $target"
             $imageRefs+=$destination
         }
     }
 }
-Assert ($imageRefs.Count -eq 12) 'Guide should have one overview and eleven distinct task images'
-Assert (@($imageRefs | Select-Object -Unique).Count -eq 12) 'A screenshot is repeated in the guide'
+Assert ($imageRefs.Count -eq 14) 'Guide should have one overview and thirteen distinct task images'
+Assert (@($imageRefs | Select-Object -Unique).Count -eq 14) 'A screenshot is repeated in the guide'
 $readme=[IO.File]::ReadAllText((Join-Path $repo 'README.md'))
 Assert ([regex]::Matches($readme,'!\[').Count -eq 1) 'README should contain only the overview image'
 Assert (($readme -split "`n").Count -le 100) 'README has grown beyond the quick-start overview'
 $manifest=[IO.File]::ReadAllText((Join-Path $repo 'docs/images/SCREENSHOTS.md'))
 Add-Type -AssemblyName System.Drawing
-. (Join-Path $PSScriptRoot 'Guide-ImagePlan.ps1')
 foreach($image in $imageRefs){
     $hash=(Get-FileHash -LiteralPath $image -Algorithm SHA256).Hash.ToLowerInvariant()
-    Assert ([IO.Path]::GetFileName($image).Contains($hash.Substring(0,16))) "Image cache key differs from contents: $image"
     Assert ($manifest.Contains($hash)) "Image missing from provenance: $image"
     $name=([IO.Path]::GetFileName($image) -replace '-[a-f0-9]{16}\.png$','.png')
     $plan=$GuideImagePlan[$name]
     Assert ($null -ne $plan) "Image not in capture plan: $name"
+    if($plan.Versioned){
+        $provenanceRows=@($manifest -split '\r?\n' | Where-Object {$_ -match ('^\| \['+[regex]::Escape($name)+'\]\(')})
+        Assert ($provenanceRows.Count -eq 1 -and $provenanceRows[0].Contains($hash) -and $provenanceRows[0].Contains($plan.Source)) "Versioned capture hash/source missing from its provenance row: $name"
+        Assert ($plan.Boxes.Count -eq 0 -and !$plan.Crop) "Game GUI captures must remain full and unannotated: $name"
+    }else{
+        Assert ([IO.Path]::GetFileName($image).Contains($hash.Substring(0,16))) "Image cache key differs from contents: $image"
+    }
     $bitmap=[Drawing.Bitmap]::FromFile($image)
     try {
         $size=if($plan.Crop){@($plan.Crop[2],$plan.Crop[3])}else{$plan.Size}
@@ -62,5 +70,5 @@ foreach($image in $imageRefs){
     } finally {$bitmap.Dispose()}
 }
 $pngs=@(Get-ChildItem -LiteralPath (Join-Path $repo 'docs/images') -Recurse -Filter '*.png')
-Assert ($pngs.Count -eq 12) 'Stale/duplicate screenshot files remain in docs/images'
+Assert ($pngs.Count -eq 14) 'Stale/duplicate screenshot files remain in docs/images'
 Write-Output "PASS: $checks documentation link, anchor, image, hash, callout and structure checks."

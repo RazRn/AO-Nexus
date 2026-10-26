@@ -10,6 +10,7 @@
 /src/Backend/LoginHandler/**/Release/
 /src/Backend/LoginHandler/**/x64/
 /runtime/
+/dist/Monitoring/
 /logs/
 *.exe
 *.dll

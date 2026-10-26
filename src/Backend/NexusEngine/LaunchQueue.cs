@@ -1,7 +1,8 @@
-﻿using AOLauncher.Localization;
+using AOLauncher.Localization;
 using AOLauncher;
 using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -11,7 +12,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AOQuickLauncher
+namespace NexusEngine
 {
     internal sealed class LaunchTarget
     {
@@ -27,7 +28,7 @@ namespace AOQuickLauncher
             if (!File.Exists(Path.Combine(gamePath, "AnarchyOnline.exe")))
                 throw new ArgumentException(Texts.T("AnarchyOnline.exe was not found in the selected game folder."));
             if (!File.Exists(Path.Combine(AppContext.BaseDirectory, "LoginHandler.dll")))
-                throw new FileNotFoundException(Texts.T("LoginHandler.dll is missing beside AOQuickLauncher.exe."));
+                throw new FileNotFoundException(Texts.T("LoginHandler.dll is missing beside NexusEngine.exe."));
             server = server ?? "37.18.192.41";
             if (!IPAddress.TryParse(server, out var address) || address.AddressFamily != AddressFamily.InterNetwork)
                 throw new ArgumentException(Texts.T("The login server must be an IPv4 address."));
@@ -71,6 +72,11 @@ namespace AOQuickLauncher
         public int StartSpacingMs { get; set; } = 1500;
         // Experimental: LoginHandler skips drawing the login and character screens.
         public bool QuietLaunch { get; set; }
+        public bool FastStartup { get; set; }
+        // Only enabled for the verified Rebirth endpoint/client below. Each
+        // preloaded client's authentication waits for the previous admission.
+        public bool AcceptancePipeline { get; set; } = true;
+        public int MaxConcurrentPreloads { get; set; } = 6;
         // Characters on one account still start one at a time: tested on Funcom Rubi-Ka, a second
         // login on the same account disconnects a character that is still loading into the world.
     }
@@ -127,7 +133,7 @@ namespace AOQuickLauncher
 
         // The operation ends once a creation client is reserved, not when the player
         // finishes creating their char. The optional name isolates concurrency tests.
-        internal static T WithLaunchLock<T>(Func<T> operation, string mutexName = @"Local\AOQuickLauncher.LoginQueue")
+        internal static T WithLaunchLock<T>(Func<T> operation, string mutexName = @"Local\AONexus.LoginQueue")
         {
             using var queueLock = new Mutex(false, mutexName);
             bool ownsLock;
@@ -153,6 +159,8 @@ namespace AOQuickLauncher
 
         internal static void ValidateRequest(LaunchRequest request)
         {
+            if (request != null && (request.MaxConcurrentPreloads < 1 || request.MaxConcurrentPreloads > 6))
+                throw new ArgumentException("Concurrent client preloads must be between 1 and 6.");
             if (request == null || request.Characters == null || request.Characters.Count == 0)
                 throw new ArgumentException(Texts.T("Select at least one character."));
             if (request.Characters.Count > 100)
@@ -311,13 +319,22 @@ namespace AOQuickLauncher
 
         private static async Task<int> LaunchSelectedAsync(LaunchRequest request)
         {
+            var batchTimer = Stopwatch.StartNew();
+            var timings = new LaunchTimings(request.Characters.Count);
             if (!request.Characters.Any(entry => entry.CreateCharacter))
                 Console.WriteLine(Texts.T("Accounts start in parallel; characters on the same account log in one at a time."));
             var queueSizes = request.Characters.GroupBy(AccountQueueKey, StringComparer.OrdinalIgnoreCase).Select(group => group.Count()).ToArray();
+            var confirmations = new ConcurrentDictionary<string, List<Task<bool>>>(StringComparer.OrdinalIgnoreCase);
+            var admissions = new ConcurrentDictionary<string, Task<bool>>(StringComparer.OrdinalIgnoreCase);
             Diagnostic("queues", null, new { ParallelQueues = queueSizes.Length, CharactersPerQueue = queueSizes, request.ReadyTimeoutSeconds, request.StartSpacingMs, request.QuietLaunch });
             int result = await RunAccountQueuesAsync(request.Characters, async entry =>
             {
+                var pending = confirmations.GetOrAdd(AccountQueueKey(entry), _ => new List<Task<bool>>());
+                if (pending.Any(task => task.IsCompleted && !task.GetAwaiter().GetResult())) return false;
                 var target = entry.ResolvedTarget;
+                bool pipeline = CanPipeline(request, target, request.FastStartup && FastStartup.IsSupported(target.GamePath));
+                while (pending.Count(task => !task.IsCompleted) >= (pipeline ? request.MaxConcurrentPreloads : 1))
+                    if (!await pending.First(task => !task.IsCompleted).ConfigureAwait(false)) return false;
                 if (entry.CreateCharacter)
                 {
                     throw new InvalidOperationException("Character creation requires its own reserved monitor.");
@@ -325,6 +342,7 @@ namespace AOQuickLauncher
                 string runningName = ClientSessions.TryGetRunningName(entry, target);
                 if (runningName != null)
                 {
+                    timings.AlreadyOpen(entry);
                     ReportCharacter(entry, runningName);
                     Console.WriteLine(Texts.F("{0} (ID {1}): already running; skipped.", runningName, entry.CharacterId));
                     return true;
@@ -334,17 +352,24 @@ namespace AOQuickLauncher
                     Console.WriteLine(Texts.F("ID {0}: a tracked game client is still logging in; skipped. Check its game window.", entry.CharacterId));
                     return true;
                 }
-                long spacingWaitMs = await StartSpacing.WaitTurnAsync(target.GamePath, request.StartSpacingMs);
+                long spacingWaitMs = await StartSpacing.WaitTurnAsync(target.GamePath, pipeline ? 0 : request.StartSpacingMs);
                 Console.WriteLine(Texts.F("Starting {0} (ID {1})...", entry.CharacterName, entry.CharacterId));
                 var spawnTimer = Stopwatch.StartNew();
+                timings.Begin(entry, batchTimer.ElapsedMilliseconds);
                 var status = LoginStatusChannel.TryStart(spawnTimer,
-                    (stage, ms) => Diagnostic("stage", entry, new { Stage = stage, Ms = ms }));
+                    (stage, ms) => {
+                        timings.Observe(entry, stage, ms);
+                        Diagnostic("stage", entry, new { Stage = stage, Ms = ms });
+                    });
                 Process spawned;
+                LoginGate gate = null;
                 try
                 {
+                    if (pipeline) gate = new LoginGate(admissions.GetOrAdd(AccountQueueKey(entry), _ => Task.FromResult(true)));
                     spawned = Program.SpawnAOProcess(new Program.Options {
                         Username = entry.Account, Password = entry.Password, CharacterId = entry.CharacterId,
-                        CampToken = Guid.NewGuid().ToString("N"), StatusPipe = status?.PipeName, Quiet = request.QuietLaunch
+                        CampToken = Guid.NewGuid().ToString("N"), StatusPipe = status?.PipeName, Quiet = request.QuietLaunch,
+                        FastStartup = request.FastStartup, LoginGate = gate?.Name
                     }, target);
                 }
                 catch (Exception error)
@@ -355,6 +380,7 @@ namespace AOQuickLauncher
                         Win32Error = (error as System.ComponentModel.Win32Exception)?.NativeErrorCode,
                         Inner = error.InnerException?.GetType().FullName, GameExecutableExists = File.Exists(Path.Combine(target.GamePath, "AnarchyOnline.exe")) });
                     status?.Dispose();
+                    gate?.Dispose();
                     throw;
                 }
                 var client = spawned;
@@ -368,35 +394,62 @@ namespace AOQuickLauncher
                     ClientSessions.RecordPending(entry, target, client, trackingRequired);
                     Console.WriteLine(Texts.F("Waiting for the game window for ID {0}...", entry.CharacterId));
                 }
-                catch { client.Dispose(); status?.Dispose(); throw; }
-                confirmation = ConfirmCharacterAsync(entry, target, client, status, request.ReadyTimeoutSeconds);
+                catch { client.Dispose(); status?.Dispose(); gate?.Dispose(); throw; }
+                confirmation = ConfirmCharacterAsync(entry, target, client, status, request.ReadyTimeoutSeconds, timings, spawnTimer);
+                if (gate != null) confirmation = gate.UntilConfirmedAsync(confirmation);
+                pending.Add(confirmation);
+                if (pipeline)
+                {
+                    admissions[AccountQueueKey(entry)] = AdmissionOrConfirmationAsync(confirmation, status);
+                    return !confirmation.IsCompleted || await confirmation.ConfigureAwait(false);
+                }
                 bool confirmed = await confirmation.ConfigureAwait(false);
                 if (confirmed) await Task.Delay(250).ConfigureAwait(false);
                 return confirmed;
             });
+            bool[] confirmedClients = await Task.WhenAll(confirmations.Values.SelectMany(tasks => tasks)).ConfigureAwait(false);
+            if (confirmedClients.Any(confirmed => !confirmed)) result = 2;
             Console.WriteLine(Texts.T(result == 0 ? "All login queues finished. Game clients remain open." :
                 "Login queues finished with an error on at least one account. Game clients remain open."));
+            Console.WriteLine(timings.Summary(result == 0, batchTimer.ElapsedMilliseconds));
             return result;
         }
 
-        /// <summary>Waits for the character to appear in the world, then records and reports it. Owns the client and status channel.</summary>
+        internal static bool CanPipeline(LaunchRequest request, LaunchTarget target, bool supportedClient)
+        {
+            // Evidence is from Rebirth's Claim/zone bootstrap ordering and live
+            // tests of this endpoint. Do not extrapolate it to Funcom or PRK.
+            return request.AcceptancePipeline && request.FastStartup && supportedClient
+                && target.EndpointKey == "2.24.96.30:7500";
+        }
+
+        // Missing telemetry falls back to full confirmation, including failure.
+        internal static async Task<bool> AdmissionOrConfirmationAsync(Task<bool> confirmation, LoginStatusChannel status)
+        {
+            if (status == null) return await confirmation.ConfigureAwait(false);
+            await Task.WhenAny(confirmation, status.Accepted).ConfigureAwait(false);
+            return !confirmation.IsCompleted || await confirmation.ConfigureAwait(false);
+        }
+
         private static async Task<bool> ConfirmCharacterAsync(CharacterLaunch entry, LaunchTarget target, Process client,
-            LoginStatusChannel status, int timeoutSeconds)
+            LoginStatusChannel status, int timeoutSeconds, LaunchTimings timings, Stopwatch spawnTimer)
         {
             try
             {
                 var wait = new CharacterWait();
                 string actualName = await WaitForCharacterAsync(client, timeoutSeconds, wait).ConfigureAwait(false);
+                long confirmedAtMs = spawnTimer.ElapsedMilliseconds;
                 Diagnostic(actualName != null ? "in-game" : "not-detected", entry, new { wait.Outcome, wait.Seconds, wait.NameFirstSeenSeconds, wait.ExitCode,
                     wait.WindowState, wait.TitleChanges, Stages = status?.Summary() ?? "unavailable", Dialogs = wait.Dialogs, RunningClients = SafeRunningClients() });
                 if (actualName == null)
                 {
+                    Console.Error.WriteLine(Texts.F("{0}: login not confirmed after {1:0.00} s.", entry.CharacterName, confirmedAtMs / 1000.0));
                     Console.Error.WriteLine(Texts.F("This account's queue stopped: ID {0} was not detected in game. Check the game window, account details and character ID. Other accounts continue; existing game windows stay open.", entry.CharacterId));
                     return false;
                 }
                 ClientSessions.Record(entry, target, client, actualName);
                 ReportCharacter(entry, actualName);
-                Console.WriteLine(Texts.F("ID {0}: detected as {1} in the game window.", entry.CharacterId, actualName));
+                Console.WriteLine(timings.Confirmed(entry, actualName, confirmedAtMs));
                 return true;
             }
             catch (Exception)
@@ -464,7 +517,7 @@ namespace AOQuickLauncher
 
         internal static void ReportCharacter(CharacterLaunch entry, string name)
         {
-            Console.WriteLine("AOQL_CHARACTER " + JsonSerializer.Serialize(new {
+            Console.WriteLine("NEXUS_CHARACTER " + JsonSerializer.Serialize(new {
                 AccountId = entry.AccountId, CharacterId = entry.CharacterId, CharacterName = name
             }));
         }
@@ -557,7 +610,7 @@ namespace AOQuickLauncher
         internal static void Diagnostic(string name, CharacterLaunch entry, object details)
         {
             // Read by AO Nexus into its anonymised diagnostics log; never shown in the activity log.
-            try { Console.WriteLine("AOQL_DIAG " + name + (entry != null ? " ID " + entry.CharacterId : "") + " " + JsonSerializer.Serialize(details)); }
+            try { Console.WriteLine("NEXUS_DIAG " + name + (entry != null ? " ID " + entry.CharacterId : "") + " " + JsonSerializer.Serialize(details)); }
             catch (Exception) { }
         }
 

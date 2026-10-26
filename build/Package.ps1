@@ -5,6 +5,8 @@ $distRoot = Join-Path $projectRoot 'dist'
 # A tested staged build can be packaged while Windows locks the installed EXE.
 $executable = if ($ExecutablePath) { [IO.Path]::GetFullPath($ExecutablePath) } else { Join-Path $distRoot 'AONexus.exe' }
 & (Join-Path $PSScriptRoot 'Build-Payload.ps1') -ValidateOnly -VerifyExecutable $executable
+& (Join-Path $env:WINDIR 'SysWOW64\WindowsPowerShell\v1.0\powershell.exe') -NoProfile -ExecutionPolicy Bypass -File (Join-Path $projectRoot 'tests\Verify-EmbeddedMonitoring.ps1') -AssemblyPath $executable
+if ($LASTEXITCODE -ne 0) { throw 'The release must include a verified monitoring companion for single-file upgrades.' }
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $inputs = @{}
 foreach ($name in @('AONexus.exe', 'README.txt', 'CREDITS.txt')) {

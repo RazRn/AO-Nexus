@@ -19,7 +19,9 @@ namespace AOLauncher
             result.HasCompletedSetup = result.HasChosenUpdatePreference = true;
             result.CheckForUpdatesOnStartup = result.ShowServerNews = result.ShowServerHealth = false;
             result.BackgroundHealthChecks = result.HealthTrayNotifications = false;
+            result.MonitorClientHealth = result.CollectClientExitReports = false;
             result.NewsSourceIds.Clear(); result.HealthServerIds.Clear();
+            SetupNewOptions.MarkReviewed(result);
             return result;
         }
 
@@ -34,6 +36,7 @@ namespace AOLauncher
     {
         private readonly LauncherSettings original, draft;
         private readonly bool firstRun;
+        private readonly bool newOptionsOnly;
         private readonly string originalLanguage;
         private readonly Button back;
         private bool startWithWindows;
@@ -43,8 +46,10 @@ namespace AOLauncher
         internal bool StartWithWindows => startWithWindows;
         internal Func<LauncherSettings, bool, string> Commit { get; set; }
 
-        internal SetupWizard(LauncherSettings settings, bool startup, bool firstRun) : base(L("Welcome to AO Nexus", "Velkommen til AO Nexus"), 640)
+        internal SetupWizard(LauncherSettings settings, bool startup, bool firstRun) : this(settings, startup, firstRun, false) { }
+        internal SetupWizard(LauncherSettings settings, bool startup, bool firstRun, bool newOptionsOnly) : base(L("Welcome to AO Nexus", "Velkommen til AO Nexus"), 640)
         {
+            this.newOptionsOnly = newOptionsOnly;
             original = settings; draft = SetupPreferences.Copy(settings); this.firstRun = firstRun;
             originalLanguage = settings.Language; originalStartup = startWithWindows = startup;
             if (firstRun) { draft.NewsSourceIds.Clear(); draft.HealthServerIds.Clear(); }
@@ -61,7 +66,7 @@ namespace AOLauncher
             back.Click += (sender, e) => { if (step > 0) { step--; RenderStep(); } };
             SaveButton.Click += (sender, e) =>
             {
-                if (step < 3) { step++; RenderStep(); }
+                if (!newOptionsOnly && step < 3) { step++; RenderStep(); }
                 else Complete(draft, startWithWindows);
             };
             CancelAction.Click += (sender, e) =>
@@ -75,7 +80,8 @@ namespace AOLauncher
 
         private void Complete(LauncherSettings choice, bool startup)
         {
-            choice.HasCompletedSetup = choice.HasChosenUpdatePreference = true;
+            if (!newOptionsOnly) choice.HasCompletedSetup = choice.HasChosenUpdatePreference = true;
+            SetupNewOptions.MarkReviewed(choice);
             try
             {
                 string error = Commit?.Invoke(choice, startup);
@@ -107,6 +113,15 @@ namespace AOLauncher
             foreach (Control control in Fields.Controls.Cast<Control>().ToArray()) control.Dispose();
             Fields.Controls.Clear(); Fields.RowStyles.Clear(); Fields.RowCount = 0;
             ErrorLabel.Text = "";
+            if (newOptionsOnly) {
+                Text = L("New options in AO Nexus", "Nye muligheder i AO Nexus");
+                back.Visible = false;
+                SaveButton.Text = L("Save choices", "Gem valg"); CancelAction.Text = L("Later", "Senere");
+                Note(L("Choose how to use the new features. Existing choices are preserved. Save once to stop this prompt for these options; Later leaves everything unchanged.",
+                    "Vælg, hvordan du vil bruge de nye funktioner. Eksisterende valg bevares. Gem én gang for at undgå denne påmindelse om disse valg; Senere ændrer intet."));
+                SetupNewOptions.Add(Fields, draft, original.OptionsReviewVersion);
+                Fields.ResumeLayout(true); Theme.Apply(this); Fields.AutoScrollPosition = Point.Empty; QueueContentFit(); return;
+            }
             Text = L("AO Nexus setup", "AO Nexus-opsætning");
             back.Text = L("Back", "Tilbage"); back.Visible = step > 0;
             CancelAction.Text = firstRun ? L("Skip setup", "Spring over") : L("Cancel", "Annuller");
@@ -182,6 +197,8 @@ namespace AOLauncher
             });
             Note(L("Background checks run every 60 seconds while Nexus is open, including in the tray. Notifications enable background checks. Without them, checks run only while the health view is visible.", "Baggrundstjek kører hvert 60. sekund, mens Nexus er åben, også i bakken. Meddelelser aktiverer baggrundstjek. Ellers tjekkes kun, mens statusvisningen er synlig."));
             Note(L("Minimize sends Nexus to the tray; Quit closes it. Both ask for confirmation until you choose not to be asked again.", "Minimer sender Nexus til bakken; Afslut lukker appen. Begge spørger om bekræftelse, indtil du vælger ikke at blive spurgt igen."));
+            Note(L("Game clients", "Spilklienter"), true);
+            SetupNewOptions.Add(Fields, draft, 0);
         }
 
         private void Review()
@@ -195,6 +212,7 @@ namespace AOLauncher
                 + "\r\n" + L("Update checks / Windows startup: ", "Opdateringstjek / Windows-start: ") + (draft.CheckForUpdatesOnStartup ? on : off) + " / " + (startWithWindows ? on : off)
                 + "\r\n" + L("Background checks / notifications: ", "Baggrundstjek / meddelelser: ") + (draft.BackgroundHealthChecks ? on : off) + " / " + (draft.HealthTrayNotifications ? on : off));
             var accounts = new NexusComboBox { Name = "setupAccounts", Dock = DockStyle.Top, DropDownStyle = ComboBoxStyle.DropDownList, Margin = new Padding(0, 0, 0, 12) };
+            foreach (var option in SetupNewOptions.All) Note(L(option.English, option.Danish) + ": " + (option.Read(draft) ? on : off));
             accounts.MatchHeight(SaveButton);
             foreach (var account in draft.Accounts) accounts.Items.Add(account.Label + " · " + AccountTargets.ServerName(draft, account));
             if (accounts.Items.Count == 0) accounts.Items.Add(L("No accounts added yet", "Ingen konti tilføjet endnu"));

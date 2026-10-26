@@ -186,7 +186,10 @@ foreach ($scale in @(1, 1.5)) {
             $settingsViewport = $settingsFields.Parent
             $settingsHost = $settingsViewport.Parent
             Assert ($settingsHost.GetType().Name -eq 'SlimScrollHost') 'Settings content must retain the slim scroll viewport.'
-            Assert (!$settingsFields.HorizontalScroll.Visible) 'Settings text must wrap without a horizontal native scrollbar.'
+            if ($settingsFields.HorizontalScroll.Visible) {
+                $settingsFields.Controls | ForEach-Object { Write-Output ($_.Name + ' ' + $_.GetType().Name + ' bounds=' + $_.Bounds + ' preferred=' + $_.PreferredSize) }
+            }
+            Assert (!$settingsFields.HorizontalScroll.Visible) ('Settings text must wrap without a horizontal native scrollbar. ' + $language + ' scale=' + $scale + ' client=' + $settingsFields.ClientSize)
             Assert ($settingsFields.ClientSize.Width -eq $settingsViewport.ClientSize.Width -and $settingsFields.ClientSize.Height -eq $settingsViewport.ClientSize.Height) 'Settings native chrome must be fully cropped while its usable client area matches the viewport.'
             $settingsBar = $settingsHost.GetType().GetProperty('VerticalBar', $flags).GetValue($settingsHost, $null)
             if ($settingsFields.VerticalScroll.Visible) { Assert $settingsBar.Visible 'Overflowing Settings must expose the slim vertical thumb.' }

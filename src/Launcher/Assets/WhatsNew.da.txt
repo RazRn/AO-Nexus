@@ -1,19 +1,15 @@
-• Scripts og makroer i Spillets GUI: den nye fane Scripts kopierer chat-scripts (/navn) mellem dine spilinstallationer, importerer script-filer og viser hver chars makroer. Kopiér makroer fra én char til andre med den nye del Makroer under Layouts; den vælges automatisk sammen med Hotbars, så makroknapper bliver ved med at virke. Hver ændring sikkerhedskopieres og kan gendannes under Sikkerhedskopier.
+﻿NYT I 1.2.0
 
-• Hurtigere holdlogin: Nexus bekræfter en char i verden ca. 0,6 s hurtigere og venter 0,25 s i stedet for 1 s, før næste char på samme konto starter. Tilsammen sparer det ca. 1,3 s pr. char.
+• Spillets GUI er redesignet med tydelige trin. Layouts viser gemt opsætning, målkarakterer og de dele, der erstattes. Sjældnere handlinger findes under Flere handlinger.
+• Skins begynder med installationen og de berørte konti. Tilføjelse og aktivering af et skin er separate, tydeligt navngivne trin.
+• Scripts har separate visninger for Script-filer og Char-makroer. Gennemse filer før kopiering; makrokopiering har sit eget målvalg og forklarer, hvad der erstattes.
+• Sikkerhedskopier kan filtreres efter type. Hver gendannelse viser oprindeligt mål, dato og berørte indstillinger, før du fortsætter.
+• Hurtigere opstart af klassiske klienter og holdlogin med Nexus' indbyggede loginmotor. Aktivitetsloggen viser indlæsningstiden for hver karakter og hele holdet.
+• AOQuickLauncher er ikke længere nødvendig. Den indbyggede motor giver Nexus direkte kontrol over opstart og loginrækkefølge; oprindelige bidrag er fortsat krediteret.
+• Valgfri AOSharp-respons i header og bakke. Målekomponenterne medfølger; aktivér Nexus Health Monitor i dine AOSharp-profiler. Forældede målinger skelnes fra faktiske opdateringspauser og manglende IPC-svar, med årsag og tider i loggen.
+• Valgfrie exit-rapporter samler seneste målinger og matchende Windows-fejl i en ZIP, du kan gemme og dele. Et exit alene beviser ikke et crash. Intet uploades automatisk.
+• Eksisterende brugere får en kort gennemgang af nye muligheder. Valgene findes fortsat i Indstillinger og opsætningsguiden.
+• Valgfri baggrundsminimering skifter kun mellem administrerede AO-vinduer. Skift til en browser eller anden app minimerer ikke den aktive AO-klient.
+• Mørk åbning af vinduer og dialoger, en mere jævn aktivitetslinje, ændringslog på versionsnummeret og GitHub-link under Indstillinger → Opdateringer.
 
-• Login-forløb pr. char: spilklienten melder nu hvert login-trin (login-skærm, serverforbindelse, char-liste, char valgt) til diagnoseloggen med tider samt teksten i eventuelle Windows-fejldialoger. Rapportér et problem kan så vise præcis, hvor et login stoppede.
-
-• Klienter fra samme spilmappe startes nu mindst 1,5 sekund fra hinanden. AO låser kortvarigt filer ved opstart, og samtidige starter kunne fejle med "No write access to the main AO folder".
-
-• Hurtigere login: spilklienten springer nu tegningen af login- og char-skærmene over og går direkte til den valgte char, ca. 1,5 sekund hurtigere pr. char i test. Det er slået til som standard; slå det fra under Indstillinger → Konti → Spring login-skærme over.
-
-• Rettelse: char-ID'er, der står lige før tegnsætning, som “ID 123456789...” mens der ventes på spilvinduet, anonymiseres nu også i diagnostik og fejlrapporter. Vælg Slet diagnostik nu under Indstillinger → Opdateringer for at rydde poster gemt af 1.1.7.
-
-• Rapportér et problem: Indstillinger → Generelt → Rapportér et problem… (også i aktivitetsvinduet) laver en anonymiseret rapport og åbner en udfyldt GitHub-sag. Du gennemser alt først; intet sendes, før du selv indsender det. Kopiér eller gem rapporten, hvis du ikke bruger GitHub.
-
-• Logins, konto- og char-navne, char-ID'er, holdnavne, egne servere og personlige mapper erstattes af koder som Char-3fa2c1. Adgangskoder registreres aldrig.
-
-• En lokal diagnostiklog registrerer nu login-trin pr. char, lukkede klienter, timeouts og fejl, så problemer som at én char i et hold ikke kan logge ind kan spores. Den fylder højst 2 MB og kan slås fra eller slettes under Indstillinger → Opdateringer.
-
-• Lukker Nexus uventet, gemmes en anonymiseret nedbrudsrapport, og du tilbydes at rapportere den ved næste start.
+Målingen kontrollerer AOSharp-opdateringer og testens lokale IPC-forbindelse. Den måler ikke pakketab til spilserveren og garanterer ikke levering for andre plugins.

@@ -1,4 +1,4 @@
-﻿using AOLauncher.Localization;
+using AOLauncher.Localization;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -7,13 +7,13 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 
-namespace AOQuickLauncher
+namespace NexusEngine
 {
     internal static class ClientSessions
     {
         private const int MaximumRecords = 128;
         private const long MaximumFileBytes = 1024 * 1024;
-        private const string MutexName = @"Local\AOQuickLauncher.ActiveClients";
+        private const string MutexName = @"Local\AONexus.ActiveClients";
         private static readonly object Sync = new object();
         private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions { MaxDepth = 8 };
 
@@ -304,7 +304,7 @@ namespace AOQuickLauncher
         {
             string folder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             if (string.IsNullOrWhiteSpace(folder)) throw new IOException(Texts.T("Local application data is unavailable."));
-            return Path.Combine(folder, "AOQuickLauncher", "ActiveClients.json");
+            return Path.Combine(folder, "AONexus", "Sessions", "ActiveClients.json");
         }
 
         private static bool TryAcquire(Mutex mutex)

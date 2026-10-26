@@ -5,7 +5,7 @@ Enhanced by Luckyspawn
 Original AOQuickLauncher backend: never-knows-best and contributors
 https://gitlab.com/never-knows-best/aoquicklauncher
 Thank you to the original authors and contributors whose work made this
-launcher possible. The backend and LoginHandler.dll are derived from this project.
+launcher possible. NexusEngine and LoginHandler.dll retain code derived from this project.
 The upstream checkout used for this package does not contain a separate LICENSE file.
 
 AO Nexus: separate launcher design, original generated backdrop, original portal icon, official server news, and independent profile storage.
@@ -20,12 +20,20 @@ libraries to Luckyspawn and does not replace their copyright or license terms.
 
 Included dependencies and upstream source projects:
 
+AOSharp.Common - never-knows-best and contributors
+https://gitlab.com/never-knows-best/aosharp
+Used by the optional responsiveness monitor's IPC companion. Source revision:
+d55eb12b5a763e5ed65851e69c50343de6c6d73c. The original assembly copyright is
+preserved. This checkout has no separate LICENSE file; no new license is asserted.
+AOSharp's injector, bootstrapper and game-facing core are not included.
+
+Json.NET 13.0.3 - James Newton-King and contributors
+https://github.com/JamesNK/Newtonsoft.Json
+The MIT license is preserved in Licenses/Newtonsoft.Json-13.0.3.
+
 .NET runtime - Microsoft and .NET contributors
 https://github.com/dotnet/runtime
 The included runtime license and third-party notices are preserved in Licenses.
-
-CommandLineParser - CommandLineParser contributors
-https://github.com/commandlineparser/commandline
 
 Reloaded.Injector - Sewer56 and Reloaded Project contributors
 https://github.com/Reloaded-Project/Reloaded.Injector

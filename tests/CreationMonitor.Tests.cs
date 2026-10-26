@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AOQuickLauncher
+namespace NexusEngine
 {
     // Program's inert spawn stub is supplied by AccountLimits.Tests.cs. This binary
     // cannot start games. Session registry methods are never invoked by these tests.

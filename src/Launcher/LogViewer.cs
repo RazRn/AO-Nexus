@@ -7,7 +7,7 @@ using static AOLauncher.Localization.Texts;
 
 namespace AOLauncher
 {
-    internal sealed class LogViewer : Form
+    internal sealed class LogViewer : NexusForm
     {
         internal static readonly Color TerminalBackground = Color.FromArgb(7, 12, 10);
         internal static readonly Color TerminalForeground = Color.FromArgb(151, 211, 166);

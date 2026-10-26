@@ -438,17 +438,17 @@ try {
     $request.Characters.Add($requested)
     $pendingCharacter.Name = 'Min midlertidige label'
     foreach ($line in @(
-        ('AOQL_CHARACTER {"CharacterId":' + $config.Accounts[0].Characters[1].CharacterId + ',"CharacterName":"Forkert"}'),
-        'AOQL_CHARACTER {not-json}',
-        'AOQL_CHARACTER null',
-        ('AOQL_CHARACTER {"CharacterId":' + $pendingCharacter.CharacterId + ',"CharacterName":""}'),
-        ('AOQL_CHARACTER {"CharacterId":' + $pendingCharacter.CharacterId + ',"CharacterName":"Bad\nName"}')
+        ('NEXUS_CHARACTER {"CharacterId":' + $config.Accounts[0].Characters[1].CharacterId + ',"CharacterName":"Forkert"}'),
+        'NEXUS_CHARACTER {not-json}',
+        'NEXUS_CHARACTER null',
+        ('NEXUS_CHARACTER {"CharacterId":' + $pendingCharacter.CharacterId + ',"CharacterName":""}'),
+        ('NEXUS_CHARACTER {"CharacterId":' + $pendingCharacter.CharacterId + ',"CharacterName":"Bad\nName"}')
     )) {
         $eventArgs = [object[]]@($line, $request, $config, $null)
         if ($eventMethod.Invoke($null, $eventArgs)) { throw 'An invalid or unrequested character event was accepted.' }
         if ($pendingCharacter.Name -ne 'Min midlertidige label' -or !$pendingCharacter.NamePending) { throw 'Rejected event changed the stored label.' }
     }
-    $validLine = 'AOQL_CHARACTER ' + $serializer.Serialize(@{ AccountId = $requested.AccountId; CharacterId = $pendingCharacter.CharacterId; CharacterName = 'FoundName' })
+    $validLine = 'NEXUS_CHARACTER ' + $serializer.Serialize(@{ AccountId = $requested.AccountId; CharacterId = $pendingCharacter.CharacterId; CharacterName = 'FoundName' })
     $requested.Account = 'wrong-account'
     if ($eventMethod.Invoke($null, [object[]]@($validLine, $request, $config, $null))) { throw 'An event for a mismatched account was accepted.' }
     $requested.Account = $config.Accounts[0].Username
@@ -457,10 +457,10 @@ try {
         throw 'A valid event did not update the actual name and clear NamePending.'
     }
     $handleLine = $formType.GetMethod('HandleBackendLine', $flags)
-    $handleLine.Invoke($form, [object[]]@('AOQL_CHARACTER {secret-marker-not-json}', $request)) | Out-Null
+    $handleLine.Invoke($form, [object[]]@('NEXUS_CHARACTER {secret-marker-not-json}', $request)) | Out-Null
     $handleLine.Invoke($form, [object[]]@($validLine, $request)) | Out-Null
     $logText = $formType.GetField('log', $flags).GetValue($form).Text
-    if ($logText -match 'AOQL_CHARACTER|secret-marker-not-json|CharacterId') { throw 'Raw protocol JSON reached the visible log.' }
+    if ($logText -match 'NEXUS_CHARACTER|secret-marker-not-json|CharacterId') { throw 'Raw protocol JSON reached the visible log.' }
     if ((Find-TreeNode $tree.Nodes $pendingCharacter).Text -ne 'FoundName') { throw 'A valid name event did not refresh the tree.' }
     'PASS: malformed/unrequested/mismatched-account events preserve labels; a valid event updates name and tree without raw JSON in the log.'
     $stopButton = $formType.GetField('stopButton', $flags).GetValue($form)
@@ -905,7 +905,7 @@ try {
         $expectedStop = if ($language -eq 'da') { 'Stopper nye login. Spilvinduerne forbliver åbne.' } else { 'Stopping new logins. Game windows remain open.' }
         if (!$footerLog.Text.StartsWith($previousLog) -or !$footerLog.Text.Substring($previousLog.Length).Contains($expectedStop)) { throw 'New Stop login messages must use the current language while preserving old log lines.' }
         $previousLog = $footerLog.Text
-        $nameEvent = 'AOQL_CHARACTER ' + $serializer.Serialize(@{ AccountId=$one.Id; CharacterId=$one.Characters[0].CharacterId; CharacterName=('Detected' + $language) })
+        $nameEvent = 'NEXUS_CHARACTER ' + $serializer.Serialize(@{ AccountId=$one.Id; CharacterId=$one.Characters[0].CharacterId; CharacterName=('Detected' + $language) })
         $formType.GetMethod('HandleBackendLine', $flags).Invoke($footerForm, [object[]]@($nameEvent, $languageRequest)) | Out-Null
         $expectedNameMessage = if ($language -eq 'da') { 'loggede ind som Detectedda' } else { 'logged in as Detecteden' }
         if (!$footerLog.Text.StartsWith($previousLog) -or !$footerLog.Text.Substring($previousLog.Length).Contains($expectedNameMessage)) { throw 'New character-ready log messages must follow the changed language without rewriting history.' }
@@ -1042,9 +1042,9 @@ try {
     $targetRequest = $formType.GetMethod('CreateLaunchRequest', $staticFlags).Invoke($null, [object[]]@($targetConfig, $sampleCredentials.psobject.BaseObject))
     if ($targetRequest.Characters.Count -ne 2 -or $targetRequest.Characters[0].AccountId -eq $targetRequest.Characters[1].AccountId -or $targetRequest.Characters[0].GamePath -ne $fakeGamePath -or $targetRequest.Characters[1].GamePath -ne $otherFakeGamePath -or $targetRequest.Characters[0].Server -ne '192.0.2.31' -or $targetRequest.Characters[1].Port -ne 7032 -or $targetRequest.Characters[1].Password -ne 'fake-password-B') { throw 'Launch request did not carry each account ID, credentials and independent game target.' }
     $firstName = $firstTarget.Characters[0].Name
-    $modernEvent = 'AOQL_CHARACTER ' + $serializer.Serialize(@{ AccountId = $secondTarget.Id; CharacterId = $secondTarget.Characters[0].CharacterId; CharacterName = 'SecondServerName' })
+    $modernEvent = 'NEXUS_CHARACTER ' + $serializer.Serialize(@{ AccountId = $secondTarget.Id; CharacterId = $secondTarget.Characters[0].CharacterId; CharacterName = 'SecondServerName' })
     if (!$eventMethod.Invoke($null, [object[]]@($modernEvent, $targetRequest, $targetConfig, $null)) -or $secondTarget.Characters[0].Name -ne 'SecondServerName' -or $firstTarget.Characters[0].Name -ne $firstName) { throw 'Modern AccountId event updated the wrong duplicate character.' }
-    $unscopedEvent = 'AOQL_CHARACTER ' + $serializer.Serialize(@{ CharacterId = $secondTarget.Characters[0].CharacterId; CharacterName = 'MustNotChange' })
+    $unscopedEvent = 'NEXUS_CHARACTER ' + $serializer.Serialize(@{ CharacterId = $secondTarget.Characters[0].CharacterId; CharacterName = 'MustNotChange' })
     if ($eventMethod.Invoke($null, [object[]]@($unscopedEvent, $targetRequest, $targetConfig, $null))) { throw 'Modern request accepted an event lacking AccountId.' }
     $legacyRequest = $serializer.Deserialize($serializer.Serialize($targetRequest), $assembly.GetType('AOLauncher.LaunchRequest'))
     foreach ($entry in $legacyRequest.Characters) { $entry.AccountId = $null }
@@ -1352,7 +1352,7 @@ foreach ($preservedLine in @(
     '[2026-10-24 09:25:45.402] [Unknown] [info] preserve',
     '[invalid timestamp] [RDB] [info] preserve',
     'Backend error mentions [RDB] [info] but must remain visible',
-    'AOQL_CHARACTER {"AccountId":"sample","CharacterId":35748,"CharacterName":"Sample"}',
+    'NEXUS_CHARACTER {"AccountId":"sample","CharacterId":35748,"CharacterName":"Sample"}',
     'This account''s queue stopped: ID 35749 was not detected in game.'
 )) {
     if ($filterMethod.Invoke($gameFilter, [object[]]@($preservedLine)) -cne $preservedLine) { throw "Diagnostic filter changed a required status/error: $preservedLine" }

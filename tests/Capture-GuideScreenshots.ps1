@@ -231,8 +231,8 @@ foreach ($fixture in @(
     } finally { $dialog.Dispose(); [GuideScreenshotNative]::Pump() }
 }
 $guiCaptureHost = Join-Path $env:WINDIR 'SysWOW64\WindowsPowerShell\v1.0\powershell.exe'
-& $guiCaptureHost -NoProfile -ExecutionPolicy Bypass -STA -File (Join-Path $PSScriptRoot 'Verify-GuiManager.ps1') -AssemblyPath $AssemblyPath -PublicGuideDirectory $OutputDirectory
+& $guiCaptureHost -NoProfile -ExecutionPolicy Bypass -STA -File (Join-Path $PSScriptRoot 'Verify-GameGuiUsability.ps1') -AssemblyPath $AssemblyPath
 if ($LASTEXITCODE -ne 0) { throw 'Game GUI screenshot verification failed.' }
 $version = $assembly.GetName().Version.ToString()
 & (Join-Path $PSScriptRoot 'Publish-GuideImages.ps1') -CaptureDirectory $OutputDirectory -Version $version
-Write-Output "PASS: 12 distinct guide images captured from $version with example accounts and offline fixtures."
+Write-Output "PASS: 14 distinct guide images captured from $version with example accounts and offline fixtures."

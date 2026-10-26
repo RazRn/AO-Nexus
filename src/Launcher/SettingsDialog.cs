@@ -13,8 +13,13 @@ namespace AOLauncher
         private readonly ComboBox languageInput;
         private readonly NumericUpDown logSizeInput;
         public int MaxLogSizeMb => (int)logSizeInput.Value;
-        private readonly CheckBox startWithWindowsInput, checkUpdatesInput, confirmTrayInput, confirmQuitInput, keepDiagnosticsInput, quietLaunchInput;
+        private readonly CheckBox startWithWindowsInput, checkUpdatesInput, confirmTrayInput, confirmQuitInput, keepDiagnosticsInput, quietLaunchInput, fastStartupInput, minimizeInactiveInput;
+        public bool MinimizeInactiveClients => minimizeInactiveInput.Checked;
+        private readonly CheckBox monitorClientHealthInput, collectClientExitReportsInput;
+        public bool MonitorClientHealth => monitorClientHealthInput.Checked;
+        public bool CollectClientExitReports => collectClientExitReportsInput.Checked;
         public bool QuietLaunch => quietLaunchInput.Checked;
+        public bool FastStartup => fastStartupInput.Checked;
         public bool KeepDiagnostics => keepDiagnosticsInput.Checked;
         public Action ReportProblemAction { private get; set; }
         public Func<bool> ClearDiagnosticsAction { private get; set; }
@@ -99,8 +104,33 @@ namespace AOLauncher
             quietLaunchInput = new NexusCheckBox { Name = "quietLaunch", Text = L("Skip login screens (faster)", "Spring login-skærme over (hurtigere)"),
                 Checked = settings.QuietLaunch, AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 12, 0, 8) };
             serverFields.Controls.Add(quietLaunchInput);
-            Note(serverFields, L("On by default. The game client goes straight to the selected character without showing the login and character list, about 1.5 seconds faster per character. Login errors are then not shown in the game window; the activity log and Report a problem show where a login stopped. Turn it off to see the game's own login screens.",
-                "Slået til som standard. Spilklienten går direkte til den valgte char uden at vise login og char-liste, ca. 1,5 sekund hurtigere pr. char. Login-fejl vises så ikke i spilvinduet; aktivitetsloggen og Rapportér et problem viser, hvor et login stoppede. Slå den fra for at se spillets egne login-skærme."));
+            Note(serverFields, L("Go straight to the selected character. Login errors and unrecognised screens remain visible. Turn this off to see the normal login screens.",
+                "Gå direkte til den valgte char. Login-fejl og ukendte skærme vises stadig. Slå fra for at se de normale login-skærme."));
+            fastStartupInput = new NexusCheckBox { Name = "fastStartup", Text = L("Faster game loading", "Hurtigere indlæsning af spillet"),
+                Checked = settings.FastStartup, AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 12, 0, 8) };
+            serverFields.Controls.Add(fastStartupInput);
+            minimizeInactiveInput = new NexusCheckBox { Name = "minimizeInactiveClients", Text = L("Minimize inactive game clients (experimental)", "Minimer inaktive spilklienter (eksperimentel)"),
+                Checked = settings.MinimizeInactiveClients, AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 12, 0, 8) };
+            // A docked checkbox can retain the pre-scrollbar column width.
+            // Bound it to the usable viewport just like the wrapping notes.
+            serverFields.ClientSizeChanged += (sender, e) => {
+                var width = Math.Max(100, serverFields.ClientSize.Width - 24);
+                quietLaunchInput.MaximumSize = new Size(width, 0);
+                fastStartupInput.MaximumSize = new Size(width, 0);
+                minimizeInactiveInput.MaximumSize = new Size(width, 0);
+            };
+            Note(serverFields, L("Shortens the logo transitions and initial texture loading on supported classic clients. Other client versions and character creation use normal loading. Turn off if you encounter a loading problem.",
+                "Forkorter logo-overgange og den første indlæsning af teksturer på understøttede klassiske klienter. Andre klientversioner og oprettelse af chars bruger normal indlæsning. Slå fra ved problemer med indlæsningen."));
+            serverFields.Controls.Add(minimizeInactiveInput);
+            Note(serverFields, L("Minimize inactive supported classic clients only when you switch to another AO client managed by Nexus. Switching to a browser, Nexus or another app leaves game windows unchanged. Alt-Tab restores the usual window and graphics. Nexus must stay running.",
+                "Minimer kun inaktive understøttede klassiske klienter, når du skifter til en anden AO-klient administreret af Nexus. Skift til en browser, Nexus eller en anden app ændrer ikke spilvinduerne. Alt-Tab gendanner det normale vindue og grafik. Nexus skal fortsat køre."));
+            var monitorOption = SetupNewOptions.All.First(o => o.Name == "monitorClientHealth");
+            var reportOption = SetupNewOptions.All.First(o => o.Name == "collectClientExitReports");
+            monitorClientHealthInput = new NexusCheckBox { Name = monitorOption.Name, Text = L(monitorOption.English, monitorOption.Danish), Checked = settings.MonitorClientHealth, AutoSize = true, Dock = DockStyle.Top };
+            collectClientExitReportsInput = new NexusCheckBox { Name = reportOption.Name, Text = L(reportOption.English, reportOption.Danish), Checked = settings.CollectClientExitReports, AutoSize = true, Dock = DockStyle.Top };
+            serverFields.Controls.Add(monitorClientHealthInput); Note(serverFields, L(monitorOption.HelpEn, monitorOption.HelpDa));
+            serverFields.Controls.Add(collectClientExitReportsInput); Note(serverFields, L(reportOption.HelpEn, reportOption.HelpDa));
+            serverFields.ClientSizeChanged += (sender, e) => monitorClientHealthInput.MaximumSize = collectClientExitReportsInput.MaximumSize = new Size(Math.Max(100, serverFields.ClientSize.Width - 24), 0);
             var passwordsHeading = Note(serverFields, T("Saved passwords"));
             passwordsHeading.Font = new Font(settingsTabs.Font, FontStyle.Bold);
             passwordsHeading.Margin = new Padding(0, 16, 0, 8);
@@ -109,7 +139,10 @@ namespace AOLauncher
             serverFields.Controls.Add(forget);
             var passwordStatus = Note(serverFields, ""); passwordStatus.Name = "passwordActionStatus";
             passwordStatus.Visible = false;
-            passwordStatus.TextChanged += (sender, e) => passwordStatus.Visible = !string.IsNullOrEmpty(passwordStatus.Text);
+            passwordStatus.TextChanged += (sender, e) => {
+                passwordStatus.Visible = !string.IsNullOrEmpty(passwordStatus.Text);
+                QueueContentFit();
+            };
             forget.Click += (sender, e) =>
             {
                 if (ForgetPasswordsAction == null) return;
@@ -123,6 +156,16 @@ namespace AOLauncher
             Note(updateFields, L("Checks once when Nexus starts. Downloads and installation always need your confirmation.", "Tjekker én gang ved start. Download og installation kræver altid din bekræftelse."));
             var checkUpdates = Theme.Button(T("Check for updates…")); checkUpdates.Name = "checkForUpdates";
             checkUpdates.Click += (sender, e) => CheckUpdatesAction?.Invoke(); updateFields.Controls.Add(checkUpdates);
+            var repositoryLink = new LinkLabel { Name = "githubRepository", Text = L("AO Nexus on GitHub", "AO Nexus på GitHub"),
+                AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 0, 0, 12),
+                LinkColor = Theme.Accent, VisitedLinkColor = Theme.Accent, ActiveLinkColor = Theme.Amber,
+                LinkBehavior = LinkBehavior.HoverUnderline, TabStop = true };
+            repositoryLink.LinkClicked += (sender, e) =>
+            {
+                try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(AppUpdates.Repository) { UseShellExecute = true }); }
+                catch (Exception error) { ErrorLabel.Text = error.Message; }
+            };
+            updateFields.Controls.Add(repositoryLink);
             Note(updateFields, L("Log size limit (MB)", "Maksimal logstørrelse (MB)"));
             logSizeInput = new NexusNumericUpDown { Name = "maxLogSizeMb", Minimum = 1, Maximum = 100,
                 Width = 100, Value = LogRetention.NormalizeMb(settings.MaxLogSizeMb) };

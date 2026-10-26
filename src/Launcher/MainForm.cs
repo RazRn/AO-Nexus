@@ -15,9 +15,10 @@ using static AOLauncher.Localization.Texts;
 
 namespace AOLauncher
 {
-    internal sealed partial class MainForm : Form
+    internal sealed partial class MainForm : NexusForm
     {
         private readonly bool smoke;
+        private BackgroundClients backgroundClients;
         private LauncherSettings settings;
         private readonly Dictionary<string, string> passwords = new Dictionary<string, string>();
         private readonly TreeView tree = new NexusTreeView();
@@ -165,9 +166,11 @@ namespace AOLauncher
             RefreshPresetPicker();
             RefreshTree();
             InitializeTray();
+            InitializeClientStatus();
             Shown += (sender, e) =>
             {
                 if (!smoke && !storageBlocked && !settings.HasCompletedSetup) RunSetup();
+                else if (!smoke && !storageBlocked && SetupNewOptions.NeedsReview(settings)) RunSetup(true);
                 if (!smoke) _ = UpdateCleanup.AfterStartup(Application.ExecutablePath);
                 RegisterPresetHotkeys();
                 BeginInvoke((Action)HideCreationCheckboxes);
@@ -175,7 +178,6 @@ namespace AOLauncher
                 if (smoke) AppendLog(T("UI preview uses sample data. It does not log in or change your settings."));
                 else AppendLog(T("Ready. Add your accounts and characters, check the ones you want, then choose “Log in selected”."));
                 if (missingStartupCharacters > 0) AppendLog(F("{0} saved characters no longer exist in the list and were skipped.", missingStartupCharacters));
-                if (!smoke && LauncherBootstrap.ImportedThisSession) AppendLog(T("Copied your AO Launcher profile. AO Nexus now saves changes separately."));
                 if (!smoke && UpdateJournal.ConsumeInstalledNotice(AppUpdates.UpdateRoot))
                 {
                     AppendLog(F("AO Nexus was updated to version {0}.", AppUpdates.CurrentVersion.ToString(3)));
@@ -199,6 +201,11 @@ namespace AOLauncher
                 if (!smoke && CrashReporter.HasPending) BeginInvoke((Action)OfferCrashReport);
             };
             FormClosing += OnFormClosing;
+            if (!smoke && !storageBlocked)
+            {
+                backgroundClients = new BackgroundClients(() => settings);
+                backgroundClients.SetEnabled(settings.MinimizeInactiveClients);
+            }
         }
 
         private NewsPanel newsPanel;
@@ -349,6 +356,9 @@ namespace AOLauncher
         {
             if (disposing)
             {
+                DisposeClientMonitor();
+                backgroundClients?.Dispose();
+                backgroundClients = null;
                 if (trayIcon != null)
                 {
                     trayIcon.Visible = false;
@@ -376,8 +386,6 @@ namespace AOLauncher
             header.Controls.Add(headerMark);
             header.Controls.Add(new Label { Text = T("YOUR GATEWAY TO RUBI-KA"), Font = new Font("Segoe UI", 8.5F, FontStyle.Bold), ForeColor = Theme.Accent, BackColor = Color.Transparent, Location = new Point(109, 22), Size = new Size(550, 20) });
             header.Controls.Add(new Label { Text = "AO NEXUS", Font = new Font("Segoe UI", 33F, FontStyle.Bold), ForeColor = Theme.Foreground, BackColor = Color.Transparent, Location = new Point(103, 37), Size = new Size(550, 60) });
-            var credit = new Label { Text = T("Based on AOQuickLauncher by never-knows-best & contributors · Enhanced by Luckyspawn"), UseMnemonic = false, Font = new Font("Segoe UI", 8F), ForeColor = Color.FromArgb(159, 179, 191), BackColor = Color.Transparent, Location = new Point(110, 99), Size = new Size(710, 19) };
-            header.Controls.Add(credit);
             var settingsButton = Theme.Button(T("Settings"));
             settingsButton.AutoSize = false;
             settingsButton.Size = new Size(124, 36);
@@ -385,12 +393,15 @@ namespace AOLauncher
             settingsButton.Click += OpenSettings;
             var headerActions = new Panel { Dock = DockStyle.Right, Width = 374, Padding = new Padding(0, 22, 24, 7), BackColor = Color.Transparent };
             string versionText = "v" + typeof(MainForm).Assembly.GetName().Version.ToString(3);
-            var versionLabel = new Label
+            var versionLabel = new LinkLabel
             {
-                Name = "appVersion", Text = versionText, AccessibleName = "AO Nexus " + versionText,
+                Name = "appVersion", Text = versionText, AccessibleName = SidebarText.L("Changelog for AO Nexus ", "Ændringslog for AO Nexus ") + versionText,
                 Dock = DockStyle.Bottom, Height = 19, TextAlign = ContentAlignment.TopRight,
-                Font = new Font("Segoe UI", 8F), ForeColor = Theme.Muted, BackColor = Color.Transparent
+                Font = new Font("Segoe UI", 8F), ForeColor = Theme.Muted, BackColor = Color.Transparent,
+                LinkColor = Theme.Accent, VisitedLinkColor = Theme.Accent, ActiveLinkColor = Theme.Amber,
+                LinkBehavior = LinkBehavior.HoverUnderline, TabStop = true
             };
+            versionLabel.LinkClicked += (sender, e) => { using (var dialog = new WhatsNewDialog(false)) dialog.ShowDialog(this); };
             headerActions.Controls.Add(versionLabel);
             updateAvailableLink = new LinkLabel { Text = T("Update available…"), Dock = DockStyle.Bottom, Height = 24, Visible = false,
                 LinkColor = Theme.Accent, VisitedLinkColor = Theme.Accent, ActiveLinkColor = Theme.Amber, BackColor = Color.Transparent, TextAlign = ContentAlignment.MiddleRight };
@@ -1413,6 +1424,15 @@ namespace AOLauncher
                 if (settings.KeepDiagnostics && !dialog.KeepDiagnostics && !smoke) DiagnosticJournal.Clear();
                 settings.KeepDiagnostics = dialog.KeepDiagnostics;
                 settings.QuietLaunch = dialog.QuietLaunch;
+                settings.FastStartup = dialog.FastStartup;
+                if (settings.MinimizeInactiveClients != dialog.MinimizeInactiveClients)
+                {
+                    settings.MinimizeInactiveClients = dialog.MinimizeInactiveClients;
+                    backgroundClients?.SetEnabled(settings.MinimizeInactiveClients);
+                    AppendLog(settings.MinimizeInactiveClients
+                        ? SidebarText.L("Automatic minimizing enabled for supported classic clients.", "Automatisk minimering aktiveret for understøttede klassiske klienter.")
+                        : SidebarText.L("Automatic minimizing disabled. Restore game windows with Alt-Tab.", "Automatisk minimering deaktiveret. Gendan spilvinduer med Alt-Tab."));
+                }
                 if (!smoke) DiagnosticJournal.Configure(settings.KeepDiagnostics);
                 if (!smoke) UpdateJournal.Configure(settings.MaxLogSizeMb);
                 string retained = LogRetention.Tail(activityLog.ToString(), settings.MaxLogSizeMb * 1024 * 1024);
@@ -1423,6 +1443,9 @@ namespace AOLauncher
                 settings.ShowServerNews = dialog.ShowServerNews;
                 settings.ShowServerHealth = dialog.ShowServerHealth;
                 settings.BackgroundHealthChecks = dialog.BackgroundHealthChecks;
+                settings.MonitorClientHealth = dialog.MonitorClientHealth;
+                settings.CollectClientExitReports = dialog.CollectClientExitReports;
+                SetupNewOptions.MarkReviewed(settings);
                 settings.HealthTrayNotifications = dialog.HealthTrayNotifications;
                 settings.NewsSourceIds = dialog.NewsSourceIds;
                 settings.HealthServerIds = dialog.HealthServerIds;
@@ -1667,7 +1690,7 @@ namespace AOLauncher
 
         internal static LaunchRequest CreateLaunchRequest(LauncherSettings value, IDictionary<string, string> credentials)
         {
-            var request = new LaunchRequest { Language = Texts.CurrentLanguage, QuietLaunch = value.QuietLaunch };
+            var request = new LaunchRequest { Language = Texts.CurrentLanguage, QuietLaunch = value.QuietLaunch, FastStartup = value.FastStartup };
             foreach (var account in value.Accounts)
                 foreach (var character in account.Characters.Where(item => item.Selected))
                     request.Characters.Add(new LaunchCharacter { AccountId = account.Id, Account = account.Username, Password = credentials[account.Id], GamePath = account.GamePath, Server = account.Server, ServerName = AccountTargets.ServerName(value, account), Port = account.Port, MaxAccounts = AccountTargets.AccountLimit(value, AccountTargets.Endpoint(account)), MaxCharactersPerAccount = AccountTargets.CharacterLimit(value, AccountTargets.Endpoint(account)), CharacterId = character.CharacterId, CharacterName = character.NamePending ? F("Character {0}", character.CharacterId) : character.Name });
@@ -1763,8 +1786,8 @@ namespace AOLauncher
                 catch (InvalidOperationException) { }
                 return;
             }
-            const string prefix = "AOQL_CREATION_STARTED ";
-            if (line != null && line.StartsWith("AOQL_CREATION_STARTED", StringComparison.Ordinal))
+            const string prefix = "NEXUS_CREATION_STARTED ";
+            if (line != null && line.StartsWith("NEXUS_CREATION_STARTED", StringComparison.Ordinal))
             {
                 if (!creation || stopRequested || !ReferenceEquals(backendRunner, runner) || request?.Characters?.Count != 1 ||
                     !request.Characters[0].CreateCharacter || !line.StartsWith(prefix, StringComparison.Ordinal) || line.Length > 2048) return;
@@ -1798,7 +1821,7 @@ namespace AOLauncher
                 DiagnosticJournal.Record("login", line.Substring(BackendDiagnosticPrefix.Length));
                 return;
             }
-            if (!line.StartsWith("AOQL_CHARACTER", StringComparison.Ordinal))
+            if (!line.StartsWith("NEXUS_CHARACTER", StringComparison.Ordinal))
             {
                 WriteLog(line, "backend");
                 return;
@@ -1829,7 +1852,7 @@ namespace AOLauncher
 
         internal static bool TryApplyCharacterEvent(string line, LaunchRequest request, LauncherSettings value, out CharacterConfig updated)
         {
-            const string prefix = "AOQL_CHARACTER ";
+            const string prefix = "NEXUS_CHARACTER ";
             updated = null;
             if (line == null || line.Length > 2048 || !line.StartsWith(prefix, StringComparison.Ordinal) || request?.Characters == null || value?.Accounts == null)
                 return false;
@@ -1998,7 +2021,7 @@ namespace AOLauncher
             passwords.Clear();
         }
 
-        internal const string BackendDiagnosticPrefix = "AOQL_DIAG ";
+        internal const string BackendDiagnosticPrefix = "NEXUS_DIAG ";
 
         internal static string DescribeLaunch(LaunchRequest request, IEnumerable<AccountConfig> accounts, bool creation)
         {

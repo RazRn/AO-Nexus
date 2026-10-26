@@ -88,7 +88,7 @@ try {
     $request=$main.GetType().GetMethod('CreateLaunchRequest',[Reflection.BindingFlags]'Static,NonPublic').Invoke($null,[object[]]@($settings,$credentials.PSObject.BaseObject))
     $main.GetType().GetField('progressRequest',$flags).SetValue($main,$request)
     $hero=Field $main 'header'; Call $hero 'BeginActivity' @([int]1)
-    $event='AOQL_CHARACTER '+$serializer.Serialize(@{AccountId=$account.Id;CharacterId=$character.CharacterId;CharacterName=$character.Name})
+    $event='NEXUS_CHARACTER '+$serializer.Serialize(@{AccountId=$account.Id;CharacterId=$character.CharacterId;CharacterName=$character.Name})
     Call $main 'HandleBackendLine' @($event,$request)
     Call $main 'HandleBackendLine' @($event,$request)
     Assert ((Field $hero 'completed') -eq 1) 'A verified character-ready event advances progress exactly once'

@@ -29,11 +29,15 @@ The default native toolset is **v145**. To use an installed compatible toolset s
 
 The build restores Detours 4.0.1 from a fixed NuGet URL and verifies its pinned SHA-256 before extracting it. It builds LoginHandler, publishes the backend and its runtime, compresses and verifies the payload, then embeds it in the interface.
 
+The monitoring companion is also embedded, so automatic updates deliver it with the executable. On a clean checkout the build fetches AOSharp source at commit `d55eb12b5a763e5ed65851e69c50343de6c6d73c`, restores its pinned NuGet dependencies, and builds the reference assemblies in `runtime/AOSharpSource`. Only `AOSharp.Common.dll`, `Newtonsoft.Json.dll` and Nexus's three monitoring binaries are bundled; the AOSharp injector, bootstrapper and game libraries are not distributed. Existing `dist/Monitoring` binaries are reused unless `-RebuildTelemetry` is supplied.
+
+To compile against a specific compatible AOSharp build, run `build/Build-Telemetry.ps1 -AOSharpRuntime <runtime-folder>` before `build/Build.ps1`. The runtime folder must contain `AOSharp.Common.dll`, `AOSharp.Core.dll` and `Newtonsoft.Json.dll`.
+
 | Output | Purpose |
 | --- | --- |
 | `dist/AONexus.exe` | Runnable application. |
 | `AO-Nexus-Luckyspawn.zip` | Verified release package when `-Package` is supplied. |
-| `runtime/AOQuickLauncher` | Generated backend used for embedding. |
+| `runtime/NexusEngine` | Generated backend used for embedding. |
 | `src/Launcher/bin/Release` | Interface build output and debugging symbols. |
 
 A clean checkout needs **-RebuildBackend** because binaries and restored packages are excluded from Git. For subsequent interface-only changes, reuse the generated runtime with:
@@ -70,7 +74,7 @@ Tests use synthetic accounts, isolated stores and inert game fixtures. They do n
 
 The packager verifies the embedded payload and uses an allowlist of release files, checking the resulting ZIP against its SHA-256 manifest. Generated executables, ZIPs, runtime files, restored packages and test logs stay out of Git. Publish the ZIP as a release asset, alongside the source version used to build it.
 
-The inherited backend `Login.bat` is an upstream demonstration, not the Nexus startup or build entry point. Start `AONexus.exe` for normal use; the interface passes login requests to its backend over private standard input.
+Start `AONexus.exe` for normal use; the interface passes login requests to its backend over private standard input. Optional monitoring files are extracted on demand to a checksum-specific folder under `%LocalAppData%\AONexus\Monitoring`. New versions do not overwrite plugins that might still be loaded in a game.
 
 ## Source map
 
@@ -78,7 +82,7 @@ The inherited backend `Login.bat` is an upstream demonstration, not the Nexus st
 | --- | --- |
 | [`src/Launcher`](../src/Launcher) | WinForms interface, settings, passwords, news, Prefs discovery, runtime loader, and anonymised diagnostics and problem reports (`Diagnostics.cs`, `ReportProblemDialog.cs`). |
 | [`src/Common`](../src/Common) | Shared localization and server-account policy. |
-| [`src/Backend/AOQuickLauncher`](../src/Backend/AOQuickLauncher) | Modified managed login backend, account queues and client tracking. |
+| [`src/Backend/NexusEngine`](../src/Backend/NexusEngine) | Modified managed login backend, account queues and client tracking. |
 | [`src/Backend/LoginHandler`](../src/Backend/LoginHandler) | Native client login handler. |
 | [`build`](../build) | Build, pinned dependency restore, payload verification and packaging scripts. |
 | [`tests`](../tests) | Regression fixtures and synthetic UI checks. |
