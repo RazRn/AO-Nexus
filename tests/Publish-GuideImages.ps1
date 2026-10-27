@@ -7,7 +7,7 @@ $published=[IO.Path]::GetFullPath((Join-Path $images 'published'))
 [IO.Directory]::CreateDirectory($published)|Out-Null
 $documents=@('README.md','docs/Player-Guide.md','docs/Game-GUI.md')
 $text=@{};foreach($document in $documents){$text[$document]=[IO.File]::ReadAllText((Join-Path $repo $document))}
-$manifest=@('# Guide screenshot provenance','',('Captured from AO Nexus '+$Version+' using real WinForms controls and offline fixtures.'),'','One overview and thirteen task-specific illustrations. Red boxes and numbers annotate the older task views; the five Game GUI 1.2 images are full client areas from Verify-GameGuiUsability with no crops or annotations. Accounts, paths, news and health/update results are examples.','','| Image | Source size | Crop (x, y, width, height) | Callouts | QA source | SHA-256 |','| --- | --- | --- | --- | --- | --- |')
+$manifest=@('# Guide screenshot provenance','',('Captured from AO Nexus '+$Version+' using real WinForms controls and offline fixtures.'),'','One overview and thirteen task-specific illustrations. Red boxes and numbers annotate the launcher task views; the five Game GUI 1.2 images are full client areas from Verify-GameGuiUsability with no crops or annotations. Accounts, paths, news and health/update results are examples.','','| Image | Source size | Crop (x, y, width, height) | Callouts | QA source | SHA-256 |','| --- | --- | --- | --- | --- | --- |')
 $keep=@()
 foreach($name in $GuideImagePlan.Keys){
     $plan=$GuideImagePlan[$name]

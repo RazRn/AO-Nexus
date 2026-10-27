@@ -6,9 +6,9 @@ Keep separate game folders and login servers for Funcom AO, Project Rubi-Ka and 
 
 **[Download the latest release](https://github.com/RazRn/AO-Nexus/releases/latest)** · [Player guide](docs/Player-Guide.md) · [Release notes](https://github.com/RazRn/AO-Nexus/releases)
 
-![AO Nexus with a team preset, accounts grouped by server, details and news](docs/images/published/launcher-overview-0e15415286481c82.png)
+![AO Nexus with a team preset, accounts grouped by server, details and news](docs/images/published/launcher-overview-5367ab3c2c3085a1.png)
 
-*Example accounts and offline news; no personal accounts or passwords. [Screenshot provenance](docs/images/SCREENSHOTS.md).*
+*AO Nexus 1.2.0 with example accounts and offline news. [Screenshot provenance](docs/images/SCREENSHOTS.md).*
 
 ## Quick start
 
@@ -41,9 +41,7 @@ The interface supports English and Danish. It initially follows Windows' languag
 
 Nexus checks the client files before enabling these version-specific hooks. Other builds and character creation retain normal loading. Game executables and DLLs are not patched on disk. Client preparation can overlap while account login claims are serialized; the log shows each character's loading time and total team time. These changes do not remove network latency or the work needed to load a zone.
 
-AO Nexus now ships NexusEngine, its maintained login worker, with the tested client-loading optimizations. No AOQuickLauncher executable or installation is used. Nexus owns the queue, session storage and communication protocol. The worker accepts launch requests only through private standard input; the former standalone command line and its parser dependency have been removed. See [integration and validation notes](docs/Fast-Startup.txt) for scope and test coverage.
-
-We moved to a Nexus-maintained launch engine to give us direct control over startup performance and future improvements. The measured gains come from changes to client loading; renaming the engine alone does not make it faster. Upstream source attribution is preserved in the credits.
+AO Nexus uses its integrated **NexusEngine** for login and client startup. Moving from the standalone AOQuickLauncher to a Nexus-maintained engine gives us direct control over loading performance, login timing and future improvements. No separate launcher installation is needed. See [integration and validation notes](docs/Fast-Startup.txt) for measured changes and supported clients.
 
 ## Scope and privacy
 
@@ -70,11 +68,13 @@ Reports from Nexus replace logins, account and character names, IDs and personal
 - [Server health](docs/Server-Health.md): endpoints, timing and what check results mean.
 - [Privacy and security](docs/Privacy-and-Security.md): local data and network behavior.
 - [Build and test](docs/Building.md): contributor requirements, commands and source map.
-- [Offline quick guide](dist/README.txt): the text guide included in future download packages.
+- [Offline quick guide](dist/README.txt): the text guide prepared for download packages.
 
 ## Credits and licensing
 
-Based on [AOQuickLauncher](https://gitlab.com/never-knows-best/aoquicklauncher) by **never-knows-best and contributors**. Enhanced by **Luckyspawn**. See [credits](dist/CREDITS.txt) and [artwork provenance](assets/ARTWORK.txt).
+**AO Nexus is developed and maintained by [Luckyspawn (RazRn)](https://github.com/RazRn).** This includes the launcher interface, account and team management, Game GUI tools, monitoring and NexusEngine integration.
+
+NexusEngine and LoginHandler retain code derived from [AOQuickLauncher](https://gitlab.com/never-knows-best/aoquicklauncher), originally by **never-knows-best and contributors**. The optional monitor uses **AOSharp.Common** from the same authors. See [full third-party credits](dist/CREDITS.txt) and [artwork provenance](assets/ARTWORK.txt).
 
 **Upstream licensing remains unresolved.** Public source and download availability are not grants of redistribution rights. See [LICENSE-NOTICE.txt](LICENSE-NOTICE.txt) before redistributing or publishing derived work. Dependency notices remain in [dist/Licenses](dist/Licenses).
 

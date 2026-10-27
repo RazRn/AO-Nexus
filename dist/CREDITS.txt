@@ -1,22 +1,20 @@
 AO NEXUS
-Based on AOQuickLauncher by never-knows-best and contributors
-Enhanced by Luckyspawn
+Developed and maintained by Luckyspawn (RazRn)
+https://github.com/RazRn/AO-Nexus
 
-Original AOQuickLauncher backend: never-knows-best and contributors
+Inherited login-engine code: AOQuickLauncher by never-knows-best and contributors
 https://gitlab.com/never-knows-best/aoquicklauncher
 Thank you to the original authors and contributors whose work made this
 launcher possible. NexusEngine and LoginHandler.dll retain code derived from this project.
 The upstream checkout used for this package does not contain a separate LICENSE file.
 
-AO Nexus: separate launcher design, original generated backdrop, original portal icon, official server news, and independent profile storage.
+AO Nexus by Luckyspawn: launcher design and interface, account/character and team
+management, local preferences import, independent profile storage, server news
+and health, Game GUI tools, client monitoring and reports, NexusEngine integration
+and startup improvements. Artwork provenance is recorded in assets/ARTWORK.txt.
 
-Luckyspawn: launcher interface, account/character selection, local preferences
-import, presets, shared login-server management, account-specific game folders,
-connections, and launcher integration and
-customisations.
-
-The Luckyspawn signature does not attribute the original backend or third-party
-libraries to Luckyspawn and does not replace their copyright or license terms.
+The AO Nexus credit does not attribute inherited code or third-party libraries
+to Luckyspawn and does not replace their copyright or license terms.
 
 Included dependencies and upstream source projects:
 

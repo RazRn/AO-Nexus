@@ -1,5 +1,5 @@
 AO NEXUS — OFFLINE QUICK GUIDE
-Enhanced by Luckyspawn.
+Developed and maintained by Luckyspawn (RazRn).
 
 GET STARTED
 1. Extract the complete release ZIP into a folder you can write to, then start
@@ -13,9 +13,8 @@ GET STARTED
 
 Requires Windows 10/11 and .NET Framework 4.8. The login engine and its runtime
 are bundled; players do not need a .NET SDK or a separate launcher installation.
-This local preview uses NexusEngine for launch, tracking and the tested
-fast-loading hooks. See CREDITS.txt for source attribution. Close game clients
-launched by an older build before testing this preview.
+AO Nexus uses its integrated NexusEngine for launch, tracking and supported
+fast-loading hooks. See CREDITS.txt for source attribution.
 The app version appears in the header. The source download is not the runnable ZIP.
 
 SETUP WIZARD

@@ -31,7 +31,7 @@ The login engine and its runtime are bundled inside Nexus. Players do not need a
 4. Open the extracted folder and run **AONexus.exe**. You can create a normal Windows shortcut to it.
 5. On a fresh installation, complete the four-step setup: language, servers, app preferences, then review and optionally add accounts. No game is started by setup.
 
-![Setup wizard with update checks, Windows startup and background monitoring choices marked in red](images/published/setup-preferences-c028152ae82ba803.png)
+![Setup wizard with update checks, Windows startup and background monitoring choices marked in red](images/published/setup-preferences-62cb3d3fdf00151f.png)
 
 *1 — Optional update checks run once at startup; downloads and installation still require confirmation. 2 — Windows startup opens Nexus in the tray without logging in characters. 3 — Background checks continue while Nexus is hidden; outage/recovery notifications also enable background checks.*
 
@@ -65,7 +65,7 @@ Choose **Add account** in **Accounts by server**. An account's **Display name** 
 
 Open **Game and server**, choose the server preset, and select the game folder containing `AnarchyOnline.exe`. Each account keeps its own server and game-folder choice. Accounts can share an installation when that installation is compatible with their server.
 
-![Game and server setup with server preset and game folder highlighted](images/published/game-and-server-b7e740dd647d2351.png)
+![Game and server setup with server preset and game folder highlighted](images/published/game-and-server-5ff2ee879176ee40.png)
 
 *Red callouts: **1** server preset, **2** game folder. Review both before saving, even when Prefs discovery suggests them.*
 
@@ -143,7 +143,7 @@ The account tree groups **server → account → character**. Expand or collapse
 2. Choose **Team presets → Save new…** and give it a name.
 3. Optionally choose a startup default and shortcuts, then **Save**.
 
-![Team preset editor with startup default, shortcuts and Save highlighted](images/published/preset-shortcuts-69e9a8fd6816179f.png)
+![Team preset editor with startup default, shortcuts and Save highlighted](images/published/preset-shortcuts-0fa1a74bbd38e7a5.png)
 
 *Red callouts: **1** optional startup default, **2** separate start and logout shortcuts, **3** Save commits the preset settings.*
 
@@ -172,7 +172,7 @@ By default the game client skips drawing the login and character screens and goe
 
 Recognized characters already open are skipped. If an account fails, its remaining queue stops while other account queues can continue. Check the log and game window rather than repeatedly starting the same failed selection.
 
-![Header progress line highlighted during a launch](images/published/launch-progress-146d64df6c3afc95.png)
+![Header progress line highlighted during a launch](images/published/launch-progress-9b9f3cb412954754.png)
 
 *The red outline marks the header progress line. Confirmed logins or actual client exits advance it; moving activity shows waiting. It is not an estimate of seconds remaining.*
 
@@ -232,7 +232,7 @@ Minimize and Quit have separate confirmation dialogs with **Don't show this agai
 
 **Settings → Updates → Check for updates…** checks manually. If enabled, automatic checking happens **once when Nexus starts**, not repeatedly on a background timer. An available version also appears as a link in the header. Checks look for newer stable GitHub releases, not prereleases or downgrades.
 
-![Update dialog with release notes and installation action highlighted](images/published/update-available-af47e7cec690a3eb.png)
+![Update dialog with release notes and installation action highlighted](images/published/update-available-99c40ea431064eec.png)
 
 *Red callouts: **1** release notes to review, **2** Install and restart. Checking for updates does not authorize installation.*
 
@@ -252,7 +252,7 @@ For a manual update, close Nexus, extract the new release ZIP into its applicati
 
 Click anywhere in the terminal-style log preview to open the resizable activity window. You can also focus the preview and press Enter or Space.
 
-![Activity log with search and clear action highlighted](images/published/activity-log-604e00b45ebf9aa4.png)
+![Activity log with search and clear action highlighted](images/published/activity-log-af4f663a6d755768.png)
 
 *Red callouts: **1** Search filters the displayed lines, **2** Clear log removes the whole session log after confirmation, including lines hidden by the filter.*
 

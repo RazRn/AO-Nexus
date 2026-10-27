@@ -1,6 +1,6 @@
 # Guide images
 
-The README has one unmarked overview. The player guide and Game GUI guide use thirteen distinct task illustrations. The nine retained launcher images use their original content-hashed names, crops and red callouts. The five Game GUI 1.2 images show the full client area without annotations, following the numbered steps already present in the application.
+The README has one unmarked overview. The player guide and Game GUI guide use thirteen distinct task illustrations. All fourteen images have been captured from AO Nexus 1.2.0. The nine launcher images use content-hashed names, with crops and red callouts for individual tasks. The five Game GUI images show the full client area without annotations, following the numbered steps already present in the application.
 
 All images come from actual AO Nexus controls with example accounts, empty passwords and offline results. They do not show live server health or announce an unpublished release. No personal profile or game client is opened by the capture workflow.
 
