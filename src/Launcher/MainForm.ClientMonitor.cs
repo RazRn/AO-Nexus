@@ -136,7 +136,7 @@ namespace AOLauncher
                         s.PulseAgeMs?.ToString("F0") ?? "?", s.HelperAgeMs?.ToString("F0") ?? "?", s.ReplyAgeMs?.ToString("F0") ?? "?");
                     if (s.Reason != null) result.Append("\r\n  ").Append(s.Reason);
                     if (s.Minimized) result.Append(L(" · minimized", " · minimeret"));
-                    if (s.Zoning) result.Append(L(" · zoning (last observed)", " · zoning (senest observeret)"));
+                    if (s.Zoning == true) result.Append(L(" · zoning (last observed)", " · zoning (senest observeret)"));
                 }
                 result.AppendLine();
             }
@@ -220,6 +220,12 @@ namespace AOLauncher
             }
             if (!row.ExitedUtc.HasValue && row.Sample?.Zoning == true)
                 result.Explanation += L(" The last measurement showed zoning in progress.", " Den seneste måling viste igangværende zoning.");
+            if (condition == ClientCondition.Unmeasured && row.SnapshotStatus != null) {
+                result.Explanation = ClientMonitor.SnapshotStatusText(row.SnapshotStatus);
+                if (row.SnapshotStatus == "MonitoringDisabled")
+                    result.NextStep = L("Enable responsiveness monitoring in Settings → Accounts, then enable Nexus Health Monitor in this character's AOSharp profile.",
+                        "Aktivér overvågning af svartider i Indstillinger → Konti, og aktivér derefter Nexus Health Monitor i karakterens AOSharp-profil.");
+            }
             result.ActionStatus = row.HasCastIssue ? L("Recent cast issue: falling", "Nyligt kasteproblem: fald") : "—";
             if (row.HasCastIssue) {
                 result.Explanation += "\r\n" + (row.CastIssueConfirmed
@@ -361,12 +367,12 @@ namespace AOLauncher
             SaveButton.Click += async (sender, args) => {
                 using (var save = new SaveFileDialog { Filter = "ZIP (*.zip)|*.zip", FileName = "AO-Nexus-client-report-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".zip", OverwritePrompt = true }) {
                     if (save.ShowDialog(this) != DialogResult.OK) return;
-                    string report = snapshot(); var rows = observations();
+                    string report = snapshot();
                     SaveButton.Enabled = false;
                     try {
                         string temporary = save.FileName + "." + Guid.NewGuid().ToString("N") + ".tmp";
                         try {
-                            await Task.Run(() => ClientReport.Export(temporary, report, ClientReport.WindowsEvidence(rows)));
+                            await Task.Run(() => ClientReport.Export(temporary, report, null));
                             if (File.Exists(save.FileName)) File.Replace(temporary, save.FileName, null); else File.Move(temporary, save.FileName);
                         } finally { if (File.Exists(temporary)) File.Delete(temporary); }
                         ErrorLabel.Text = L("ZIP saved. Review it before sharing.", "ZIP gemt. Gennemse den før deling.");

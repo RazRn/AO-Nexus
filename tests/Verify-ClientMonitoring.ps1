@@ -247,7 +247,7 @@ try {
  Static ClientReport Export @($zip,'{"Clients":[]}',$evidence,$temp)|Out-Null
  $archive=[IO.Compression.ZipFile]::OpenRead($zip)
  try {
-  Assert ($archive.Entries.Count -eq 4) 'ZIP has only README, snapshot, Windows evidence and allowlisted exit report'
+  Assert ($archive.Entries.Count -eq 5) 'ZIP has only README, summary, snapshot, Windows evidence and allowlisted exit report'
   foreach($entry in $archive.Entries){$reader=[IO.StreamReader]::new($entry.Open());try{Assert (!$reader.ReadToEnd().Contains('SECRET')) 'Export must not include arbitrary saved-report fields or paths'}finally{$reader.Dispose()}}
  }finally{$archive.Dispose()}
 }finally{

@@ -1,9 +1,9 @@
-WHAT'S NEW IN 1.2.1
+WHAT'S NEW IN 1.2.2
 
-• Search your characters without losing the current selection. The selected total still includes characters hidden by the search.
-• Login and team logout each have a “Don't show this confirmation again” checkbox. Turn either confirmation back on independently in Settings. Cancel never saves the checkbox.
-• Client monitoring now starts with each character's status, a plain explanation and a suggested next step. Open Technical details when you need the measurements.
-• Missing measurements, a client that is not responding and an exited client remain separate states. An exit alone does not prove a crash.
-• The updated monitoring plugin flags recent nano casts while falling, with a character name, grouped reports and a next step. Action issues are separate from responsiveness. Reload the updated plugin through AOSharp to enable this.
+• Reports clearly state when no responsiveness measurements are available. Missing, unreadable, invalid and mismatched monitoring snapshots have separate explanations.
+• Session summaries retain earlier memory peaks, update gaps, reply times and state counts alongside the latest 120 samples. They cover only the time Nexus observed the client.
+• Client aliases match throughout each diagnostic ZIP. Duplicate saved exits are omitted; distinct evidence is kept.
+• Reports show the installed Windows version and build instead of the legacy compatibility version.
+• The player guide and monitoring help explain how to enable measurements and interpret reports.
 
-Account limits, password choices and safe client matching still apply when confirmations are turned off. Monitoring remains optional and requires Nexus Health Monitor in the relevant AOSharp profiles. Nothing is uploaded automatically.
+Start with report-summary.txt. Process samples and exit code zero do not prove the game was responsive or rule out a crash. Monitoring remains optional and must be enabled for each character through AOSharp. Existing v1.2.1 monitoring plugins remain compatible. Nothing is uploaded automatically.

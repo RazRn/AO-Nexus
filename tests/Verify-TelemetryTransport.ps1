@@ -79,6 +79,9 @@ try {
  Assert ($saved.Count -eq 1) 'Observed exit saves one local report'
  $json=Get-Content -LiteralPath $saved[0].FullName -Raw|ConvertFrom-Json
  Assert ($json.Samples.Count -gt 0 -and $json.ExitCode -eq 37) 'Exit report preserves the pre-exit measurement history'
+ Assert ($json.Summary.TotalSamples -gt $json.Samples.Count -and $json.Samples.Count -eq 120) 'Observed lifetime summary survives actual recent-sample eviction'
+ Assert ($json.Summary.SamplesWithPluginData -gt 0 -and $json.Summary.LargestPluginReportedGapMs -ge 2000) 'Saved summary retains plugin coverage and the induced long game-loop pause'
+ Assert ($json.StartedUtcTicks -eq $startTicks -and $json.SnapshotStatus -eq 'SnapshotAccepted') 'Saved exit retains exact process identity and snapshot acceptance status'
  Assert (!(Get-Content -LiteralPath $saved[0].FullName -Raw).Contains('Synthetic test client')) 'Persisted exit report must not retain character name'
  Write-Output "PASS: $checks production-plugin/real-IPC checks: normal, frozen loop, late reply, recovery, stalled update, blocked IPC, unload, process exit and retained report."
 }finally{

@@ -13,7 +13,7 @@ Write-Host 'PASS: Verify-ClientMonitoring'
 & $x86 -NoProfile -ExecutionPolicy Bypass -File (Join-Path $testRoot 'Verify-ActionIssues.ps1') -AssemblyPath $launcher *> (Join-Path $logRoot 'Verify-ActionIssues.txt')
 if ($LASTEXITCODE -ne 0) { throw 'Failed: Verify-ActionIssues. See logs.' }
 Write-Host 'PASS: Verify-ActionIssues'
-foreach ($test in @('Verify-CharacterSearch', 'Verify-GameConfirmations')) {
+foreach ($test in @('Verify-CharacterSearch', 'Verify-GameConfirmations', 'Verify-ClientReports')) {
     & $x86 -NoProfile -ExecutionPolicy Bypass -STA -File (Join-Path $testRoot ($test + '.ps1')) -AssemblyPath $launcher *> (Join-Path $logRoot ($test + '.txt'))
     if ($LASTEXITCODE -ne 0) { throw "Failed: $test. See logs." }
     Write-Host "PASS: $test"

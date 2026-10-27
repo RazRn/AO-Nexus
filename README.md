@@ -6,6 +6,8 @@ Keep separate game folders and login servers for Funcom AO, Project Rubi-Ka and 
 
 **[Download the latest release](https://github.com/RazRn/AO-Nexus/releases/latest)** · [Player guide](docs/Player-Guide.md) · [Release notes](https://github.com/RazRn/AO-Nexus/releases)
 
+**New in 1.2.2:** clearer monitoring diagnostics, session summaries that retain earlier peaks and gaps, consistent report aliases and accurate Windows information. [What changed](docs/Whats-New-1.2.2.md).
+
 ![AO Nexus with a team preset, accounts grouped by server, details and news](docs/images/published/launcher-overview-27637d6f30ce9c52.png)
 
 *AO Nexus 1.2.1 with example accounts and offline news. [Screenshot provenance](docs/images/SCREENSHOTS.md).*

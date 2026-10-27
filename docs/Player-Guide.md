@@ -245,7 +245,7 @@ Click the character status in the header or choose **Characters · status and he
 
 *Offline example: Aster is responding, but the game reported a cast blocked while falling. This does not identify a specific pet or prove that a retry succeeded. Exact live error-message coverage still needs verification.*
 
-Monitoring is optional. Enable **Settings → Accounts → Show AOSharp responsiveness in header and tray**, then follow **Monitoring setup help** to enable Nexus Health Monitor in each relevant AOSharp profile. Keep Nexus running. **Keep local client exit reports** is a separate option; **Save diagnostic ZIP…** saves available evidence locally without uploading it. See [monitoring and exit reports](Client-Monitoring.txt) for setup and measurement details.
+Monitoring is optional. Enable **Settings → Accounts → Show AOSharp responsiveness in header and tray**, then follow **Monitoring setup help** to enable Nexus Health Monitor in each relevant AOSharp profile. Keep Nexus running. **Keep local client exit reports** is a separate option; **Save diagnostic ZIP…** saves available evidence locally without uploading it. Read **report-summary.txt** first: it states whether plugin measurements are available. Reports retain recent samples and a summary of the time Nexus observed each client, including earlier peaks and gaps. A regular process sample or exit code zero does not prove the game was responsive. See [monitoring and exit reports](Client-Monitoring.txt) for setup and measurement details.
 
 ## Settings, tray and updates
 

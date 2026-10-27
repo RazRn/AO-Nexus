@@ -1,9 +1,9 @@
-NYT I 1.2.1
+NYT I 1.2.2
 
-• Søg efter dine karakterer uden at miste dit valg. Det samlede antal valgte omfatter stadig karakterer, som søgningen skjuler.
-• Login og holdlogout har hver sit afkrydsningsfelt “Vis ikke denne bekræftelse igen”. Slå hver bekræftelse til igen i Indstillinger. Annuller gemmer aldrig afkrydsningen.
-• Klientovervågning viser først hver karakters status, en kort forklaring og et forslag til næste trin. Åbn Tekniske detaljer, når du har brug for målingerne.
-• Manglende målinger, en klient der ikke svarer, og en afsluttet klient vises som forskellige tilstande. Et exit alene beviser ikke et crash.
-• Det opdaterede overvågnings-plugin viser nylige forsøg på nanoprogrammer under fald med karakternavn, samlede rapporter og næste trin. Handlingsproblemer vises særskilt fra svartider. Genindlæs det opdaterede plugin via AOSharp for at aktivere dette.
+• Rapporterne siger tydeligt, når der ikke er målinger af svartider. Manglende, ulæselige og ugyldige målinger samt forkert procesidentitet har hver sin forklaring.
+• Sessionsoversigter bevarer tidligere hukommelsestoppe, opdateringspauser, svartider og antal observationer pr. tilstand ved siden af de seneste 120 målinger. De dækker kun den tid, Nexus observerede klienten.
+• Klienternes aliaser er ens i hele diagnose-ZIP-filen. Dublerede exitrapporter udelades; forskellige oplysninger bevares.
+• Rapporterne viser den installerede Windows-version og build i stedet for den gamle kompatibilitetsversion.
+• Spillervejledningen og overvågningshjælpen forklarer opsætning og fortolkning af rapporter.
 
-Kontogrænser, adgangskodevalg og sikker identifikation af klienter gælder stadig, når bekræftelser er slået fra. Overvågning er valgfri og kræver Nexus Health Monitor i de relevante AOSharp-profiler. Intet uploades automatisk.
+Start med report-summary.txt. Procesmålinger og exitkode nul beviser ikke, at spillet svarede, og udelukker ikke et crash. Overvågning er valgfri og skal aktiveres for hver karakter via AOSharp. Overvågnings-plugins fra v1.2.1 er stadig kompatible. Intet uploades automatisk.

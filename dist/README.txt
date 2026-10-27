@@ -111,6 +111,11 @@ Monitoring is optional and needs Nexus Health Monitor enabled in each relevant
 AOSharp profile. Enable Show AOSharp responsiveness in header and tray under
 Settings > Accounts. Keep local client exit reports is a separate option.
 Save diagnostic ZIP saves available evidence locally. Nothing is uploaded.
+Read report-summary.txt first: it states whether plugin measurements are present.
+Reports retain recent samples and a summary of the period Nexus observed each
+client, including earlier peaks and gaps. Process samples alone do not prove
+responsiveness; exit code zero does not rule out a crash. Aliases are consistent
+throughout the ZIP, and duplicate saved exits are omitted.
 
 GAME GUI — EXPERIMENTAL
 Layouts lets you capture a saved char setup or copy one to selected targets. Choose

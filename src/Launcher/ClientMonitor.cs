@@ -47,6 +47,7 @@ namespace AOLauncher
         public DateTime Utc { get; set; }
         public string State { get; set; }
         public string Reason { get; set; }
+        public string SnapshotStatus { get; set; }
         public double? PulseAgeMs { get; set; }
         public double? ObservedUpdateGapMs { get; set; }
         public double? HelperAgeMs { get; set; }
@@ -62,8 +63,48 @@ namespace AOLauncher
         public int? Pending { get; set; }
         public bool Minimized { get; set; }
         public bool Foreground { get; set; }
-        public bool Zoning { get; set; }
+        public bool? Zoning { get; set; }
         public long WorkingSetBytes { get; set; }
+    }
+    internal sealed class ClientObservationSummary
+    {
+        public DateTime? FirstObservedUtc { get; set; }
+        public DateTime? LastObservedUtc { get; set; }
+        public DateTime? FirstPluginSampleUtc { get; set; }
+        public DateTime? LastPluginSampleUtc { get; set; }
+        public long TotalSamples { get; set; }
+        public long SamplesWithPluginData { get; set; }
+        public long FreshPluginSamples { get; set; }
+        public long PeakObservedWorkingSetBytes { get; set; }
+        public double? LongestObservedUpdateGapMs { get; set; }
+        public double? LargestPluginReportedGapMs { get; set; }
+        public double? LargestObservedReplyMs { get; set; }
+        public double LongestObserverSampleIntervalMs { get; set; }
+        public Dictionary<string, long> StateSamples { get; set; } = new Dictionary<string, long>();
+        internal void Observe(ClientSample sample)
+        {
+            if (LastObservedUtc.HasValue)
+                LongestObserverSampleIntervalMs = Math.Max(LongestObserverSampleIntervalMs, (sample.Utc - LastObservedUtc.Value).TotalMilliseconds);
+            if (!FirstObservedUtc.HasValue) FirstObservedUtc = sample.Utc;
+            LastObservedUtc = sample.Utc; TotalSamples++;
+            if (sample.PulseAgeMs.HasValue) {
+                SamplesWithPluginData++;
+                if (!FirstPluginSampleUtc.HasValue) FirstPluginSampleUtc = sample.Utc;
+                LastPluginSampleUtc = sample.Utc;
+                if (sample.PulseAgeMs.Value < 3000 && sample.State != ClientCondition.Unloaded.ToString()) FreshPluginSamples++;
+            }
+            PeakObservedWorkingSetBytes = Math.Max(PeakObservedWorkingSetBytes, sample.WorkingSetBytes);
+            LongestObservedUpdateGapMs = Max(LongestObservedUpdateGapMs, sample.ObservedUpdateGapMs);
+            LargestPluginReportedGapMs = Max(LargestPluginReportedGapMs, sample.MaxGapMs);
+            LargestObservedReplyMs = Max(LargestObservedReplyMs, sample.ReplyMs);
+            ClientCondition state;
+            if (Enum.TryParse(sample.State, out state) && Enum.IsDefined(typeof(ClientCondition), state)) {
+                string key = state.ToString(); long count;
+                StateSamples.TryGetValue(key, out count); StateSamples[key] = count + 1;
+            }
+        }
+        static double? Max(double? previous, double? value) => !value.HasValue || double.IsNaN(value.Value) || double.IsInfinity(value.Value)
+            ? previous : !previous.HasValue ? value : Math.Max(previous.Value, value.Value);
     }
     internal sealed class ClientObservation
     {
@@ -72,6 +113,7 @@ namespace AOLauncher
         internal long StartTicks;
         internal ClientCondition Condition;
         internal ClientSample Sample;
+        internal string SnapshotStatus;
         internal bool Measured;
         internal DateTime? ExitedUtc;
         internal int? ExitCode;
@@ -94,6 +136,8 @@ namespace AOLauncher
             internal DateTime? ExitedUtc;
             internal int? ExitCode;
             internal bool CastIssueVisible;
+            internal string SnapshotStatus;
+            internal readonly ClientObservationSummary Summary = new ClientObservationSummary();
             internal readonly Queue<ClientSample> Samples = new Queue<ClientSample>();
             public void Dispose() { Process?.Dispose(); }
         }
@@ -114,6 +158,7 @@ namespace AOLauncher
         long lastStart;
         int nextAlias;
         string targets = "";
+        bool monitoringEnabled, collectExitReports;
         static JavaScriptSerializer Json() => new JavaScriptSerializer { MaxJsonLength = 16 * 1024 * 1024, RecursionLimit = 16 };
         internal static double Age(long now, long then) => then <= 0 || then > now ? double.PositiveInfinity : (now - then) * 1000.0 / Stopwatch.Frequency;
         internal static bool HasRecentCastIssue(ClientPulse pulse, long now) => pulse != null && pulse.Active && !pulse.Zoning
@@ -182,9 +227,34 @@ namespace AOLauncher
                 }
             }
         }
+        internal static string ValidatePulse(ClientPulse pulse, int pid, long startTicks, long now)
+        {
+            if (pulse == null) return "SnapshotInvalid";
+            if (pulse.Version != 1) return "SnapshotVersionUnsupported";
+            if (pulse.Pid != pid || pulse.StartTicks != startTicks) return "SnapshotIdentityMismatch";
+            if (string.IsNullOrEmpty(pulse.Instance) || pulse.Instance.Length > 64 || pulse.PublishedQpc <= 0 || pulse.PublishedQpc > now
+                || pulse.LastUpdateQpc < 0 || pulse.LastUpdateQpc > pulse.PublishedQpc || pulse.RecentMaxMs < 0 || pulse.MaxMs < 0
+                || double.IsNaN(pulse.RecentMaxMs) || double.IsInfinity(pulse.RecentMaxMs) || double.IsNaN(pulse.MaxMs) || double.IsInfinity(pulse.MaxMs))
+                return "SnapshotInvalid";
+            return "SnapshotAccepted";
+        }
+        internal static string SnapshotStatusText(string status)
+        {
+            switch (status) {
+                case "MonitoringDisabled": return SidebarText.L("Responsiveness monitoring is turned off in Nexus settings.", "Overvågning af svartider er slået fra i Nexus-indstillingerne.");
+                case "SnapshotMissing": return SidebarText.L("No monitoring snapshot was found for this process and start time. Check that Nexus Health Monitor is loaded into this character through AOSharp under the same Windows user.", "Ingen overvågningsfil blev fundet til denne proces og starttid. Tjek, at Nexus Health Monitor er indlæst i karakteren via AOSharp under samme Windows-bruger.");
+                case "SnapshotIdentityMismatch": return SidebarText.L("A snapshot was found, but its process identity did not match. Nexus rejected it rather than attribute another client's measurements.", "En måling blev fundet, men procesidentiteten passede ikke. Nexus afviste den for ikke at vise en anden klients målinger.");
+                case "SnapshotVersionUnsupported": return SidebarText.L("The monitoring snapshot uses an unsupported version. Update Nexus and its monitoring plugin together.", "Overvågningsfilens version understøttes ikke. Opdatér Nexus og overvågnings-pluginet sammen.");
+                case "SnapshotUnreadable": return SidebarText.L("The monitoring snapshot could not be read. Check file access and reload the monitoring plugin when safe.", "Overvågningsfilen kunne ikke læses. Tjek filadgang, og genindlæs overvågnings-pluginet, når det er sikkert.");
+                case "SnapshotInvalid": return SidebarText.L("The monitoring snapshot was incomplete or invalid. Reload the matching monitoring plugin when safe.", "Overvågningsfilen var ufuldstændig eller ugyldig. Genindlæs det tilhørende plugin, når det er sikkert.");
+                case "SnapshotAccepted": return SidebarText.L("A snapshot matching this process was read; check its freshness and responsiveness state separately.", "En måling til denne proces blev læst; tjek dens alder og svartilstand særskilt.");
+                default: return SidebarText.L("The reason was not recorded by this Nexus version.", "Årsagen blev ikke registreret af denne Nexus-version.");
+            }
+        }
         internal void Poll(LauncherSettings settings)
         {
             if (disposed) return;
+            monitoringEnabled = settings.MonitorClientHealth; collectExitReports = settings.CollectClientExitReports;
             Changes.Clear(); Error = null;
             var all = new LaunchPreset { Characters = settings.Accounts.SelectMany(a => a.Characters.Select(c => new PresetCharacter { AccountId = a.Id, CharacterId = c.CharacterId })).ToList() };
             try {
@@ -218,13 +288,13 @@ namespace AOLauncher
                     }
                     string path = Path.Combine(pulseRoot, entry.Key + ".json");
                     try {
+                        item.SnapshotStatus = settings.MonitorClientHealth ? "SnapshotMissing" : "MonitoringDisabled";
                         if (!settings.MonitorClientHealth) item.Pulse = null;
                         if (settings.MonitorClientHealth && File.Exists(path)) {
                             var pulse = ReadPulse(path);
                             now = Stopwatch.GetTimestamp(); // Validate against a clock sampled AFTER the read.
-                            if (pulse != null && pulse.Version == 1 && pulse.Pid == item.Client.ProcessId && pulse.StartTicks == item.Client.StartTimeUtcTicks
-                                && !string.IsNullOrEmpty(pulse.Instance) && pulse.Instance.Length <= 64 && pulse.PublishedQpc > 0 && pulse.PublishedQpc <= now
-                                && pulse.LastUpdateQpc <= pulse.PublishedQpc && pulse.RecentMaxMs >= 0 && pulse.MaxMs >= 0) {
+                            item.SnapshotStatus = ValidatePulse(pulse, item.Client.ProcessId, item.Client.StartTimeUtcTicks, now);
+                            if (item.SnapshotStatus == "SnapshotAccepted") {
                                 if (item.Instance != pulse.Instance) {
                                     item.FirstPulse = now; item.Instance = pulse.Instance;
                                     lock (pingGate) pings.Remove(item.Client.ProcessId);
@@ -232,16 +302,17 @@ namespace AOLauncher
                                 item.Pulse = pulse;
                             }
                         }
-                    } catch { /* Retain evidence; Assess distinguishes stale measurements from a stalled game. */ }
+                    } catch { item.SnapshotStatus = "SnapshotUnreadable"; /* Retain prior evidence; Assess checks its age. */ }
                     ClientPing ping;
                     lock (pingGate) pings.TryGetValue(item.Client.ProcessId, out ping);
-                    if (ping != null && ping.StartTicks != item.Client.StartTimeUtcTicks) ping = null;
+                    if (item.Pulse == null || (ping != null && ping.StartTicks != item.Client.StartTimeUtcTicks)) ping = null;
                     now = Stopwatch.GetTimestamp(); // The helper can publish while the file read is in progress.
                     string reason;
                     var condition = Assess(item.Pulse, ping, now, item.FirstPulse, out reason);
+                    if (condition == ClientCondition.Unmeasured) reason = SnapshotStatusText(item.SnapshotStatus);
                     item.Process.Refresh();
                     IntPtr window = item.Process.MainWindowHandle;
-                    var sample = new ClientSample { Utc = DateTime.UtcNow, State = condition.ToString(), Reason = reason,
+                    var sample = new ClientSample { Utc = DateTime.UtcNow, State = condition.ToString(), Reason = reason, SnapshotStatus = item.SnapshotStatus,
                         PulseAgeMs = item.Pulse != null ? (double?)Age(now, item.Pulse.PublishedQpc) : null,
                         ObservedUpdateGapMs = item.Pulse?.LastUpdateQpc > 0 ? (double?)Age(item.Pulse.PublishedQpc, item.Pulse.LastUpdateQpc) : null,
                         HelperAgeMs = ping != null ? (double?)Age(now, ping.PublishedQpc) : null,
@@ -250,7 +321,7 @@ namespace AOLauncher
                         RecentMaxGapMs = item.Pulse?.RecentMaxMs, MaxGapMs = item.Pulse?.MaxMs,
                         ReplyMs = ping?.LastReplyQpc > 0 ? (double?)ping.LastMs : null,
                         Sent = ping?.Sent, Replies = ping?.Replies, Timeouts = ping?.Timeouts, Late = ping?.Late, Pending = ping?.Pending,
-                        Zoning = item.Pulse?.Zoning ?? false, Minimized = window != IntPtr.Zero && IsIconic(window),
+                        Zoning = item.Pulse?.Zoning, Minimized = window != IntPtr.Zero && IsIconic(window),
                         Foreground = window != IntPtr.Zero && window == GetForegroundWindow(), WorkingSetBytes = item.Process.WorkingSet64 };
                     if (condition != item.Condition && item.Pulse != null) {
                         string detail = reason == null ? "" : string.Format(" — {0} (snapshot {1:F0} ms; update gap {2:F0} ms; max/10s {3:F1} ms; helper {4:F0} ms; reply age {5:F0} ms; RTT {6:F1} ms; timeouts {7})",
@@ -263,6 +334,7 @@ namespace AOLauncher
                         Changes.Add(item.Client.CharacterName + ": " + SidebarText.L("Nano cast attempted while falling. Check the game window, let the character land, then retry. Repeated reports are grouped in character status.",
                             "Nanoprogram forsøgt under fald. Tjek spilvinduet, lad karakteren lande, og prøv igen. Gentagne rapporter samles i karakterstatus."));
                     item.CastIssueVisible = castIssue;
+                    item.Summary.Observe(sample);
                     item.Samples.Enqueue(sample); while (item.Samples.Count > 120) item.Samples.Dequeue();
                 } catch { Error = "One client could not be inspected"; }
             }
@@ -271,7 +343,7 @@ namespace AOLauncher
             }
             Current = clients.Values.Select(t => new ClientObservation { Name = t.Client.CharacterName, Alias = t.Alias, Pid = t.Client.ProcessId,
                 StartTicks = t.Client.StartTimeUtcTicks, Condition = t.Condition, Measured = t.Pulse != null && t.Condition != ClientCondition.Unloaded,
-                Sample = t.Samples.LastOrDefault(), ExitedUtc = t.ExitedUtc, ExitCode = t.ExitCode,
+                Sample = t.Samples.LastOrDefault(), SnapshotStatus = t.SnapshotStatus, ExitedUtc = t.ExitedUtc, ExitCode = t.ExitCode,
                 CastWhileFalling = !t.ExitedUtc.HasValue && HasRecentCastIssue(t.Pulse, now),
                 CastIssueConfirmed = t.Pulse?.ActionIssueConfirmed ?? false, CastIssueCount = t.Pulse?.ActionIssueCount ?? 0 }).ToList();
             UpdateHost(now);
@@ -324,13 +396,16 @@ namespace AOLauncher
         }
         internal string Capture()
         {
-            return Json().Serialize(new { Format = 1, CreatedUtc = DateTime.UtcNow, NexusVersion = AppUpdates.CurrentVersion.ToString(),
-                WindowsVersion = Environment.OSVersion.Version.ToString(), LogicalProcessors = Environment.ProcessorCount,
-                ObserverError = Error, Note = "Local AOSharp responsiveness, not server packet loss. Timeouts may later receive late replies. A process exit alone is not proof of a crash.",
+            return Json().Serialize(new { Format = 2, CreatedUtc = DateTime.UtcNow, NexusVersion = AppUpdates.CurrentVersion.ToString(),
+                WindowsVersion = DiagnosticSnapshot.WindowsVersion(), WindowsVersionSource = "Windows registry", LogicalProcessors = Environment.ProcessorCount,
+                MonitorClientHealth = monitoringEnabled, CollectClientExitReports = collectExitReports,
+                ObserverError = Error, Note = "Process sampling is independent of game responsiveness. Unmeasured clients have no responsiveness evidence. Exit code 0 and absent Windows events do not rule out a crash or hang. Summaries cover only the period observed by this Nexus session; recent samples retain up to 120 observations. Memory samples alone cannot prove or exclude a leak.",
                 Clients = clients.Values.Select(t => Report(t)).ToArray() });
         }
         static object Report(Tracked t) => new { Client = t.Alias, ProcessId = t.Client.ProcessId, StartedUtc = new DateTime(t.Client.StartTimeUtcTicks, DateTimeKind.Utc),
+            StartedUtcTicks = t.Client.StartTimeUtcTicks,
             t.ExitedUtc, t.ExitCode, ExecutableVersion = t.Version, MeasurementInstance = t.Instance,
+            SnapshotStatus = t.SnapshotStatus, Summary = t.Summary,
             Assessment = t.ExitedUtc.HasValue ? (t.ExitCode.HasValue && t.ExitCode.Value != 0 ? "Non-zero process exit; inspect Windows evidence. Not proof of root cause." : "Process exited; normal logout and crash are not distinguishable from exit alone.") : "Client was still open at capture.",
             Samples = t.Samples.ToArray() };
         void SaveExit(Tracked item)

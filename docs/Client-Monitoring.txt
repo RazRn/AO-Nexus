@@ -1,5 +1,5 @@
 AO NEXUS: CLIENT RESPONSIVENESS AND EXIT REPORTS
-AO Nexus 1.2.1, 27 October 2026.
+AO Nexus 1.2.2, 27 October 2026.
 
 READABLE CHARACTER STATUS (1.2.1)
 Click the header status or the tray's Characters · status and help action for a
@@ -98,8 +98,13 @@ the game loop; the last observed zoning state is context, not proof of cause.
 Fresh IPC cannot hide a stopped OnUpdate callback, or vice versa.
 
 EXIT / CRASH DIAGNOSTICS
-While report collection is on, Nexus retains the last 120 samples (~2 min)
-for each observed client. It holds the process handle to preserve exit status
+Nexus retains the last 120 samples (~2 min) for each observed client while
+monitoring or report collection is on. A bounded summary also retains observed
+sample counts by state, plugin coverage, peak working set, longest update gap
+and largest reply time across the period observed by this Nexus session.
+It cannot reconstruct earlier history or periods when Nexus was not observing.
+Missing plugin measurements, including zoning, remain unknown.
+It holds the process handle to preserve exit status
 and guard against PID reuse. Every observed exit can create a report, including
 normal logout: an exit code alone cannot reliably distinguish logout and crash.
 Reports are saved under %LocalAppData%/AONexus/ClientReports, newest 20 retained.
@@ -111,8 +116,27 @@ Error/Hang fields when available. Matching requires executable, process ID,
 process lifetime and an exit-time window. Only allowed event fields are copied;
 raw event XML, account names, paths, credentials, chat and full memory dumps
 are excluded. Names use aliases; process IDs and timestamps remain included.
-Aliases in historical files are based on PID and should be paired with start
-time, not interpreted as a permanent account identity. Nothing is uploaded.
+One alias map is shared by current data, historical files and Windows evidence.
+Each alias identifies a process ID and start time, not a permanent account.
+Saved exits already present with the same evidence are omitted; distinct
+historical evidence is retained under the same alias. Nothing is uploaded.
+
+Read report-summary.txt first. It explicitly states when there is no accepted
+monitoring-plugin evidence. New reports record whether monitoring was enabled
+and whether a snapshot was missing, unreadable, invalid, from an unsupported
+version, rejected for a process-identity mismatch, or accepted. An accepted file
+can still be stale: inspect the responsiveness state and ages separately.
+These reasons narrow the setup investigation; they do not establish root cause.
+For missing data, enable monitoring in Settings > Accounts and load Nexus
+Health Monitor into each affected character through AOSharp under the same
+Windows user. Then export again after the status changes from Not measured.
+Windows version/build is read from the registry instead of the compatibility
+version returned to an application without a modern Windows manifest.
+
+Regular process samples do not prove the game was responsive. Exit code zero
+and no matching Windows error do not exclude a crash or hang. A short, flat
+memory window cannot establish whether a leak exists. Older reports have no
+lifetime summary or snapshot failure reason; exporting them cannot restore it.
 
 Windows events may arrive late or be absent. The ZIP is a diagnostic evidence
 bundle, not a guaranteed root-cause determination. Faulting module/exception

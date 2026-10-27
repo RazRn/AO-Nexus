@@ -588,11 +588,12 @@ namespace AOLauncher
                 + "; " + LocationCategory(folder);
         }
 
-        private static string WindowsVersion()
+        internal static string WindowsVersion()
         {
+            try {
             using (var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion"))
             {
-                if (key == null) return Environment.OSVersion.VersionString;
+                if (key == null) return "Windows version unavailable (registry inaccessible)";
                 string product = key.GetValue("ProductName") as string ?? "Windows";
                 string build = key.GetValue("CurrentBuild") as string ?? "";
                 int buildNumber;
@@ -601,6 +602,7 @@ namespace AOLauncher
                 object revision = key.GetValue("UBR");
                 return product + (display.Length > 0 ? " " + display : "") + " (build " + build + (revision != null ? "." + revision : "") + ")";
             }
+            } catch { return "Windows version unavailable (registry inaccessible)"; }
         }
 
         private static string FrameworkVersion()
