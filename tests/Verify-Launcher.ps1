@@ -567,7 +567,7 @@ try {
             if ($name -eq 'LaunchConfirmationDialog') {
                 $modelBeforeCancel = $serializer.Serialize($config)
                 $fields = $type.BaseType.GetField('Fields', $flags).GetValue($dialog)
-                $summaryLabels = @($fields.Controls | Where-Object { $_ -is [Windows.Forms.Label] })
+                $summaryLabels = @($fields.Controls | Where-Object { $_ -is [Windows.Forms.Label] -and $_.Name -eq 'launchSummary' })
                 $confirm = $type.BaseType.GetField('SaveButton', $flags).GetValue($dialog)
                 $cancel = $type.BaseType.GetField('CancelAction', $flags).GetValue($dialog)
                 $expectedConfirm = if ($language -eq 'da') { 'Log ind' } else { 'Log in' }

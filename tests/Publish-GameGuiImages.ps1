@@ -1,4 +1,4 @@
-param([string]$CaptureDirectory=(Join-Path $PSScriptRoot '..\logs\game-gui-usability'),[string]$Version='1.2.0.0')
+﻿param([string]$CaptureDirectory=(Join-Path $PSScriptRoot '..\logs\game-gui-usability'),[string]$Version='1.2.1.0')
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.Drawing
 . (Join-Path $PSScriptRoot 'Guide-ImagePlan.ps1')
@@ -6,7 +6,7 @@ $repo=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $images=Join-Path $repo 'docs\images'
 $provenance=Join-Path $images 'SCREENSHOTS.md'
 $legacyRows=@([IO.File]::ReadAllLines($provenance)|Where-Object {$_ -match '^\| \[' -and $_ -notmatch '^\| \[gui-'})
-if($legacyRows.Count -ne 9){throw 'Expected nine retained non-GUI provenance rows'}
+if($legacyRows.Count -ne @($GuideImagePlan.Values|Where-Object {!$_.Versioned}).Count){throw 'Expected all non-GUI provenance rows to be retained'}
 $documents=@('README.md','docs/Player-Guide.md','docs/Game-GUI.md')
 $body=($documents|ForEach-Object {[IO.File]::ReadAllText((Join-Path $repo $_))}) -join "`n"
 $entries=@(foreach($name in $GuideImagePlan.Keys){
@@ -21,7 +21,7 @@ $entries=@(foreach($name in $GuideImagePlan.Keys){
 if($entries.Count -ne 5){throw 'Expected all five Game GUI captures'}
 # Validate every input before replacing any public image. No capture is generated here.
 foreach($entry in $entries){Copy-Item -LiteralPath $entry.Source -Destination (Join-Path $images $entry.Name) -Force}
-$lines=@('# Guide screenshot provenance','','One overview and thirteen task-specific illustrations. All accounts, paths and results are synthetic examples; no personal profile or game client was opened.','','## Retained overview and launcher tasks','','These nine images are preserved from the previous full guide capture using real WinForms controls and offline fixtures. Red boxes and numbers are guide annotations; source sizes, crops, capture sources and content hashes are retained below.','','| Image | Source size | Crop (x, y, width, height) | Callouts | QA source | SHA-256 |','| --- | --- | --- | --- | --- | --- |')
+$lines=@('# Guide screenshot provenance','','One overview and sixteen task-specific illustrations. All accounts, paths and results are synthetic examples; no personal profile or game client was opened.','','## Retained overview and launcher tasks','','These twelve images are preserved from the previous full guide capture using real WinForms controls and offline fixtures. Red boxes and numbers are guide annotations; source sizes, crops, capture sources and content hashes are retained below.','','| Image | Source size | Crop (x, y, width, height) | Callouts | QA source | SHA-256 |','| --- | --- | --- | --- | --- | --- |')
 $lines+=$legacyRows
 $lines+=@('','## Game GUI 1.2','',('Captured from AO Nexus '+$Version+' by `tests/Verify-GameGuiUsability.ps1`, English at 100% scale and the default window size. Each image shows the full client area with no cropping, red boxes or other annotations. The fixture checks action visibility and uses isolated synthetic layouts, skins, scripts, macros and backups. Final captures must also be visually reviewed before this publishing step.'),'','| Image | Source size | Crop | Callouts | QA source in `logs/game-gui-usability` | SHA-256 |','| --- | --- | --- | --- | --- | --- |')
 foreach($entry in $entries){$lines+=('| ['+$entry.Name+']('+$entry.Name+') | '+($entry.Plan.Size -join ' x ')+' | Full client area | 0 | `'+$entry.Plan.Source+'` | `'+$entry.Hash+'` |')}
@@ -35,4 +35,4 @@ foreach($file in Get-ChildItem -LiteralPath $published -File -Filter '*.png'){
  if([IO.Path]::GetDirectoryName($absolute) -ne [IO.Path]::GetFullPath($published)){throw 'Unexpected obsolete image path'}
  Remove-Item -LiteralPath $absolute
 }
-Write-Output 'Published five approved Game GUI captures with SHA-256 provenance; nine existing images preserved.'
+Write-Output 'Published five approved Game GUI captures with SHA-256 provenance; twelve existing images preserved.'

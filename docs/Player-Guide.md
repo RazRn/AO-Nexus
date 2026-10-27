@@ -13,6 +13,7 @@ Set up your accounts once, choose the characters you want to play, and save reus
 - [Launch, stop and logout](#launch-stop-and-logout)
 - [Passwords](#passwords)
 - [Server news and health](#server-news-and-health)
+- [Character status and monitoring](#character-status-and-monitoring)
 - [Settings, tray and updates](#settings-tray-and-updates)
 - [Activity log](#activity-log)
 - [Layouts, skins and local data](#layouts-skins-and-local-data)
@@ -139,11 +140,17 @@ Recognized clients already running count toward launch limits. The Funcom dimens
 
 The account tree groups **server → account → character**. Expand or collapse groups as needed; checking a parent selects its children. A team preset saves character selections across any of your accounts and servers.
 
+Use **Search** above the account tree to find a name, character ID, account or server. Search is case-insensitive. Searching changes what is displayed, not the saved team or current selection. The selected count includes characters hidden by the search, and a separate count shows how many selected characters are hidden. With a search active, parent checkboxes and **Select matches / Clear matches** affect only matching characters. **Clear** or **Esc** restores the full roster and its previous collapsed groups.
+
+![Character search showing one match and a warning about selected characters outside the search](images/published/character-search-6f52707ea60c2e7a.png)
+
+*The amber note shows that two selected characters are hidden by this search and will still log in. Clear the search to review the whole team.*
+
 1. Check the characters you want in the team.
 2. Choose **Team presets → Save new…** and give it a name.
 3. Optionally choose a startup default and shortcuts, then **Save**.
 
-![Team preset editor with startup default, shortcuts and Save highlighted](images/published/preset-shortcuts-0fa1a74bbd38e7a5.png)
+![Team preset editor with startup default, shortcuts and Save highlighted](images/published/preset-shortcuts-69e9a8fd6816179f.png)
 
 *Red callouts: **1** optional startup default, **2** separate start and logout shortcuts, **3** Save commits the preset settings.*
 
@@ -160,11 +167,17 @@ Only one preset can be the startup default. It is selected when Nexus opens, wit
 
 In **Save new…** or **Edit…**, click a shortcut field and press a combination using Ctrl and/or Alt with a supported key, such as **Ctrl+Alt+F6** for start and **Ctrl+Alt+F7** for logout. **Delete/Backspace** clears it; **Esc** cancels recording. Save applies the change, while Cancel discards it. Reserved or conflicting combinations are rejected.
 
-Shortcuts work while Nexus is running, including in the tray. Busy operations and modal editing dialogs block shortcut actions. The Start shortcut selects that saved team and opens the normal launch confirmation; the Logout shortcut asks before requesting logout from safely matched clients.
+Shortcuts work while Nexus is running, including in the tray. Busy operations and modal editing dialogs block shortcut actions. The Start shortcut selects that saved team and starts its login flow; the Logout shortcut requests logout from safely matched clients. Each action shows its confirmation unless you have turned that confirmation off.
 
 ## Launch, stop and logout
 
-Choose **Log in selected**, review the account/server/character counts, and confirm. Nexus asks for passwords according to each account's preference.
+Choose **Log in selected**. When the confirmation is enabled, review the account/server/character counts and confirm. Nexus asks for passwords according to each account's preference.
+
+Login and team logout each have a **Don't show this confirmation again** checkbox. The choice is saved only when you confirm; Cancel leaves it unchanged. Turn either confirmation back on independently in **Settings → General → Confirm before logging in / Confirm before team logout**, then choose **Save**. These choices also apply to team shortcuts. Skipping a confirmation keeps password prompts, account limits, game-folder checks and safe logout matching in place.
+
+![Login confirmation with the optional Don't show this confirmation again checkbox](images/published/login-confirmation-3e03889664e64aea.png)
+
+*Remembering the login choice does not disable the separate team logout confirmation.*
 
 Independent accounts can start in parallel. Multiple characters on the **same account and server start serially**: the next waits until the previous character is detected in the world. Successfully started clients stay open. Public Nexus does not include experimental same-account parallel login.
 
@@ -172,14 +185,14 @@ By default the game client skips drawing the login and character screens and goe
 
 Recognized characters already open are skipped. If an account fails, its remaining queue stops while other account queues can continue. Check the log and game window rather than repeatedly starting the same failed selection.
 
-![Header progress line highlighted during a launch](images/published/launch-progress-9b9f3cb412954754.png)
+![Header progress line highlighted during a launch](images/published/launch-progress-d6b13d1254933ebb.png)
 
 *The red outline marks the header progress line. Confirmed logins or actual client exits advance it; moving activity shows waiting. It is not an estimate of seconds remaining.*
 
 | Action | Result |
 | --- | --- |
 | **Stop login** | Stops further login activity. Already opened game clients remain open. |
-| A team's **Logout shortcut** | Confirms the matched clients, sends normal `/quit`, and waits for their exit. |
+| A team's **Logout shortcut** | Reviews matched clients when its confirmation is enabled, sends normal `/quit`, and waits for their exit. |
 | **Close Nexus / Quit** | Exits the launcher, leaving game clients open. Shortcuts and monitoring stop. |
 | **Minimize** | Keeps Nexus running in the tray, out of the taskbar and Alt+Tab. |
 
@@ -220,6 +233,20 @@ By default, health checks run every **60 seconds for the visible server**. Enabl
 
 Edit enabled checks, hostnames/IPs and ports under **Settings → Accounts → Manage health checks…**. Save that table and then Settings. Health endpoints do not change your account's login settings. Some servers have no verified zone/chat endpoint, so those checks remain disabled until configured. See [Server health](Server-Health.md) for exact defaults, timings and limitations.
 
+## Character status and monitoring
+
+Click the character status in the header or choose **Characters · status and help** from the tray menu. Select a character to see its status, a short explanation and the next useful step. **Show technical details** reveals the underlying measurements; **Monitoring setup help** opens the setup instructions and **Open measurement plugin folder** action. Both sections start collapsed.
+
+**Responding**, **Delayed**, **No response**, **Measurement unavailable**, **Not measured**, **Monitoring stopped** and **Game closed** describe different situations. Missing measurements do not prove a crash, and **Game closed** can mean normal logout. These are local game measurements, not server ping.
+
+**Recent action issue** is separate: a responsive character can still be unable to cast. The updated plugin flags nano casts attempted while falling, distinguishes observed attempts from confirmed game feedback, and groups repeated reports. Select the character for the next step. An alert fades after 30 seconds without a new report; this does not prove the cast succeeded. Other action failures are not yet covered. Reload the updated plugin from **Open measurement plugin folder** through AOSharp when safe; an already injected copy does not update automatically.
+
+![Character status showing a responsive character with a separate recent casting issue and suggested next step](images/published/character-status-88db9b4e2a538d31.png)
+
+*Offline example: Aster is responding, but the game reported a cast blocked while falling. This does not identify a specific pet or prove that a retry succeeded. Exact live error-message coverage still needs verification.*
+
+Monitoring is optional. Enable **Settings → Accounts → Show AOSharp responsiveness in header and tray**, then follow **Monitoring setup help** to enable Nexus Health Monitor in each relevant AOSharp profile. Keep Nexus running. **Keep local client exit reports** is a separate option; **Save diagnostic ZIP…** saves available evidence locally without uploading it. See [monitoring and exit reports](Client-Monitoring.txt) for setup and measurement details.
+
 ## Settings, tray and updates
 
 **Settings → General** controls language, startup and confirmations. Automatic language chooses Danish for a Danish Windows locale and English otherwise. You can choose either manually. New log messages use the new language; existing messages are not rewritten.
@@ -232,7 +259,7 @@ Minimize and Quit have separate confirmation dialogs with **Don't show this agai
 
 **Settings → Updates → Check for updates…** checks manually. If enabled, automatic checking happens **once when Nexus starts**, not repeatedly on a background timer. An available version also appears as a link in the header. Checks look for newer stable GitHub releases, not prereleases or downgrades.
 
-![Update dialog with release notes and installation action highlighted](images/published/update-available-99c40ea431064eec.png)
+![Update dialog with release notes and installation action highlighted](images/published/update-available-1e6e3e7f662977ee.png)
 
 *Red callouts: **1** release notes to review, **2** Install and restart. Checking for updates does not authorize installation.*
 

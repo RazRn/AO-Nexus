@@ -114,6 +114,9 @@ try {
     $tree = Field $dashboard 'tree'
     $tree.SelectedNode = $tree.Nodes[0].Nodes[0]
     Save-GuideScreenshot $dashboard 'launcher-overview.png'
+    (Field $dashboard 'characterSearch').Text='Aster'
+    Save-GuideScreenshot $dashboard 'character-search.png'
+    (Field $dashboard 'characterSearch').Clear()
     $hero = Field $dashboard 'header'
     $hero.GetType().GetMethod('BeginActivity',$flags).Invoke($hero,[object[]]@([int]3)) | Out-Null
     $hero.GetType().GetMethod('ReportActivity',$flags).Invoke($hero,[object[]]@([int]1)) | Out-Null
@@ -182,6 +185,36 @@ foreach ($minimize in @($true,$false)) {
         Save-GuideScreenshot $confirmation $filename
     } finally { $confirmation.Dispose() }
 }
+$loginConfirmation = New-Dialog 'LaunchConfirmationDialog' ([object[]]@("Log in 3 characters across 1 account?`r`nAO Rebirth - Live: Main account"))
+try {
+    $loginConfirmation.ClientSize=[Drawing.Size]::new(620,340)
+    Show-Fixture $loginConfirmation
+    $loginConfirmation.Controls.Find('dontShowAgain',$true)[0].Checked=$true
+    Save-GuideScreenshot $loginConfirmation 'login-confirmation.png'
+} finally { $loginConfirmation.Dispose() }
+$monitorRows=[Array]::CreateInstance($assembly.GetType('AOLauncher.ClientObservation'),3)
+foreach($index in 0..2){
+    $row=New-Dialog 'ClientObservation' ([object[]]@())
+    $type=$row.GetType()
+    $type.GetField('Name',$flags).SetValue($row,@('Aster','Orion','Vesper')[$index])
+    $type.GetField('Pid',$flags).SetValue($row,[int](100+$index))
+    $type.GetField('StartTicks',$flags).SetValue($row,[long](1000+$index))
+    $type.GetField('Measured',$flags).SetValue($row,($index -ne 2))
+    $type.GetField('Condition',$flags).SetValue($row,[Enum]::Parse($assembly.GetType('AOLauncher.ClientCondition'),@('Healthy','Delayed','Unmeasured')[$index]))
+    if($index -eq 0){
+        $type.GetField('CastWhileFalling',$flags).SetValue($row,$true)
+        $type.GetField('CastIssueConfirmed',$flags).SetValue($row,$true)
+        $type.GetField('CastIssueCount',$flags).SetValue($row,[int]4)
+    }
+    $monitorRows.SetValue($row,$index)
+}
+$rowFactory=[scriptblock]{return ,$monitorRows} -as ([Func``1].MakeGenericType($monitorRows.GetType()))
+$monitorDialog=New-Dialog 'ClientStatusDialog' ([object[]]@([Func[string]]{return 'Offline monitoring example'},[Func[string]]{return '{}'},$rowFactory))
+try {
+    $monitorDialog.ClientSize=[Drawing.Size]::new(720,640)
+    Show-Fixture $monitorDialog
+    Save-GuideScreenshot $monitorDialog 'character-status.png'
+} finally { $monitorDialog.Dispose() }
 $account = New-Model 'AccountConfig'
 $whatsNew = New-Dialog 'WhatsNewDialog' ([object[]]@())
 try {
@@ -235,4 +268,4 @@ $guiCaptureHost = Join-Path $env:WINDIR 'SysWOW64\WindowsPowerShell\v1.0\powersh
 if ($LASTEXITCODE -ne 0) { throw 'Game GUI screenshot verification failed.' }
 $version = $assembly.GetName().Version.ToString()
 & (Join-Path $PSScriptRoot 'Publish-GuideImages.ps1') -CaptureDirectory $OutputDirectory -Version $version
-Write-Output "PASS: 14 distinct guide images captured from $version with example accounts and offline fixtures."
+Write-Output "PASS: $($GuideImagePlan.Count) distinct guide images captured from $version with example accounts and offline fixtures."

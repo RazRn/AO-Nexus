@@ -9,7 +9,8 @@ GET STARTED
 3. In Game and server, choose the server and folder containing AnarchyOnline.exe.
 4. Import character IDs from the account's Prefs folder, or save the account and
    use Add character. Check the characters you want to play.
-5. Choose Log in selected, review the confirmation and enter passwords as needed.
+5. Choose Log in selected, review the confirmation if enabled, and enter passwords
+   as needed.
 
 Requires Windows 10/11 and .NET Framework 4.8. The login engine and its runtime
 are bundled; players do not need a .NET SDK or a separate launcher installation.
@@ -37,6 +38,11 @@ Create new char opens the game's creation screen when the configured capacity
 permits. Keep Nexus open until the char enters the world for automatic detection.
 If detection ends, import its Prefs or add its ID manually.
 
+Search characters above the list by name, ID, account or server. Searching keeps
+your current selection; a count shows selected characters hidden by the search.
+Selection buttons and parent checkboxes affect matches while searching. Clear or
+Esc restores the whole roster and its previous collapsed groups.
+
 TEAMS AND LOGIN
 Check chars across accounts/servers, then use Team presets > Save new.
 Selecting a saved team restores its checkboxes; it does not start games.
@@ -48,13 +54,20 @@ Separate accounts can start in parallel. Multiple chars on the same account and
 server start one at a time; opened clients stay open, subject to server limits.
 The header line shows confirmed login/logout progress and waiting activity.
 
+Login and team logout offer separate Don't show this confirmation again choices.
+Only confirming saves that choice; Cancel leaves it unchanged. Re-enable either
+in Settings > General using Confirm before logging in or Confirm before team
+logout, then Save. These choices also apply to team shortcuts. Password prompts,
+limits and safe client matching apply.
+
 STOP, LOG OUT OR CLOSE NEXUS
 Stop login stops further login activity; game windows already opened stay open.
 In a team's Save new/Edit dialog, assign separate Start and Logout shortcuts.
 Click a field and press Ctrl/Alt plus a key; Delete clears and Esc cancels recording.
 Shortcuts work while Nexus runs, including in the tray. Save commits the changes.
-Logout asks before sending normal /quit to safely matched clients, then watches
-their actual exit for up to 90 seconds. Combat or movement may interrupt logout.
+Logout asks, unless you turned off its confirmation, before sending normal /quit
+to safely matched clients, then watches their actual exit for up to 90 seconds.
+Combat or movement may interrupt logout.
 Clients are never forcibly closed. Start clients normally through the current
 Nexus version to enable quit control; newly created clients need a normal launch.
 Closing Nexus leaves game windows open but stops its shortcuts and monitoring.
@@ -87,6 +100,17 @@ Reachable means TCP connectivity from your PC, not proof that game login works.
 Unknown means missing, stale or unverified information. Health endpoint addresses
 can be edited under Settings > Accounts > Manage health checks; login is separate.
 Settings > General offers English, Danish or automatic Windows-language selection.
+
+CLIENT MONITORING
+Click the character status in the header or choose Characters · status and help
+from the tray menu for a per-character status list, explanation and next step.
+Show technical details reveals the underlying timings. Monitoring setup help
+opens the instructions and Open measurement plugin folder action.
+Missing measurements do not prove a crash, and an exit may be a normal logout.
+Monitoring is optional and needs Nexus Health Monitor enabled in each relevant
+AOSharp profile. Enable Show AOSharp responsiveness in header and tray under
+Settings > Accounts. Keep local client exit reports is a separate option.
+Save diagnostic ZIP saves available evidence locally. Nothing is uploaded.
 
 GAME GUI — EXPERIMENTAL
 Layouts lets you capture a saved char setup or copy one to selected targets. Choose

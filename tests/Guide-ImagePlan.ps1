@@ -2,6 +2,9 @@
 # when a source size changes, so callouts cannot silently drift after a redesign.
 $GuideImagePlan = [ordered]@{
     'launcher-overview.png' = @{ Size=@(1280,1000); Boxes=@() }
+    'character-search.png' = @{ Size=@(1280,1000); Crop=@(24,230,600,480); Boxes=@() }
+    'login-confirmation.png' = @{ Size=@(620,340); Boxes=@() }
+    'character-status.png' = @{ Size=@(720,640); Boxes=@() }
     'setup-preferences.png' = @{ Size=@(680,994); Boxes=@(@(25,61,627,64),@(25,132,627,64),@(25,203,627,112)) }
     'account-setup.png' = @{ Size=@(640,740); Boxes=@(@(35,65,570,130),@(35,204,570,150),@(35,380,570,117)) }
     'game-and-server.png' = @{ Size=@(640,740); Boxes=@(@(35,65,570,58),@(35,129,570,110)) }

@@ -38,8 +38,8 @@ foreach($document in $documents){
         }
     }
 }
-Assert ($imageRefs.Count -eq 14) 'Guide should have one overview and thirteen distinct task images'
-Assert (@($imageRefs | Select-Object -Unique).Count -eq 14) 'A screenshot is repeated in the guide'
+Assert ($imageRefs.Count -eq $GuideImagePlan.Count) 'Guide should use each planned image once'
+Assert (@($imageRefs | Select-Object -Unique).Count -eq $GuideImagePlan.Count) 'A screenshot is repeated in the guide'
 $readme=[IO.File]::ReadAllText((Join-Path $repo 'README.md'))
 Assert ([regex]::Matches($readme,'!\[').Count -eq 1) 'README should contain only the overview image'
 Assert (($readme -split "`n").Count -le 100) 'README has grown beyond the quick-start overview'
@@ -70,5 +70,5 @@ foreach($image in $imageRefs){
     } finally {$bitmap.Dispose()}
 }
 $pngs=@(Get-ChildItem -LiteralPath (Join-Path $repo 'docs/images') -Recurse -Filter '*.png')
-Assert ($pngs.Count -eq 14) 'Stale/duplicate screenshot files remain in docs/images'
+Assert ($pngs.Count -eq $GuideImagePlan.Count) 'Stale/duplicate screenshot files remain in docs/images'
 Write-Output "PASS: $checks documentation link, anchor, image, hash, callout and structure checks."

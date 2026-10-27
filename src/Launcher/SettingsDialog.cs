@@ -16,6 +16,7 @@ namespace AOLauncher
         private readonly CheckBox startWithWindowsInput, checkUpdatesInput, confirmTrayInput, confirmQuitInput, keepDiagnosticsInput, quietLaunchInput, fastStartupInput, minimizeInactiveInput;
         public bool MinimizeInactiveClients => minimizeInactiveInput.Checked;
         private readonly CheckBox monitorClientHealthInput, collectClientExitReportsInput;
+        private readonly CheckBox confirmLoginInput, confirmTeamLogoutInput;
         public bool MonitorClientHealth => monitorClientHealthInput.Checked;
         public bool CollectClientExitReports => collectClientExitReportsInput.Checked;
         public bool QuietLaunch => quietLaunchInput.Checked;
@@ -27,6 +28,8 @@ namespace AOLauncher
         internal readonly NexusTabControl settingsTabs;
         public bool SkipTrayConfirmation => !confirmTrayInput.Checked;
         public bool SkipQuitConfirmation => !confirmQuitInput.Checked;
+        public bool SkipLoginConfirmation => !confirmLoginInput.Checked;
+        public bool SkipTeamLogoutConfirmation => !confirmTeamLogoutInput.Checked;
         public Action CheckUpdatesAction { private get; set; }
         public bool CheckForUpdatesOnStartup => checkUpdatesInput.Checked;
         public Func<bool, string> SaveStartupAction { private get; set; }
@@ -68,6 +71,13 @@ namespace AOLauncher
             confirmTrayInput = Check("Confirm before minimizing to tray", !settings.SkipTrayConfirmation, "confirmTray");
             confirmQuitInput = Check("Confirm before quitting Nexus", !settings.SkipQuitConfirmation, "confirmQuit");
             Fields.Controls.Add(confirmTrayInput); Fields.Controls.Add(confirmQuitInput);
+            confirmLoginInput = new NexusCheckBox { Name = "confirmLogin", Text = L("Confirm before logging in", "Bekræft før login"),
+                Checked = !settings.SkipLoginConfirmation, AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 0, 0, 8) };
+            confirmTeamLogoutInput = new NexusCheckBox { Name = "confirmTeamLogout", Text = L("Confirm before team logout", "Bekræft før hold-logout"),
+                Checked = !settings.SkipTeamLogoutConfirmation, AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 0, 0, 8) };
+            Fields.Controls.Add(confirmLoginInput); Fields.Controls.Add(confirmTeamLogoutInput);
+            Note(Fields, L("These choices also apply to team shortcuts. Login checks and password prompts still apply.",
+                "Disse valg gælder også holdgenveje. Login-tjek og anmodninger om adgangskode gælder stadig."));
             var privacy = Theme.Button(L("Privacy & security…", "Privatliv og sikkerhed…")); privacy.Name = "privacySecurity";
             privacy.UseMnemonic = false;
             privacy.Click += (sender, e) => { using (var dialog = new PrivacyDialog()) dialog.ShowDialog(this); };

@@ -111,8 +111,7 @@ namespace AOLauncher
             if (supported.Count == 0) { ShowInfo(names); return; }
             string question = F("Send /quit to {0} clients from preset “{1}”?", supported.Count, preset.Name)
                 + "\r\n\r\n" + names + "\r\n\r\n" + T("The game handles the normal logout countdown. Combat, movement or cancellation may prevent logout. Clients are never forcibly closed.");
-            if (NexusMessageBox.Show(this, question, T("Log out preset"), MessageBoxButtons.OKCancel,
-                MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.OK) return;
+            if (!ConfirmGameAction(true, question)) return;
             foreach (var control in editingControls) control.Enabled = false;
             startButton.Enabled = false;
             var processes = new List<System.Diagnostics.Process>();

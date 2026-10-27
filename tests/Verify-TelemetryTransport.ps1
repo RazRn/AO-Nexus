@@ -1,16 +1,19 @@
-param([string]$AssemblyPath=(Join-Path $PSScriptRoot '../src/Launcher/bin/Release/AONexus.exe'))
+param([string]$AssemblyPath=(Join-Path $PSScriptRoot '../src/Launcher/bin/Release/AONexus.exe'), [string]$MonitoringDirectory)
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.Web.Extensions
 $root=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$helper=Join-Path $root 'dist\Monitoring'
+$a=[Reflection.Assembly]::LoadFrom((Resolve-Path -LiteralPath $AssemblyPath).Path)
+$flags=[Reflection.BindingFlags]'Public,NonPublic,Static,Instance'
+$helper=if($MonitoringDirectory){[IO.Path]::GetFullPath($MonitoringDirectory)}else{
+ $cache=Join-Path ([IO.Path]::GetTempPath()) ('NexusTransportFixture-'+[Guid]::NewGuid().ToString('N'))
+ $a.GetType('AOLauncher.EmbeddedMonitoring').GetMethod('Extract',$flags).Invoke($null,@([IO.Path]::GetFullPath($cache)))
+}
 $output=Join-Path $root 'logs\TelemetryFixture'
 New-Item -ItemType Directory -Force -Path $output | Out-Null
 foreach($name in @('AOSharp.Common.dll','Newtonsoft.Json.dll','NexusTelemetry.Protocol.dll')){Copy-Item -LiteralPath (Join-Path $helper $name) -Destination $output -Force}
 $compiler=& "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products '*' -find 'MSBuild\Current\Bin\Roslyn\csc.exe' | Select-Object -First 1
 & $compiler /nologo /target:exe /platform:x86 "/out:$output\TelemetryFixture.exe" "/r:$output\AOSharp.Common.dll" "/r:$output\NexusTelemetry.Protocol.dll" /r:System.Web.Extensions.dll "$PSScriptRoot\TelemetryGameFixture.cs" "$root\src\Telemetry\NexusHealthPlugin.cs"
 if($LASTEXITCODE){throw 'Fixture build failed'}
-$a=[Reflection.Assembly]::LoadFrom((Resolve-Path -LiteralPath $AssemblyPath).Path)
-$flags=[Reflection.BindingFlags]'Public,NonPublic,Static,Instance'
 $checks=0
 function Assert($ok,$why){if(!$ok){throw $why};$script:checks++}
 function Field($o,$name){,$o.GetType().GetField($name,$flags).GetValue($o)}
@@ -46,6 +49,14 @@ try {
  $row=Sample 5
  Assert ((Field $row Condition).ToString() -eq 'Healthy') ('Production plugin + real IPC should respond: '+(Field $row Condition)+' / '+$monitor.GetType().GetProperty('Error',$flags).GetValue($monitor))
  $s=Field $row Sample;Assert ($s.Replies -gt 0 -and $s.Timeouts -eq 0) 'Real IPC replies must arrive without timeouts in normal fixture'
+ Command 'falling';$row=Sample 2
+ Assert ((Field $row CastWhileFalling) -and !(Field $row CastIssueConfirmed)) 'Cast hook publishes observed falling without claiming a confirmed rejection'
+ Command 'falling-network';$row=Sample 2
+ Assert ((Field $row CastIssueCount) -gt 1 -and (Field $row Condition).ToString() -eq 'Healthy') 'Plugin cast packets increase the grouped alert while responsiveness remains healthy'
+ Command 'falling-feedback';$row=Sample 2
+ Assert ((Field $row CastIssueConfirmed)) 'Recognized game feedback reaches Nexus as a confirmed recent failure'
+ Assert ($monitor.Changes.Count -eq 0) 'Repeated action reports do not spam the launcher log'
+ Command 'normal'
  Command 'pause';$row=Sample 5
  Assert ((Field $row Condition).ToString() -eq 'NoResponse') 'Stopped loop must be visible despite running telemetry writer'
  Assert ((Field $row Sample).Timeouts -gt 0) 'Independent host must count timeouts while game loop is stopped'
@@ -61,6 +72,7 @@ try {
  Command 'normal';Sample 2|Out-Null
  Command 'unload';$row=Sample 2
  Assert ((Field $row Condition).ToString() -eq 'Unloaded') 'Explicit teardown is recognized without a false crash'
+ Assert (!(Field $row CastWhileFalling)) 'Unloading clears the live action alert'
  Command 'crash';$fixture.WaitForExit(5000)|Out-Null;$row=Sample 1
  Assert ((Field $row Condition).ToString() -eq 'Exited' -and (Field $row ExitCode) -eq 37) 'OS process exit and code must be retained'
  $saved=@(Get-ChildItem -LiteralPath $reports -Filter '*.json')

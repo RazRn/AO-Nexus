@@ -46,6 +46,7 @@
     <Compile Include="DesktopLifetime.cs" />
     <Compile Include="PresetHotkeys.cs" />
     <Compile Include="MainForm.Hotkeys.cs" />
+    <Compile Include="MainForm.Confirmations.cs" />
     <Compile Include="PresetCamping.cs" />
     <Compile Include="BackgroundClients.cs" />
     <Compile Include="ClientMonitor.cs" />

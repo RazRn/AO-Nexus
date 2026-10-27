@@ -21,7 +21,7 @@ $preview=Join-Path $PSScriptRoot '../logs/dialog-sizing-previews'
 foreach ($language in @('en','da')) {
  $assembly.GetType('AOLauncher.Localization.Texts').GetMethod('SetLanguage',$static).Invoke($null,@($language)) | Out-Null
  foreach ($scale in @(1,1.5)) {
-  foreach ($kind in @('PresetNameDialog','AccountDialog','CharacterDialog','PasswordDialog','SavedPasswordDialog','WindowActionDialog','GuiCaptureDialog','GuiTemplateNameDialog','SettingsDialog','PrivacyDialog','WhatsNewDialog','UpdateDialog','LoginServersDialog','PrefsPickerDialog','SelectedTargetsDialog','LaunchConfirmationDialog','HealthEndpointsDialog','ReportProblemDialog')) {
+  foreach ($kind in @('PresetNameDialog','AccountDialog','CharacterDialog','PasswordDialog','SavedPasswordDialog','WindowActionDialog','GuiCaptureDialog','GuiTemplateNameDialog','SettingsDialog','PrivacyDialog','WhatsNewDialog','UpdateDialog','LoginServersDialog','PrefsPickerDialog','SelectedTargetsDialog','LaunchConfirmationDialog','LogoutConfirmationDialog','HealthEndpointsDialog','ReportProblemDialog')) {
    $ctorArgs = switch ($kind) {
     'PresetNameDialog' { [object[]]@('Create team preset','Example',[string[]]@('Reserved'),$null,$null,6,$false) }
     'AccountDialog' { [object[]]@($null,$settings) }
@@ -37,6 +37,7 @@ foreach ($language in @('en','da')) {
     'PrefsPickerDialog' { [object[]]@($candidates,'Example') }
     'SelectedTargetsDialog' { [object[]]@('Example account / example server') }
     'LaunchConfirmationDialog' { [object[]]@('6 characters across 2 accounts on 2 servers.') }
+    'LogoutConfirmationDialog' { [object[]]@('Send /quit to 6 matched clients from team Evening team? The game handles its normal logout countdown.') }
     'ReportProblemDialog' { [object[]]@($settings,[Enum]::ToObject($assembly.GetType('AOLauncher.ProblemArea'),0),$false) }
     'UpdateDialog' {
      $release=Model 'UpdateRelease'; $release.GetType().GetField('Version',$flags).SetValue($release,[version]'9.0.0'); $notes="# Example release`n`n- First change.`n- Second change."

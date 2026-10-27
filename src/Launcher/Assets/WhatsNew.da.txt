@@ -1,15 +1,9 @@
-﻿NYT I 1.2.0
+NYT I 1.2.1
 
-• Spillets GUI er redesignet med tydelige trin. Layouts viser gemt opsætning, målkarakterer og de dele, der erstattes. Sjældnere handlinger findes under Flere handlinger.
-• Skins begynder med installationen og de berørte konti. Tilføjelse og aktivering af et skin er separate, tydeligt navngivne trin.
-• Scripts har separate visninger for Script-filer og Char-makroer. Gennemse filer før kopiering; makrokopiering har sit eget målvalg og forklarer, hvad der erstattes.
-• Sikkerhedskopier kan filtreres efter type. Hver gendannelse viser oprindeligt mål, dato og berørte indstillinger, før du fortsætter.
-• Hurtigere opstart af klassiske klienter og holdlogin med Nexus' indbyggede loginmotor. Aktivitetsloggen viser indlæsningstiden for hver karakter og hele holdet.
-• AOQuickLauncher er ikke længere nødvendig. Den indbyggede motor giver Nexus direkte kontrol over opstart og loginrækkefølge; oprindelige bidrag er fortsat krediteret.
-• Valgfri AOSharp-respons i header og bakke. Målekomponenterne medfølger; aktivér Nexus Health Monitor i dine AOSharp-profiler. Forældede målinger skelnes fra faktiske opdateringspauser og manglende IPC-svar, med årsag og tider i loggen.
-• Valgfrie exit-rapporter samler seneste målinger og matchende Windows-fejl i en ZIP, du kan gemme og dele. Et exit alene beviser ikke et crash. Intet uploades automatisk.
-• Eksisterende brugere får en kort gennemgang af nye muligheder. Valgene findes fortsat i Indstillinger og opsætningsguiden.
-• Valgfri baggrundsminimering skifter kun mellem administrerede AO-vinduer. Skift til en browser eller anden app minimerer ikke den aktive AO-klient.
-• Mørk åbning af vinduer og dialoger, en mere jævn aktivitetslinje, ændringslog på versionsnummeret og GitHub-link under Indstillinger → Opdateringer.
+• Søg efter dine karakterer uden at miste dit valg. Det samlede antal valgte omfatter stadig karakterer, som søgningen skjuler.
+• Login og holdlogout har hver sit afkrydsningsfelt “Vis ikke denne bekræftelse igen”. Slå hver bekræftelse til igen i Indstillinger. Annuller gemmer aldrig afkrydsningen.
+• Klientovervågning viser først hver karakters status, en kort forklaring og et forslag til næste trin. Åbn Tekniske detaljer, når du har brug for målingerne.
+• Manglende målinger, en klient der ikke svarer, og en afsluttet klient vises som forskellige tilstande. Et exit alene beviser ikke et crash.
+• Det opdaterede overvågnings-plugin viser nylige forsøg på nanoprogrammer under fald med karakternavn, samlede rapporter og næste trin. Handlingsproblemer vises særskilt fra svartider. Genindlæs det opdaterede plugin via AOSharp for at aktivere dette.
 
-Målingen kontrollerer AOSharp-opdateringer og testens lokale IPC-forbindelse. Den måler ikke pakketab til spilserveren og garanterer ikke levering for andre plugins.
+Kontogrænser, adgangskodevalg og sikker identifikation af klienter gælder stadig, når bekræftelser er slået fra. Overvågning er valgfri og kræver Nexus Health Monitor i de relevante AOSharp-profiler. Intet uploades automatisk.

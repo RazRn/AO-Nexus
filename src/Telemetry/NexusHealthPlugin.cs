@@ -6,13 +6,18 @@ using System.Threading;
 using System.Web.Script.Serialization;
 using AOSharp.Core;
 using AOSharp.Core.IPC;
+using AOSharp.Core.UI;
+using AOSharp.Common.SharedEventArgs;
+using SmokeLounge.AOtomation.Messaging.Messages;
+using SmokeLounge.AOtomation.Messaging.Messages.N3Messages;
+using SmokeLounge.AOtomation.Messaging.GameData;
 using System.Reflection;
 
 [assembly: AssemblyTitle("Nexus Health Monitor")]
 [assembly: AssemblyProduct("Nexus Health Monitor")]
 [assembly: AssemblyDescription("AO Nexus update-loop and IPC measurements")]
 [assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.1.0.0")]
 
 namespace NexusTelemetry
 {
@@ -29,6 +34,7 @@ namespace NexusTelemetry
         int cursor;
         bool stopped;
         int writing;
+        ActionIssueTracker actionIssues;
 
         public override void Run()
         {
@@ -39,6 +45,7 @@ namespace NexusTelemetry
             Directory.CreateDirectory(root);
             path = Path.Combine(root, pulse.Pid + "-" + pulse.StartTicks + ".json");
             pulse.Active = true;
+            actionIssues = new ActionIssueTracker(pulse);
             IPCChannel.LoadMessages(typeof(HealthPing).Assembly);
             channel = new IPCChannel(238);
             channel.RegisterCallback(32002, (sender, message) => {
@@ -48,7 +55,30 @@ namespace NexusTelemetry
                     Target = pulse.Pid, StartTicks = pulse.StartTicks, Reply = 1 }); } catch { }
             });
             Game.OnUpdate += Update;
+            MiscClientEvents.AttemptingSpellCast += AttemptingSpellCast;
+            Network.N3MessageSent += MessageSent;
+            Chat.FeedbackReceived += FeedbackReceived;
             writer = new Timer(Publish, null, 0, 500);
+        }
+        void AttemptingSpellCast(object sender, AttemptingSpellCastEventArgs args) { ObserveCast(); }
+        void MessageSent(object sender, N3Message message)
+        {
+            if (message is CharacterActionMessage action && action.Action == CharacterActionType.CastNano) ObserveCast();
+        }
+        void ObserveCast()
+        {
+            try {
+                if (stopped || Game.IsZoning) return;
+                var player = DynelManager.LocalPlayer;
+                if (player == null) return;
+                bool falling = player.IsFalling;
+                lock (gate) { if (!stopped) actionIssues.ObserveCast(falling, false, Stopwatch.GetTimestamp()); }
+            } catch { /* Monitoring must never interfere with casting. */ }
+        }
+        void FeedbackReceived(string text)
+        {
+            try { lock (gate) { if (!stopped) actionIssues.ObserveFeedback(text, Stopwatch.GetTimestamp()); } }
+            catch { /* Ignore unavailable diagnostic evidence. */ }
         }
         void Update(object sender, float delta)
         {
@@ -85,6 +115,9 @@ namespace NexusTelemetry
         {
             lock (gate) { stopped = true; pulse.Active = false; }
             Game.OnUpdate -= Update;
+            MiscClientEvents.AttemptingSpellCast -= AttemptingSpellCast;
+            Network.N3MessageSent -= MessageSent;
+            Chat.FeedbackReceived -= FeedbackReceived;
             if (writer != null) using (var finished = new ManualResetEvent(false)) {
                 if (writer.Dispose(finished)) finished.WaitOne(2000);
             }

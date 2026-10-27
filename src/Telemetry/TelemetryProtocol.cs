@@ -31,6 +31,41 @@ namespace NexusTelemetry
         public long Over100 { get; set; }
         public bool Zoning { get; set; }
         public bool Active { get; set; }
+        public int ActionIssue { get; set; }
+        public long ActionIssueQpc { get; set; }
+        public int ActionIssueCount { get; set; }
+        public bool ActionIssueConfirmed { get; set; }
+    }
+    // Only structured, recognized action issues leave the game; never chat text.
+    public sealed class ActionIssueTracker
+    {
+        readonly Pulse pulse;
+        long lastCountedQpc;
+        public ActionIssueTracker(Pulse pulse) { this.pulse = pulse; }
+        public void ObserveCast(bool falling, bool zoning, long now)
+        {
+            if (falling && !zoning) Record(now, false);
+        }
+        public void ObserveFeedback(string text, long now)
+        {
+            if (string.Equals(text?.Trim(), "You can't execute nanoprograms while falling!", StringComparison.OrdinalIgnoreCase))
+                Record(now, true);
+        }
+        void Record(long now, bool confirmed)
+        {
+            if (now <= 0) return;
+            long previous = pulse.ActionIssueQpc;
+            bool sameBurst = previous > 0 && now >= previous && now - previous < 30 * Stopwatch.Frequency;
+            if (!sameBurst) { pulse.ActionIssueCount = 0; pulse.ActionIssueConfirmed = false; }
+            // The cast hook, outbound packet and feedback can describe one attempt.
+            if (!sameBurst || now - lastCountedQpc >= Stopwatch.Frequency / 4) {
+                pulse.ActionIssueCount = Math.Min(9999, pulse.ActionIssueCount + 1);
+                lastCountedQpc = now;
+            }
+            pulse.ActionIssue = 1;
+            pulse.ActionIssueQpc = now;
+            pulse.ActionIssueConfirmed |= confirmed;
+        }
     }
     public sealed class Target
     {

@@ -6,9 +6,9 @@ Keep separate game folders and login servers for Funcom AO, Project Rubi-Ka and 
 
 **[Download the latest release](https://github.com/RazRn/AO-Nexus/releases/latest)** · [Player guide](docs/Player-Guide.md) · [Release notes](https://github.com/RazRn/AO-Nexus/releases)
 
-![AO Nexus with a team preset, accounts grouped by server, details and news](docs/images/published/launcher-overview-5367ab3c2c3085a1.png)
+![AO Nexus with a team preset, accounts grouped by server, details and news](docs/images/published/launcher-overview-27637d6f30ce9c52.png)
 
-*AO Nexus 1.2.0 with example accounts and offline news. [Screenshot provenance](docs/images/SCREENSHOTS.md).*
+*AO Nexus 1.2.1 with example accounts and offline news. [Screenshot provenance](docs/images/SCREENSHOTS.md).*
 
 ## Quick start
 
@@ -16,7 +16,7 @@ Keep separate game folders and login servers for Funcom AO, Project Rubi-Ka and 
 2. Extract the whole ZIP into a writable folder, such as `%LOCALAPPDATA%\Programs\AO Nexus`, and run **AONexus.exe**.
 3. Choose **Add account**. Enter your game username; under **Game and server**, select its server and the game folder containing `AnarchyOnline.exe`.
 4. Import existing characters with **Find Prefs folders…** and **Find characters**, or save the account and use **Add character** to enter their IDs manually.
-5. Check the characters you want and choose **Log in selected**. Review the confirmation and enter passwords when asked.
+5. Check the characters you want and choose **Log in selected**. Review the confirmation if enabled and enter passwords when asked.
 
 Requires Windows 10/11, **.NET Framework 4.8 or 4.8.1**, and an installed game client prepared for the chosen server. See [installation and download verification](docs/Player-Guide.md#install-and-first-launch) for folder, runtime and unsigned-app guidance.
 
@@ -24,14 +24,14 @@ Requires Windows 10/11, **.NET Framework 4.8 or 4.8.1**, and an installed game c
 
 | Feature | How it helps | Guide |
 | --- | --- | --- |
-| Accounts and team presets | Group characters by server; save teams across accounts; choose an optional startup default. | [Accounts](docs/Player-Guide.md#accounts-and-characters) · [Team presets](docs/Player-Guide.md#team-presets) |
-| Launch and logout | Start independent accounts in parallel, with serial logins within each account. Assign separate team shortcuts for login and normal `/quit`. | [Launch, stop and logout](docs/Player-Guide.md#launch-stop-and-logout) |
+| Accounts and team presets | Search by character name, ID, account or server; save teams across accounts; choose an optional startup default. | [Accounts](docs/Player-Guide.md#accounts-and-characters) · [Team presets](docs/Player-Guide.md#team-presets) |
+| Launch and logout | Start independent accounts in parallel, with serial logins within each account. Assign team shortcuts for login and normal `/quit`, with separate confirmation preferences. | [Launch, stop and logout](docs/Player-Guide.md#launch-stop-and-logout) |
 | Password choices | Remember a password per account, encrypted for your Windows user, or enter it each time. Update or remove saved copies. | [Passwords](docs/Player-Guide.md#passwords) |
 | News and server health | Choose news sources and connection checks; optionally monitor in the background and receive tray notifications. | [News and health](docs/Player-Guide.md#server-news-and-health) |
 | Tray, updates and logs | Keep Nexus out of Alt+Tab, opt into update checks, and search the activity log. Update installation always requires confirmation. | [Everyday settings](docs/Player-Guide.md#settings-tray-and-updates) |
 | Problem reports | Anonymised diagnostics and crash reports, shared as a prefilled GitHub issue only when you choose to. | [Report a problem](docs/Player-Guide.md#report-a-problem) |
 | Game GUI · Experimental | Follow clear steps to reuse layouts, select skins, copy script files or character macros, and review backups before restoring. | [Layouts, skins, scripts and recovery](docs/Game-GUI.md) |
-| Client responsiveness | Optional AOSharp update and IPC measurements in the header/tray, with local exit reports you can save as a diagnostic ZIP. | [Monitoring and reports](docs/Client-Monitoring.txt) |
+| Character status and help | See responsiveness and recent casts while falling separately, with explanations and next steps. Expand measurements or save a diagnostic ZIP. | [Monitoring and reports](docs/Player-Guide.md#character-status-and-monitoring) |
 
 The interface supports English and Danish. It initially follows Windows' language, with a manual override in Settings.
 

@@ -1,15 +1,9 @@
-﻿WHAT'S NEW IN 1.2.0
+WHAT'S NEW IN 1.2.1
 
-• Game GUI redesigned around clear tasks. Layouts walks through a saved setup, target characters and the parts to replace. Less common actions are under More actions.
-• Skins starts with the installation and shared accounts. Adding a skin and activating it are separate, clearly labelled steps.
-• Scripts has separate Script files and Character macros views. Preview files before copying; macro copies have their own destination selection and explain what is replaced.
-• Backups can be filtered by type. Each restore shows the original target, date and affected settings before you continue.
-• Faster classic-client startup and team logins using Nexus's integrated launch engine. Each character and the whole team's loading time appear in the activity log.
-• AOQuickLauncher is no longer required. The integrated engine gives Nexus direct control of startup and login scheduling; inherited work remains credited.
-• Optional AOSharp responsiveness in the header and tray. Measurement components are included; enable Nexus Health Monitor in your AOSharp profiles. Stale measurements are distinguished from actual update pauses or missing IPC replies, with reasons and timings in the log.
-• Optional client exit reports collect recent measurements and matching Windows errors in a ZIP you can save and share. An exit alone does not prove a crash. Nothing is uploaded automatically.
-• Existing users get a short review of new options. Choices remain available in Settings and the setup wizard.
-• Optional background minimization switches only between managed AO windows. Switching to a browser or another app does not minimize your active AO client.
-• Dark opening of windows and dialogs, a smoother header activity line, version-linked changelog and a GitHub link under Settings → Updates.
+• Search your characters without losing the current selection. The selected total still includes characters hidden by the search.
+• Login and team logout each have a “Don't show this confirmation again” checkbox. Turn either confirmation back on independently in Settings. Cancel never saves the checkbox.
+• Client monitoring now starts with each character's status, a plain explanation and a suggested next step. Open Technical details when you need the measurements.
+• Missing measurements, a client that is not responding and an exited client remain separate states. An exit alone does not prove a crash.
+• The updated monitoring plugin flags recent nano casts while falling, with a character name, grouped reports and a next step. Action issues are separate from responsiveness. Reload the updated plugin through AOSharp to enable this.
 
-Monitoring checks the local AOSharp update loop and its test IPC path. It does not measure game-server packet loss or guarantee delivery for other plugins.
+Account limits, password choices and safe client matching still apply when confirmations are turned off. Monitoring remains optional and requires Nexus Health Monitor in the relevant AOSharp profiles. Nothing is uploaded automatically.

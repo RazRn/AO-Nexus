@@ -22,6 +22,12 @@ namespace AOLauncher
         private LauncherSettings settings;
         private readonly Dictionary<string, string> passwords = new Dictionary<string, string>();
         private readonly TreeView tree = new NexusTreeView();
+        private readonly TextBox characterSearch = new NexusTextBox();
+        private readonly Label characterSearchLabel = new Label();
+        private readonly Label characterSearchStatus = new Label();
+        private Button clearCharacterSearchButton;
+        private Button selectAllCharactersButton;
+        private Button clearCharacterSelectionButton;
         private readonly Label selectionLabel = new Label();
         private readonly Label detailTitle = new Label();
         private readonly Label detailText = new Label();
@@ -259,6 +265,7 @@ namespace AOLauncher
             if (trayOpenItem == null) return;
             trayOpenItem.Text = T("Open AO Nexus");
             trayExitItem.Text = T("Exit AO Nexus");
+            RefreshClientStatus();
             RefreshHealthTray();
         }
 
@@ -384,8 +391,8 @@ namespace AOLauncher
             headerMark.Location = new Point(27, 38);
             headerMark.Size = new Size(66, 66);
             header.Controls.Add(headerMark);
-            header.Controls.Add(new Label { Text = T("YOUR GATEWAY TO RUBI-KA"), Font = new Font("Segoe UI", 8.5F, FontStyle.Bold), ForeColor = Theme.Accent, BackColor = Color.Transparent, Location = new Point(109, 22), Size = new Size(550, 20) });
-            header.Controls.Add(new Label { Text = "AO NEXUS", Font = new Font("Segoe UI", 33F, FontStyle.Bold), ForeColor = Theme.Foreground, BackColor = Color.Transparent, Location = new Point(103, 37), Size = new Size(550, 60) });
+            header.Controls.Add(new Label { Name = "brandTagline", Text = T("YOUR GATEWAY TO RUBI-KA"), Font = new Font("Segoe UI", 8.5F, FontStyle.Bold), ForeColor = Theme.Accent, BackColor = Color.Transparent, Location = new Point(109, 80), Size = new Size(260, 17) });
+            header.Controls.Add(new Label { Name = "brandTitle", Text = "AO NEXUS", Font = new Font("Segoe UI", 33F, FontStyle.Bold), ForeColor = Theme.Foreground, BackColor = Color.Transparent, Location = new Point(103, 25), Size = new Size(280, 55) });
             var settingsButton = Theme.Button(T("Settings"));
             settingsButton.AutoSize = false;
             settingsButton.Size = new Size(124, 36);
@@ -436,8 +443,8 @@ namespace AOLauncher
             addCharacterButton = AddAction(toolbar, T("Add character"), AddCharacter);
             editButton = AddAction(toolbar, T("Edit"), EditSelected);
             removeButton = AddAction(toolbar, T("Remove"), RemoveSelected);
-            AddAction(toolbar, T("Select all"), (sender, e) => SetAll(true));
-            AddAction(toolbar, T("Clear selection"), (sender, e) => SetAll(false));
+            selectAllCharactersButton = AddAction(toolbar, T("Select all"), (sender, e) => SetAll(true));
+            clearCharacterSelectionButton = AddAction(toolbar, T("Clear selection"), (sender, e) => SetAll(false));
             foreach (Button button in toolbar.Controls)
             {
                 button.Font = new Font("Segoe UI", 9F);
@@ -492,7 +499,7 @@ namespace AOLauncher
             var leftFrame = new NexusPanel { Legend = T("ACCOUNTS BY SERVER"), AccessibleName = T("ACCOUNTS BY SERVER"), Dock = DockStyle.Fill, Margin = Padding.Empty, Padding = new Padding(12, 22, 12, 12), Name = "accountsByServer" };
             var left = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, Margin = Padding.Empty, BackColor = Theme.Surface };
             left.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            left.RowStyles.Add(new RowStyle(SizeType.Absolute, 0));
+            left.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             left.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             leftFrame.Controls.Add(left);
             expandAccountsLink = new LinkLabel { Text = T("Expand all"), Name = "expandAccounts" };
@@ -518,6 +525,61 @@ namespace AOLauncher
                 editingControls.Add(link);
             }
             left.Controls.Add(toolbar, 0, 0);
+            var search = new TableLayoutPanel { Name = "characterSearchPanel", Dock = DockStyle.Top, AutoSize = true, ColumnCount = 3, RowCount = 2, Margin = new Padding(0, 0, 0, 8) };
+            search.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            search.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            search.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            search.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            search.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            characterSearchLabel.Name = "characterSearchLabel";
+            characterSearchLabel.AutoSize = true;
+            characterSearchLabel.Anchor = AnchorStyles.Left;
+            characterSearchLabel.ForeColor = Theme.Foreground;
+            characterSearchLabel.Margin = new Padding(0, 0, 8, 0);
+            search.Controls.Add(characterSearchLabel, 0, 0);
+            var searchInput = new Panel { Name = "characterSearchInput", Dock = DockStyle.Fill, Height = 34, MinimumSize = new Size(0, 34),
+                BackColor = Theme.Surface, Margin = new Padding(0, 0, 8, 0), TabStop = false };
+            characterSearch.Name = "characterSearch";
+            characterSearch.BorderStyle = BorderStyle.None;
+            characterSearch.Margin = Padding.Empty;
+            searchInput.Controls.Add(characterSearch);
+            searchInput.Layout += (sender, e) => {
+                int inset = Math.Max(8, (int)Math.Round(10 * searchInput.DeviceDpi / 96.0));
+                characterSearch.Bounds = new Rectangle(inset, Math.Max(0, (searchInput.ClientSize.Height - characterSearch.PreferredHeight) / 2),
+                    Math.Max(1, searchInput.ClientSize.Width - inset * 2), characterSearch.PreferredHeight);
+            };
+            searchInput.Paint += (sender, e) => {
+                using (var pen = new Pen(characterSearch.Enabled && characterSearch.Focused ? Theme.Accent : Theme.Border))
+                    e.Graphics.DrawRectangle(pen, 0, 0, Math.Max(0, searchInput.Width - 1), Math.Max(0, searchInput.Height - 1));
+            };
+            searchInput.Click += (sender, e) => characterSearch.Focus();
+            characterSearch.Enter += (sender, e) => searchInput.Invalidate();
+            characterSearch.Leave += (sender, e) => searchInput.Invalidate();
+            characterSearch.EnabledChanged += (sender, e) => searchInput.Invalidate();
+            characterSearch.FontChanged += (sender, e) => searchInput.PerformLayout();
+            characterSearch.TextChanged += (sender, e) => RefreshTree();
+            characterSearch.KeyDown += (sender, e) => {
+                if (e.KeyCode != Keys.Escape || characterSearch.Text.Length == 0) return;
+                characterSearch.Clear(); e.Handled = true; e.SuppressKeyPress = true;
+            };
+            search.Controls.Add(searchInput, 1, 0);
+            clearCharacterSearchButton = Theme.Button(T("Clear"));
+            clearCharacterSearchButton.Name = "clearCharacterSearch";
+            clearCharacterSearchButton.MinimumSize = new Size(0, 30);
+            clearCharacterSearchButton.Margin = Padding.Empty;
+            clearCharacterSearchButton.Click += (sender, e) => { characterSearch.Clear(); characterSearch.Focus(); };
+            search.Controls.Add(clearCharacterSearchButton, 2, 0);
+            characterSearchStatus.Name = "characterSearchStatus";
+            characterSearchStatus.AutoSize = true;
+            characterSearchStatus.Font = new Font("Segoe UI", 8.5F);
+            characterSearchStatus.ForeColor = Theme.Muted;
+            characterSearchStatus.Margin = new Padding(0, 5, 0, 0);
+            search.Controls.Add(characterSearchStatus, 0, 1);
+            search.SetColumnSpan(characterSearchStatus, 3);
+            search.SizeChanged += (sender, e) => characterSearchStatus.MaximumSize = new Size(Math.Max(1, search.ClientSize.Width), 0);
+            left.Controls.Add(search, 0, 1);
+            editingControls.Add(characterSearch);
+            editingControls.Add(clearCharacterSearchButton);
             tree.Dock = DockStyle.Fill;
             tree.BorderStyle = BorderStyle.None;
             tree.BackColor = Theme.Surface;
@@ -966,9 +1028,52 @@ namespace AOLauncher
             catch (InvalidOperationException ex) { ShowInfo(ex.Message); }
         }
 
+        private bool HasCharacterSearch => !string.IsNullOrWhiteSpace(characterSearch.Text);
+
+        private bool CharacterMatchesSearch(AccountConfig account, CharacterConfig character)
+        {
+            string query = characterSearch.Text.Trim();
+            if (query.Length == 0) return true;
+            string[] values = { character.Name, character.CharacterId.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                account.Label, account.Username, ServerName(AccountTargets.Endpoint(account)) };
+            return values.Any(value => value != null && value.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0);
+        }
+
+        private void UpdateCharacterSearchStatus()
+        {
+            bool searching = HasCharacterSearch;
+            characterSearchLabel.Text = SidebarText.L("Search", "Søg");
+            characterSearch.AccessibleName = SidebarText.L("Search characters by name, ID, account or server", "Søg efter chars via navn, ID, konto eller server");
+            if (clearCharacterSearchButton != null)
+            {
+                clearCharacterSearchButton.Text = SidebarText.L("Clear", "Ryd");
+                clearCharacterSearchButton.AccessibleName = SidebarText.L("Clear character search", "Ryd charsøgning");
+                clearCharacterSearchButton.Enabled = characterSearch.Text.Length > 0 && !running;
+            }
+            if (selectAllCharactersButton != null) selectAllCharactersButton.Text = searching ? SidebarText.L("Select matches", "Vælg søgeresultater") : T("Select all");
+            if (clearCharacterSelectionButton != null) clearCharacterSelectionButton.Text = searching ? SidebarText.L("Clear matches", "Fravælg søgeresultater") : T("Clear selection");
+            if (!searching)
+            {
+                characterSearchStatus.Text = SidebarText.L("Find a character by name, ID, account or server.", "Find en char via navn, ID, konto eller server.");
+                characterSearchStatus.ForeColor = Theme.Muted;
+                return;
+            }
+            int total = settings.Accounts.Sum(account => account.Characters.Count);
+            int shown = settings.Accounts.Sum(account => account.Characters.Count(character => CharacterMatchesSearch(account, character)));
+            int hiddenSelected = settings.Accounts.Sum(account => account.Characters.Count(character => character.Selected && !CharacterMatchesSearch(account, character)));
+            string result = shown == 0
+                ? SidebarText.L("No matching characters. Clear the search to see everyone.", "Ingen chars matcher. Ryd søgningen for at se alle.")
+                : string.Format(SidebarText.L("{0} of {1} characters shown. Selection controls affect matches only.", "{0} af {1} chars vises. Valgknapper og afkrydsninger gælder kun søgeresultater."), shown, total);
+            if (hiddenSelected > 0)
+                result += "\r\n" + string.Format(SidebarText.L("{0} selected outside this search will also log in.", "{0} valgte chars uden for søgningen logger også ind."), hiddenSelected);
+            characterSearchStatus.Text = result;
+            characterSearchStatus.ForeColor = hiddenSelected > 0 ? Theme.Amber : Theme.Muted;
+        }
+
         private void RefreshTree(object selected = null)
         {
             bool revealSelected = selected != null;
+            bool searching = HasCharacterSearch;
             bool expansionChanged = false;
             selected = selected ?? tree.SelectedNode?.Tag;
             object previousTop = tree.TopNode?.Tag;
@@ -980,7 +1085,8 @@ namespace AOLauncher
                 TreeNode selectedNode = null;
                 foreach (var group in BuildServerGroups())
                 {
-                    var groupCharacters = group.Accounts.SelectMany(account => account.Characters).ToArray();
+                    var groupCharacters = group.Accounts.SelectMany(account => account.Characters.Where(character => CharacterMatchesSearch(account, character))).ToArray();
+                    if (searching && groupCharacters.Length == 0) continue;
                     var serverNode = new TreeNode {
                         Tag = group, Checked = groupCharacters.Length > 0 && groupCharacters.All(character => character.Selected),
                         ForeColor = ServerLimitExceeded(group) ? Theme.Warning : Theme.Accent, BackColor = Theme.SurfaceRaised,
@@ -990,18 +1096,20 @@ namespace AOLauncher
                     if (SameTreeItem(selected, group)) selectedNode = serverNode;
                     foreach (var account in group.Accounts)
                     {
+                        var visibleCharacters = account.Characters.Where(character => CharacterMatchesSearch(account, character)).ToArray();
+                        if (searching && visibleCharacters.Length == 0) continue;
                         var node = new TreeNode(AccountCaption(account)) {
-                            Tag = account, Checked = account.Characters.Count > 0 && account.Characters.All(c => c.Selected)
+                            Tag = account, Checked = visibleCharacters.Length > 0 && visibleCharacters.All(c => c.Selected)
                         };
                         serverNode.Nodes.Add(node);
                         bool selectedAccount = ReferenceEquals(selected, account) || account.Characters.Any(character => ReferenceEquals(selected, character));
-                        if (revealSelected && selectedAccount && ServerCollapsed(group.Endpoint))
+                        if (!searching && revealSelected && selectedAccount && ServerCollapsed(group.Endpoint))
                         {
                             SetServerCollapsed(group.Endpoint, false);
                             expansionChanged = true;
                         }
                         if (ReferenceEquals(selected, account)) selectedNode = node;
-                        foreach (var character in account.Characters)
+                        foreach (var character in visibleCharacters)
                         {
                             var child = new TreeNode(character.NamePending ? F("Character {0} (name detected at login)", character.CharacterId) : character.Name) {
                                 Tag = character, Checked = character.Selected
@@ -1009,15 +1117,15 @@ namespace AOLauncher
                             node.Nodes.Add(child);
                             if (ReferenceEquals(selected, character))
                             {
-                                if (revealSelected && account.Collapsed)
+                                if (!searching && revealSelected && account.Collapsed)
                                 {
                                     account.Collapsed = false;
                                     expansionChanged = true;
                                 }
-                                selectedNode = account.Collapsed ? node : child;
+                                selectedNode = !searching && account.Collapsed ? node : child;
                             }
                         }
-                        if (AccountTargets.CanCreateCharacter(settings, account))
+                        if (!searching && AccountTargets.CanCreateCharacter(settings, account))
                         {
                             var action = new CreationAction { Account = account };
                             var actionNode = new TreeNode("+ " + T("Create new char")) {
@@ -1026,9 +1134,9 @@ namespace AOLauncher
                             node.Nodes.Add(actionNode);
                             if (SameTreeItem(selected, action)) selectedNode = account.Collapsed ? node : actionNode;
                         }
-                        if (!account.Collapsed) node.Expand();
+                        if (searching || !account.Collapsed) node.Expand();
                     }
-                    if (!ServerCollapsed(group.Endpoint)) serverNode.Expand();
+                    if (searching || !ServerCollapsed(group.Endpoint)) serverNode.Expand();
                 }
                 // Restore to the nearest visible ancestor without reopening a collapsed group.
                 for (var ancestor = selectedNode?.Parent; ancestor != null; ancestor = ancestor.Parent)
@@ -1053,7 +1161,7 @@ namespace AOLauncher
 
         private void RememberAccountExpansion(TreeNode node, bool collapsed)
         {
-            if (refreshing || running) return;
+            if (refreshing || running || HasCharacterSearch) return;
             if (node.Tag is AccountConfig account) account.Collapsed = collapsed;
             else if (node.Tag is ServerGroup group) SetServerCollapsed(group.Endpoint, collapsed);
             else return;
@@ -1072,10 +1180,11 @@ namespace AOLauncher
             {
                 if (collapsed)
                     while (tree.SelectedNode?.Parent != null) tree.SelectedNode = tree.SelectedNode.Parent;
-                foreach (var account in settings.Accounts) account.Collapsed = collapsed;
+                if (!HasCharacterSearch)
+                    foreach (var account in settings.Accounts) account.Collapsed = collapsed;
                 foreach (TreeNode serverNode in tree.Nodes)
                 {
-                    SetServerCollapsed(((ServerGroup)serverNode.Tag).Endpoint, collapsed);
+                    if (!HasCharacterSearch) SetServerCollapsed(((ServerGroup)serverNode.Tag).Endpoint, collapsed);
                     foreach (TreeNode accountNode in serverNode.Nodes)
                     {
                         if (collapsed) accountNode.Collapse(true);
@@ -1106,11 +1215,11 @@ namespace AOLauncher
                 var group = e.Node.Tag as ServerGroup;
                 if (group != null)
                 {
-                    foreach (var item in group.Accounts.SelectMany(value => value.Characters)) item.Selected = e.Node.Checked;
+                    foreach (var item in AllNodes(e.Node.Nodes).Select(node => node.Tag).OfType<CharacterConfig>()) item.Selected = e.Node.Checked;
                 }
                 else if (account != null)
                 {
-                    foreach (var item in account.Characters) item.Selected = e.Node.Checked;
+                    foreach (var item in e.Node.Nodes.Cast<TreeNode>().Select(node => node.Tag).OfType<CharacterConfig>()) item.Selected = e.Node.Checked;
                 }
                 else if (character != null) character.Selected = e.Node.Checked;
                 foreach (var node in AllNodes(tree.Nodes))
@@ -1118,12 +1227,13 @@ namespace AOLauncher
                     if (node.Tag is CharacterConfig item) node.Checked = item.Selected;
                     else if (node.Tag is AccountConfig owner)
                     {
-                        node.Checked = owner.Characters.Count > 0 && owner.Characters.All(value => value.Selected);
+                        var visibleCharacters = node.Nodes.Cast<TreeNode>().Select(child => child.Tag).OfType<CharacterConfig>().ToArray();
+                        node.Checked = visibleCharacters.Length > 0 && visibleCharacters.All(value => value.Selected);
                         node.Text = AccountCaption(owner);
                     }
                     else if (node.Tag is ServerGroup server)
                     {
-                        var characters = server.Accounts.SelectMany(value => value.Characters).ToArray();
+                        var characters = AllNodes(node.Nodes).Select(child => child.Tag).OfType<CharacterConfig>().ToArray();
                         node.Checked = characters.Length > 0 && characters.All(value => value.Selected);
                         node.Text = ServerCaption(server);
                         node.ForeColor = ServerLimitExceeded(server) ? Theme.Warning : Theme.Accent;
@@ -1141,6 +1251,7 @@ namespace AOLauncher
             int count = selectedAccounts.Sum(a => a.Characters.Count(c => c.Selected));
             int accounts = selectedAccounts.Length;
             selectionLabel.Text = F("{0} {1} selected across {2} {3}", count, count == 1 ? T("character") : T("characters"), accounts, accounts == 1 ? T("account") : T("accounts"));
+            UpdateCharacterSearchStatus();
             UpdateTargetSummary(selectedAccounts);
             startButton.Enabled = count > 0 && !running && !smoke;
             addCharacterButton.Enabled = CurrentAccount != null && !running;
@@ -1185,8 +1296,10 @@ namespace AOLauncher
             }
             else
             {
-                detailTitle.Text = T("Build your team");
-                detailText.Text = T("Start with “Add account”. Save several characters per account and choose your team using the checkboxes.");
+                detailTitle.Text = HasCharacterSearch ? SidebarText.L("No matching characters", "Ingen chars matcher") : T("Build your team");
+                detailText.Text = HasCharacterSearch
+                    ? SidebarText.L("Try another name, character ID, account or server, or clear the search. Your character selections have been kept.", "Prøv et andet navn, char-ID, konto eller server, eller ryd søgningen. Dine char-valg er bevaret.")
+                    : T("Start with “Add account”. Save several characters per account and choose your team using the checkboxes.");
             }
             if (account != null) detailText.Text += "\r\n" + F("Server: {0}", ServerName(AccountTargets.Endpoint(account)));
             UpdatePresetStatus();
@@ -1382,7 +1495,8 @@ namespace AOLauncher
 
         private void SetAll(bool selected)
         {
-            foreach (var character in settings.Accounts.SelectMany(a => a.Characters)) character.Selected = selected;
+            foreach (var account in settings.Accounts)
+                foreach (var character in account.Characters.Where(item => CharacterMatchesSearch(account, item))) character.Selected = selected;
             SaveSettings();
             RefreshTree();
         }
@@ -1420,6 +1534,8 @@ namespace AOLauncher
                 settings.HasChosenUpdatePreference = true;
                 settings.SkipTrayConfirmation = dialog.SkipTrayConfirmation;
                 settings.SkipQuitConfirmation = dialog.SkipQuitConfirmation;
+                settings.SkipLoginConfirmation = dialog.SkipLoginConfirmation;
+                settings.SkipTeamLogoutConfirmation = dialog.SkipTeamLogoutConfirmation;
                 settings.MaxLogSizeMb = dialog.MaxLogSizeMb;
                 if (settings.KeepDiagnostics && !dialog.KeepDiagnostics && !smoke) DiagnosticJournal.Clear();
                 settings.KeepDiagnostics = dialog.KeepDiagnostics;
@@ -1652,8 +1768,7 @@ namespace AOLauncher
 
         private bool ConfirmSelectedLaunch()
         {
-            using (var dialog = new LaunchConfirmationDialog(BuildLaunchConfirmation(settings)))
-                return dialog.ShowDialog(this) == DialogResult.OK;
+            return ConfirmGameAction(false, BuildLaunchConfirmation(settings));
         }
 
         private bool EnsureGameFolder(AccountConfig account)

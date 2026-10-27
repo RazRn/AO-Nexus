@@ -345,16 +345,40 @@ namespace AOLauncher
 
     internal sealed class LaunchConfirmationDialog : EditorDialog
     {
-        public LaunchConfirmationDialog(string summary) : base(T("Confirm login"), 250)
+        private readonly CheckBox remember;
+        internal bool DontShowAgain => remember.Checked;
+        public LaunchConfirmationDialog(string summary) : base(T("Confirm login"), 320)
         {
-            Fields.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            Fields.Controls.Add(new Label {
-                Text = summary, Dock = DockStyle.Fill, Margin = Padding.Empty,
-                TextAlign = ContentAlignment.TopLeft
-            });
+            AddWrappedNote(summary, "launchSummary").ForeColor = Theme.Foreground;
+            remember = new NexusCheckBox { Name = "dontShowAgain", Text = SidebarText.L("Don't show this confirmation again", "Vis ikke denne bekræftelse igen"),
+                AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 14, 0, 8) };
+            Fields.Controls.Add(remember);
+            AddWrappedNote(SidebarText.L("Turn this back on in Settings → General → Confirm before logging in.",
+                "Slå den til igen i Indstillinger → Generelt → Bekræft før login."), "confirmationSettingsGuide");
             DialogLayout.RowStyles[1].Height = 0;
             ErrorLabel.Visible = false;
             SaveButton.Text = T("Log in");
+            SaveButton.DialogResult = DialogResult.OK;
+            AcceptButton = CancelAction;
+            ActiveControl = CancelAction;
+        }
+    }
+
+    internal sealed class LogoutConfirmationDialog : EditorDialog
+    {
+        private readonly CheckBox remember;
+        internal bool DontShowAgain => remember.Checked;
+        public LogoutConfirmationDialog(string summary) : base(T("Log out preset"), 440)
+        {
+            AddWrappedNote(summary, "logoutSummary").ForeColor = Theme.Foreground;
+            remember = new NexusCheckBox { Name = "dontShowAgain", Text = SidebarText.L("Don't show this confirmation again", "Vis ikke denne bekræftelse igen"),
+                AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 14, 0, 8) };
+            Fields.Controls.Add(remember);
+            AddWrappedNote(SidebarText.L("Turn this back on in Settings → General → Confirm before team logout.",
+                "Slå den til igen i Indstillinger → Generelt → Bekræft før hold-logout."), "confirmationSettingsGuide");
+            DialogLayout.RowStyles[1].Height = 0;
+            ErrorLabel.Visible = false;
+            SaveButton.Text = SidebarText.L("Log out team", "Log hold ud");
             SaveButton.DialogResult = DialogResult.OK;
             AcceptButton = CancelAction;
             ActiveControl = CancelAction;

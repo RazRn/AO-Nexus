@@ -33,6 +33,8 @@ The monitoring companion is also embedded, so automatic updates deliver it with 
 
 To compile against a specific compatible AOSharp build, run `build/Build-Telemetry.ps1 -AOSharpRuntime <runtime-folder>` before `build/Build.ps1`. The runtime folder must contain `AOSharp.Common.dll`, `AOSharp.Core.dll` and `Newtonsoft.Json.dll`.
 
+If an open game has loaded the existing monitoring DLLs, build to a separate folder with `build/Build.ps1 -RebuildTelemetry -MonitoringDirectory logs/Monitoring-next -Package`. This embeds the new files without replacing the loaded plugin. Keep passing that directory on subsequent builds until the default monitoring binaries can be rebuilt. Reload the updated plugin through AOSharp when safe; packaging does not change an injected copy.
+
 | Output | Purpose |
 | --- | --- |
 | `dist/AONexus.exe` | Runnable application. |

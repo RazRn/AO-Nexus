@@ -1,12 +1,43 @@
 AO NEXUS: CLIENT RESPONSIVENESS AND EXIT REPORTS
-AO Nexus 1.2, 26 October 2026.
+AO Nexus 1.2.1, 27 October 2026.
+
+READABLE CHARACTER STATUS (1.2.1)
+Click the header status or the tray's Characters · status and help action for a
+character/status list.
+Select a character to see a short explanation and the next useful step. Responding,
+Delayed, No response, Measurement unavailable, Not measured, Monitoring stopped
+and Game closed are separate states. A missing measurement does not prove a crash;
+Game closed can also mean normal logout.
+Show technical details reveals the underlying measurements. Monitoring setup help
+opens the AOSharp instructions and plugin-folder action. Both start collapsed.
+The measurements, opt-in choices and diagnostic ZIP privacy are unchanged.
+
+RECENT ACTION ISSUES
+The updated Nexus Health Monitor also reports nano casts attempted while the game
+marks the character as falling. The character list has a separate Recent action
+issue column: a responsive client can still be unable to perform an action.
+The header names the affected character. Select that character for an explanation
+and next step. An observed cast while falling is distinguished from the exact
+"You can't execute nanoprograms while falling!" rejection received as game feedback.
+Repeated reports are grouped, with one log entry per burst. Reports fade after
+30 seconds without another report; this is not evidence that a cast succeeded.
+No alert is raised merely for falling without a cast attempt. Zoning, stale data
+and unloaded plugins suppress the alert. Other failure reasons are not yet covered.
+Only the recognized issue code, timestamp, bounded count and confirmation flag
+are published; no chat text or character action commands are recorded or sent.
+This cannot identify the intended pet or prove it spawned. Verify the outcome in
+the game. Exact live error-message coverage still needs testing on each client.
+Existing injected plugins do not update automatically. Use Open measurement
+plugin folder in the updated Nexus to select the new NexusHealthPlugin.dll and
+reload it through AOSharp when it is safe to restart the character's plugins.
 
 TRY IT
 1. Open AONexus.exe. The monitoring companion is included in the executable.
 2. In the new-options wizard, enable "Show AOSharp responsiveness in header and
    tray" and optionally "Keep local client exit reports". These are opt-in.
    The same choices are in Settings > Accounts, and in the full setup wizard.
-3. In the Nexus client-status dialog, click "Open measurement plugin folder".
+3. In Character status and help, open "Monitoring setup help", then click
+   "Open measurement plugin folder".
    Add NexusHealthPlugin.dll from that folder using AOSharp's Add Plugin.
    Select each character and tick "Nexus Health Monitor" alongside your usual
    plugins, then Inject. Adding the DLL alone does not enable it per character.
@@ -15,13 +46,15 @@ TRY IT
    Nexus does not inject another bootstrapper or unload your existing plugins.
 4. Launch a character through Nexus and load that AOSharp profile normally.
    The header/tray status appears after a pulse is detected. Click the header
-   or right-click the tray > Clients to see the per-character measurements.
+   or right-click the tray > Characters · status and help for each character's
+   status and optional technical details.
 
 AOSharp being open is not enough: the plugin must run inside each measured
 game client. Clients without a plugin are "not measured", never "healthy".
 With monitoring off, unmeasured clients do not create a header indicator.
-With monitoring enabled and clients open, the header and tray show "not measured
-— click to set up" until the plugin is enabled. An unexplained silence
+With monitoring enabled and clients open, the header and tray show "monitoring
+not set up · click for help" until the plugin is enabled. An explicitly unloaded
+plugin is shown as "monitoring stopped". An unexplained silence
 remains visible. Explicit plugin teardown is distinguished from missing replies.
 Only verified, registered Nexus sessions are discovered. Nexus must remain open.
 Turning off monitoring stops the Nexus helper. Unload the measurement plugin
@@ -72,7 +105,7 @@ normal logout: an exit code alone cannot reliably distinguish logout and crash.
 Reports are saved under %LocalAppData%/AONexus/ClientReports, newest 20 retained.
 Disabling collection stops new reports; previously saved reports are retained.
 
-Save diagnostic ZIP from the Clients dialog. It includes current measurements,
+Save diagnostic ZIP from Character status and help. It includes current measurements,
 saved exit reports, basic OS/Nexus information, and matching Windows Application
 Error/Hang fields when available. Matching requires executable, process ID,
 process lifetime and an exit-time window. Only allowed event fields are copied;

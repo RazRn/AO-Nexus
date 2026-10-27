@@ -1,9 +1,10 @@
-param([switch]$RebuildBackend, [switch]$RebuildTelemetry, [switch]$Package, [string]$PlatformToolset = 'v145')
+param([switch]$RebuildBackend, [switch]$RebuildTelemetry, [switch]$Package, [string]$PlatformToolset = 'v145', [string]$MonitoringDirectory)
 $ErrorActionPreference = 'Stop'
 $projectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-if ($RebuildTelemetry -or !(Test-Path -LiteralPath (Join-Path $projectRoot 'dist\Monitoring\NexusHealthPlugin.dll'))) { & (Join-Path $PSScriptRoot 'Build-Telemetry.ps1') }
-Copy-Item -LiteralPath (Join-Path $projectRoot 'docs\Client-Monitoring.txt') -Destination (Join-Path $projectRoot 'dist\Monitoring\README.txt') -Force
-& (Join-Path $PSScriptRoot 'Build-MonitoringPayload.ps1')
+if (!$MonitoringDirectory) { $MonitoringDirectory = Join-Path $projectRoot 'dist\Monitoring' }
+if ($RebuildTelemetry -or !(Test-Path -LiteralPath (Join-Path $MonitoringDirectory 'NexusHealthPlugin.dll'))) { & (Join-Path $PSScriptRoot 'Build-Telemetry.ps1') -OutputDirectory $MonitoringDirectory }
+Copy-Item -LiteralPath (Join-Path $projectRoot 'docs\Client-Monitoring.txt') -Destination (Join-Path $MonitoringDirectory 'README.txt') -Force
+& (Join-Path $PSScriptRoot 'Build-MonitoringPayload.ps1') -InputDirectory $MonitoringDirectory
 $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
 $msbuild = & $vswhere -latest -products '*' -find 'MSBuild\Current\Bin\MSBuild.exe' | Select-Object -First 1
 if (!$msbuild) { throw 'Install Visual Studio Build Tools with .NET Framework 4.8 and desktop C++ support.' }

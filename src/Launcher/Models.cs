@@ -18,6 +18,8 @@ namespace AOLauncher
         public bool HasCompletedSetup { get; set; }
         public bool SkipTrayConfirmation { get; set; }
         public bool SkipQuitConfirmation { get; set; }
+        public bool SkipLoginConfirmation { get; set; }
+        public bool SkipTeamLogoutConfirmation { get; set; }
         public int MaxLogSizeMb { get; set; } = 5;
         public bool KeepDiagnostics { get; set; } = true;
         // The login handler skips drawing the login and character screens (measured ~1.5 s faster per character).

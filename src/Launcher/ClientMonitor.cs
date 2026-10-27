@@ -22,6 +22,10 @@ namespace AOLauncher
         public long Over100 { get; set; }
         public bool Zoning { get; set; }
         public bool Active { get; set; }
+        public int ActionIssue { get; set; }
+        public long ActionIssueQpc { get; set; }
+        public int ActionIssueCount { get; set; }
+        public bool ActionIssueConfirmed { get; set; }
     }
     internal sealed class ClientPing
     {
@@ -71,6 +75,9 @@ namespace AOLauncher
         internal bool Measured;
         internal DateTime? ExitedUtc;
         internal int? ExitCode;
+        internal bool CastWhileFalling, CastIssueConfirmed;
+        internal int CastIssueCount;
+        internal bool HasCastIssue => Measured && !ExitedUtc.HasValue && Condition != ClientCondition.Unloaded && CastWhileFalling;
     }
     internal sealed class ClientMonitor : IDisposable
     {
@@ -86,6 +93,7 @@ namespace AOLauncher
             internal ClientCondition Condition;
             internal DateTime? ExitedUtc;
             internal int? ExitCode;
+            internal bool CastIssueVisible;
             internal readonly Queue<ClientSample> Samples = new Queue<ClientSample>();
             public void Dispose() { Process?.Dispose(); }
         }
@@ -108,6 +116,9 @@ namespace AOLauncher
         string targets = "";
         static JavaScriptSerializer Json() => new JavaScriptSerializer { MaxJsonLength = 16 * 1024 * 1024, RecursionLimit = 16 };
         internal static double Age(long now, long then) => then <= 0 || then > now ? double.PositiveInfinity : (now - then) * 1000.0 / Stopwatch.Frequency;
+        internal static bool HasRecentCastIssue(ClientPulse pulse, long now) => pulse != null && pulse.Active && !pulse.Zoning
+            && pulse.ActionIssue == 1 && pulse.ActionIssueCount > 0 && pulse.ActionIssueCount <= 9999
+            && pulse.ActionIssueQpc <= pulse.PublishedQpc && Age(now, pulse.PublishedQpc) < 3000 && Age(now, pulse.ActionIssueQpc) < 30000;
         internal static ClientCondition Evaluate(ClientPulse pulse, ClientPing ping, long now, long firstPulse)
         {
             string reason;
@@ -247,6 +258,11 @@ namespace AOLauncher
                         Changes.Add(item.Client.CharacterName + ": AOSharp · " + ConditionText(condition) + detail);
                     }
                     item.Condition = condition;
+                    bool castIssue = HasRecentCastIssue(item.Pulse, now);
+                    if (castIssue && !item.CastIssueVisible)
+                        Changes.Add(item.Client.CharacterName + ": " + SidebarText.L("Nano cast attempted while falling. Check the game window, let the character land, then retry. Repeated reports are grouped in character status.",
+                            "Nanoprogram forsøgt under fald. Tjek spilvinduet, lad karakteren lande, og prøv igen. Gentagne rapporter samles i karakterstatus."));
+                    item.CastIssueVisible = castIssue;
                     item.Samples.Enqueue(sample); while (item.Samples.Count > 120) item.Samples.Dequeue();
                 } catch { Error = "One client could not be inspected"; }
             }
@@ -255,7 +271,9 @@ namespace AOLauncher
             }
             Current = clients.Values.Select(t => new ClientObservation { Name = t.Client.CharacterName, Alias = t.Alias, Pid = t.Client.ProcessId,
                 StartTicks = t.Client.StartTimeUtcTicks, Condition = t.Condition, Measured = t.Pulse != null && t.Condition != ClientCondition.Unloaded,
-                Sample = t.Samples.LastOrDefault(), ExitedUtc = t.ExitedUtc, ExitCode = t.ExitCode }).ToList();
+                Sample = t.Samples.LastOrDefault(), ExitedUtc = t.ExitedUtc, ExitCode = t.ExitCode,
+                CastWhileFalling = !t.ExitedUtc.HasValue && HasRecentCastIssue(t.Pulse, now),
+                CastIssueConfirmed = t.Pulse?.ActionIssueConfirmed ?? false, CastIssueCount = t.Pulse?.ActionIssueCount ?? 0 }).ToList();
             UpdateHost(now);
         }
         void UpdateHost(long now)
