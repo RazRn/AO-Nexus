@@ -65,6 +65,7 @@ Reports from Nexus replace logins, account and character names, IDs and personal
 
 ## More documentation
 
+- [Performance investigation](docs/Performance-Investigation.md): Fiddler and Process Monitor findings, startup experiments, measured gains, rejected approaches, and limitations.
 - [Player guide](docs/Player-Guide.md): setup and everyday use, with focused red callouts.
 - [Game GUI](docs/Game-GUI.md): experimental character templates, macros, installation skins, scripts and backups.
 - [Server health](docs/Server-Health.md): endpoints, timing and what check results mean.

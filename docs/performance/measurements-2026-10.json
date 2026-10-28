@@ -1,0 +1,533 @@
+{
+  "schemaVersion": 1,
+  "compiledOn": "2026-10-28",
+  "measurementDates": [
+    "2026-10-26",
+    "2026-10-27"
+  ],
+  "repositoryBaseline": "118e207845b1c66ce401ab25e666eb84c985bb32",
+  "publication": "Selected aggregate measurements. Source hashes identify local files; raw captures and personal identifiers are not included.",
+  "sourceInventory": [
+    {
+      "name": "client-analysis.json",
+      "sha256": "92cfc81ba8ed756707536bddada53a021ace9789026cfdea14b40c135f5df577"
+    },
+    {
+      "name": "startup-analysis.json",
+      "sha256": "2a6ffe5efb2d956391c76aad7ac363d1db18a3ed11d420ede15f31a1b00b9392"
+    },
+    {
+      "name": "procmon-analysis.json",
+      "sha256": "55f91579d3e2034ee41b7d3296c8932ca517fdefef21758f3580c56491b5e406"
+    },
+    {
+      "name": "new-location-analysis.json",
+      "sha256": "ae141809751745d6a1de1f727d47d6d2cabc243bbd62c0f7cbf84addb3d943b7"
+    },
+    {
+      "name": "login-speed-investigation-2026-10-27.txt",
+      "sha256": "2627f3e00f88456acd430286e5d58abd6c89e1a74d63207a7455f0d288858389"
+    }
+  ],
+  "fiddler": {
+    "successfulHttpTimingAvailable": false,
+    "proxyProbeOutcome": "Request failed while sending",
+    "namedFiddlerJsonlIs": "ProcessObserver log, not a Fiddler session export",
+    "separateProcessExplorerExportFound": false
+  },
+  "client": {
+    "version": "Funcom classic 18.8.62_EP1",
+    "liveRuns": 46,
+    "completed": 44,
+    "endpoint": "Process creation through client loading-overlay removal; screenshots and F10 verified selected variants, not an exact GPU-present timestamp.",
+    "groups": [
+      {
+        "label": "Paired02: normal fade",
+        "n": 1,
+        "medianMs": 17103.69,
+        "minMs": 17103.69,
+        "maxMs": 17103.69,
+        "files": [
+          "paired02-baseline-2.jsonl"
+        ]
+      },
+      {
+        "label": "Paired02: GUI login, 0 ms fades",
+        "n": 3,
+        "medianMs": 5994.637,
+        "minMs": 5669.689,
+        "maxMs": 6236.475,
+        "files": [
+          "paired02-zero-1.jsonl",
+          "paired02-zero-2.jsonl",
+          "paired02-zero-3.jsonl"
+        ]
+      },
+      {
+        "label": "Paired02: Nexus direct quiet, 0 ms fades",
+        "n": 3,
+        "medianMs": 5960.322,
+        "minMs": 5689.395,
+        "maxMs": 6024.874,
+        "files": [
+          "paired02-nexus-zero-1.jsonl",
+          "paired02-nexus-zero-2.jsonl",
+          "paired02-nexus-zero-3.jsonl"
+        ]
+      },
+      {
+        "label": "Paired04: skip login meshes",
+        "n": 2,
+        "medianMs": 5468.0125,
+        "minMs": 5280.259,
+        "maxMs": 5655.766,
+        "files": [
+          "paired04-skip-meshes-1.jsonl",
+          "paired04-skip-meshes-2.jsonl"
+        ]
+      },
+      {
+        "label": "CPU05: normal scheduler, skip meshes",
+        "n": 3,
+        "medianMs": 5840.07,
+        "minMs": 5318.562,
+        "maxMs": 6787.605,
+        "files": [
+          "cpu05-skip-meshes-1.jsonl",
+          "cpu05-skip-meshes-2.jsonl",
+          "cpu05-skip-meshes-3.jsonl"
+        ]
+      },
+      {
+        "label": "CPU05: fastest CPU set, skip meshes",
+        "n": 3,
+        "medianMs": 5958.992,
+        "minMs": 5702.903,
+        "maxMs": 7149.221,
+        "files": [
+          "cpu05-fast-cores-1.jsonl",
+          "cpu05-fast-cores-2.jsonl",
+          "cpu05-fast-cores-3.jsonl"
+        ]
+      },
+      {
+        "label": "Trace06: network trace enabled",
+        "n": 2,
+        "medianMs": 6527.6165,
+        "minMs": 6494.15,
+        "maxMs": 6561.083,
+        "files": [
+          "trace06-skip-meshes-1.jsonl",
+          "trace06-skip-meshes-2.jsonl"
+        ]
+      },
+      {
+        "label": "Trace06: network trace disabled",
+        "n": 2,
+        "medianMs": 6183.735000000001,
+        "minMs": 6131.18,
+        "maxMs": 6236.29,
+        "files": [
+          "trace06-skip-meshes-no-network-trace-1.jsonl",
+          "trace06-skip-meshes-no-network-trace-2.jsonl"
+        ]
+      },
+      {
+        "label": "Ablation07: only fade-out shortened",
+        "n": 1,
+        "medianMs": 10891.523,
+        "minMs": 10891.523,
+        "maxMs": 10891.523,
+        "files": [
+          "ablation07-out250-1.jsonl"
+        ]
+      },
+      {
+        "label": "Ablation07: only fade-in shortened",
+        "n": 1,
+        "medianMs": 14698.033,
+        "minMs": 14698.033,
+        "maxMs": 14698.033,
+        "files": [
+          "ablation07-in250-1.jsonl"
+        ]
+      },
+      {
+        "label": "Texture09: compression reference",
+        "n": 1,
+        "medianMs": 7015.869,
+        "minMs": 7015.869,
+        "maxMs": 7015.869,
+        "files": [
+          "texture09-texture-reference-1.jsonl"
+        ]
+      },
+      {
+        "label": "Texture09: compression disabled",
+        "n": 1,
+        "medianMs": 6729.731,
+        "minMs": 6729.731,
+        "maxMs": 6729.731,
+        "files": [
+          "texture09-uncompressed-textures-1.jsonl"
+        ]
+      },
+      {
+        "label": "Pixels11: reference",
+        "n": 3,
+        "medianMs": 7016.238,
+        "minMs": 7006.62,
+        "maxMs": 8588.338,
+        "files": [
+          "pixels11-texture-reference-1.jsonl",
+          "pixels11-texture-reference-2.jsonl",
+          "pixels11-texture-reference-3.jsonl"
+        ]
+      },
+      {
+        "label": "Pixels11: optimized scalar pixel filter",
+        "n": 3,
+        "medianMs": 6641.946,
+        "minMs": 6466.524,
+        "maxMs": 7196.399,
+        "files": [
+          "pixels11-bilinear-fast-1.jsonl",
+          "pixels11-bilinear-fast-2.jsonl",
+          "pixels11-bilinear-fast-3.jsonl"
+        ]
+      },
+      {
+        "label": "Final: fast profile, visual and F10 verified",
+        "n": 1,
+        "medianMs": 8019.381,
+        "minMs": 8019.381,
+        "maxMs": 8019.381,
+        "files": [
+          "final-fast-profile-visual-01.jsonl"
+        ]
+      }
+    ],
+    "pixelValidation": {
+      "offline": {
+        "passed": true,
+        "cases": 100000,
+        "pixels": 25533619,
+        "referenceMs": 133.53,
+        "candidateMs": 109.436
+      },
+      "shadow": {
+        "rows": 506754,
+        "mismatches": 0,
+        "referenceMs": 1196.3101,
+        "candidateMs": 932.263
+      },
+      "rejectedSimd": {
+        "rows": 502542,
+        "mismatches": 0,
+        "referenceMs": 1139.6485,
+        "candidateMs": 1454.5892
+      },
+      "failedAttempt": {
+        "file": "pixels10-bilinear-shadow-1.jsonl",
+        "reason": "Initial decoder input lacked its required null sentinel. Client crashed before login; crash report was declined. Fixed source list terminator and strengthened offline test decoder before retesting.",
+        "exitCodeCaveat": "The client handled its crash and exited with code 0, which is not sufficient to classify a successful test."
+      },
+      "finalProfile": {
+        "flags": 17119,
+        "fadeInMs": 0,
+        "fadeOutMs": 0,
+        "entryPoint": "client-bridge/run-client.mjs:startFastClient",
+        "visualAndF10Verified": true
+      }
+    }
+  },
+  "procmon": {
+    "durationAvailable": false,
+    "limitations": [
+      "CSV/XML export has no operation Duration column; counts and timestamp density are not blocking time.",
+      "ReadFile lengths are API requests, not physical disk traffic.",
+      "Procmon profiling and recording were active.",
+      "PML contains other processes; this report only analyzes the two designated AO PIDs."
+    ],
+    "runs": [
+      {
+        "trace": "procmon01-fast250-1.jsonl",
+        "totalEvents": 81059,
+        "startupEvents": 79529,
+        "visibleMs": 9629.318
+      },
+      {
+        "trace": "procmon01-zero-visual.jsonl",
+        "totalEvents": 83275,
+        "startupEvents": 79603,
+        "visibleMs": 7555.225
+      }
+    ]
+  },
+  "launcherShell": {
+    "observations": 838,
+    "valid": 786,
+    "invalid": 52,
+    "validSteady": 750,
+    "validFirstSeen": 30,
+    "validFreshExtraction": 6,
+    "invalidCause": "Original noCRT argument parser rejected quoted flags. 50 steady and 2 first-seen measurements executed plain UI instead of requested headless/composed. Preserved, marked invalid, excluded from ranking.",
+    "qpcCorrection": "Actual readiness uses shared-system QPC timestamps, before telemetry formatting/pipe delivery. This removes 14–27 ms median managed reporting overhead from startup results.",
+    "findings": [
+      "Standard native C++ x64 had the best valid main-window composed median, 79.06 ms; native x86 was effectively tied at 79.44 ms. Tail variation prevents ranking the tiny difference.",
+      "Native AOT raw Win32: 105.28 ms median; Framework raw Win32: 127.78 ms; Framework WinForms x64: 149.32 ms; modern WinForms: 266.89 ms on this machine in the main window.",
+      "Compressed single-file was slower than uncompressed single-file in all 25 paired composed rounds: median paired penalty 124.85 ms, with median peak working set about 110 MiB versus 47 MiB.",
+      "ReadyToRun and uncompressed single-file versus folder did not show sufficiently consistent speed improvements to recommend solely on these measurements.",
+      "Corrected noCRT did not beat standard native in contemporaneous recheck: composed medians 58.80 versus 54.47 ms, headless 14.79 versus 14.25 ms.",
+      "Native x64 anchor improved from 79.06 ms in main to 54.47 ms in recheck. System-state noise matters; compare alternatives within their randomized window and do not pool rankings.",
+      "Fresh bundle extraction sampled three times per bundle; this is extraction cost on a warm OS, not cold-boot/cache startup.",
+      "These are synthetic launcher-shell measurements, not game authentication or character-ready measurements."
+    ],
+    "composedMainBlock": [
+      {
+        "variant": "framework-raw-x64",
+        "valid": 25,
+        "exactReadyMs": {
+          "count": 25,
+          "min": 86.1862,
+          "p50": 127.7819,
+          "p95": 249.9316,
+          "max": 274.4851,
+          "mean": 140.04056
+        }
+      },
+      {
+        "variant": "framework-x64",
+        "valid": 25,
+        "exactReadyMs": {
+          "count": 25,
+          "min": 110.5611,
+          "p50": 149.3172,
+          "p95": 314.8272,
+          "max": 329.163,
+          "mean": 176.24436000000003
+        }
+      },
+      {
+        "variant": "framework-x86",
+        "valid": 25,
+        "exactReadyMs": {
+          "count": 25,
+          "min": 309.1251,
+          "p50": 347.513,
+          "p95": 584.7248,
+          "max": 826.7201,
+          "mean": 394.55442000000005
+        }
+      },
+      {
+        "variant": "native-x64",
+        "valid": 25,
+        "exactReadyMs": {
+          "count": 25,
+          "min": 46.2995,
+          "p50": 79.0632,
+          "p95": 164.3445,
+          "max": 175.4211,
+          "mean": 90.898552
+        }
+      },
+      {
+        "variant": "native-x86",
+        "valid": 25,
+        "exactReadyMs": {
+          "count": 25,
+          "min": 45.2893,
+          "p50": 79.4441,
+          "p95": 178.7069,
+          "max": 202.5051,
+          "mean": 91.977196
+        }
+      },
+      {
+        "variant": "net10-aot-raw-x64",
+        "valid": 25,
+        "exactReadyMs": {
+          "count": 25,
+          "min": 63.162,
+          "p50": 105.2846,
+          "p95": 300.8857,
+          "max": 315.1643,
+          "mean": 128.010508
+        }
+      },
+      {
+        "variant": "net10-r2r-raw-x64",
+        "valid": 25,
+        "exactReadyMs": {
+          "count": 25,
+          "min": 98.6909,
+          "p50": 136.6193,
+          "p95": 277.8141,
+          "max": 331.3768,
+          "mean": 160.516748
+        }
+      },
+      {
+        "variant": "net10-r2r-x64",
+        "valid": 25,
+        "exactReadyMs": {
+          "count": 25,
+          "min": 195.3081,
+          "p50": 257.7644,
+          "p95": 450.5382,
+          "max": 511.9344,
+          "mean": 291.33036799999996
+        }
+      },
+      {
+        "variant": "net10-raw-x64",
+        "valid": 25,
+        "exactReadyMs": {
+          "count": 25,
+          "min": 105.9538,
+          "p50": 139.9854,
+          "p95": 291.1717,
+          "max": 334.7528,
+          "mean": 160.978596
+        }
+      },
+      {
+        "variant": "net10-sc-compressed-x64",
+        "valid": 25,
+        "exactReadyMs": {
+          "count": 25,
+          "min": 283.2391,
+          "p50": 359.6382,
+          "p95": 581.4985,
+          "max": 585.1375,
+          "mean": 397.05753200000004
+        }
+      },
+      {
+        "variant": "net10-sc-folder-x64",
+        "valid": 25,
+        "exactReadyMs": {
+          "count": 25,
+          "min": 183.3978,
+          "p50": 265.2439,
+          "p95": 521.8799,
+          "max": 524.6618,
+          "mean": 279.454004
+        }
+      },
+      {
+        "variant": "net10-sc-single-x64",
+        "valid": 25,
+        "exactReadyMs": {
+          "count": 25,
+          "min": 188.1256,
+          "p50": 230.8826,
+          "p95": 380.372,
+          "max": 516.8434,
+          "mean": 258.44499999999994
+        }
+      },
+      {
+        "variant": "net10-x64",
+        "valid": 25,
+        "exactReadyMs": {
+          "count": 25,
+          "min": 185.1509,
+          "p50": 266.8926,
+          "p95": 551.8357,
+          "max": 556.8389,
+          "mean": 311.195724
+        }
+      }
+    ]
+  },
+  "indoorLocation": {
+    "description": "Indoor weapons shop",
+    "methodology": "Five starts per variant, serial, largely alternating pair order. Same native login, skipped menu meshes and zero fades. Only the scalar pixel filter differs: fast 17119 versus reference 735. No profiling or network tracing.",
+    "limitations": [
+      "Warm/repeated starts; no cold boot or cache purge.",
+      "Small sample, changing live service and desktop load.",
+      "Historical ICC measurements were taken earlier, so the location effect is not an isolated controlled comparison.",
+      "First and final fast runs visually checked; final client left open. No changes to character position."
+    ],
+    "stats": {
+      "fast": {
+        "n": 5,
+        "medianMs": 3165.733,
+        "minMs": 3034.134,
+        "maxMs": 3246.786
+      },
+      "reference": {
+        "n": 5,
+        "medianMs": 3334.971,
+        "minMs": 3154.106,
+        "maxMs": 3574.534
+      }
+    },
+    "medianDifferenceMs": 169.23799999999983,
+    "fasterPairs": 4,
+    "pairs": [
+      {
+        "repeat": 1,
+        "fastMs": 3246.786,
+        "referenceMs": 3574.534,
+        "savedMs": 327.74800000000005
+      },
+      {
+        "repeat": 2,
+        "fastMs": 3085.229,
+        "referenceMs": 3308.368,
+        "savedMs": 223.13900000000012
+      },
+      {
+        "repeat": 3,
+        "fastMs": 3165.733,
+        "referenceMs": 3334.971,
+        "savedMs": 169.23799999999983
+      },
+      {
+        "repeat": 4,
+        "fastMs": 3171.395,
+        "referenceMs": 3154.106,
+        "savedMs": -17.28899999999976
+      },
+      {
+        "repeat": 5,
+        "fastMs": 3034.134,
+        "referenceMs": 3385.243,
+        "savedMs": 351.1089999999999
+      }
+    ]
+  },
+  "followUp": {
+    "source": "login-speed-investigation-2026-10-27.txt",
+    "reportedSlowWorldReadyMs": 6826,
+    "reportedSlowFastStartupActiveMs": 4856,
+    "comparisonModes": [
+      "lab",
+      "Nexus",
+      "Nexus",
+      "lab"
+    ],
+    "stageWorldReadyMs": [
+      3239,
+      2587,
+      2586,
+      2972
+    ],
+    "harnessToReadyMs": [
+      3288,
+      2902,
+      2867,
+      3027
+    ],
+    "normalUiWorldReadyMs": 2746,
+    "causeEstablished": false
+  },
+  "repositoryEvidence": {
+    "background": "docs/Background-Clients.txt",
+    "integration": "docs/Fast-Startup.txt",
+    "admission": "docs/Admission-Pipeline.txt"
+  }
+}
