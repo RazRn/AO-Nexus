@@ -1691,6 +1691,8 @@ namespace AOLauncher
                 if (!settings.MonitorClientHealth && dialog.MonitorClientHealth) settings.IncludeHealthMonitor = true;
                 settings.MonitorClientHealth = dialog.MonitorClientHealth;
                 settings.CollectClientExitReports = dialog.CollectClientExitReports;
+                settings.AutoRelogCrashedClients = dialog.AutoRelogCrashedClients;
+                crashRelog.SetEnabled(settings.AutoRelogCrashedClients);
                 SetupNewOptions.MarkReviewed(settings);
                 settings.HealthTrayNotifications = dialog.HealthTrayNotifications;
                 settings.NewsSourceIds = dialog.NewsSourceIds;
@@ -1985,6 +1987,7 @@ namespace AOLauncher
 
         private void StopLogin()
         {
+            crashRelog.CancelAll();
             if (!running) return;
             stopRequested = true;
             guiCancellation?.Cancel();

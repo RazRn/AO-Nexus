@@ -1,5 +1,6 @@
-NYT I 1.3.0
+NYT I 1.3.1
 
+• Valgfrit automatisk login efter genkendte klientnedbrud: Indstillinger → Login. Kræver gemte adgangskoder; normalt logout forbliver lukket, højst to forsøg pr. karakter på ti minutter.
 • Kontrolpanel: sorterbare kamprapporter, individuelle pets, helbred/nano, angrebsmål, observeret aggro, zoner og klientmålinger.
 • Flyt karakterkort og fold Hold, Damage Dumper og Timere sammen eller skift deres rækkefølge. Dine valg huskes.
 • Holdopsætninger gemmer loginrækkefølgen og kan holde den første klient i fokus under opstart.

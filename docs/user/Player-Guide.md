@@ -204,6 +204,16 @@ Recognized characters already open are skipped. If an account fails, its remaini
 
 Logout uses the game's normal `/quit` countdown, not a forced process termination. Nexus watches for actual exit for up to 90 seconds. Combat, movement, zoning or cancelling logout can prevent it; clients are not forcibly closed.
 
+### Automatic crash relog
+
+Enable **Settings → Login → Automatically relog crashed clients** to restart a Nexus-managed character after a recognized crash exit. This option starts off. Keep Nexus running and enable **Remember password** on the character's account; background recovery never opens a password prompt.
+
+The first restart waits 10 seconds, and a second waits 30 seconds. Nexus allows at most two attempts per character in ten minutes during the current Nexus session. It waits while another login or blocking operation is active, cancels if a replacement is already running, and drops requests that have waited two minutes. Disabling the option or pressing **Stop login** cancels queued recovery.
+
+Normal logout, an intentional close through Nexus, and unknown exit codes stay closed. This is not a hang detector: a frozen client that has not exited needs **Recover…**. Some crashes with unrecognized exit codes also need manual recovery.
+
+If automatic team recovery is enabled and its helpers are available, it can invite the returning character back and restore their former leadership. Automatic relog itself does not enable team automation. This launcher update does not require relogging the currently running team.
+
 Launch clients normally through the current Nexus version for logout control. A client opened for character creation needs a normal launch afterward before this control is available. AO# is not required.
 
 ## Passwords

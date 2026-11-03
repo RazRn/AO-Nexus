@@ -166,6 +166,7 @@ namespace AOLauncher
                     if (closing) break;
                     bool accepted=false;
                     DevelopmentRecorder.Action("logout",client,"normal logout requested");
+                    SuppressCrashRelog(client);
                     string result = await Task.Run(() => PresetCamping.SendCamp(client,out accepted));
                     DevelopmentRecorder.Action("logout",client,result);if(accepted)waiting.Add(processes[supported.IndexOf(client)]);
                     if (!closing) AppendLog(client.CharacterName + ": " + T(result));

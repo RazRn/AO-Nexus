@@ -15,6 +15,7 @@
     <Compile Include="BackendRunner.cs" />
     <Compile Include="LaunchPlan.cs" />
     <Compile Include="SettingsStorage.cs" />
+    <Compile Include="CrashRelogPolicy.cs" />
     <Compile Include="GraphicsTransaction.cs" />
     <Compile Include="PluginDispatch.cs" />
     <Compile Include="StartupPolling.cs" />

@@ -1892,4 +1892,11 @@ These trials do not raise the server tick rate or fix obstacles, zoning, stalled
   <string key="Regroup.UpdateMonitor">Auto regroup: relog to update monitors</string>
   <string key="Regroup.Armed">Auto regroup enabled</string>
   <string key="Preview.MinimizedHelp">The game window is minimized, so its preview may freeze or stop updating. Minimize inactive game clients in Settings → Advanced minimizes background windows to reduce resource use. Restore this client, or turn that setting off to keep background windows restored. Health and other measurements are separate from the preview.</string>
+  <string key="CrashRelog.Option" xml:space="preserve">Automatically relog crashed clients</string>
+  <string key="CrashRelog.Help" xml:space="preserve">Requires Nexus to stay open and a saved password. Restarts recognized crash exits after 10 seconds (30 seconds on retry), at most twice per character in 10 minutes. Normal logouts, forced closes and uncertain exits stay closed. Disable this option to cancel pending recovery.</string>
+  <string key="CrashRelog.Scheduled" xml:space="preserve">Crash detected; automatic relog queued (10 seconds, or 30 after a recent attempt).</string>
+  <string key="CrashRelog.Limit" xml:space="preserve">Automatic relog stopped: two attempts within 10 minutes. Check diagnostics and relaunch manually.</string>
+  <string key="CrashRelog.Credentials" xml:space="preserve">Automatic relog skipped: a saved password is required.</string>
+  <string key="CrashRelog.Starting" xml:space="preserve">Relogging after a confirmed crash exit…</string>
+  <string key="CrashRelog.Failed" xml:space="preserve">Automatic relog failed; see diagnostics. No further retry for this exit.</string>
 </strings>

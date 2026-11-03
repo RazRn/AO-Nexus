@@ -98,6 +98,7 @@
     <Compile Include="GuiSessions.cs" />
     <Compile Include="MainForm.GameGui.cs" />
     <Compile Include="MainForm.TeamRelog.cs" />
+    <Compile Include="MainForm.CrashRelog.cs" />
     <Compile Include="ClientRecovery.cs" />
     <Compile Include="DevelopmentRecorder.cs" />
     <Compile Include="ServerSidebar.cs" />

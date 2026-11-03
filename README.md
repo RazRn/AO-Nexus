@@ -1,4 +1,4 @@
-# AO Nexus 1.3.0
+# AO Nexus 1.3.1
 
 **A Windows launcher and Control Panel for your Anarchy Online accounts, characters and teams.**
 
@@ -6,7 +6,9 @@ Keep separate game folders and login servers, launch a saved team in your chosen
 
 **[Published downloads](https://github.com/RazRn/AO-Nexus/releases)** · [Player guide](docs/user/Player-Guide.md) · [1.3.0 notes](docs/user/releases/Whats-New-1.3.0.md)
 
-This branch contains **1.3.0**. Download the packaged application from Releases. Experimental features remain opt-in; see the known limitations below.
+This branch contains **1.3.1**. Download the packaged application from Releases. Experimental features remain opt-in; see the known limitations below.
+
+**New in 1.3.1:** optional automatic relog after a recognized client crash. Enable it under **Settings → Login** and keep Nexus running. It uses saved passwords, waits before restarting, prevents duplicate clients and limits attempts. Normal logout stays closed. [Recovery details](docs/user/Player-Guide.md#automatic-crash-relog).
 
 ![AO Nexus with example accounts, team presets and server information](docs/user/images/published/launcher-overview-915ae76b8b2425e6.png)
 

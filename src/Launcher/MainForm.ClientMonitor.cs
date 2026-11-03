@@ -44,7 +44,7 @@ namespace AOLauncher
             if (clientPollBusy || clientMonitorDisposed || closing) return;
             clientPollBusy = true;
             try {
-                if (!settings.MonitorClientHealth && !settings.CollectClientExitReports) {
+                if (!settings.MonitorClientHealth && !settings.CollectClientExitReports && !settings.AutoRelogCrashedClients) {
                     clientMonitor?.Dispose(); clientMonitor = null;
                     clientObservations.Clear(); clientObserverError = null; clientReport = "{}";
                     RefreshClientStatus(); RefreshHealthTray(); return;
@@ -64,6 +64,8 @@ namespace AOLauncher
                 clientReport = monitor.Capture(); clientObserverError = monitor.Error;
                 foreach (var change in monitor.Changes) AppendLog(change);
                 RefreshClientStatus(); RefreshHealthTray();
+                ObserveCrashRelog();
+                _ = TryCrashRelogAsync();
             } catch (Exception error) {
                 DevelopmentRecorder.Write("monitor-error",new {Type=error.GetType().Name,Message=DiagnosticRedactor.Current.Redact(error.Message)});
                 clientObserverError = error.GetType().Name;

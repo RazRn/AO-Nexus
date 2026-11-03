@@ -32,6 +32,7 @@ namespace AOLauncher
         public bool ExperimentalNearbyCombat { get; set; }
         public bool MinimizeInactiveClients { get; set; }
         public bool MonitorClientHealth { get; set; }
+        public bool AutoRelogCrashedClients { get; set; }
         public List<string> TeamCardOrder { get; set; } = new List<string>();
         public ControlPanelPreferences ControlPanel { get; set; } = new ControlPanelPreferences();
         public bool CollectClientExitReports { get; set; }

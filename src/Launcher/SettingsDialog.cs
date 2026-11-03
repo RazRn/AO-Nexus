@@ -22,7 +22,8 @@ namespace AOLauncher
         private readonly CheckBox ExperimentalNearbyCombatInput;
         public bool ExperimentalNearbyCombat => ExperimentalNearbyCombatInput.Checked;
         public bool MinimizeInactiveClients => minimizeInactiveInput.Checked;
-        private readonly CheckBox monitorClientHealthInput, collectClientExitReportsInput;
+        private readonly CheckBox monitorClientHealthInput, collectClientExitReportsInput, autoCrashRelogInput;
+        public bool AutoRelogCrashedClients => autoCrashRelogInput.Checked;
         private readonly CheckBox confirmLoginInput, confirmTeamLogoutInput;
         public bool MonitorClientHealth => monitorClientHealthInput.Checked;
         public bool CollectClientExitReports => collectClientExitReportsInput.Checked;
@@ -129,6 +130,9 @@ namespace AOLauncher
             ButtonRow(Fields, privacy, setup);
 
             Section(serverFields, Get("Settings.Launching"));
+            autoCrashRelogInput = new NexusCheckBox { Name = "autoRelogCrashedClients", Text = Get("CrashRelog.Option"), Checked = settings.AutoRelogCrashedClients, AutoSize = true, Dock = DockStyle.Top };
+            serverFields.Controls.Add(autoCrashRelogInput);
+            Note(serverFields, Get("CrashRelog.Help"));
 
             quietLaunchInput = new NexusCheckBox { Name = "quietLaunch", Text = AOLauncher.Localization.Texts.Get("Text_Skip_login_screens_faster_F502C8C9FEED"),
                 Checked = settings.QuietLaunch, AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 12, 0, 8) };

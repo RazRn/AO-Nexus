@@ -80,6 +80,7 @@ namespace AOLauncher
                 {
                     cancellation.Token.ThrowIfCancellationRequested();
                     if(force) {
+                        SuppressCrashRelog(client);
                         bool exited=await Task.Run(()=>ClientRecovery.ForceClose(client,handles[client]));
                         if(!exited)throw new InvalidOperationException(AOLauncher.Localization.Texts.Get("Text_The_client_did_not_exit_Restart_BF729E1FBCED"));
                         AppendLog(client.CharacterName+": "+AOLauncher.Localization.Texts.Get("Text_force_close_completed_D4B0137E2CE0"));
@@ -87,6 +88,7 @@ namespace AOLauncher
                     }
                     bool accepted=false;
                     DevelopmentRecorder.Action("relog",client,"normal logout requested");
+                    SuppressCrashRelog(client);
                     string result=await Task.Run(()=>PresetCamping.SendCamp(client,out accepted));
                     DevelopmentRecorder.Action("relog",client,result);
                     if(accepted)waiting.Add(handles[client]);

@@ -1,4 +1,12 @@
-AO NEXUS 1.3.0 — OFFLINE QUICK GUIDE
+AO NEXUS 1.3.1 — OFFLINE QUICK GUIDE
+
+NEW: AUTOMATIC CRASH RELOG
+Enable Settings > Login > Automatically relog crashed clients. Keep Nexus open
+and use Remember password on the account. Recognized crash exits restart after
+10 seconds (30 seconds for a second attempt), at most twice per character in
+ten minutes during the current Nexus session. Normal logout and uncertain
+exits stay closed. Frozen clients still need Recover. Automatic team recovery,
+when separately enabled, can reinvite the returning character and restore leadership.
 Developed and maintained by Luckyspawn (RazRn).
 
 GET STARTED

@@ -9,6 +9,7 @@
 - [Privacy and security](Privacy-and-Security.md)
 - [Starter layouts](Starter-GUI-Layouts.md)
 - [Camp control](Camp-Control.md)
+- [1.3.1 automatic crash relog](releases/Whats-New-1.3.1.md)
 - [1.3.0 notes and limitations](releases/Whats-New-1.3.0.md)
 - [Earlier release notes](releases)
 

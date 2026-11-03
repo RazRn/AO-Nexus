@@ -87,6 +87,7 @@ namespace AOLauncher
                     foreach (var client in clients)
                     {
                         cancellation.Token.ThrowIfCancellationRequested();
+                        SuppressCrashRelog(client);
                         string result = await Task.Run(() => PresetCamping.SendCamp(client));
                         AppendLog(client.CharacterName + ": " + Localization.Texts.T(result));
                     }

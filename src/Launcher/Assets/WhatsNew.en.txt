@@ -1,5 +1,6 @@
-WHAT'S NEW IN 1.3.0
+WHAT'S NEW IN 1.3.1
 
+• Optional automatic relog after recognized client crashes: Settings → Login. Saved passwords required; normal logouts stay closed, with at most two attempts per character in ten minutes.
 • Control Panel: sortable combat reports, individual pets, health/nano, attack targets, observed aggro, zones and client measurements.
 • Reorder character cards and collapse/reorder Team, Damage Dumper and Timers. Your choices are remembered.
 • Team presets keep login order and can keep the first client focused during startup.

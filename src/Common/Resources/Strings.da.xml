@@ -1892,4 +1892,11 @@ Forsøgene ændrer ikke serverens frekvens og løser ikke forhindringer, zoneski
   <string key="Regroup.UpdateMonitor">Saml automatisk: log ind igen for at opdatere monitorer</string>
   <string key="Regroup.Armed">Automatisk samling slået til</string>
   <string key="Preview.MinimizedHelp">Spilvinduet er minimeret, så billedet kan fryse eller holde op med at opdatere. Minimer inaktive spilklienter under Indstillinger → Avanceret minimerer baggrundsvinduer for at spare ressourcer. Gendan klienten, eller slå indstillingen fra for at holde baggrundsvinduer gendannede. Helbred og andre målinger er uafhængige af billedet.</string>
+  <string key="CrashRelog.Option" xml:space="preserve">Log automatisk ind igen efter klientnedbrud</string>
+  <string key="CrashRelog.Help" xml:space="preserve">Kræver at Nexus er åbent og adgangskoden er gemt. Genstarter ved genkendte nedbrud efter 10 sekunder (30 ved næste forsøg), højst to gange pr. karakter på 10 minutter. Normalt logout, tvungen lukning og ukendte afslutninger forbliver lukkede. Slå fra for at annullere ventende genstart.</string>
+  <string key="CrashRelog.Scheduled" xml:space="preserve">Nedbrud registreret; automatisk login sat i kø (10 sekunder eller 30 efter et nyligt forsøg).</string>
+  <string key="CrashRelog.Limit" xml:space="preserve">Automatisk login stoppet: to forsøg på 10 minutter. Se diagnostik og start manuelt.</string>
+  <string key="CrashRelog.Credentials" xml:space="preserve">Automatisk login sprunget over: kræver en gemt adgangskode.</string>
+  <string key="CrashRelog.Starting" xml:space="preserve">Logger ind igen efter en bekræftet nedbrudsafslutning…</string>
+  <string key="CrashRelog.Failed" xml:space="preserve">Automatisk login mislykkedes; se diagnostik. Denne afslutning forsøges ikke igen.</string>
 </strings>
