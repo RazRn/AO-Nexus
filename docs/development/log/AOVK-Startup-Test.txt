@@ -1,0 +1,234 @@
+CURRENT STATUS - AO-VK / REBIRTH REPAIR CANDIDATE (28 October 2026)
+AO-VK is selected in D:\Games\AORebirth-AOVK-Test with a new Rebirth patch.
+Build and DLL format/export/runtime-dependency checks PASS. Live acceptance PENDING.
+The earlier renderer-layout warning is addressed by selecting the hash-verified
+randy31_orig.dll and validating GUI calls through the pinned AO-VK exports.
+Original instruction checks, patch transaction/rollback, login-key, RoomSpace,
+GUI and daily-login code remain active. No error is suppressed or repair skipped.
+The original is loaded before device creation; runtime ordering still needs testing.
+
+NEXT CHECK
+Run Start-Test.cmd in D:\Games\AO-Nexus-AOVK-Test and log in ONE character.
+Confirm the world appears, movement/F10/zoning work, and no patch dialog appears.
+Do not open Anarchy.exe or accept the official launcher's file restoration.
+Expected new Rebirth log line:
+  RENDERER profile=aovk-0.7.1-rebirth-test repairModule=randy31_orig.dll hashes=verified
+It must be followed by renderer PATCH PASS and READY with RoomSpace/GUI/renderer
+repairs active. The profile line alone does not prove installation succeeded.
+Nexus should also report: fast-startup active profile=aovk-test texture=off
+Rebirth log: %LOCALAPPDATA%\AORebirthClientPatch\AORebirthClientPatch.log
+Use only the current run/PID when checking these shared historical logs.
+
+ROLLBACK
+Exit test clients, then run Use-Stock.cmd. It restores BOTH the original renderer
+and original Rebirth version.dll. Use-AOVK.cmd selects both experimental files.
+Both helpers verify hashes first and refuse running test clients/unknown DLLs.
+Normal D:\Games\AORebirth-Live is unchanged. AOSharp remains the UI fallback;
+this candidate only addresses renderer coexistence, not new overlay windows.
+
+PATCH PROVENANCE
+Rebirth source: AO-Rebirth-AOVK-Patch, branch codex/aovk-renderer-repair,
+base 6a371f29 plus local changes; version 2-aovk-test.1.
+Candidate SHA256: F156D1C2F7FCFFA6BFEF2DFCE7A1EF50664F7ED15E67625F0E156A40EDEFC857
+Original patch SHA256: F392CB4EE8810D933C2A13D0DFEADE79981F39A42CAE65302D312726D0A58301
+Automated Rebirth suites were not run (repository instructions require an explicit
+request). The game was not launched by the assistant. No production release claim.
+
+AO NEXUS / AO-VK STARTUP TEST 1
+Local test for AO Rebirth on this PC. Based on Nexus commit 4552be4.
+
+START
+1. Exit the normal Nexus launcher, including its tray icon. The test deliberately
+   shares the desktop/session locks, so it cannot bypass running-account checks.
+2. Run AONexus.exe in this test package. Its title says "AO-VK startup TEST".
+3. Select ONE Rebirth character first and log in. The test profile points to
+   D:\Games\AORebirth-AOVK-Test, a separate copy of the Rebirth installation.
+4. Check that the world appears, controls work, F10 opens, and zoning works.
+   Stop there if there is a crash, black screen, broken input or loading hang.
+
+WHAT IS BEING TESTED
+AO-VK 0.7.1 plus Nexus's known classic-client GUI/login startup hooks.
+The texture-filter hook is never attached to AO-VK or randy31_orig.dll.
+Admission-based overlapping logins stay disabled for AO-VK in this build.
+Unknown client files, unknown AO-VK DLLs and character creation keep normal loading.
+
+Expected launcher messages with Faster game loading enabled:
+  AO-VK startup TEST: verified classic GUI/login files + AO-VK 0.7.1 ...
+  Startup hooks: fast-startup active profile=aovk-test texture=off
+The first line means disk files passed; the second confirms the runtime hooks
+actually attached. An unsupported/failed line is not a successful fast-startup test.
+If no runtime line arrives, record that as unconfirmed, even if login succeeds.
+
+COMPARISON
+Use Settings > Accounts > Faster game loading for each run, then close the test
+game before the next launch. Keep Skip login screens and all other options fixed.
+
+  A. AO-VK, Faster game loading OFF
+  B. AO-VK, Faster game loading ON
+  C. Stock renderer, Faster game loading ON
+
+Repeat A/B in alternating order, preferably three successful runs each, with the
+same character, zone, resolution and other running applications. Record launch
+times, whether the loading overlay really disappeared, visual/input issues,
+memory growth and crashes. A character title alone is not proof of world readiness.
+Only try the team after the one-character test succeeds. Team results also reflect
+the deliberately disabled AO-VK admission pipeline; do not attribute all changes
+in team time to graphics performance.
+
+Switch between the two renderers using Use-AOVK.cmd or Use-Stock.cmd.
+These helpers refuse a running test client or an unexpected renderer checksum.
+They modify only the prepared test installation. Stock restores the original
+renderer and the original Rebirth version.dll login/crash patch.
+
+CONSERVATIVE FIRST TEST
+AO-VK's visual enhancements and frame generation start OFF. The Vulkan backend
+still runs. Ctrl+Shift+E can toggle enhancements after the baseline succeeds.
+Native renderer replacements also start OFF: upstream targets an older Randy
+build, while this Rebirth installation has the verified 2023 classic binaries.
+This test does not establish the crowd/GPU-skinning performance claimed for PRK.
+Do not enable those native replacements on this Rebirth copy without further work.
+The copy's pre-existing version.dll is AORebirthClientPatch v2, including the
+Rebirth login-key patch. It MUST remain installed in both renderer modes.
+It was incorrectly disabled in the initial setup and restored after the first
+black-screen test. Its hash matches the original Rebirth installation.
+AO-VK's optional AOReloaded version.dll must not overwrite it. Renderer settings
+use the console/INI. version.dll.nexus-test-backup is the saved Rebirth patch.
+The initial test does not automatically inject AOSharp or install a new in-game UI.
+
+ISOLATION AND RETURNING TO NORMAL
+Normal game: D:\Games\AORebirth-Live (unchanged).
+Test game: D:\Games\AORebirth-AOVK-Test (about 3.1 GB copied locally).
+Settings/password copies: %LOCALAPPDATA%\AONexus-AOVK-Test.
+Only Rebirth accounts are copied into that profile; selections/preset hotkeys and
+startup update checks are cleared. Password files remain encrypted for this
+Windows user. The profile is local and is not included in the package.
+Account/session tracking and some diagnostics/runtime caches remain shared with
+Nexus so duplicate logins cannot bypass account checks. Avoid editing GUI layouts
+or doing updates during the test. Close the test launcher and reopen normal Nexus
+to return to your usual setup.
+
+EVIDENCE
+Keep the Nexus activity log and the test game's randy-vk.log (and numbered logs
+for additional clients). The AO-VK log should identify the Vulkan backend/GPU.
+For a hang, allow about 20 seconds for AO-VK's watchdog report before closing it.
+No reports are uploaded automatically.
+
+AUTOMATED VERIFICATION
+The custom native test uses inert PE images and mock detours to check stock vs
+AO-VK hook targets, runtime rejection, creation/opt-out and transaction failures.
+The managed test checks exact hashes, altered/missing files and opt-in, then reads
+both local installations to verify the expected profile. No game login is performed.
+See tests\Verify-AOVKStartup.ps1 and logs\ for automated verification results.
+In-game compatibility, performance and stability still require the user's test.
+
+UPSTREAM
+https://github.com/wannabuh/ao-vk/releases/tag/v0.7.1
+Archive SHA-256: a347dea477cd84bd746f259b6df99edc302237da8944fc4237c8d6c4d61e028a
+Renderer SHA-256: 60759c61c7383efa39ae4f09981ed3e42d7a25ce7c9d093e6791a5c4a98040c6
+AO-VK and its bundled AMD libraries retain their upstream licence notices.
+
+Lighting/shadows-only trial prepared. No test client running during change.
+Enabled per-pixel/nearby lighting, sun shadows, contact shadows, point-light
+shadows and required off-screen rendering. Other enhancement groups off;
+100% render scale, no TAA/FSR/frame generation. Native settings unchanged.
+User preference: motion blur and depth of field should remain OFF in future
+Nexus graphics presets/test profiles. Do not re-enable for an all-effects preset.
+Runtime acceptance pending. User launches the game.
+
+2026-10-28: User confirms the lighting/shadows profile works, including F10
+and zoning. Accepted as the current working baseline for the next effects trial.
+This is user-observed functional acceptance, not a long-duration stability test.
+Motion blur, depth of field and frame generation remain OFF.
+
+2026-10-28: Texture/material trial prepared on the accepted lighting/shadows
+baseline. Changes only: RVK_Aniso=16, RVK_BumpOn=1, RVK_NormalMaps=1,
+RVK_Pbr=1, RVK_Albedo=1. Existing material strengths retained, including
+parallax=0.3. Asset-dependent effects require suitable texture assets.
+Tessellation, terrain replacement, global SSR, particles and other enhancement
+groups remain off. Motion blur, DoF and frame generation remain off.
+No test client running during change. File write verified; runtime acceptance
+pending. User launches the game and checks F10, movement and zoning.
+
+2026-10-28: User reports texture/material trial good all over; saved as the
+accepted lighting+materials baseline. User approves adding frame generation.
+Enabled RVK_FrameGen=1 and its required RVK_Taa=1. RenderScale remains 100,
+Upscaler remains 0 (AO-VK TAA), all other effects unchanged. Motion blur and
+DoF remain OFF by user preference. Settings changed while the test client
+was responsive; AO-VK supports live INI reload. Runtime acceptance pending.
+
+2026-10-28 18:09 local: Frame-generation/TAA trial reproduced the hang.
+Saved failing INI differs from accepted materials baseline ONLY in
+RVK_FrameGen=1 and RVK_Taa=1. AO-VK confirms frame interpolation active,
+then unresponsive window/no frames for 20 seconds. Rebirth initialization
+reached READY with repairs active. Main-thread stack samples include the
+same FXS.dll and randy31.dll offsets seen in the previous all-effects hang.
+This implicates the added FrameGen+TAA combination; TAA alone has not been
+tested, so neither frame generation alone nor the exact cause is proven.
+Evidence: D:\Games\AO-Nexus-AOVK-Test\framegen-hang-20261028-181012
+Restored exact accepted lighting/materials INI and verified its hash.
+No AO client running at inspection. Motion blur/DoF remain OFF.
+Next isolation step, if requested: TAA ON with FrameGen OFF.
+
+2026-10-28: After the second hang and rollback, user reports "works with all
+tests" for the restored lighting/materials configuration. Reconfirmed user
+acceptance; current INI verified FrameGen=0, Taa=0, MBlurOn=0, Dof=0,
+Enhance=1 and Pbr=1. Keep this as the working configuration. No additional
+effects enabled. FrameGen+TAA remains a failing combination in this setup;
+TAA-only isolation and long-duration stability remain unverified.
+
+2026-10-28: User authorizes grass/foliage, enhanced water, weather, clouds
+and GPU particles together. Enabled these groups, vegetation movement/detail,
+and the procedural sky/atmosphere with existing stored strengths. Lighting and
+materials retained. No forced weather; visibility depends on zone/weather/assets.
+FrameGen, TAA, motion blur and DoF remain OFF. Native compatibility settings
+unchanged. Terrain replacement and simulated smoke remain off, as do unrelated
+post-processing groups. No AO client running at edit; saved file verified.
+This combined environment-effects trial awaits user gameplay acceptance.
+
+2026-10-28: Combined environment trial has a visual obstruction: user's
+screenshot shows scene visible through the chat rectangle but covered elsewhere
+by a sky/weather-looking layer. PID 14868 responsive; renderer reports 100 FPS.
+No hang inferred. Exact cause not established. Preserved failing INI/log/screenshot.
+Disabled enhanced weather, clouds, procedural sky and atmosphere with their
+standalone sky controls as the first isolation step. Grass/foliage, water and
+particles remain enabled, with accepted lighting/materials. Native unchanged.
+FrameGen/TAA/motion blur/DoF remain off. Live INI change verified; visual outcome
+awaits user observation. Grass setting is enabled but current log reports zero
+blades drawn, so actual enhanced grass rendering is not yet demonstrated.
+
+2026-10-28 documentation/source review, after user reports visibility works again:
+- Sky/weather/atmosphere group disabled resolves the reported obstruction by
+  user observation. Individual responsible feature still not isolated. Current
+  settings retained; no additional effects enabled during documentation review.
+- AO-VK v0.7.1 README targets Project Rubi-Ka. Author's documented tested system
+  is Linux/Wine/NVIDIA; it does not establish compatibility with this Rebirth build.
+- proxy/native/hook.cpp KnownBuild requires original PE timestamp 0x5CD328BA,
+  SizeOfImage 0x1ED000. Local original is 0x647A069E, size 0x1ED000.
+- proxy/native/gui.cpp checks GUI export prologues and EH helper RVA 0x1738A4.
+  Current logs reject both WindowController_c::Render and View::_CallRender.
+  docs/rvk.md explains these mark/cache the UI layer; native/scene.cpp supplies
+  visual classification. Our Native Visuals is off. These are compatibility gaps;
+  they are NOT proof of the exact chat-rectangle artifact or framegen hang cause.
+- docs/materials.md requires side-loaded normal/PBR/albedo maps. Local materials
+  and packs directories are absent. mesh-ids.bin and statels are absent too.
+  Earlier material-test success confirms gameplay with flags set, not installed
+  texture packs or visible PBR/normal/albedo upgrades. Generated bump and
+  anisotropic filtering are separate from those optional map files.
+- docs/rvk.md and rvk/grass.cpp describe grass capture from terrain draws and
+  additional pipeline/scene prerequisites. Local log reports 0 blades drawn.
+  Enabled grass is not yet verified visible; no evidence it requires a texture pack.
+- Particle/smoke update hooks also report unknown client version and skip their
+  hooks. We must distinguish flags set from features functioning.
+- FrameGen+TAA reproducibly hangs in this setup. TAA alone untested; neither
+  the docs nor reviewed issue reports establish our exact root cause.
+- Next engineering work should address/verify Rebirth GUI and scene integration
+  and effect prerequisites, with frame captures, before further broad presets.
+  Keep native replacement checks intact. Do not install optional AOReloaded
+  version.dll over the required Rebirth patch.
+References (reviewed at v0.7.1):
+https://github.com/wannabuh/ao-vk/blob/v0.7.1/README.md
+https://github.com/wannabuh/ao-vk/blob/v0.7.1/docs/rvk.md
+https://github.com/wannabuh/ao-vk/blob/v0.7.1/docs/materials.md
+https://github.com/wannabuh/ao-vk/blob/v0.7.1/docs/native.md
+https://github.com/wannabuh/ao-vk/blob/v0.7.1/proxy/native/gui.cpp
+https://github.com/wannabuh/ao-vk/blob/v0.7.1/proxy/native/hook.cpp

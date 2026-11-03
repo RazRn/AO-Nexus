@@ -28,49 +28,47 @@ namespace AOLauncher
             ForeColor = LogViewer.TerminalForeground, Font = new Font("Consolas", 9F) };
         private readonly Timer refresh = new Timer { Interval = 400 };
         private readonly bool interactive;
-        private string environment = L("Collecting environment details…", "Indsamler oplysninger om systemet…");
+        private string environment = AOLauncher.Localization.Texts.Get("Text_Collecting_environment_details_D7DF4C000818");
 
         internal ReportProblemDialog(LauncherSettings settings, ProblemArea area, bool interactive = true)
-            : base(L("Report a problem", "Rapportér et problem"), 600)
+            : base(AOLauncher.Localization.Texts.Get("Text_Report_a_problem_45CBEF14095C"), 600)
         {
             this.settings = settings;
             this.interactive = interactive;
             // Grows to fit its content on open, within the screen's working area.
             ClientSize = new Size(760, 600);
-            AddWrappedNote(L("Describe what went wrong. Nexus adds an anonymised report: versions, Windows, a summary of your setup and recent diagnostics. Logins, account and character names, character IDs, team names, custom server addresses and personal folder names are replaced with codes such as Char-3fa2c1. Passwords are never logged. Review the preview before sharing; nothing is sent automatically.",
-                "Beskriv hvad der gik galt. Nexus tilføjer en anonymiseret rapport: versioner, Windows, et overblik over din opsætning og seneste diagnostik. Logins, konto- og char-navne, char-ID'er, holdnavne, egne serveradresser og personlige mappenavne erstattes af koder som Char-3fa2c1. Adgangskoder logges aldrig. Gennemse forhåndsvisningen før du deler; intet sendes automatisk."), "reportPrivacyNote");
+            AddWrappedNote(AOLauncher.Localization.Texts.Get("Text_Describe_what_went_wrong_Nexus_adds_D5A84238A255"), "reportPrivacyNote");
 
-            Fields.Controls.Add(new Label { Text = L("Area", "Område"), Dock = DockStyle.Top, Height = 24 });
+            Fields.Controls.Add(new Label { Text = AOLauncher.Localization.Texts.Get("Text_Area_2D900204D831"), Dock = DockStyle.Top, Height = 24 });
             foreach (var item in Areas) areaInput.Items.Add(AreaLabel(item));
             areaInput.SelectedIndex = Math.Max(0, Array.IndexOf(Areas, area));
             areaInput.Margin = new Padding(0, 0, 0, 14);
             Fields.Controls.Add(areaInput);
-            summaryInput = AddTextField(L("Short summary", "Kort resumé"), "");
+            summaryInput = AddTextField(AOLauncher.Localization.Texts.Get("Text_Short_summary_2158DA301DDC"), "");
             summaryInput.Name = "problemSummary"; summaryInput.MaxLength = 120;
-            Fields.Controls.Add(new Label { Text = L("What happened? What did you expect? Steps to reproduce help a lot.", "Hvad skete der? Hvad forventede du? Trin til at genskabe fejlen hjælper meget."), Dock = DockStyle.Top, AutoSize = true, Margin = new Padding(0, 0, 0, 4) });
+            Fields.Controls.Add(new Label { Text = AOLauncher.Localization.Texts.Get("Text_What_happened_What_did_you_expect_E99F63B7B3AC"), Dock = DockStyle.Top, AutoSize = true, Margin = new Padding(0, 0, 0, 4) });
             descriptionInput.Margin = new Padding(0, 0, 0, 10);
             Fields.Controls.Add(descriptionInput);
-            includeJournal.Text = L("Include recent diagnostics log (anonymised)", "Medtag seneste diagnostiklog (anonymiseret)");
+            includeJournal.Text = AOLauncher.Localization.Texts.Get("Text_Include_recent_diagnostics_log_anonymised_D12E902FA444");
             int crashes = CrashReporter.Reports().Count;
             includeCrashes.Text = crashes > 0
-                ? string.Format(L("Include saved crash reports ({0})", "Medtag gemte nedbrudsrapporter ({0})"), crashes)
-                : L("Include saved crash reports (none saved)", "Medtag gemte nedbrudsrapporter (ingen gemt)");
+                ? string.Format(AOLauncher.Localization.Texts.Get("Text_Include_saved_crash_reports_0_5AF974BEAA00"), crashes)
+                : AOLauncher.Localization.Texts.Get("Text_Include_saved_crash_reports_none_saved_CE07D89C6B34");
             includeCrashes.Enabled = crashes > 0; includeCrashes.Checked = crashes > 0;
             Fields.Controls.Add(includeJournal); Fields.Controls.Add(includeCrashes);
             if (!DiagnosticJournal.Enabled)
-                AddWrappedNote(L("The diagnostics log is turned off in Settings → Updates, so only the environment summary can be included.",
-                    "Diagnostikloggen er slået fra under Indstillinger → Opdateringer, så kun systemoverblikket kan medtages."), "diagnosticsDisabledNote");
-            Fields.Controls.Add(new Label { Text = L("Preview of what will be shared", "Forhåndsvisning af det, der deles"), Dock = DockStyle.Top, Height = 24, Font = new Font(Font, FontStyle.Bold), ForeColor = Theme.Accent, Margin = new Padding(0, 6, 0, 2) });
+                AddWrappedNote(AOLauncher.Localization.Texts.Get("Text_The_diagnostics_log_is_turned_off_9224234DE539"), "diagnosticsDisabledNote");
+            Fields.Controls.Add(new Label { Text = AOLauncher.Localization.Texts.Get("Text_Preview_of_what_will_be_shared_3A9044369C9D"), Dock = DockStyle.Top, Height = 24, Font = new Font(Font, FontStyle.Bold), ForeColor = Theme.Accent, Margin = new Padding(0, 6, 0, 2) });
             Fields.Controls.Add(preview);
 
-            SaveButton.Text = L("Open GitHub issue…", "Åbn GitHub-sag…"); SaveButton.Name = "openGitHubIssue";
-            CancelAction.Text = L("Close", "Luk");
+            SaveButton.Text = AOLauncher.Localization.Texts.Get("Text_Open_GitHub_issue_161E7DADC9F7"); SaveButton.Name = "openGitHubIssue";
+            CancelAction.Text = AOLauncher.Localization.Texts.Get("Text_Close_B182D0987175");
             var actions = SaveButton.Parent;
-            var copy = Theme.Button(L("Copy report", "Kopiér rapport")); copy.Name = "copyReport";
-            var save = Theme.Button(L("Save report…", "Gem rapport…")); save.Name = "saveReport";
+            var copy = Theme.Button(AOLauncher.Localization.Texts.Get("Text_Copy_report_DA15267478B9")); copy.Name = "copyReport";
+            var save = Theme.Button(AOLauncher.Localization.Texts.Get("Text_Save_report_751AE73AB940")); save.Name = "saveReport";
             actions.Controls.Add(copy); actions.Controls.Add(save);
             SaveButton.Click += (sender, e) => OpenIssue();
-            copy.Click += (sender, e) => { if (CopyReport(Report())) Status(L("The report was copied. Paste it into a GitHub issue, Discord or an e-mail.", "Rapporten er kopieret. Indsæt den i en GitHub-sag, på Discord eller i en e-mail."), false); };
+            copy.Click += (sender, e) => { if (CopyReport(Report())) Status(AOLauncher.Localization.Texts.Get("Text_The_report_was_copied_Paste_it_3FA6E2C36B80"), false); };
             save.Click += (sender, e) => SaveReport();
 
             refresh.Tick += (sender, e) => { refresh.Stop(); UpdatePreview(); };
@@ -88,13 +86,13 @@ namespace AOLauncher
         {
             switch (area)
             {
-                case ProblemArea.Login: return L("Login and characters", "Login og chars");
-                case ProblemArea.GameGui: return L("Game GUI and skins", "Spil-GUI og skins");
-                case ProblemArea.Presets: return L("Team presets and shortcuts", "Hold og genveje");
-                case ProblemArea.NewsHealth: return L("News and server health", "Nyheder og serverstatus");
-                case ProblemArea.Updates: return L("Updates", "Opdateringer");
-                case ProblemArea.Crash: return L("Crash or freeze", "Nedbrud eller frys");
-                default: return L("Other", "Andet");
+                case ProblemArea.Login: return AOLauncher.Localization.Texts.Get("Text_Login_and_characters_60A7E61E92A2");
+                case ProblemArea.GameGui: return AOLauncher.Localization.Texts.Get("Text_Game_GUI_and_skins_B8CAE2F99CD4");
+                case ProblemArea.Presets: return AOLauncher.Localization.Texts.Get("Text_Team_presets_and_shortcuts_4C049F7AE3E2");
+                case ProblemArea.NewsHealth: return AOLauncher.Localization.Texts.Get("Text_News_and_server_health_D8E16A65062B");
+                case ProblemArea.Updates: return AOLauncher.Localization.Texts.Get("Text_Updates_4FB2C3778125");
+                case ProblemArea.Crash: return AOLauncher.Localization.Texts.Get("Text_Crash_or_freeze_AB184EC2F619");
+                default: return AOLauncher.Localization.Texts.Get("Text_Other_22927CEA4736");
             }
         }
 
@@ -123,31 +121,29 @@ namespace AOLauncher
         {
             DialogResult = DialogResult.None;
             if (string.IsNullOrWhiteSpace(summaryInput.Text) && string.IsNullOrWhiteSpace(descriptionInput.Text))
-            { Status(L("Add a short summary or description first.", "Tilføj først et kort resumé eller en beskrivelse."), true); summaryInput.Focus(); return; }
+            { Status(AOLauncher.Localization.Texts.Get("Text_Add_a_short_summary_or_description_A3434C43226A"), true); summaryInput.Focus(); return; }
             string report = Report();
             bool truncated;
             string url = DiagnosticReport.BuildIssueUrl(Area, summaryInput.Text, report, out truncated);
             bool copied = CopyReport(report);
-            if (!interactive) { Status(L("Preview only: GitHub was not opened.", "Kun forhåndsvisning: GitHub blev ikke åbnet."), false); return; }
+            if (!interactive) { Status(AOLauncher.Localization.Texts.Get("Text_Preview_only_GitHub_was_not_opened_B7C45C2EDB62"), false); return; }
             try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
             catch (Exception error) when (error is System.ComponentModel.Win32Exception || error is InvalidOperationException)
             {
-                Status(L("The browser could not be opened. Use Copy report or Save report and share it another way.", "Browseren kunne ikke åbnes. Brug Kopiér rapport eller Gem rapport og del den på anden vis."), true);
+                Status(AOLauncher.Localization.Texts.Get("Text_The_browser_could_not_be_opened_A86EDF6401F8"), true);
                 return;
             }
             DiagnosticJournal.Record("report", "Opened a GitHub issue draft for area " + DiagnosticReport.AreaName(Area) + (truncated ? " (report shortened in the link)" : ""));
             CrashReporter.AcknowledgePending();
             Status(truncated && copied
-                ? L("GitHub opened in your browser. The report was too long for the link, so the full version is on your clipboard: paste it into the Diagnostics box before submitting.",
-                    "GitHub er åbnet i din browser. Rapporten var for lang til linket, så den fulde version ligger i udklipsholderen: indsæt den i feltet Diagnostics før du sender.")
-                : L("GitHub opened in your browser. Review the issue and choose Submit new issue. A GitHub account is required; otherwise use Copy report.",
-                    "GitHub er åbnet i din browser. Gennemse sagen og vælg Submit new issue. Det kræver en GitHub-konto; ellers brug Kopiér rapport."), false);
+                ? AOLauncher.Localization.Texts.Get("Text_GitHub_opened_in_your_browser_The_0AE335CDB1E9")
+                : AOLauncher.Localization.Texts.Get("Text_GitHub_opened_in_your_browser_Review_6BE998C90043"), false);
         }
 
         private bool CopyReport(string report)
         {
             try { Clipboard.SetText(report); return true; }
-            catch (ExternalException) { Status(L("The clipboard is busy. Try again, or use Save report.", "Udklipsholderen er optaget. Prøv igen, eller brug Gem rapport."), true); return false; }
+            catch (ExternalException) { Status(AOLauncher.Localization.Texts.Get("Text_The_clipboard_is_busy_Try_again_67B8D7E989EA"), true); return false; }
             catch (System.Threading.ThreadStateException) { return false; }
         }
 
@@ -155,8 +151,8 @@ namespace AOLauncher
         {
             using (var dialog = new SaveFileDialog
             {
-                Title = L("Save report", "Gem rapport"),
-                Filter = L("Markdown report (*.md)|*.md|Text file (*.txt)|*.txt", "Markdown-rapport (*.md)|*.md|Tekstfil (*.txt)|*.txt"),
+                Title = AOLauncher.Localization.Texts.Get("Text_Save_report_C539DE9BC0F4"),
+                Filter = AOLauncher.Localization.Texts.Get("Text_Markdown_report_md_md_Text_file_AB094FF81D0F"),
                 FileName = "AO-Nexus-report-" + DateTime.Now.ToString("yyyyMMdd-HHmm", System.Globalization.CultureInfo.InvariantCulture) + ".md",
                 OverwritePrompt = true, AddExtension = true
             })
@@ -166,10 +162,10 @@ namespace AOLauncher
                 {
                     File.WriteAllText(dialog.FileName, Report(), new UTF8Encoding(false));
                     CrashReporter.AcknowledgePending();
-                    Status(L("Report saved. You can attach the file to a GitHub issue or send it to the developer.", "Rapporten er gemt. Du kan vedhæfte filen til en GitHub-sag eller sende den til udvikleren."), false);
+                    Status(AOLauncher.Localization.Texts.Get("Text_Report_saved_You_can_attach_the_CD047DF93C65"), false);
                 }
                 catch (Exception error) when (error is IOException || error is UnauthorizedAccessException || error is System.Security.SecurityException)
-                { Status(L("The report could not be saved: ", "Rapporten kunne ikke gemmes: ") + error.Message, true); }
+                { Status(AOLauncher.Localization.Texts.Get("Text_The_report_could_not_be_saved_0B473E9DBE74") + error.Message, true); }
             }
         }
 

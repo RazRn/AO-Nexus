@@ -25,7 +25,7 @@ namespace AOLauncher
             Dock = DockStyle.Fill; BackColor = Theme.Background; Name = "sidebarOptions";
             var fields = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, AutoScroll = true, BackColor = Theme.Background };
             fields.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            news = Check(L("Show Server news", "Vis servernyheder"), settings.ShowServerNews, "showServerNews");
+            news = Check(AOLauncher.Localization.Texts.Get("Text_Show_Server_news_AE2AF7BADF88"), settings.ShowServerNews, "showServerNews");
             fields.Controls.Add(news);
             var feedChoices = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Top, FlowDirection = FlowDirection.TopDown, WrapContents = false, Margin = new Padding(18, 0, 0, 14) };
             foreach (var source in ServerNews.Sources)
@@ -34,15 +34,15 @@ namespace AOLauncher
                 sources.Add(source.Id, box); feedChoices.Controls.Add(box);
             }
             fields.Controls.Add(feedChoices);
-            health = Check(L("Show Server health", "Vis serverstatus"), settings.ShowServerHealth, "showServerHealth");
+            health = Check(AOLauncher.Localization.Texts.Get("Text_Show_Server_health_A2C7B2E3B7E1"), settings.ShowServerHealth, "showServerHealth");
             fields.Controls.Add(health);
-            background = Check(L("Check selected servers in the background", "Tjek valgte servere i baggrunden"), settings.BackgroundHealthChecks || settings.HealthTrayNotifications, "backgroundHealthChecks");
-            notifications = Check(L("Tray notifications for outages and recovery", "Bakkemeddelelser ved udfald og genoprettelse"), settings.HealthTrayNotifications, "healthTrayNotifications");
+            background = Check(AOLauncher.Localization.Texts.Get("Text_Check_selected_servers_in_the_background_E9C695B964D5"), settings.BackgroundHealthChecks || settings.HealthTrayNotifications, "backgroundHealthChecks");
+            notifications = Check(AOLauncher.Localization.Texts.Get("Text_Tray_notifications_for_outages_and_recovery_F8C7CF877E21"), settings.HealthTrayNotifications, "healthTrayNotifications");
             fields.Controls.Add(background); fields.Controls.Add(notifications);
             servers = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Top, FlowDirection = FlowDirection.TopDown, WrapContents = false, Margin = new Padding(18, 0, 0, 14) };
             fields.Controls.Add(servers);
             RebuildServers(settings.LoginServers, settings.HealthServerIds ?? new List<string> { "rebirth", "prk", "live", "live-2019" });
-            var note = new Label { Text = L("Background checks run every 60 seconds while Nexus is open, including in the tray. Notifications enable background checks and report issues after two failed checks, then recovery. Windows controls popup duration; the tray keeps the outage status. Without background checks, only the visible health view is checked.", "Baggrundstjek kører hvert 60. sekund, mens Nexus er åben, også i bakken. Meddelelser aktiverer baggrundstjek og rapporterer problemer efter to fejlede tjek, derefter genoprettelse. Windows styrer varigheden; bakken bevarer fejlstatus. Uden baggrundstjek tjekkes kun den synlige statusvisning."), AutoSize = true, MaximumSize = new Size(440, 0), ForeColor = Theme.Muted, Dock = DockStyle.Top, Margin = new Padding(0, 12, 0, 8) };
+            var note = new Label { Text = AOLauncher.Localization.Texts.Get("Text_Background_checks_run_every_60_seconds_095E0BA50C36"), AutoSize = true, MaximumSize = new Size(440, 0), ForeColor = Theme.Muted, Dock = DockStyle.Top, Margin = new Padding(0, 12, 0, 8) };
             fields.Controls.Add(note);
             fields.ClientSizeChanged += (sender, e) => note.MaximumSize = new Size(Math.Max(100, fields.ClientSize.Width - 24), 0);
             news.CheckedChanged += (sender, e) => feedChoices.Enabled = news.Checked;
@@ -82,6 +82,8 @@ namespace AOLauncher
             News.Visible = false; Health.Visible = false;
             News.Parent = null; Health.Parent = null;
             if (Tabs != null) { Tabs.Dispose(); Tabs = null; }
+            // The reusable panels are detached; release replaced stacks/cards and handles.
+            foreach (Control child in Controls.Cast<Control>().ToArray()) child.Dispose();
             Controls.Clear();
             News.ApplySelectionPreferences(settings.NewsSourceIds);
             Health.Endpoints = HealthEndpoints.Clone(settings.HealthCheckEndpoints);
@@ -90,13 +92,18 @@ namespace AOLauncher
             News.RefreshLanguage(); Health.RefreshLanguage();
             if (settings.ShowServerNews && settings.ShowServerHealth)
             {
-                Tabs = new NexusTabControl { Name = "serverSidebarTabs", Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9F) };
-                var news = new TabPage(L("Server news", "Servernyheder")) { BackColor = Theme.Surface };
-                var health = new TabPage(L("Server health", "Serverstatus")) { BackColor = Theme.Surface };
-                news.Controls.Add(News); health.Controls.Add(Health); Tabs.TabPages.Add(news); Tabs.TabPages.Add(health);
-                Controls.Add(Tabs); if (wasHealth) Tabs.SelectedIndex = 1;
+                // Server status above news, both visible (main window design), instead of tabs.
+                BackColor = Theme.Background;
+                var stack = new TableLayoutPanel { Name = "serverSidebarStack", Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Margin = Padding.Empty, BackColor = Theme.Background };
+                stack.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+                stack.RowStyles.Add(new RowStyle(SizeType.Percent, 46)); stack.RowStyles.Add(new RowStyle(SizeType.Percent, 54));
+                var healthCard = new NexusPanel { Dock = DockStyle.Fill, Margin = new Padding(0, 0, 0, 12), Padding = new Padding(1), BackColor = Theme.Surface };
+                var newsCard = new NexusPanel { Dock = DockStyle.Fill, Margin = Padding.Empty, Padding = new Padding(1), BackColor = Theme.Surface };
+                healthCard.Controls.Add(Health); newsCard.Controls.Add(News);
+                stack.Controls.Add(healthCard, 0, 0); stack.Controls.Add(newsCard, 0, 1);
+                Controls.Add(stack);
             }
-            else if (settings.ShowServerNews) Controls.Add(News);
+            else if (settings.ShowServerNews) { BackColor = Theme.Surface; Controls.Add(News); }
             else if (settings.ShowServerHealth) Controls.Add(Health);
             News.Visible = settings.ShowServerNews; Health.Visible = settings.ShowServerHealth;
             Visible = settings.ShowServerNews || settings.ShowServerHealth;
@@ -113,7 +120,8 @@ namespace AOLauncher
     {
         private readonly bool preview;
         private readonly ComboBox picker = new NexusComboBox();
-        private readonly Label heading = new Label(), status = new Label(), serverName = new Label();
+        private readonly Label heading = new Label(), serverName = new Label();
+        private readonly ToolTip tips=new ToolTip();
         private readonly Panel serverChoice = new Panel();
         private readonly FlowLayoutPanel cards = new FlowLayoutPanel();
         private readonly System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer { Interval = 1000 };
@@ -129,10 +137,10 @@ namespace AOLauncher
         {
             this.preview = preview; Name = "serverHealthPanel"; BackColor = Theme.Surface; ForeColor = Theme.Foreground;
             Check = (server, cancellation) => ServerHealth.CheckConfiguredAsync(server, HealthEndpoints.Resolve(server, Endpoints), cancellation);
-            Font = new Font("Segoe UI", 9F); Padding = new Padding(14);
-            var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 4, BackColor = BackColor };
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
-            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+            Font = new Font("Segoe UI", 9F); Padding = new Padding(10,6,10,8);
+            var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, BackColor = BackColor };
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute,32));
+            layout.RowStyles.Add(new RowStyle(SizeType.Percent,100));
             heading.Dock = DockStyle.Fill; heading.ForeColor = Theme.Accent; heading.TextAlign = ContentAlignment.MiddleLeft;
             picker.DropDownStyle = ComboBoxStyle.DropDownList; picker.Dock = DockStyle.Fill; picker.Margin = new Padding(0, 5, 0, 5);
             serverChoice.Dock = DockStyle.Fill; serverChoice.Margin = Padding.Empty;
@@ -142,9 +150,11 @@ namespace AOLauncher
             picker.SelectedIndexChanged += (sender, e) => { if (!backgroundChecks) pending?.Cancel(); Render(); if (!configuring) _ = RefreshAsync(false); };
             cards.Dock = DockStyle.Fill; cards.FlowDirection = FlowDirection.TopDown; cards.WrapContents = false; cards.AutoScroll = true;
             cards.ClientSizeChanged += (sender, e) => { foreach (Control card in cards.Controls) card.Width = Math.Max(100, cards.ClientSize.Width - 4); };
-            status.Dock = DockStyle.Fill; status.ForeColor = Theme.Muted;
-            layout.Controls.Add(heading, 0, 0); layout.Controls.Add(serverChoice, 0, 1); layout.Controls.Add(SlimScrolling.Wrap(cards), 0, 2);
-            layout.Controls.Add(status, 0, 3); Controls.Add(layout);
+            var header=new TableLayoutPanel {Dock=DockStyle.Fill,ColumnCount=2,RowCount=1,Margin=Padding.Empty};
+            header.RowStyles.Add(new RowStyle(SizeType.Percent,100));
+            header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,112));header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
+            header.Controls.Add(heading,0,0);header.Controls.Add(serverChoice,1,0);
+            layout.Controls.Add(header,0,0);layout.Controls.Add(SlimScrolling.Wrap(cards),0,1);Controls.Add(layout);
             timer.Tick += async (sender, e) => { if (!backgroundChecks && BackgroundUi.DropdownOpen()) return; if (deferredRender && Visible) Render(); if (Visible) UpdateStatus(); await RefreshAsync(false); };
             VisibleChanged += (sender, e) => { if (Visible) { timer.Start(); Render(); if (!configuring) _ = RefreshAsync(false); } else if (!backgroundChecks) { timer.Stop(); pending?.Cancel(); } };
             Load += async (sender, e) => { if (Visible) { timer.Start(); await RefreshAsync(false); } };
@@ -177,7 +187,7 @@ namespace AOLauncher
         }
         internal void RefreshLanguage()
         {
-            heading.Text = L("SERVER HEALTH", "SERVERSTATUS");
+            heading.Text = AOLauncher.Localization.Texts.Get("Text_SERVER_HEALTH_5D3BDAE22723");
             Render();
         }
         internal async Task RefreshAsync(bool manual)
@@ -228,12 +238,12 @@ namespace AOLauncher
             var keys = new[] { "login", "zone", "chat" };
             var results = checks.Select((endpoint, index) => endpoint.Enabled && endpoint.Valid
                 ? new HealthResult { Key = keys[index], State = HealthState.Reachable, Detail = endpoint.Host + ":" + endpoint.Port + " · TCP", Milliseconds = 18, CheckedUtc = DateTime.UtcNow }
-                : ServerHealth.Unknown(keys[index], L("Check disabled or not configured.", "Tjek slået fra eller ikke konfigureret."), DateTime.UtcNow)).ToList();
+                : ServerHealth.Unknown(keys[index], AOLauncher.Localization.Texts.Get("Text_Check_disabled_or_not_configured_74349205A58C"), DateTime.UtcNow)).ToList();
             string kind = ServerHealth.Kind(server);
             results.Add(new HealthResult { Key = "report", CheckedUtc = DateTime.UtcNow, State = kind == "rebirth" || kind == "prk" ? HealthState.ReportedOnline : HealthState.Unknown,
-                Detail = kind == "rebirth" ? L("Login: online · Zones: online · Chat: online · Accounts: online", "Login: online · Zoner: online · Chat: online · Konti: online")
-                    : kind == "prk" ? L("Listed by PRK. No per-service status or source timestamp supplied.", "Rapporteret af PRK. Ingen særskilt servicestatus eller tidsstempel fra kilden.")
-                    : L("No verified public service report.", "Ingen verificeret offentlig servicestatus.") });
+                Detail = kind == "rebirth" ? AOLauncher.Localization.Texts.Get("Text_Login_online_Zones_online_Chat_online_39BE23DE11A7")
+                    : kind == "prk" ? AOLauncher.Localization.Texts.Get("Text_Listed_by_PRK_No_per_service_124D6C17AB74")
+                    : AOLauncher.Localization.Texts.Get("Text_No_verified_public_service_report_1DBBAF184B50") });
             return results.ToArray();
         }
         private void Render()
@@ -244,13 +254,13 @@ namespace AOLauncher
             deferredRender = false;
             cards.SuspendLayout(); foreach (Control control in cards.Controls.Cast<Control>().ToArray()) control.Dispose();
             var server = picker.SelectedItem as LoginServerProfile;
-            if (server == null) cards.Controls.Add(new Label { Text = L("Choose health servers in Settings → Sidebar.", "Vælg statusservere i Indstillinger → Sidepanel."), AutoSize = true, MaximumSize = new Size(280, 0), ForeColor = Theme.Muted });
+            if (server == null) cards.Controls.Add(new Label { Text = AOLauncher.Localization.Texts.Get("Text_Choose_health_servers_in_Settings_Sidebar_926BBF5B456D"), AutoSize = true, MaximumSize = new Size(280, 0), ForeColor = Theme.Muted });
             else
             {
                 var samples = Samples(server);
                 foreach (string key in new[] { "login", "zone", "chat", "report" })
                 {
-                    var result = samples.LastOrDefault()?.FirstOrDefault(value => value.Key == key) ?? ServerHealth.Unknown(key, L("Not checked yet.", "Ikke tjekket endnu."), DateTime.MinValue);
+                    var result = samples.LastOrDefault()?.FirstOrDefault(value => value.Key == key) ?? ServerHealth.Unknown(key, AOLauncher.Localization.Texts.Get("Text_Not_checked_yet_230D01774B7D"), DateTime.MinValue);
                     var card = new HealthCard(result, samples.Select(sample => sample.FirstOrDefault(value => value.Key == key)).Where(value => value != null).ToArray());
                     card.Width = Math.Max(100, cards.ClientSize.Width - 4); cards.Controls.Add(card);
                 }
@@ -262,12 +272,13 @@ namespace AOLauncher
             if (BackgroundUi.DropdownOpen()) return;
             var server = picker.SelectedItem as LoginServerProfile;
             var sample = server == null ? null : Samples(server).LastOrDefault();
-            status.Text = busy ? L("Checking…", "Tjekker…") : sample == null ? L("Waiting for a check", "Venter på et tjek")
-                : (preview ? L("Example data", "Eksempeldata") : L("Checked ", "Tjekket ") + sample[0].CheckedUtc.ToLocalTime().ToString("HH:mm:ss")) + (backgroundChecks ? L(" · background · every 60s", " · baggrund · hvert 60. sekund") : L(" · every 60s while visible", " · hvert 60. sekund når synlig"));
+            string detail=busy?AOLauncher.Localization.Texts.Get("Text_Checking_B15323E4F6AD"):sample==null?AOLauncher.Localization.Texts.Get("Text_Waiting_for_a_check_C6195F06E6D2"):
+                AOLauncher.Localization.Texts.Get("Text_Last_checked_B74D740E8896")+sample[0].CheckedUtc.ToLocalTime().ToString("HH:mm:ss");
+            tips.SetToolTip(heading,detail);
         }
         protected override void Dispose(bool disposing)
         {
-            if (disposing && !disposed) { disposed = true; timer.Stop(); timer.Dispose(); pending?.Cancel(); }
+            if (disposing && !disposed) { disposed = true; tips.Dispose(); timer.Stop(); timer.Dispose(); pending?.Cancel(); }
             base.Dispose(disposing);
         }
     }
@@ -277,37 +288,41 @@ namespace AOLauncher
         private readonly HealthResult result;
         private readonly HealthResult[] history;
         private int measuredWidth;
+        private readonly ToolTip detailsTip=new ToolTip();
         internal HealthCard(HealthResult result, HealthResult[] history)
         {
-            this.result = result; this.history = history; Height = 116; Margin = new Padding(0, 0, 0, 8);
+            this.result = result; this.history = history; Height = 50; Margin = new Padding(0, 0, 0, 4);
             BackColor = Theme.SurfaceRaised; ForeColor = Theme.Foreground; Font = new Font("Segoe UI", 9F);
             SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.ResizeRedraw, true);
             AccessibleName = Title(result.Key) + ": " + Caption(result.State) + ". " + result.Detail;
+            detailsTip.SetToolTip(this,AccessibleName);
         }
         protected override void OnSizeChanged(EventArgs e)
         {
             base.OnSizeChanged(e);
             if (result == null || Width == measuredWidth) return;
             measuredWidth = Width;
-            int inset = NexusChrome.Scale(this, 10), line = Font.Height + 4;
-            int detailHeight = TextRenderer.MeasureText(result.Detail, Font, new Size(Math.Max(50, Width - inset * 2), int.MaxValue), TextFormatFlags.WordBreak).Height;
-            Height = Math.Max(NexusChrome.Scale(this, 94), inset * 2 + line * 2 + detailHeight + NexusChrome.Scale(this, 18));
+            int inset = NexusChrome.Scale(this, 8), line = Font.Height + 4;
+            Height = inset * 2 + line + NexusChrome.Scale(this,8);
         }
-        private static string Title(string key) => key == "login" ? L("Login connection", "Loginforbindelse") : key == "zone" ? L("World / zone connection", "Verden / zoneforbindelse") : key == "chat" ? L("Chat connection", "Chatforbindelse") : L("Official service report", "Officiel servicestatus");
-        private static string Caption(HealthState state) => state == HealthState.Reachable ? L("Reachable", "Tilgængelig") : state == HealthState.Unreachable ? L("Unreachable", "Utilgængelig") : state == HealthState.ReportedOnline ? L("Reported online", "Rapporteret online") : state == HealthState.ReportedIssue ? L("Reported issue", "Rapporteret problem") : L("Unknown", "Ukendt");
+        protected override void Dispose(bool disposing){if(disposing)detailsTip.Dispose();base.Dispose(disposing);}
+        private static string Title(string key) => key == "login" ? "Login" : key == "zone" ? AOLauncher.Localization.Texts.Get("Text_World_zone_8210E875436B") : key == "chat" ? "Chat" : AOLauncher.Localization.Texts.Get("Text_Official_report_741785D5A656");
+        private static string Caption(HealthState state) => state == HealthState.Reachable ? AOLauncher.Localization.Texts.Get("Text_Reachable_54DB153474A9") : state == HealthState.Unreachable ? AOLauncher.Localization.Texts.Get("Text_Unreachable_263A5CE5D6FC") : state == HealthState.ReportedOnline ? AOLauncher.Localization.Texts.Get("Text_Reported_online_E847C0DF1229") : state == HealthState.ReportedIssue ? AOLauncher.Localization.Texts.Get("Text_Reported_issue_A629ABE96E16") : AOLauncher.Localization.Texts.Get("Text_Unknown_D8D7AE0368FB");
         private static Color ColorFor(HealthState state) => state == HealthState.Reachable || state == HealthState.ReportedOnline ? Color.FromArgb(85, 190, 139) : state == HealthState.Unreachable || state == HealthState.ReportedIssue ? Theme.Amber : Theme.Muted;
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
-            int inset = NexusChrome.Scale(this, 10), line = Font.Height + 4;
+            int inset = NexusChrome.Scale(this, 8), line = Font.Height + 4;
             bool stale = result.CheckedUtc != DateTime.MinValue && DateTime.UtcNow - result.CheckedUtc > TimeSpan.FromSeconds(150);
             HealthState state = stale ? HealthState.Unknown : result.State;
             using (var pen = new Pen(Theme.Border)) e.Graphics.DrawRectangle(pen, 0, 0, Width - 1, Height - 1);
-            TextRenderer.DrawText(e.Graphics, Title(result.Key), Font, new Rectangle(inset, inset, Width - inset * 2, line), Theme.Foreground, TextFormatFlags.EndEllipsis);
-            string label = stale ? L("Outdated — waiting for next check", "Forældet — afventer næste tjek") : Caption(state) + (result.Milliseconds.HasValue ? " · " + result.Milliseconds + " ms" : "");
-            TextRenderer.DrawText(e.Graphics, label, Font, new Rectangle(inset, inset + line, Width - inset * 2, line), ColorFor(state), TextFormatFlags.EndEllipsis);
-            TextRenderer.DrawText(e.Graphics, result.Detail, Font, new Rectangle(inset, inset + line * 2, Width - inset * 2, line * 3), Theme.Muted, TextFormatFlags.WordBreak | TextFormatFlags.EndEllipsis);
-            int barWidth = Math.Max(2, (Width - inset * 2) / 24 - 2), barHeight = NexusChrome.Scale(this, 8);
+
+            string label = stale ? AOLauncher.Localization.Texts.Get("Text_Outdated_waiting_for_next_check_7A92103DA916") : Caption(state) + (result.Milliseconds.HasValue ? " · " + result.Milliseconds + " ms" : "");
+            string title=Title(result.Key)+" · ";
+            int titleWidth=TextRenderer.MeasureText(e.Graphics,title,Font,Size.Empty,TextFormatFlags.NoPadding).Width;
+            TextRenderer.DrawText(e.Graphics,title,Font,new Rectangle(inset,inset,titleWidth,line),Theme.Foreground,TextFormatFlags.NoPadding);
+            TextRenderer.DrawText(e.Graphics,label,Font,new Rectangle(inset+titleWidth,inset,Math.Max(1,Width-inset*2-titleWidth),line),ColorFor(state),TextFormatFlags.EndEllipsis|TextFormatFlags.NoPadding);
+            int barWidth = Math.Max(2, (Width - inset * 2) / 24 - 2), barHeight = NexusChrome.Scale(this, 6);
             for (int i = 0; i < 24; i++)
             {
                 int index = i - (24 - history.Length);

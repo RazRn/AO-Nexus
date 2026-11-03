@@ -47,7 +47,7 @@ namespace AOLauncher
         internal Func<LauncherSettings, bool, string> Commit { get; set; }
 
         internal SetupWizard(LauncherSettings settings, bool startup, bool firstRun) : this(settings, startup, firstRun, false) { }
-        internal SetupWizard(LauncherSettings settings, bool startup, bool firstRun, bool newOptionsOnly) : base(L("Welcome to AO Nexus", "Velkommen til AO Nexus"), 640)
+        internal SetupWizard(LauncherSettings settings, bool startup, bool firstRun, bool newOptionsOnly) : base(AOLauncher.Localization.Texts.Get("Text_Welcome_to_AO_Nexus_B4D7976EE4B2"), 640)
         {
             this.newOptionsOnly = newOptionsOnly;
             original = settings; draft = SetupPreferences.Copy(settings); this.firstRun = firstRun;
@@ -61,7 +61,7 @@ namespace AOLauncher
             };
             SaveButton.Name = "setupNext"; CancelAction.Name = "setupSkip";
             CancelAction.DialogResult = DialogResult.None;
-            back = Theme.Button(L("Back", "Tilbage")); back.Name = "setupBack";
+            back = Theme.Button(AOLauncher.Localization.Texts.Get("Text_Back_629DEFB2AE16")); back.Name = "setupBack";
             SaveButton.Parent.Controls.Add(back);
             back.Click += (sender, e) => { if (step > 0) { step--; RenderStep(); } };
             SaveButton.Click += (sender, e) =>
@@ -114,19 +114,18 @@ namespace AOLauncher
             Fields.Controls.Clear(); Fields.RowStyles.Clear(); Fields.RowCount = 0;
             ErrorLabel.Text = "";
             if (newOptionsOnly) {
-                Text = L("New options in AO Nexus", "Nye muligheder i AO Nexus");
+                Text = AOLauncher.Localization.Texts.Get("Text_New_options_in_AO_Nexus_C230AE926A9E");
                 back.Visible = false;
-                SaveButton.Text = L("Save choices", "Gem valg"); CancelAction.Text = L("Later", "Senere");
-                Note(L("Choose how to use the new features. Existing choices are preserved. Save once to stop this prompt for these options; Later leaves everything unchanged.",
-                    "Vælg, hvordan du vil bruge de nye funktioner. Eksisterende valg bevares. Gem én gang for at undgå denne påmindelse om disse valg; Senere ændrer intet."));
+                SaveButton.Text = AOLauncher.Localization.Texts.Get("Text_Save_choices_F3EF7533A58D"); CancelAction.Text = AOLauncher.Localization.Texts.Get("Text_Later_AFBE95F81840");
+                Note(AOLauncher.Localization.Texts.Get("Text_Choose_how_to_use_the_new_31BD80AB2116"));
                 SetupNewOptions.Add(Fields, draft, original.OptionsReviewVersion);
                 Fields.ResumeLayout(true); Theme.Apply(this); Fields.AutoScrollPosition = Point.Empty; QueueContentFit(); return;
             }
-            Text = L("AO Nexus setup", "AO Nexus-opsætning");
-            back.Text = L("Back", "Tilbage"); back.Visible = step > 0;
-            CancelAction.Text = firstRun ? L("Skip setup", "Spring over") : L("Cancel", "Annuller");
-            SaveButton.Text = step == 3 ? L("Finish", "Afslut") : L("Next", "Næste");
-            var names = new[] { L("Welcome", "Velkommen"), L("Your servers", "Dine servere"), L("App preferences", "Appindstillinger"), L("Review and add accounts", "Gennemse og tilføj konti") };
+            Text = AOLauncher.Localization.Texts.Get("Text_AO_Nexus_setup_0321187C12EE");
+            back.Text = AOLauncher.Localization.Texts.Get("Text_Back_629DEFB2AE16"); back.Visible = step > 0;
+            CancelAction.Text = firstRun ? AOLauncher.Localization.Texts.Get("Text_Skip_setup_A7E0AF8CA306") : AOLauncher.Localization.Texts.Get("Text_Cancel_34A3CBFEA4A5");
+            SaveButton.Text = step == 3 ? AOLauncher.Localization.Texts.Get("Text_Finish_E18185A51BC5") : AOLauncher.Localization.Texts.Get("Text_Next_5A25B0B171F8");
+            var names = new[] { AOLauncher.Localization.Texts.Get("Text_Welcome_B422C20EC6E5"), AOLauncher.Localization.Texts.Get("Text_Your_servers_D17CCCE5E2B5"), AOLauncher.Localization.Texts.Get("Text_App_preferences_F6BF57DCC78B"), AOLauncher.Localization.Texts.Get("Text_Review_and_add_accounts_43243A638D86") };
             Note((step + 1) + " / 4  ·  " + names[step], true);
             if (step == 0) Welcome();
             else if (step == 1) Servers();
@@ -138,10 +137,10 @@ namespace AOLauncher
 
         private void Welcome()
         {
-            Note(L("Choose your language, servers and a few preferences. You can change everything later in Settings.", "Vælg sprog, servere og nogle få indstillinger. Alt kan ændres senere i Indstillinger."));
-            Note(L("Language", "Sprog"));
+            Note(AOLauncher.Localization.Texts.Get("Text_Choose_your_language_servers_and_a_C97F19F459C6"));
+            Note(AOLauncher.Localization.Texts.Get("Text_Language_C87857889CA6"));
             var language = new NexusComboBox { Name = "setupLanguage", Dock = DockStyle.Top, DropDownStyle = ComboBoxStyle.DropDownList, Margin = new Padding(0, 0, 0, 18) };
-            language.Items.AddRange(new object[] { L("Automatic (Windows language)", "Automatisk (Windows-sprog)"), "Dansk", "English" });
+            language.Items.AddRange(new object[] { AOLauncher.Localization.Texts.Get("Text_Automatic_Windows_language_A732CA9BCE47"), "Dansk", "English" });
             language.SelectedIndex = draft.Language == "da" ? 1 : draft.Language == "en" ? 2 : 0;
             language.MatchHeight(SaveButton);
             language.SelectedIndexChanged += (sender, e) =>
@@ -152,16 +151,16 @@ namespace AOLauncher
             };
             Fields.Controls.Add(language);
             Note(firstRun
-                ? L("Nothing connects to news, health services or GitHub until you finish. Skip setup leaves those optional features off. No game is started by this wizard.", "Der oprettes ingen forbindelse til nyheder, statustjenester eller GitHub, før du afslutter. Spring over lader disse valgfrie funktioner være slået fra. Guiden starter ikke spillet.")
-                : L("Your existing accounts and presets are kept. Changes are saved only when you finish; Cancel leaves your configuration unchanged.", "Dine eksisterende konti og presets bevares. Ændringer gemmes først, når du afslutter; Annuller bevarer din opsætning."));
-            var privacy = Theme.Button(L("Privacy and connections…", "Privatliv og forbindelser…")); privacy.Name = "setupPrivacy";
+                ? AOLauncher.Localization.Texts.Get("Text_Nothing_connects_to_news_health_services_0CF7CE019E53")
+                : AOLauncher.Localization.Texts.Get("Text_Your_existing_accounts_and_presets_are_2438B537D65F"));
+            var privacy = Theme.Button(AOLauncher.Localization.Texts.Get("Text_Privacy_and_connections_597D8EF1EF13")); privacy.Name = "setupPrivacy";
             privacy.Click += (sender, e) => { using (var dialog = new PrivacyDialog()) dialog.ShowDialog(this); };
             Fields.Controls.Add(privacy);
         }
 
         private void Servers()
         {
-            Note(L("Select servers for news and health checks. These choices do not restrict which servers your accounts can use. Custom servers can be added later in Settings.", "Vælg servere til nyheder og statustjek. Valget begrænser ikke, hvilke servere dine konti kan bruge. Egne servere kan tilføjes senere i Indstillinger."));
+            Note(AOLauncher.Localization.Texts.Get("Text_Select_servers_for_news_and_health_2B34D3A8384C"));
             var selected = new HashSet<string>(draft.HealthServerIds);
             foreach (var id in draft.NewsSourceIds) if (draft.LoginServers.Any(server => server.Id == id)) selected.Add(id);
             foreach (var server in draft.LoginServers)
@@ -174,52 +173,52 @@ namespace AOLauncher
                     draft.NewsSourceIds = SetupPreferences.NewsForServers(draft.HealthServerIds);
                 });
             }
-            Check("setupNews", L("Show server news", "Vis servernyheder"), draft.ShowServerNews, value => draft.ShowServerNews = value);
-            Check("setupHealth", L("Show server health", "Vis serverstatus"), draft.ShowServerHealth, value => draft.ShowServerHealth = value);
-            Note(L("News uses the selected servers' official websites. Health checks contact configured service endpoints and public status reports without logging in. Local/custom servers may have no news source.", "Nyheder hentes fra de valgte serveres officielle hjemmesider. Statustjek kontakter tjenesternes adresser og offentlige statusrapporter uden login. Lokale/egne servere har muligvis ingen nyhedskilde."));
+            Check("setupNews", AOLauncher.Localization.Texts.Get("Text_Show_server_news_CC9264E5114D"), draft.ShowServerNews, value => draft.ShowServerNews = value);
+            Check("setupHealth", AOLauncher.Localization.Texts.Get("Text_Show_server_health_548A59DDF29C"), draft.ShowServerHealth, value => draft.ShowServerHealth = value);
+            Note(AOLauncher.Localization.Texts.Get("Text_News_uses_the_selected_servers_official_14C9093C3CEB"));
         }
 
         private void Preferences()
         {
-            Check("setupUpdates", L("Check GitHub for updates when Nexus starts", "Tjek GitHub for opdateringer ved start"), draft.CheckForUpdatesOnStartup, value => draft.CheckForUpdatesOnStartup = value);
-            Note(L("Checks once at startup. Downloads and installation always require your confirmation.", "Tjekker én gang ved start. Download og installation kræver altid din bekræftelse."));
-            Check("setupStartup", L("Start with Windows", "Start med Windows"), startWithWindows, value => startWithWindows = value);
-            Note(L("Starts Nexus in the tray. It never logs in game accounts automatically.", "Starter Nexus i bakken. Spilkonti logges aldrig ind automatisk."));
+            Check("setupUpdates", AOLauncher.Localization.Texts.Get("Text_Check_GitHub_for_updates_when_Nexus_8C9475F12550"), draft.CheckForUpdatesOnStartup, value => draft.CheckForUpdatesOnStartup = value);
+            Note(AOLauncher.Localization.Texts.Get("Text_Checks_once_at_startup_Downloads_and_81D83132EEE6"));
+            Check("setupStartup", AOLauncher.Localization.Texts.Get("Text_Start_with_Windows_408B4BA98620"), startWithWindows, value => startWithWindows = value);
+            Note(AOLauncher.Localization.Texts.Get("Text_Starts_Nexus_in_the_tray_It_17FD0D22B67E"));
             CheckBox notifications = null;
-            var background = Check("setupBackground", L("Check selected servers in the background", "Tjek valgte servere i baggrunden"), draft.BackgroundHealthChecks || draft.HealthTrayNotifications, value =>
+            var background = Check("setupBackground", AOLauncher.Localization.Texts.Get("Text_Check_selected_servers_in_the_background_E9C695B964D5"), draft.BackgroundHealthChecks || draft.HealthTrayNotifications, value =>
             {
                 draft.BackgroundHealthChecks = value;
                 if (!value) { draft.HealthTrayNotifications = false; if (notifications != null) notifications.Checked = false; }
             });
-            notifications = Check("setupNotifications", L("Notify me about outages and recovery", "Giv besked om udfald og genoprettelse"), draft.HealthTrayNotifications, value =>
+            notifications = Check("setupNotifications", AOLauncher.Localization.Texts.Get("Text_Notify_me_about_outages_and_recovery_81175164B268"), draft.HealthTrayNotifications, value =>
             {
                 draft.HealthTrayNotifications = value; if (value) { draft.BackgroundHealthChecks = true; background.Checked = true; }
             });
-            Note(L("Background checks run every 60 seconds while Nexus is open, including in the tray. Notifications enable background checks. Without them, checks run only while the health view is visible.", "Baggrundstjek kører hvert 60. sekund, mens Nexus er åben, også i bakken. Meddelelser aktiverer baggrundstjek. Ellers tjekkes kun, mens statusvisningen er synlig."));
-            Note(L("Minimize sends Nexus to the tray; Quit closes it. Both ask for confirmation until you choose not to be asked again.", "Minimer sender Nexus til bakken; Afslut lukker appen. Begge spørger om bekræftelse, indtil du vælger ikke at blive spurgt igen."));
-            Note(L("Game clients", "Spilklienter"), true);
+            Note(AOLauncher.Localization.Texts.Get("Text_Background_checks_run_every_60_seconds_6676D44C413A"));
+            Note(AOLauncher.Localization.Texts.Get("Text_Minimize_sends_Nexus_to_the_tray_B5C1DBE11C41"));
+            Note(AOLauncher.Localization.Texts.Get("Text_Game_clients_0C9E9394E82E"), true);
             SetupNewOptions.Add(Fields, draft, 0);
         }
 
         private void Review()
         {
-            string on = L("On", "Til"), off = L("Off", "Fra");
-            Note(L("Finish saves these preferences. Adding an account is optional; passwords are requested at login.", "Afslut gemmer disse indstillinger. Det er valgfrit at tilføje en konto; adgangskoder indtastes ved login."));
+            string on = AOLauncher.Localization.Texts.Get("Text_On_74735AB159B4"), off = AOLauncher.Localization.Texts.Get("Text_Off_CAD65C6B8619");
+            Note(AOLauncher.Localization.Texts.Get("Text_Finish_saves_these_preferences_Adding_an_0ECF0D05EE4C"));
             string servers = string.Join(", ", draft.LoginServers.Where(server => draft.HealthServerIds.Contains(server.Id)).Select(server => server.Name));
-            Note(L("Health servers: ", "Statusservere: ") + (servers.Length == 0 ? L("None", "Ingen") : servers)
-                + "\r\n" + L("News sources: ", "Nyhedskilder: ") + (draft.NewsSourceIds.Count == 0 ? L("None", "Ingen") : string.Join(", ", ServerNews.Sources.Where(source => draft.NewsSourceIds.Contains(source.Id)).Select(source => source.Name)))
-                + "\r\n" + L("News / health view: ", "Nyheder / statusvisning: ") + (draft.ShowServerNews ? on : off) + " / " + (draft.ShowServerHealth ? on : off)
-                + "\r\n" + L("Update checks / Windows startup: ", "Opdateringstjek / Windows-start: ") + (draft.CheckForUpdatesOnStartup ? on : off) + " / " + (startWithWindows ? on : off)
-                + "\r\n" + L("Background checks / notifications: ", "Baggrundstjek / meddelelser: ") + (draft.BackgroundHealthChecks ? on : off) + " / " + (draft.HealthTrayNotifications ? on : off));
+            Note(AOLauncher.Localization.Texts.Get("Text_Health_servers_FDDD7FDB3206") + (servers.Length == 0 ? AOLauncher.Localization.Texts.Get("Text_None_D5BD8CBDBF60") : servers)
+                + "\r\n" + AOLauncher.Localization.Texts.Get("Text_News_sources_A6E652046EED") + (draft.NewsSourceIds.Count == 0 ? AOLauncher.Localization.Texts.Get("Text_None_D5BD8CBDBF60") : string.Join(", ", ServerNews.Sources.Where(source => draft.NewsSourceIds.Contains(source.Id)).Select(source => source.Name)))
+                + "\r\n" + AOLauncher.Localization.Texts.Get("Text_News_health_view_D19A7FD7E381") + (draft.ShowServerNews ? on : off) + " / " + (draft.ShowServerHealth ? on : off)
+                + "\r\n" + AOLauncher.Localization.Texts.Get("Text_Update_checks_Windows_startup_9E3DAA4F0B37") + (draft.CheckForUpdatesOnStartup ? on : off) + " / " + (startWithWindows ? on : off)
+                + "\r\n" + AOLauncher.Localization.Texts.Get("Text_Background_checks_notifications_C115A3CDB7B4") + (draft.BackgroundHealthChecks ? on : off) + " / " + (draft.HealthTrayNotifications ? on : off));
             var accounts = new NexusComboBox { Name = "setupAccounts", Dock = DockStyle.Top, DropDownStyle = ComboBoxStyle.DropDownList, Margin = new Padding(0, 0, 0, 12) };
-            foreach (var option in SetupNewOptions.All) Note(L(option.English, option.Danish) + ": " + (option.Read(draft) ? on : off));
+            foreach (var option in SetupNewOptions.All) Note(AOLauncher.Localization.Texts.Get(option.TextKey) + ": " + (option.Read(draft) ? on : off));
             accounts.MatchHeight(SaveButton);
             foreach (var account in draft.Accounts) accounts.Items.Add(account.Label + " · " + AccountTargets.ServerName(draft, account));
-            if (accounts.Items.Count == 0) accounts.Items.Add(L("No accounts added yet", "Ingen konti tilføjet endnu"));
+            if (accounts.Items.Count == 0) accounts.Items.Add(AOLauncher.Localization.Texts.Get("Text_No_accounts_added_yet_9470643382AE"));
             accounts.SelectedIndex = 0; Fields.Controls.Add(accounts);
-            var add = Theme.Button(draft.Accounts.Count == 0 ? L("Add first account…", "Tilføj første konto…") : L("Add another account…", "Tilføj endnu en konto…"));
+            var add = Theme.Button(draft.Accounts.Count == 0 ? AOLauncher.Localization.Texts.Get("Text_Add_first_account_D49D0215364F") : AOLauncher.Localization.Texts.Get("Text_Add_another_account_2BFD2743EEB3"));
             add.Name = "setupAddAccount"; add.Click += (sender, e) => AddAccount(); Fields.Controls.Add(add);
-            Note(L("Choose the account's server and game folder, then locate its Prefs to import characters. Remembering its password is a per-account choice; saved copies are encrypted for your Windows user.", "Vælg kontoens server og spilmappe, og find dens Prefs for at importere chars. Du vælger pr. konto, om adgangskoden skal huskes; gemte kopier krypteres til din Windows-bruger."));
+            Note(AOLauncher.Localization.Texts.Get("Text_Choose_the_account_s_server_and_29F71895471C"));
         }
 
         private void AddAccount()

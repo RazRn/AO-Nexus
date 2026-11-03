@@ -29,6 +29,7 @@ try {
     $watch = [Diagnostics.Stopwatch]::StartNew()
     do { Start-Sleep -Milliseconds 50; $process.Refresh() } while ($process.MainWindowTitle -ne 'Anarchy Online - Fixture' -and $watch.Elapsed.TotalSeconds -lt 5)
     if (!$type.GetMethod('IsSameProcess', $flags).Invoke($null, @($client))) { throw 'Fixture identity validation failed' }
+    if ($type.GetMethod('PluginsReady', $flags).Invoke($null, @($client)) -ne $true) { throw 'Game-thread readiness handshake failed' }
     # An old bridge must never be treated as /quit-capable, even with a valid token.
     $legacyToken = [Guid]::NewGuid().ToString('N')
     $legacy = [Threading.EventWaitHandle]::new($false, [Threading.EventResetMode]::AutoReset, ('Local\AONexus.Camp.v1.' + $process.Id + '.' + $legacyToken + '.request'))
@@ -38,11 +39,12 @@ try {
         if ($canQuit.GetValue($client)) { throw 'Legacy camp bridge must require a restart for /quit' }
     } finally { $legacy.Dispose(); $client.CampToken = $token }
     $client.StartTimeUtcTicks++
-    if ($type.GetMethod('SendCamp', $flags).Invoke($null, @($client)) -notlike 'Client changed*') { throw 'PID reuse guard failed' }
+    if ($type.GetMethod('PluginsReady', $flags).Invoke($null, @($client)) -ne $false) { throw 'Readiness PID reuse guard failed' }
+    if ($type.GetMethod('SendCamp', $flags, $null, [type[]]@($client.GetType()), $null).Invoke($null, @($client)) -notlike 'Client changed*') { throw 'PID reuse guard failed' }
     $client.StartTimeUtcTicks--
-    $result = $type.GetMethod('SendCamp', $flags).Invoke($null, @($client))
+    $result = $type.GetMethod('SendCamp', $flags, $null, [type[]]@($client.GetType()), $null).Invoke($null, @($client))
     if ($result -notlike '/quit accepted*') { throw "Native bridge rejected valid fixture: $result" }
-    $result = $type.GetMethod('SendCamp', $flags).Invoke($null, @($client))
+    $result = $type.GetMethod('SendCamp', $flags, $null, [type[]]@($client.GetType()), $null).Invoke($null, @($client))
     if ($result -notlike 'The client declined*') { throw 'Native repeat guard failed' }
     Write-Host 'PASS: managed identity -> named events -> native UI-thread timed quit -> acknowledgement; legacy camp bridge, stale identity and repeat rejection.'
 } finally {

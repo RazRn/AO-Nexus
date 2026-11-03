@@ -8,6 +8,12 @@ $checks = 0
 function Assert($value, $message) { if (!$value) { throw $message }; $script:checks++ }
 function Call($type, $method, [object[]]$arguments) { for ($i=0; $i -lt $arguments.Count; $i++) { if ($null -ne $arguments[$i]) { $arguments[$i] = $arguments[$i].psobject.BaseObject } }; $type.GetMethod($method,$flags).Invoke($null,$arguments) }
 function Must-Fail([scriptblock]$action, $message) { $failed=$false; try { & $action | Out-Null } catch { $failed=$true }; Assert $failed $message }
+$current = $updates.GetProperty('CurrentVersion',$flags).GetValue($null)
+$isBeta = $updates.GetProperty('IsPrerelease',$flags).GetValue($null)
+Assert ((Call $updates 'IsNewer' @($current)) -eq $isBeta) 'Stable same-version release supersedes Beta only'
+Assert (!(Call $updates 'IsNewer' @([version]'1.0.0.0'))) 'Beta does not downgrade to an older stable release'
+Assert (Call $updates 'IsNewer' @([version]'99.0.0.0')) 'Newer stable release remains eligible'
+Assert ($updates.GetProperty('DisplayVersion',$flags).GetValue($null).Contains('Beta')) 'Beta is visible in the display version'
 $serializer = New-Object Web.Script.Serialization.JavaScriptSerializer
 $notes=[Activator]::CreateInstance($assembly.GetType('AOLauncher.ReleaseNotesBox'),$true)
 try {

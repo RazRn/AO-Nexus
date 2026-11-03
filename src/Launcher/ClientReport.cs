@@ -103,7 +103,8 @@ namespace AOLauncher
             output.AppendLine("A faulting module identifies where Windows observed the failure; it is not necessarily the root cause.");
             return output.ToString();
         }
-        internal static void Export(string path, string current, string evidence, string savedRoot = null)
+        internal const int ActivityLogLimitBytes = 512 * 1024;
+        internal static void Export(string path, string current, string evidence, string savedRoot = null, string activityLog = null, string appState = null, string settingsJson = null)
         {
             var json = new JavaScriptSerializer { MaxJsonLength = 16 * 1024 * 1024, RecursionLimit = 32 };
             var session = json.Deserialize<SessionReport>(current) ?? new SessionReport();
@@ -152,13 +153,37 @@ namespace AOLauncher
                     "A steady process-sampling interval does not prove that the game was responsive. Memory samples alone cannot prove or exclude a leak.\r\n" +
                     "Recent detail retains up to 120 samples (roughly two minutes). Summary covers the period observed by this Nexus session, including earlier peaks and state counts. Older reports may have no summary. IPC counters reset when the helper restarts.\r\n" +
                     "Aliases are shared across this ZIP and identify a process lifetime, not a permanent account. Duplicate saved exits are omitted when their data is already present; distinct evidence is retained.\r\n" +
+                    "activity-log.txt is this Nexus session's activity log (newest " + (ActivityLogLimitBytes / 1024) + " KB at most). Account, character and team names are replaced by codes such as Char-3fa2c1; those codes differ from the Client-N aliases, which identify process lifetimes.\r\n" +
+                    "app-state.txt shows how Nexus was set up when the ZIP was saved: ticked characters, team, plugin sets, switches, servers and running clients. settings-snapshot.json holds the same settings in full; credential-like fields are removed and names are replaced by codes.\r\n" +
                     "Review the ZIP before sharing. Nothing is uploaded automatically.\r\n");
                 Add(zip, "current-session.json", json.Serialize(session));
                 Add(zip, "report-summary.txt", SummaryText(session, reports, duplicateExits, unreadableExits));
                 Add(zip, "windows-evidence.txt", evidence);
+                string journal=DiagnosticJournal.ReadTail(DiagnosticJournal.LimitBytes);
+                if(!string.IsNullOrWhiteSpace(journal))Add(zip,"diagnostics-journal.txt",journal);
+                // Explicit savedRoot is used for isolated report fixtures/imports, not this PC's live recorder.
+                if(savedRoot==null)foreach(var recording in DevelopmentRecorder.Read())AddRaw(zip,"development/"+recording.Key,recording.Value);
+                if (activityLog != null) Add(zip, "activity-log.txt", ActivityLogText(activityLog));
+                if (appState != null) Add(zip, "app-state.txt", appState);
+                // Already redacted value by value (AppStateReport.SettingsJson); a second, text-wide pass
+                // could turn numbers into bare words and break the JSON.
+                if (settingsJson != null) AddRaw(zip, "settings-snapshot.json", settingsJson);
                 for (int i = 0; i < history.Count; i++)
                     Add(zip, "saved-exits/" + history[i].Client + "-" + (i + 1) + ".json", json.Serialize(history[i]));
             }
+        }
+        // The visible activity log of this session, newest part kept. Names are anonymised by Add().
+        internal static string ActivityLogText(string log)
+        {
+            log = log ?? "";
+            if (Encoding.UTF8.GetByteCount(log) > ActivityLogLimitBytes)
+            {
+                log = log.Substring(Math.Max(0, log.Length - ActivityLogLimitBytes / 2));
+                int line = log.IndexOf('\n');
+                if (line >= 0 && line + 1 < log.Length) log = log.Substring(line + 1);
+                log = "[Earlier entries omitted to keep the report small.]\r\n" + log;
+            }
+            return "AO Nexus activity log · exported " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss zzz") + "\r\n\r\n" + (log.Length == 0 ? "[The activity log is empty.]\r\n" : log);
         }
         static long StartTicks(SavedExit report) => report.StartedUtcTicks > 0 ? report.StartedUtcTicks : report.StartedUtc.ToUniversalTime().Ticks;
         // Compare evidence values, not JSON property ordering (reflection order can vary).
@@ -202,9 +227,15 @@ namespace AOLauncher
                 var summary = group.Where(r => r.Summary != null).Select(r => r.Summary).OrderByDescending(s => s.TotalSamples).FirstOrDefault();
                 if (summary != null) text.AppendLine("Observed samples: " + summary.TotalSamples + "; samples with plugin data: " + summary.SamplesWithPluginData + "; peak observed working set: " + summary.PeakObservedWorkingSetBytes + " bytes.");
             }
-            if (measured < clients.Length) text.AppendLine("For missing measurements: enable monitoring in Nexus Settings > Accounts; load Nexus Health Monitor into each affected character through AOSharp under the same Windows user. Merely opening AOSharp or adding the DLL is not enough. Export again after the status changes from Not measured. Missing/invalid snapshot reasons do not by themselves establish the root cause.");
+            if (measured < clients.Length) text.AppendLine("For missing measurements: enable monitoring in Nexus Settings > Accounts; load Nexus Health Monitor into each affected character through AO# under the same Windows user. Merely opening AO# or adding the DLL is not enough. Export again after the status changes from Not measured. Missing/invalid snapshot reasons do not by themselves establish the root cause.");
             return text.ToString();
         }
+        static void AddRaw(ZipArchive zip, string name, string content)
+        {
+            using (var writer = new StreamWriter(zip.CreateEntry(name, CompressionLevel.Optimal).Open(), new UTF8Encoding(false)))
+                writer.Write(content);
+        }
+
         static void Add(ZipArchive zip, string name, string content)
         {
             using (var writer = new StreamWriter(zip.CreateEntry(name, CompressionLevel.Optimal).Open(), new UTF8Encoding(false)))

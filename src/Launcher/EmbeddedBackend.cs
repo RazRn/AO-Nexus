@@ -141,6 +141,17 @@ namespace AOLauncher
             }
         }
 
+        internal static string FindVerifiedBundle(string cacheRoot, Stream manifestStream, string requiredFile)
+        {
+            var manifest = ReadManifest(manifestStream, CancellationToken.None);
+            var files = ValidateManifest(manifest, requiredFile);
+            string version = Path.Combine(Path.GetFullPath(cacheRoot), manifest.PayloadSha256.ToUpperInvariant());
+            EnsureNoReparseAncestors(version);
+            if (!Directory.Exists(version)) return null;
+            VerifyExistingVersion(version, files, CancellationToken.None);
+            return Path.Combine(version, requiredFile);
+        }
+
         private static PayloadManifest ReadManifest(Stream stream, CancellationToken cancellationToken)
         {
             try

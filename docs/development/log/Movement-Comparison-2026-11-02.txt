@@ -1,0 +1,35 @@
+MOVEMENT COMPARISON RESULTS - 2026-11-02
+
+Build 8CAB27EAE1F7E875A2BF0EB105134044F187019AE29CDAF3BD4E95F2C5E949B0.
+Both runs used the same six client processes, the updated monitor and AOSP
+Manager.Sync on channel 4. Run A had five minimized followers; run B had none.
+
+Both recordings included zoning. For the normal-movement comparison, use
+only leader-foreground moving samples in playfield 655, excluding 15 seconds
+before/after each recorded leader playfield change. A: 169 samples; B: 151.
+These are observational runs of unequal duration, not a controlled benchmark.
+
+Median summed client CPU percentage: 12.44 with minimizing, 27.02 without.
+Follower median CPU: about 1.59-1.64 each with minimizing, 3.98-5.12 without.
+Follower sampled update-age p95: 9.25-9.58 ms with minimizing,
+9.51-9.89 ms without. This is sample age, not measured FPS or frame duration.
+IPC round-trip p95 approximately 16 ms in both runs.
+
+The largest obvious separation was Calm 8-10 world units behind for several
+samples just after the first run's zone transition. This subsequently cleared.
+All six were healthy and at the same reported position at the end of BOTH runs.
+No persistent detached follower was reproduced.
+
+Small instantaneous distance warnings occurred in both modes. Player
+positions were sampled independently, often several hundred milliseconds
+apart, so these cannot establish rejected movement packets or true distances
+at one instant. Future warnings should account for sample timing and sustained
+separation before presenting a strong alert.
+
+Conclusion: this test does not implicate minimizing as the cause. Restoring
+full windows raised CPU load without a normal update-timing advantage. Zoning
+and sync re-acquisition remain investigation targets, not a confirmed cause.
+Restored the original MinimizeInactiveClients=true setting after testing.
+
+Raw captures and numeric summaries: logs/MovementComparison/run-A.jsonl,
+run-B.jsonl and comparison.json. No game input/movement was automated.

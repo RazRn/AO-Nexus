@@ -32,9 +32,9 @@ namespace AOLauncher
                         if (startupChanged)
                         {
                             try { WindowsStartup.SetEnabled(startup, Application.ExecutablePath); }
-                            catch (Exception rollback) { detail += "\r\n" + L("Windows startup could not be restored: ", "Windows-start kunne ikke gendannes: ") + rollback.Message; }
+                            catch (Exception rollback) { detail += "\r\n" + AOLauncher.Localization.Texts.Get("Text_Windows_startup_could_not_be_restored_0915547895E2") + rollback.Message; }
                         }
-                        return L("Setup could not be saved. Your profile has not been replaced.\r\n", "Opsætningen kunne ikke gemmes. Din profil er ikke erstattet.\r\n") + detail;
+                        return AOLauncher.Localization.Texts.Get("Text_Setup_could_not_be_saved_Your_A765E9899023") + detail;
                     }
                 };
                 if (wizard.ShowDialog(this) != DialogResult.OK) { ApplyLanguage(); return; }

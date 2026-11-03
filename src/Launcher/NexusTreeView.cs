@@ -10,6 +10,49 @@ namespace AOLauncher
     internal sealed class NexusTreeView : TreeView
     {
         internal NexusTreeView() { DrawMode = TreeViewDrawMode.OwnerDrawAll; }
+        // Optional chip at the right edge of a row (a character's plugin set). Clicking it raises
+        // RightTextClicked so the owner can show a picker.
+        internal Func<TreeNode, string> RightText;
+        internal event Action<TreeNode, Rectangle> RightTextClicked;
+        // Same width on every row so the set buttons line up.
+        Rectangle ChipBounds(TreeNode node, Graphics graphics, string text)
+        {
+            var bounds = node.Bounds;
+            int width = Math.Min(NexusChrome.Scale(this, 150), Math.Max(0, (ClientSize.Width - bounds.Left) / 2));
+            int height = Math.Max(1, ItemHeight - 6);
+            return new Rectangle(ClientSize.Width - width - 8, bounds.Top + (bounds.Height - height) / 2, width, height);
+        }
+
+        bool ChipAt(Point point, out TreeNode node, out Rectangle chip)
+        {
+            chip = Rectangle.Empty;
+            node = RightText == null ? null : GetNodeAt(point);
+            string text = node == null ? null : RightText(node);
+            if (string.IsNullOrEmpty(text)) return false;
+            using (var graphics = CreateGraphics()) chip = ChipBounds(node, graphics, text);
+            return chip.Contains(point);
+        }
+
+        // The native tree runs its own selection/drag loop on a left press and swallows the
+        // release, so the set button is handled here before the tree sees the click. Double
+        // clicks on it are swallowed too, so they never open Edit.
+        protected override void WndProc(ref Message m)
+        {
+            const int WM_LBUTTONDOWN = 0x0201, WM_LBUTTONDBLCLK = 0x0203;
+            if ((m.Msg == WM_LBUTTONDOWN || m.Msg == WM_LBUTTONDBLCLK) && RightText != null)
+            {
+                long value = m.LParam.ToInt64();
+                var point = new Point((short)(value & 0xFFFF), (short)((value >> 16) & 0xFFFF));
+                if (ChipAt(point, out var node, out var chip))
+                {
+                    if (!Focused) Focus();
+                    if (m.Msg == WM_LBUTTONDOWN) BeginInvoke((Action)(() => RightTextClicked?.Invoke(node, chip)));
+                    m.Result = IntPtr.Zero;
+                    return;
+                }
+            }
+            base.WndProc(ref m);
+        }
 
         protected override CreateParams CreateParams
         {
@@ -89,6 +132,17 @@ namespace AOLauncher
                 e.Graphics.Restore(state);
             }
             var text = new Rectangle(textBounds.Left + 2, row.Top, Math.Max(1, ClientSize.Width - textBounds.Left - 5), row.Height);
+            string right = RightText?.Invoke(e.Node);
+            if (!string.IsNullOrEmpty(right))
+            {
+                var font = e.Node.NodeFont ?? Font;
+                var chip = ChipBounds(e.Node, e.Graphics, right);
+                using (var brush = new SolidBrush(Theme.SurfaceRaised)) e.Graphics.FillRectangle(brush, chip);
+                using (var pen = new Pen(Theme.Border)) e.Graphics.DrawRectangle(pen, chip.X, chip.Y, chip.Width - 1, chip.Height - 1);
+                TextRenderer.DrawText(e.Graphics, right + "  ▾", font, Rectangle.Inflate(chip, -6, 0), Theme.Foreground,
+                    TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix | TextFormatFlags.EndEllipsis);
+                text.Width = Math.Max(1, chip.Left - text.Left - 8);
+            }
             TextRenderer.DrawText(e.Graphics, e.Node.Text, e.Node.NodeFont ?? Font, text, foreground,
                 TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix | TextFormatFlags.EndEllipsis);
             if (selected && Focused && ShowFocusCues)

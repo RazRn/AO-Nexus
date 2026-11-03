@@ -12,7 +12,7 @@ function Assert([bool]$Condition, [string]$Description) {
     if (!$Condition) { throw ('FAIL: ' + $Description) }
     $script:checks++
 }
-function New-Model([string]$Name) { [Activator]::CreateInstance($assembly.GetType('AOLauncher.' + $Name, $true)) }
+function New-Model([string]$Name) { [Activator]::CreateInstance($assembly.GetType('AOLauncher.' + $Name, $true), $true) }
 function New-Char([int]$Id, [string]$Name, [bool]$Selected = $true, [bool]$Pending = $false) {
     $char = New-Model 'CharacterConfig'; $char.CharacterId = $Id; $char.Name = $Name
     $char.Selected = $Selected; $char.NamePending = $Pending; return $char
@@ -173,7 +173,13 @@ Reject $fixture $notice 'Ordinary event with an ID absent from the launch reques
 # No process is spawned. The actual form is in its synthetic/offline preview mode.
 $instance = [Reflection.BindingFlags]'Public,NonPublic,Instance'
 $mainType = $assembly.GetType('AOLauncher.MainForm', $true)
-function Get-Field($Object, [string]$Name) { return ,$Object.GetType().GetField($Name, $instance).GetValue($Object) }
+function Get-Field($Object, [string]$Name) {
+    for ($type = $Object.GetType(); $type; $type = $type.BaseType) {
+        $field = $type.GetField($Name, $instance)
+        if ($field) { return ,$field.GetValue($Object) }
+    }
+    throw "Fixture field not found: $Name"
+}
 function Set-Field($Object, [string]$Name, $Value) { $Object.GetType().GetField($Name, $instance).SetValue($Object, $Value) }
 function Call-Instance($Object, [string]$Name, [object[]]$Arguments = @()) {
     $method = @($Object.GetType().GetMethods($instance) | Where-Object { $_.Name -eq $Name -and $_.GetParameters().Length -eq $Arguments.Length })[0]

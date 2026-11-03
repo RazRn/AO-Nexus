@@ -1,9 +1,13 @@
-WHAT'S NEW IN 1.2.2
+WHAT'S NEW IN 1.3.0 BETA 1
 
-• Reports clearly state when no responsiveness measurements are available. Missing, unreadable, invalid and mismatched monitoring snapshots have separate explanations.
-• Session summaries retain earlier memory peaks, update gaps, reply times and state counts alongside the latest 120 samples. They cover only the time Nexus observed the client.
-• Client aliases match throughout each diagnostic ZIP. Duplicate saved exits are omitted; distinct evidence is kept.
-• Reports show the installed Windows version and build instead of the legacy compatibility version.
-• The player guide and monitoring help explain how to enable measurements and interpret reports.
+• Control Panel: sortable combat reports, individual pets, health/nano, attack targets, observed aggro, zones and client measurements.
+• Reorder character cards and collapse/reorder Team, Damage Dumper and Timers. Your choices are remembered.
+• Team presets keep login order and can keep the first client focused during startup.
+• Confirmed logout/relog stops formation movement first. Cancel leaves the current formation unchanged.
+• AO# plugin sets support shared selections under ALL, local installation compatibility and load diagnostics.
+• Export Team, All and NPC statistics to clickable in-game scripts.
+• Recommended settings are staged for review. Graphics, auto-minimize and experimental choices are preserved.
 
-Start with report-summary.txt. Process samples and exit code zero do not prove the game was responsive or rule out a crash. Monitoring remains optional and must be enabled for each character through AOSharp. Existing v1.2.1 monitoring plugins remain compatible. Nothing is uploaded automatically.
+Automatic teams, formations, sync refresh, auto regroup, nearby reports and AO-VK management remain opt-in experiments. Minimized clients may stop drawing; the card tooltip explains why a preview can pause.
+
+Known issue: an Engineer can repeat the standing-required casting message after login even when visually standing. This is not yet fixed. Updated game helpers require a client relog. See the Beta notes and guide for compatibility limits. Keep Defender enabled.

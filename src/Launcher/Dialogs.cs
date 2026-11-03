@@ -13,15 +13,15 @@ namespace AOLauncher
 {
     internal static class Theme
     {
-        public static readonly Color Foreground = Color.FromArgb(224, 237, 241);
+        public static readonly Color Foreground = Color.FromArgb(220, 237, 235);
         public static readonly Color Navy = Foreground;
-        public static readonly Color Accent = Color.FromArgb(72, 198, 220);
-        public static readonly Color Background = Color.FromArgb(11, 19, 29);
-        public static readonly Color Surface = Color.FromArgb(16, 29, 42);
-        public static readonly Color SurfaceRaised = Color.FromArgb(21, 38, 52);
-        public static readonly Color Border = Color.FromArgb(43, 66, 82);
-        public static readonly Color Selection = Color.FromArgb(29, 83, 104);
-        public static readonly Color Muted = Color.FromArgb(141, 164, 178);
+        public static readonly Color Accent = Color.FromArgb(88, 199, 206);
+        public static readonly Color Background = Color.FromArgb(5, 18, 22);
+        public static readonly Color Surface = Color.FromArgb(9, 32, 38);
+        public static readonly Color SurfaceRaised = Color.FromArgb(15, 49, 56);
+        public static readonly Color Border = Color.FromArgb(54, 104, 111);
+        public static readonly Color Selection = Color.FromArgb(23, 79, 89);
+        public static readonly Color Muted = Color.FromArgb(148, 180, 182);
         public static readonly Color Amber = Color.FromArgb(224, 167, 73);
         public static readonly Color Warning = Color.FromArgb(255, 143, 125);
 
@@ -37,8 +37,8 @@ namespace AOLauncher
                 UseVisualStyleBackColor = false
             };
             button.FlatAppearance.BorderColor = primary ? Accent : Border;
-            button.FlatAppearance.MouseOverBackColor = primary ? Color.FromArgb(105, 216, 232) : Color.FromArgb(31, 58, 74);
-            button.FlatAppearance.MouseDownBackColor = primary ? Color.FromArgb(45, 169, 194) : Color.FromArgb(40, 75, 91);
+            button.FlatAppearance.MouseOverBackColor = primary ? Color.FromArgb(119, 218, 222) : Color.FromArgb(23, 67, 74);
+            button.FlatAppearance.MouseDownBackColor = primary ? Color.FromArgb(51, 163, 174) : Selection;
             return button;
         }
 
@@ -78,7 +78,7 @@ namespace AOLauncher
                 grid.DefaultCellStyle.ForeColor = Foreground;
                 grid.DefaultCellStyle.SelectionBackColor = Selection;
                 grid.DefaultCellStyle.SelectionForeColor = Foreground;
-                grid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(18, 33, 47);
+                grid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(12, 39, 45);
                 grid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
                 grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
                 grid.EditingControlShowing -= StyleGridEditor;
@@ -233,9 +233,23 @@ namespace AOLauncher
             QueueContentFit();
         }
 
+        // Shows this dialog as a page inside the main window instead of a separate window.
+        internal void EmbedIn(Control host)
+        {
+            TopLevel = false;
+            FormBorderStyle = FormBorderStyle.None;
+            ShowInTaskbar = false;
+            Dock = DockStyle.Fill;
+            DialogLayout.Padding = new Padding(24, 14, 24, 0);
+            host.Controls.Add(this);
+            Show();
+        }
+        internal bool Embedded => !TopLevel;
+
         protected void QueueContentFit()
         {
-            if (!IsHandleCreated || fittingContent || IsDisposed) return;
+            // An embedded page fills its host; only stand-alone dialogs resize to their content.
+            if (!IsHandleCreated || fittingContent || IsDisposed || !TopLevel) return;
             BeginInvoke((Action)(() => { if (!IsDisposed) FitDialogContent(); }));
         }
 
@@ -312,7 +326,7 @@ namespace AOLauncher
         {
             var note = new Label
             {
-                Name = name, Text = text, Dock = DockStyle.Top, AutoSize = true,
+                Name = name ?? "", Text = text, Dock = DockStyle.Top, AutoSize = true,
                 MaximumSize = new Size(420, 0), ForeColor = Theme.Muted,
                 Margin = new Padding(0, 6, 0, 8)
             };
@@ -350,11 +364,10 @@ namespace AOLauncher
         public LaunchConfirmationDialog(string summary) : base(T("Confirm login"), 320)
         {
             AddWrappedNote(summary, "launchSummary").ForeColor = Theme.Foreground;
-            remember = new NexusCheckBox { Name = "dontShowAgain", Text = SidebarText.L("Don't show this confirmation again", "Vis ikke denne bekræftelse igen"),
+            remember = new NexusCheckBox { Name = "dontShowAgain", Text = AOLauncher.Localization.Texts.Get("Text_Don_t_show_this_confirmation_again_888D3A875FD7"),
                 AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 14, 0, 8) };
             Fields.Controls.Add(remember);
-            AddWrappedNote(SidebarText.L("Turn this back on in Settings → General → Confirm before logging in.",
-                "Slå den til igen i Indstillinger → Generelt → Bekræft før login."), "confirmationSettingsGuide");
+            AddWrappedNote(AOLauncher.Localization.Texts.Get("Text_Turn_this_back_on_in_Settings_049077CE4FC6"), "confirmationSettingsGuide");
             DialogLayout.RowStyles[1].Height = 0;
             ErrorLabel.Visible = false;
             SaveButton.Text = T("Log in");
@@ -371,17 +384,34 @@ namespace AOLauncher
         public LogoutConfirmationDialog(string summary) : base(T("Log out preset"), 440)
         {
             AddWrappedNote(summary, "logoutSummary").ForeColor = Theme.Foreground;
-            remember = new NexusCheckBox { Name = "dontShowAgain", Text = SidebarText.L("Don't show this confirmation again", "Vis ikke denne bekræftelse igen"),
+            remember = new NexusCheckBox { Name = "dontShowAgain", Text = AOLauncher.Localization.Texts.Get("Text_Don_t_show_this_confirmation_again_888D3A875FD7"),
                 AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 14, 0, 8) };
             Fields.Controls.Add(remember);
-            AddWrappedNote(SidebarText.L("Turn this back on in Settings → General → Confirm before team logout.",
-                "Slå den til igen i Indstillinger → Generelt → Bekræft før hold-logout."), "confirmationSettingsGuide");
+            AddWrappedNote(AOLauncher.Localization.Texts.Get("Text_Turn_this_back_on_in_Settings_B387EF78DFAE"), "confirmationSettingsGuide");
             DialogLayout.RowStyles[1].Height = 0;
             ErrorLabel.Visible = false;
-            SaveButton.Text = SidebarText.L("Log out team", "Log hold ud");
+            SaveButton.Text = AOLauncher.Localization.Texts.Get("Text_Log_out_team_5529613F97DF");
             SaveButton.DialogResult = DialogResult.OK;
             AcceptButton = CancelAction;
             ActiveControl = CancelAction;
+        }
+    }
+
+    internal sealed class TeamWindowLogoutDialog : EditorDialog
+    {
+        public TeamWindowLogoutDialog(string summary) : this(summary,false) { }
+        public TeamWindowLogoutDialog(string summary,bool relog) : base(relog?AOLauncher.Localization.Texts.Get("Text_Confirm_relog_E3096511674D"):AOLauncher.Localization.Texts.Get("Text_Confirm_logout_992898FB7433"), 210)
+        {
+            ClientSize = new Size(420, 210);
+            AddWrappedNote(summary, "logoutSummary").ForeColor = Theme.Foreground;
+            AddWrappedNote(relog?AOLauncher.Localization.Texts.Get("Text_Normal_logout_first_then_log_these_E6142E020037"):AOLauncher.Localization.Texts.Get("Text_The_normal_game_logout_countdown_applies_8AE50DDC2E23"), "logoutCountdown");
+            DialogLayout.RowStyles[1].Height = 0;
+            ErrorLabel.Visible = false;
+            SaveButton.Text = relog?AOLauncher.Localization.Texts.Get("Text_Relog_18C6E265BF38"):AOLauncher.Localization.Texts.Get("Text_Log_out_698471977A3C");
+            SaveButton.DialogResult = DialogResult.OK;
+            AcceptButton = CancelAction;
+            ActiveControl = CancelAction;
+            Shown += (sender, e) => CancelAction.Focus();
         }
     }
 
@@ -796,6 +826,45 @@ namespace AOLauncher
         public HotkeyBinding StartHotkey => startHotkeyField.Binding;
         public HotkeyBinding LogoutHotkey => campHotkeyField.Binding;
         internal Func<HotkeyBinding, HotkeyBinding, string> ValidateShortcuts;
+        readonly ListBox teamOrder = new ListBox { Name = "teamLoginOrder", Dock = DockStyle.Fill, IntegralHeight = false, BackColor = Theme.Surface, ForeColor = Theme.Foreground };
+        readonly CheckBox orderedLogin = new NexusCheckBox { Text = AOLauncher.Localization.Texts.Get("Text_Use_this_login_order_first_character_6E2E729DA890"), AutoSize = true };
+        readonly CheckBox autoTeam = new NexusCheckBox { Text = AOLauncher.Localization.Texts.Get("Text_Automatically_form_team_as_characters_log_E124242C8AE6"), AutoSize = true };
+        internal bool OrderedLogin => orderedLogin.Checked;
+        internal bool AutoFormTeam => autoTeam.Checked;
+        internal List<PresetCharacter> TeamOrder => teamOrder.Items.Cast<TeamEntry>().Select(e => e.Reference).ToList();
+        sealed class TeamEntry { internal PresetCharacter Reference; internal string Name; public override string ToString() => Name; }
+        internal void ConfigureTeam(LauncherSettings settings, LaunchPreset preset)
+        {
+            var members = preset?.Characters ?? settings.Accounts.SelectMany(a => a.Characters.Where(c => c.Selected)
+                .Select(c => new PresetCharacter { AccountId = a.Id, CharacterId = c.CharacterId })).ToList();
+            foreach (var member in members) {
+                var account = settings.Accounts.FirstOrDefault(a => a.Id == member.AccountId);
+                var character = account?.Characters.FirstOrDefault(c => c.CharacterId == member.CharacterId);
+                teamOrder.Items.Add(new TeamEntry { Name = character?.Name ?? ("ID " + member.CharacterId), Reference = new PresetCharacter {
+                    AccountId = member.AccountId, CharacterId = member.CharacterId, PluginSetId = member.PluginSetId } });
+            }
+            orderedLogin.Checked = preset?.OrderedLogin == true || (settings.ExperimentalTeamAutomation && preset?.AutoFormTeam == true);
+            autoTeam.Checked = preset?.AutoFormTeam == true;
+            autoTeam.CheckedChanged += (s,e) => { if (autoTeam.Checked) orderedLogin.Checked = true; orderedLogin.Enabled = !autoTeam.Checked; };
+            autoTeam.Enabled = settings.ExperimentalTeamAutomation;
+            orderedLogin.Enabled = !settings.ExperimentalTeamAutomation || !autoTeam.Checked;
+            Fields.Controls.Add(orderedLogin);
+            var panel = new Panel { Dock = DockStyle.Top, Height = 150, Margin = new Padding(0,4,0,6) };
+            var buttons = new FlowLayoutPanel { Dock = DockStyle.Right, Width = 118, FlowDirection = FlowDirection.TopDown };
+            var up = Theme.Button(AOLauncher.Localization.Texts.Get("Text_Move_up_60D6CF5A78B6")); var down = Theme.Button(AOLauncher.Localization.Texts.Get("Text_Move_down_D316E9A269EB"));
+            up.Name="teamOrderUp"; down.Name="teamOrderDown";
+            Action<int> move = delta => { int at = teamOrder.SelectedIndex, to = at + delta;
+                if (at < 0 || to < 0 || to >= teamOrder.Items.Count) return;
+                object item = teamOrder.Items[at]; teamOrder.Items.RemoveAt(at); teamOrder.Items.Insert(to,item); teamOrder.SelectedIndex = to; };
+            up.Click += (s,e) => move(-1); down.Click += (s,e) => move(1);
+            buttons.Controls.Add(up); buttons.Controls.Add(down); panel.Controls.Add(teamOrder); panel.Controls.Add(buttons); Fields.Controls.Add(panel);
+            if (!settings.ExperimentalTeamAutomation) AddWrappedNote(AOLauncher.Localization.Texts.Get("Experiments.EnableTeam"), "teamExperimentHelp");
+            Fields.Controls.Add(autoTeam);
+            AddWrappedNote(AOLauncher.Localization.Texts.Get("Text_The_first_character_invites_only_this_85F252A387D3"), "autoTeamGuide");
+            teamValidation = () => !settings.ExperimentalTeamAutomation || !AutoFormTeam ? null : AutoTeamStartup.Validate(settings, TeamOrder, preset?.LoadPlugins ?? true);
+            ClientSize = new Size(600, 820);
+        }
+        Func<string> teamValidation;
 
         public PresetNameDialog(string title, string initialName, IEnumerable<string> reservedNames)
             : this(title, initialName, reservedNames, null, null, 0, false) { }
@@ -828,6 +897,8 @@ namespace AOLauncher
                 {
                     string validName = PresetService.ValidateName(nameInput.Text);
                     if (reserved.Contains(validName)) { ErrorLabel.Text = T("A preset with this name already exists."); return; }
+                    string teamError = teamValidation?.Invoke();
+                    if (teamError != null) { ErrorLabel.Text = teamError; return; }
                     string error = CheckShortcuts(StartHotkey, LogoutHotkey);
                     if (error != null) { ErrorLabel.Text = error; return; }
                     PresetName = validName;

@@ -12,14 +12,18 @@ namespace AOLauncher
         internal static readonly Color TerminalBackground = Color.FromArgb(7, 12, 10);
         internal static readonly Color TerminalForeground = Color.FromArgb(151, 211, 166);
         private readonly TextBox search = new NexusTextBox { Dock = DockStyle.Fill, MaxLength = 512, AutoSize = false };
-        private readonly TextBox output = new TextBox { Dock = DockStyle.Fill, Multiline = true, ReadOnly = true,
-            ScrollBars = ScrollBars.Both, WordWrap = false, BorderStyle = BorderStyle.None, BackColor = TerminalBackground,
+        private readonly RichTextBox output = new RichTextBox { Dock = DockStyle.Fill, ReadOnly = true, DetectUrls = false,
+            ScrollBars = RichTextBoxScrollBars.Both, WordWrap = false, BorderStyle = BorderStyle.None, BackColor = TerminalBackground,
             ForeColor = TerminalForeground, Font = new Font("Consolas", 10F) };
-        private readonly CheckBox follow = new NexusCheckBox { AutoSize = true, Checked = true };
+        private readonly CheckBox follow = new NexusCheckBox { AutoSize = false, Size = new Size(165, 28), Checked = true };
+        private readonly CheckBox wrap = new NexusCheckBox { Name = "wrapLogLines", AutoSize = false, Size = new Size(132, 34) };
+        internal bool WrapLines { get => wrap.Checked; set => wrap.Checked = value; }
+        internal Action<bool> WrapLinesChanged;
         private readonly Label count = new Label { Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, ForeColor = Theme.Muted };
         private readonly Timer refresh = new Timer { Interval = 150 };
         private string source = "";
         private string lastSearch = "";
+        private string rendered;
         private readonly Button clearLog = Theme.Button(T("Clear log…"));
         internal Action ClearLogRequested;
         internal Action ReportProblemRequested;
@@ -39,9 +43,10 @@ namespace AOLauncher
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
-            var toolbar = new TableLayoutPanel { Dock = DockStyle.Fill, Margin = Padding.Empty, ColumnCount = 3, RowCount = 1 };
+            var toolbar = new TableLayoutPanel { Dock = DockStyle.Fill, Margin = Padding.Empty, ColumnCount = 4, RowCount = 1 };
             toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             toolbar.Controls.Add(new Label { Text = T("Search"), AutoSize = true, Margin = new Padding(0, 8, 8, 0) }, 0, 0);
             search.AccessibleName = T("Search log"); search.Margin = new Padding(0, 1, 8, 8);
@@ -50,6 +55,9 @@ namespace AOLauncher
             search.Height = clear.Height;
             clear.Click += (sender, e) => { search.Clear(); search.Focus(); };
             toolbar.Controls.Add(clear, 2, 0);
+            wrap.Text = T("Wrap lines"); wrap.Margin = new Padding(12, 1, 0, 8);
+            wrap.CheckedChanged += (sender, e) => ApplyWrap();
+            toolbar.Controls.Add(wrap, 3, 0);
             var frame = new NexusPanel { Dock = DockStyle.Fill, Padding = new Padding(10), Margin = Padding.Empty, BackColor = TerminalBackground };
             output.AccessibleName = T("Activity log");
             frame.Controls.Add(SlimScrolling.Wrap(output));
@@ -70,6 +78,24 @@ namespace AOLauncher
         }
 
         internal void SetLogText(string text) { source = text ?? ""; QueueRefresh(); }
+        private void ApplyWrap()
+        {
+            int start = output.SelectionStart, length = output.SelectionLength;
+            int anchor = output.IsHandleCreated ? output.GetCharIndexFromPosition(Point.Empty) : 0;
+            output.WordWrap = wrap.Checked;
+            output.ScrollBars = wrap.Checked ? RichTextBoxScrollBars.Vertical : RichTextBoxScrollBars.Both;
+            if (output.IsHandleCreated) {
+                if (follow.Checked) { output.Select(output.TextLength, 0); output.ScrollToCaret(); }
+                else {
+                    output.Select(Math.Min(start, output.TextLength), Math.Min(length, Math.Max(0, output.TextLength - start)));
+                    int firstLine = SendMessage(output.Handle, 0x00CE, IntPtr.Zero, IntPtr.Zero).ToInt32();
+                    int wantedLine = output.GetLineFromCharIndex(Math.Min(anchor, output.TextLength));
+                    SendMessage(output.Handle, 0x00B6, IntPtr.Zero, new IntPtr(wantedLine - firstLine));
+                }
+                SlimScrolling.LayoutNow(output);
+            }
+            WrapLinesChanged?.Invoke(wrap.Checked);
+        }
         private void ClearActivity()
         {
             if (source.Length == 0) return;
@@ -92,7 +118,8 @@ namespace AOLauncher
             int start = output.SelectionStart, length = output.SelectionLength;
             int firstLine = term == lastSearch ? SendMessage(output.Handle, 0x00CE, IntPtr.Zero, IntPtr.Zero).ToInt32() : 0;
             lastSearch = term;
-            if (output.Text != text) output.Text = text;
+            // Lines are coloured green (worked), yellow (skipped or needs a look) and red (failed).
+            if (rendered != text) { rendered = text; LogTone.Show(output, text, 10F, false); }
             if (follow.Checked) { output.SelectionStart = output.TextLength; output.SelectionLength = 0; output.ScrollToCaret(); }
             else
             {

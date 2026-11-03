@@ -1,0 +1,89 @@
+[
+  {
+    "Repository": "aoquicklauncher",
+    "Url": "https://gitlab.com/never-knows-best/aoquicklauncher.git",
+    "Commit": "12e727c92a8014520625a28e5890987a483b78d6",
+    "LocalChanges": [
+      " M AOQuickLauncher/AOQuickLauncher.csproj",
+      " M AOQuickLauncher/Program.cs",
+      " M LoginHandler/dllmain.cpp",
+      "?? AOQuickLauncher/ClientSessions.cs",
+      "?? AOQuickLauncher/LaunchQueue.cs"
+    ]
+  },
+  {
+    "Repository": "aosharp",
+    "Url": "https://gitlab.com/never-knows-best/aosharp.git",
+    "Commit": "d55eb12b5a763e5ed65851e69c50343de6c6d73c",
+    "LocalChanges": [
+      " M AOSharp.Bootstrap/app.config",
+      " M AOSharp.Core/Pet.cs",
+      " M AOSharp.Core/app.config",
+      " M AOSharp.Navigator/AOSharp.Navigator.csproj",
+      " M AOSharp.Navigator/app.config",
+      " M AOSharp.Navigator/packages.config",
+      " M AOSharp/AOSharp.csproj",
+      " M AOSharp/App.config",
+      " M AOSharp/Config.cs",
+      " M AOSharp/MainWindow.xaml.cs",
+      " M AOSharp/Models/PluginModel.cs",
+      " M AOSharp/Properties/AssemblyInfo.cs",
+      " M TestPlugin/TestPlugin.csproj",
+      " M TestPlugin/packages.config",
+      "?? AOSharp/BundledPluginCatalog.cs"
+    ]
+  },
+  {
+    "Repository": "aosharp.utils",
+    "Url": "https://gitlab.com/never-knows-best/aosharp.utils.git",
+    "Commit": "fdc5017a1abd77ed6c85dfee19e3e6459aba0c11",
+    "LocalChanges": [
+      " M Backstabber/Backstabber.csproj",
+      " M Backstabber/app.config",
+      " M Backstabber/packages.config",
+      " M GraceBot9000/GraceBot9000.csproj",
+      " M GraceBot9001/GraceBot9001.csproj",
+      " M GraceBot9001/app.config",
+      " M GraceBot9001/packages.config",
+      " M MissionHelper/MissionHelper.csproj",
+      " M NavGen/NavGen.csproj",
+      " M Neko/Neko.csproj",
+      " M Qubit/Qubit.csproj",
+      " M StackDetector/StackDetector.csproj",
+      " M TradeskillLeveler/TradeskillLeveler.csproj"
+    ]
+  },
+  {
+    "Repository": "aosp-bots",
+    "Url": "https://gitlab.com/aosharp-plus/aosp-bots.git",
+    "Commit": "59de6fe9a0ec297e71fbf4338fdcb01683947865",
+    "LocalChanges": [
+      " M Directory.Build.props",
+      " M Directory.Build.targets"
+    ]
+  },
+  {
+    "Repository": "z-buddies",
+    "Url": "https://gitlab.com/Zzzzzzzzzzzzzzzzzzzzzz/buddies.git",
+    "Commit": "f4ddf8f3fe8bf8b53e21e1e7dfec513da845ad28",
+    "LocalChanges": []
+  },
+  {
+    "Repository": "z-handlers",
+    "Url": "https://gitlab.com/Zzzzzzzzzzzzzzzzzzzzzz/handlers.git",
+    "Commit": "82f179b337d39669f60a996d8f707e2cd5bf2c3e",
+    "LocalChanges": []
+  },
+  {
+    "Repository": "z-managers",
+    "Url": "https://gitlab.com/Zzzzzzzzzzzzzzzzzzzzzz/managers.git",
+    "Commit": "410368d5c7e0b473530bdb89fc88c265be74be5a",
+    "LocalChanges": []
+  },
+  {
+    "Repository": "z-utilities",
+    "Url": "https://gitlab.com/Zzzzzzzzzzzzzzzzzzzzzz/utilities.git",
+    "Commit": "176cc9de8a5c1fb093ce83c5ad58633a7a3f9387",
+    "LocalChanges": []
+  }
+]

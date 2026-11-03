@@ -1,4 +1,4 @@
-param([string]$AssemblyPath = (Join-Path $PSScriptRoot '../src/Launcher/bin/Release/AONexus.exe'))
+param([string]$AssemblyPath = (Join-Path $PSScriptRoot '../src/Launcher/bin/Release/AONexus.exe'), [switch]$SettingsOnly)
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Windows.Forms,System.Drawing
 [Windows.Forms.Application]::EnableVisualStyles()
@@ -22,6 +22,7 @@ foreach ($language in @('en','da')) {
  $assembly.GetType('AOLauncher.Localization.Texts').GetMethod('SetLanguage',$static).Invoke($null,@($language)) | Out-Null
  foreach ($scale in @(1,1.5)) {
   foreach ($kind in @('PresetNameDialog','AccountDialog','CharacterDialog','PasswordDialog','SavedPasswordDialog','WindowActionDialog','GuiCaptureDialog','GuiTemplateNameDialog','SettingsDialog','PrivacyDialog','WhatsNewDialog','UpdateDialog','LoginServersDialog','PrefsPickerDialog','SelectedTargetsDialog','LaunchConfirmationDialog','LogoutConfirmationDialog','HealthEndpointsDialog','ReportProblemDialog')) {
+   if ($SettingsOnly -and $kind -ne 'SettingsDialog') { continue }
    $ctorArgs = switch ($kind) {
     'PresetNameDialog' { [object[]]@('Create team preset','Example',[string[]]@('Reserved'),$null,$null,6,$false) }
     'AccountDialog' { [object[]]@($null,$settings) }
@@ -59,18 +60,31 @@ foreach ($language in @('en','da')) {
      if ($kind -eq 'SettingsDialog' -and $page -eq 1) {
       $loginAction=$dialog.Controls.Find('manageLoginServers',$true)[0]
       $healthAction=$dialog.Controls.Find('manageHealthChecks',$true)[0]
-      Check ($healthAction.Top - $loginAction.Bottom -ge 8*$scale-1) "$context stacked actions need a visible gap"
-      Check ($healthAction.Left -eq $loginAction.Left -and $healthAction.Width -eq $loginAction.Width) "$context related actions should align and have equal widths"
+      Check ($healthAction.Top -eq $loginAction.Top) "$context related actions share a row"
+      Check ($healthAction.Left - $loginAction.Right -ge 8*$scale-1) "$context related actions need a visible gap"
      }
      $work=[Windows.Forms.Screen]::FromControl($dialog).WorkingArea
      Check ($dialog.Height -le $work.Height) "$context exceeds screen height"
+     if ($kind -eq 'SettingsDialog') {
+      foreach ($scroller in @(Children $dialog | Where-Object { $_ -is [Windows.Forms.ScrollableControl] -and $_.Visible -and $_.AutoScroll })) {
+       Check (!$scroller.HorizontalScroll.Visible) "$context must wrap instead of scrolling horizontally"
+      }
+      $recommended=$dialog.Controls.Find('recommendedSettings',$true)[0]
+      Check ($recommended.Visible -and $dialog.RectangleToClient($recommended.RectangleToScreen($recommended.ClientRectangle)).Bottom -le $dialog.ClientSize.Height) "$context recommendation button remains reachable"
+      if ($page -eq 4) {
+       $folder=$dialog.Controls.Find('graphicsGameFolder',$true)[0]
+       $browse=$dialog.Controls.Find('graphicsBrowse',$true)[0]
+       Check ($browse.PointToScreen([Drawing.Point]::Empty).Y -ge $folder.PointToScreen([Drawing.Point]::new(0,$folder.Height)).Y) "$context game folder and browse action must not overlap"
+      }
+     }
      foreach ($table in @(Children $dialog | Where-Object { $_ -is [Windows.Forms.TableLayoutPanel] -and $_.Visible -and $_.AutoScroll })) {
       if ($table.ColumnCount -ne 1 -or @($table.RowStyles | Where-Object {$_.SizeType -eq 'Percent'}).Count) { continue }
       $preferred=$table.GetPreferredSize([Drawing.Size]::new($table.ClientSize.Width,0)).Height
-      if ($kind -ne 'PrivacyDialog') {
+      if ($kind -ne 'PrivacyDialog' -and $kind -ne 'SettingsDialog') {
        Check ($preferred -le $table.ClientSize.Height -or $dialog.Height -ge $work.Height-25) "$context is cramped despite room on screen ($preferred / $($table.ClientSize.Height))"
       }
       if ($preferred -le $table.ClientSize.Height) { Check (!$table.VerticalScroll.Visible) "$context has a needless scrollbar" }
+      if ($kind -eq 'SettingsDialog') { Check (!$table.HorizontalScroll.Visible) "$context must wrap instead of scrolling horizontally" }
       if ($kind -eq 'PrivacyDialog') { Check $table.VerticalScroll.Visible "$context must retain scrolling for the long document" }
      }
      foreach ($button in @(Children $dialog | Where-Object { $_ -is [Windows.Forms.Button] -and $_.Visible -and ($_.DialogResult -eq 'Cancel' -or $_.Text -in @('Save','Gem')) })) {

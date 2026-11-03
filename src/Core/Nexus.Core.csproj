@@ -1,0 +1,23 @@
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+    <ProjectGuid>{E615CB41-AC5A-4ED3-8628-030334C87D93}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AssemblyName>Nexus.Core</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <LangVersion>7.3</LangVersion>
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+    <DebugType>pdbonly</DebugType>
+    <Optimize Condition="'$(Configuration)' == 'Release'">true</Optimize>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" /><Reference Include="System.Core" />
+    <Compile Include="BackendRunner.cs" />
+    <Compile Include="LaunchPlan.cs" />
+    <Compile Include="SettingsStorage.cs" />
+    <Compile Include="GraphicsTransaction.cs" />
+    <Compile Include="PluginDispatch.cs" />
+    <Compile Include="StartupPolling.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

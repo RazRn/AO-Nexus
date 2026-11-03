@@ -19,12 +19,14 @@ namespace NexusEngine
             internal string CharacterPipe { get; set; }
             internal string CampToken { get; set; }
             public bool Quiet { get; set; }
-            public bool FastStartup { get; set; }
+            public bool AllowExperimentalAovk { get; set; }
+        public bool FastStartup { get; set; }
+            public bool StartMinimized { get; set; }
             public string StatusPipe { get; set; }
             internal string LoginGate { get; set; }
         }
 
-        private static int Main(string[] args)
+        public static int Run(string[] args)
         {
             Console.InputEncoding = new System.Text.UTF8Encoding(false);
             Console.OutputEncoding = new System.Text.UTF8Encoding(false);
@@ -73,15 +75,29 @@ namespace NexusEngine
                 client.StartInfo.Environment["AONexusLoginGateParent"] = Environment.ProcessId.ToString();
             }
             // Always overwrite inherited values. Creation and unknown builds retain normal loading.
-            bool fast = options.FastStartup && !options.CreateCharacter && NexusEngine.FastStartup.IsSupported(target.GamePath);
+            var startupProfile = options.FastStartup && !options.CreateCharacter
+                ? NexusEngine.FastStartup.GetAllowedProfile(target.GamePath, options.AllowExperimentalAovk)
+                : StartupProfile.None;
+            bool fast = startupProfile != StartupProfile.None;
             client.StartInfo.Environment["AONexusFastStartupValidated"] = Convert.ToString(fast);
+            client.StartInfo.Environment["AONexusFastTextureValidated"] = Convert.ToString(startupProfile == StartupProfile.Stock);
+            client.StartInfo.Environment["AONexusFastStartupProfile"] = startupProfile==StartupProfile.AOVKVerified ? "AOVK" : startupProfile.ToString();
             if (options.FastStartup)
-                Console.WriteLine(fast ? "Fast loading: verified classic client." : "Fast loading unavailable for this client; using normal loading.");
+                Console.WriteLine(startupProfile == StartupProfile.AOVKVerified
+                    ? "Fast loading: verified AO-VK renderer and startup repair. GUI fades/login scene optimized; texture hook disabled. Rebirth admission-gated preloads enabled when requested."
+                    : startupProfile == StartupProfile.AOVK
+                    ? "AO-VK startup TEST: pinned renderer with verified classic GUI/login files. Fades/login scene enabled; texture hook disabled. Rebirth admission-gated overlap enabled when requested (max 2 preloads). Runtime hook checks still apply."
+                    : fast ? "Fast loading: verified classic client (stock renderer)." : "Fast loading unavailable for this client; using normal loading (file checks did not match, or character creation).");
+            if(!options.FastStartup)Console.WriteLine("Fast loading is OFF in Nexus settings; using normal sequential loading for this account.");
+            client.StartInfo.WindowStyle = options.StartMinimized && !options.CreateCharacter && PresetLaunchWindows.SupportsMinimizedStart(startupProfile)
+                ? ProcessWindowStyle.Minimized : ProcessWindowStyle.Normal;
             client.StartInfo.Environment["NoChat"] = "False";
             client.Start();
 
             try
             {
+                long loaderWaitMs = ProcessLoaderReadiness.Wait(client);
+                Console.WriteLine("Client Windows loader ready after " + loaderWaitMs + " ms.");
                 using (var injector = new Injector(client))
                 {
                     if (injector.Inject(Path.Combine(AppContext.BaseDirectory, "LoginHandler.dll")) == 0)
@@ -90,6 +106,11 @@ namespace NexusEngine
             }
             catch
             {
+                // This is the process created above, before a successful helper
+                // load. Do not leave an untracked startup window behind or
+                // terminate any existing client when this attempt fails.
+                try { if (!client.HasExited) { client.Kill(); client.WaitForExit(1000); } }
+                catch (Exception cleanup) { Console.Error.WriteLine("Failed startup client cleanup: " + cleanup.GetType().Name); }
                 client.Dispose();
                 throw;
             }

@@ -22,20 +22,21 @@ namespace AOLauncher
         string clientReport = "{}", clientObserverError;
         bool clientPollBusy, clientMonitorDisposed;
         DateTime exitsSeenUtc = DateTime.MinValue;
+        readonly Dictionary<string,long> syncAlertsSeen=new Dictionary<string,long>();
 
         void InitializeClientStatus()
         {
-            clientStatus = new LinkLabel { Name = "clientHealth", Visible = false, Location = new Point(109, 99), Size = new Size(500, 20),
+            clientStatus = new LinkLabel { Name = "clientHealth", Visible = false, AutoSize = true, Margin = new Padding(0, 10, 16, 0), MaximumSize = new Size(380, 20), AutoEllipsis = true,
                 Font = new Font("Segoe UI", 9F), BackColor = Color.Transparent, LinkColor = Theme.Accent, ActiveLinkColor = Theme.Amber,
-                LinkBehavior = LinkBehavior.HoverUnderline, AccessibleName = L("Character status", "Karakterstatus") };
+                LinkBehavior = LinkBehavior.HoverUnderline, AccessibleName = AOLauncher.Localization.Texts.Get("Text_Character_status_3826BDC7320F") };
             clientStatus.LinkClicked += (sender, args) => ShowClientStatus();
-            header.Controls.Add(clientStatus);
-            trayClientsItem = new ToolStripMenuItem(L("Characters · status and help", "Karakterer · status og hjælp"));
+            headerFlow.Controls.Add(clientStatus); // beside Settings in the header
+            trayClientsItem = new ToolStripMenuItem(AOLauncher.Localization.Texts.Get("Text_Characters_status_and_help_E5F368A05B53"));
             trayClientsItem.Click += (sender, args) => BeginInvoke((Action)ShowClientStatus);
             trayMenu.Items.Insert(2, trayClientsItem);
             if (smoke || storageBlocked) return;
             clientMonitor = new ClientMonitor();
-            clientMonitorTimer.Tick += async (sender, args) => await PollClients();
+            clientMonitorTimer.Tick += async (sender, args) => {DevelopmentRecorder.Beat();await PollClients();};
             clientMonitorTimer.Start();
         }
         async Task PollClients()
@@ -53,13 +54,18 @@ namespace AOLauncher
                 var serializer = new JavaScriptSerializer { MaxJsonLength = 4 * 1024 * 1024 };
                 var snapshot = serializer.Deserialize<LauncherSettings>(serializer.Serialize(settings));
                 var monitor = clientMonitor;
-                await Task.Run(() => monitor.Poll(snapshot));
+                await Task.Run(() => {
+                    var watch=System.Diagnostics.Stopwatch.StartNew();monitor.Poll(snapshot);
+                    DevelopmentRecorder.Poll(monitor.Current,watch.Elapsed.TotalMilliseconds);
+                });
                 if (clientMonitorDisposed || closing || IsDisposed) return;
                 clientObservations = monitor.Current;
+                ReportSyncAlerts();
                 clientReport = monitor.Capture(); clientObserverError = monitor.Error;
                 foreach (var change in monitor.Changes) AppendLog(change);
                 RefreshClientStatus(); RefreshHealthTray();
             } catch (Exception error) {
+                DevelopmentRecorder.Write("monitor-error",new {Type=error.GetType().Name,Message=DiagnosticRedactor.Current.Redact(error.Message)});
                 clientObserverError = error.GetType().Name;
                 // A failed observer must never leave a green indicator on screen.
                 foreach (var row in clientObservations.Where(c => c.Measured && !c.ExitedUtc.HasValue)) row.Condition = ClientCondition.MeasurementUnavailable;
@@ -70,34 +76,56 @@ namespace AOLauncher
             }
         }
         IEnumerable<ClientObservation> MeasuredClients => clientObservations.Where(c => c.Measured && !c.ExitedUtc.HasValue);
+        void ReportSyncAlerts()
+        {
+            var notices=new List<string>();
+            long now=System.Diagnostics.Stopwatch.GetTimestamp();
+            foreach(var row in clientObservations) {
+                var movement=row.Pulse?.Movement;
+                if(!MovementTracking.Fresh(row,now) || movement.GuardEventQpc<=0 || now<movement.GuardEventQpc
+                    || now-movement.GuardEventQpc>10*System.Diagnostics.Stopwatch.Frequency)continue;
+                string key=row.Pid+"/"+row.StartTicks;
+                if(syncAlertsSeen.TryGetValue(key,out var seen) && seen>=movement.GuardEventQpc)continue;
+                syncAlertsSeen[key]=movement.GuardEventQpc;
+                DevelopmentRecorder.Write("sync-guard-event",new {row.Pid,row.StartTicks,movement.GuardEvent,movement.GuardEventQpc,movement.GuardDistance,movement.GuardLeader});
+                if(movement.GuardEvent!="Warning" && movement.GuardEvent!="Stopped")continue;
+                string message=string.Format(AOLauncher.Localization.Texts.Get("Movement.Alert"+movement.GuardEvent),row.Name,movement.GuardDistance);
+                AppendLog(message);
+                DevelopmentRecorder.Write("sync-guard-alert",new {row.Pid,row.StartTicks,movement.GuardEvent,movement.GuardEventQpc,movement.GuardDistance,movement.GuardLeader});
+                notices.Add(message);
+            }
+            if(notices.Count==0)return;
+            System.Media.SystemSounds.Exclamation.Play();
+            if(trayIcon!=null) { trayIcon.Visible=true;trayIcon.ShowBalloonTip(10000,"AO Nexus",string.Join("\n",notices),ToolTipIcon.Warning); }
+        }
         bool ClientWarning => MeasuredClients.Any(c => c.Condition == ClientCondition.Delayed || c.Condition == ClientCondition.NoResponse || c.Condition == ClientCondition.MeasurementUnavailable || c.HasCastIssue) || clientObserverError != null && MeasuredClients.Any();
         bool NewClientExit => clientObservations.Any(c => c.ExitedUtc.HasValue && c.ExitedUtc.Value > exitsSeenUtc);
         string ClientSummary()
         {
             var rows = MeasuredClients.ToArray();
             if (rows.Length == 0) {
-                if (NewClientExit) return L("Characters · game closed · view details", "Karakterer · spil lukket · se detaljer");
+                if (NewClientExit) return AOLauncher.Localization.Texts.Get("Text_Characters_game_closed_view_details_88B1F9FBFC7C");
                 if (settings.MonitorClientHealth && clientObservations.Any(c => !c.ExitedUtc.HasValue)) {
                     var live = clientObservations.Where(c => !c.ExitedUtc.HasValue).ToArray();
                     int stopped = live.Count(c => c.Condition == ClientCondition.Unloaded);
                     if (stopped == live.Length)
-                        return L("Characters · monitoring stopped · click for help", "Karakterer · overvågning stoppet · klik for hjælp");
+                        return AOLauncher.Localization.Texts.Get("Text_Characters_monitoring_stopped_click_for_help_5C3C489F106B");
                     if (stopped > 0)
-                        return L("Characters · ", "Karakterer · ") + stopped + L(" monitoring stopped", " overvågning stoppet")
-                            + " · " + (live.Length - stopped) + L(" not measured", " ikke målt");
-                    return L("Characters · monitoring not set up · click for help", "Karakterer · overvågning ikke opsat · klik for hjælp");
+                        return AOLauncher.Localization.Texts.Get("Text_Characters_F0A1A9369C4C") + stopped + AOLauncher.Localization.Texts.Get("Text_monitoring_stopped_58996E24FEC2")
+                            + " · " + (live.Length - stopped) + AOLauncher.Localization.Texts.Get("Text_not_measured_D5D3B63D44E1");
+                    return AOLauncher.Localization.Texts.Get("Text_Characters_monitoring_not_set_up_click_3332C2DB0135");
                 }
                 return null;
             }
             var bad = rows.FirstOrDefault(c => c.Condition == ClientCondition.NoResponse) ?? rows.FirstOrDefault(c => c.Condition == ClientCondition.Delayed)
                 ?? rows.FirstOrDefault(c => c.Condition == ClientCondition.MeasurementUnavailable);
             if (bad != null) return bad.Name + " · " + ClientStatusPresentation.For(bad, clientObserverError).Status;
-            if (clientObserverError != null) return L("Characters · measurement unavailable", "Karakterer · måling utilgængelig");
+            if (clientObserverError != null) return AOLauncher.Localization.Texts.Get("Text_Characters_measurement_unavailable_A5EB9E93CC5D");
             var actionIssue = rows.FirstOrDefault(c => c.HasCastIssue);
-            if (actionIssue != null) return actionIssue.Name + L(" · recent cast issue: falling", " · nyligt kasteproblem: fald");
+            if (actionIssue != null) return actionIssue.Name + AOLauncher.Localization.Texts.Get("Text_recent_cast_issue_falling_13D1DE52141C");
             int healthy = rows.Count(c => c.Condition == ClientCondition.Healthy);
             int unmeasured = clientObservations.Count(c => !c.ExitedUtc.HasValue && !c.Measured);
-            return L("Characters · ", "Karakterer · ") + healthy + "/" + rows.Length + L(" responding", " svarer") + (unmeasured == 0 ? "" : " · " + unmeasured + L(" not measured", " ikke målt"));
+            return AOLauncher.Localization.Texts.Get("Text_Characters_F0A1A9369C4C") + healthy + "/" + rows.Length + AOLauncher.Localization.Texts.Get("Text_responding_327A70FCA581") + (unmeasured == 0 ? "" : " · " + unmeasured + AOLauncher.Localization.Texts.Get("Text_not_measured_D5D3B63D44E1"));
         }
         internal static string LimitTrayText(string text)
         {
@@ -108,8 +136,8 @@ namespace AOLauncher
         void RefreshClientStatus()
         {
             if (clientStatus == null) return;
-            clientStatus.AccessibleName = L("Character status", "Karakterstatus");
-            if (trayClientsItem != null) trayClientsItem.Text = L("Characters · status and help", "Karakterer · status og hjælp");
+            clientStatus.AccessibleName = AOLauncher.Localization.Texts.Get("Text_Character_status_3826BDC7320F");
+            if (trayClientsItem != null) trayClientsItem.Text = AOLauncher.Localization.Texts.Get("Text_Characters_status_and_help_E5F368A05B53");
             string summary = ClientSummary();
             clientStatus.Visible = summary != null;
             if (summary != null) clientStatus.Text = summary;
@@ -129,28 +157,29 @@ namespace AOLauncher
                     .Append(" · exit ").Append(row.ExitCode?.ToString() ?? "?");
                 else if (row.Measured && row.Sample != null) {
                     var s = row.Sample;
-                    result.AppendFormat(L(" · IPC {0} ms · {1} timeouts · {2} late", " · IPC {0} ms · {1} timeouts · {2} sene svar"), s.ReplyMs?.ToString("F1") ?? "?", s.Timeouts?.ToString() ?? "?", s.Late?.ToString() ?? "?");
-                    result.AppendFormat("\r\n  {0}: {1} ms · max/10s: {2} ms · max: {3} ms", L("Update gap at snapshot", "Opdateringspause ved måling"),
+                    result.AppendFormat(AOLauncher.Localization.Texts.Get("Text_IPC_0_ms_1_timeouts_2_DEF297CC16D2"), s.ReplyMs?.ToString("F1") ?? "?", s.Timeouts?.ToString() ?? "?", s.Late?.ToString() ?? "?");
+                    result.AppendFormat("\r\n  {0}: {1} ms · max/10s: {2} ms · max: {3} ms", AOLauncher.Localization.Texts.Get("Text_Update_gap_at_snapshot_38F20EF748C1"),
                         s.ObservedUpdateGapMs?.ToString("F0") ?? "?", s.RecentMaxGapMs?.ToString("F1") ?? "?", s.MaxGapMs?.ToString("F1") ?? "?");
-                    result.AppendFormat(L("\r\n  Snapshot age: {0} ms · helper age: {1} ms · reply age: {2} ms", "\r\n  Målingens alder: {0} ms · hjælperens alder: {1} ms · svarets alder: {2} ms"),
+                    result.AppendFormat(AOLauncher.Localization.Texts.Get("Text_Snapshot_age_0_ms_helper_age_F1A2AEEAEABA"),
                         s.PulseAgeMs?.ToString("F0") ?? "?", s.HelperAgeMs?.ToString("F0") ?? "?", s.ReplyAgeMs?.ToString("F0") ?? "?");
                     if (s.Reason != null) result.Append("\r\n  ").Append(s.Reason);
-                    if (s.Minimized) result.Append(L(" · minimized", " · minimeret"));
-                    if (s.Zoning == true) result.Append(L(" · zoning (last observed)", " · zoning (senest observeret)"));
+                    if (s.Minimized) result.Append(AOLauncher.Localization.Texts.Get("Text_minimized_29BCD54A1780"));
+                    if (s.Zoning == true) result.Append(AOLauncher.Localization.Texts.Get("Text_zoning_last_observed_AE61CE5C663B"));
                 }
                 result.AppendLine();
             }
-            if (result.Length == 0) result.AppendLine(L("No Nexus-managed clients detected.", "Ingen Nexus-styrede klienter fundet."));
-            if (clientObserverError != null) result.AppendLine(L("Measurement: ", "Måling: ") + clientObserverError);
+            if (result.Length == 0) result.AppendLine(AOLauncher.Localization.Texts.Get("Text_No_Nexus_managed_clients_detected_7EACFFAFAB29"));
+            if (clientObserverError != null) result.AppendLine(AOLauncher.Localization.Texts.Get("Text_Measurement_830369828612") + clientObserverError);
             return result.ToString();
         }
         void ShowClientStatus()
         {
             ShowLauncher(); exitsSeenUtc = DateTime.UtcNow; RefreshClientStatus(); RefreshHealthTray();
-            using (var dialog = new ClientStatusDialog(() => ClientDetails(), () => clientReport, () => clientObservations.ToArray(), () => clientObserverError)) dialog.ShowDialog(this);
+            using (var dialog = new ClientStatusDialog(() => ClientDetails(), () => clientReport, () => clientObservations.ToArray(), () => clientObserverError) { ActivityLog = () => activityLog.ToString(), AppState = AppStateSnapshot }) dialog.ShowDialog(this);
         }
         void DisposeClientMonitor()
         {
+            if(!smoke)DevelopmentRecorder.Stop();
             clientMonitorDisposed = true; clientMonitorTimer.Stop(); clientMonitorTimer.Dispose(); clientTooltip.Dispose();
             if (!clientPollBusy) { clientMonitor?.Dispose(); clientMonitor = null; }
         }
@@ -174,66 +203,64 @@ namespace AOLauncher
             var result = new ClientStatusPresentation { Color = Theme.Muted };
             switch (condition) {
                 case ClientCondition.Healthy:
-                    result.Status = L("Responding", "Svarer");
-                    result.Explanation = L("The character's game updates and monitoring replies are arriving normally.", "Karakterens spilopdateringer og overvågningssvar kommer som forventet.");
-                    result.NextStep = L("No action needed.", "Du behøver ikke gøre noget.");
+                    result.Status = AOLauncher.Localization.Texts.Get("Text_Responding_35E6019771E7");
+                    result.Explanation = AOLauncher.Localization.Texts.Get("Text_The_character_s_game_updates_and_E58D4B7718AE");
+                    result.NextStep = AOLauncher.Localization.Texts.Get("Text_No_action_needed_72E437159AC3");
                     result.Color = Theme.Accent;
                     break;
                 case ClientCondition.Delayed:
-                    result.Status = L("Delayed", "Forsinket");
-                    result.Explanation = L("Recent game updates or monitoring replies took longer than expected.", "Spilopdateringer eller overvågningssvar tog for nylig længere tid end forventet.");
-                    result.NextStep = L("Check the game window. If the delay continues, save a diagnostic ZIP for help.", "Tjek spilvinduet. Hvis forsinkelsen fortsætter, kan du gemme en diagnose-ZIP til hjælp.");
+                    result.Status = AOLauncher.Localization.Texts.Get("Text_Delayed_17C12ABE1A14");
+                    result.Explanation = AOLauncher.Localization.Texts.Get("Text_Recent_game_updates_or_monitoring_replies_E0C22D51B690");
+                    result.NextStep = AOLauncher.Localization.Texts.Get("Text_Check_the_game_window_If_the_329DF7FA7AC5");
                     result.Color = Theme.Warning;
                     break;
                 case ClientCondition.NoResponse:
-                    result.Status = L("No response", "Intet svar");
-                    result.Explanation = L("Game updates or monitoring replies have stopped arriving. This does not confirm a crash.", "Spilopdateringer eller overvågningssvar er holdt op med at komme. Det bekræfter ikke et crash.");
-                    result.NextStep = L("Check the game window. Allow zoning to finish; if the game stays stuck, save a diagnostic ZIP.", "Tjek spilvinduet. Vent på at zoning er færdig; gem en diagnose-ZIP, hvis spillet bliver ved med at sidde fast.");
+                    result.Status = AOLauncher.Localization.Texts.Get("Text_No_response_1C26BD324EDD");
+                    result.Explanation = AOLauncher.Localization.Texts.Get("Text_Game_updates_or_monitoring_replies_have_53EB7F285648");
+                    result.NextStep = AOLauncher.Localization.Texts.Get("Text_Check_the_game_window_Allow_zoning_F8E86AA85EAD");
                     result.Color = Theme.Warning;
                     break;
                 case ClientCondition.MeasurementUnavailable:
-                    result.Status = L("Measurement unavailable", "Måling utilgængelig");
-                    result.Explanation = L("Nexus cannot get current monitoring data. The game may still be working normally.", "Nexus kan ikke hente aktuelle målinger. Spillet kan stadig fungere normalt.");
-                    result.NextStep = L("Check the game window, then check that Nexus Health Monitor is enabled in AOSharp. Open setup help below.", "Tjek spilvinduet og derefter, at Nexus Health Monitor er aktiveret i AOSharp. Åbn opsætningshjælpen nedenfor.");
+                    result.Status = AOLauncher.Localization.Texts.Get("Text_Measurement_unavailable_20443020E9B2");
+                    result.Explanation = AOLauncher.Localization.Texts.Get("Text_Nexus_cannot_get_current_monitoring_data_978FED481A2F");
+                    result.NextStep = AOLauncher.Localization.Texts.Get("Text_Check_the_game_window_then_check_0D3492F76E1D");
                     result.Color = Theme.Warning;
                     break;
                 case ClientCondition.Waiting:
-                    result.Status = L("Checking…", "Kontrollerer…");
-                    result.Explanation = L("Monitoring has started and is waiting for its first complete measurements.", "Overvågningen er startet og venter på de første komplette målinger.");
-                    result.NextStep = L("Wait a few seconds. The status updates automatically.", "Vent et par sekunder. Status opdateres automatisk.");
+                    result.Status = AOLauncher.Localization.Texts.Get("Text_Checking_B5725BB70893");
+                    result.Explanation = AOLauncher.Localization.Texts.Get("Text_Monitoring_has_started_and_is_waiting_C3AA70434161");
+                    result.NextStep = AOLauncher.Localization.Texts.Get("Text_Wait_a_few_seconds_The_status_15B2AC68DE2F");
                     break;
                 case ClientCondition.Unloaded:
-                    result.Status = L("Monitoring stopped", "Overvågning stoppet");
-                    result.Explanation = L("The monitoring plugin was unloaded. This does not mean the game has closed.", "Overvågnings-pluginet blev fjernet fra klienten. Det betyder ikke, at spillet er lukket.");
-                    result.NextStep = L("Enable Nexus Health Monitor in this character's AOSharp profile when you want measurements again.", "Aktivér Nexus Health Monitor i karakterens AOSharp-profil, når du vil have målinger igen.");
+                    result.Status = AOLauncher.Localization.Texts.Get("Text_Monitoring_stopped_3616F7F5EF23");
+                    result.Explanation = AOLauncher.Localization.Texts.Get("Text_The_monitoring_plugin_was_unloaded_This_D823F8EC782D");
+                    result.NextStep = AOLauncher.Localization.Texts.Get("Text_Enable_Nexus_Health_Monitor_in_this_B266DA419FDD");
                     break;
                 case ClientCondition.Exited:
-                    result.Status = L("Game closed", "Spil lukket");
-                    result.Explanation = L("This game process has ended. It may have been a normal logout or an unexpected exit.", "Denne spilproces er afsluttet. Det kan være normalt logout eller en uventet afslutning.");
-                    result.NextStep = L("If this was unexpected, save a diagnostic ZIP before launching again.", "Hvis det var uventet, kan du gemme en diagnose-ZIP, før du starter igen.");
+                    result.Status = AOLauncher.Localization.Texts.Get("Text_Game_closed_56CECD673BDA");
+                    result.Explanation = AOLauncher.Localization.Texts.Get("Text_This_game_process_has_ended_It_668111C55FF5");
+                    result.NextStep = AOLauncher.Localization.Texts.Get("Text_If_this_was_unexpected_save_a_5F5852AD2C8F");
                     break;
                 default:
-                    result.Status = L("Not measured", "Ikke målt");
-                    result.Explanation = L("Nexus has found the game window, but no monitoring plugin measurements are available.", "Nexus har fundet spilvinduet, men der er ingen målinger fra overvågnings-pluginet.");
-                    result.NextStep = L("For optional monitoring, open setup help below and enable Nexus Health Monitor for this character in AOSharp.", "Åbn opsætningshjælpen nedenfor og aktivér Nexus Health Monitor for karakteren i AOSharp, hvis du ønsker overvågning.");
+                    result.Status = AOLauncher.Localization.Texts.Get("Text_Not_measured_61E24E1E3CEB");
+                    result.Explanation = AOLauncher.Localization.Texts.Get("Text_Nexus_has_found_the_game_window_466C91B6A9A2");
+                    result.NextStep = AOLauncher.Localization.Texts.Get("Text_For_optional_monitoring_open_setup_help_20662E43FBAA");
                     break;
             }
             if (!row.ExitedUtc.HasValue && row.Sample?.Zoning == true)
-                result.Explanation += L(" The last measurement showed zoning in progress.", " Den seneste måling viste igangværende zoning.");
+                result.Explanation += AOLauncher.Localization.Texts.Get("Text_The_last_measurement_showed_zoning_in_D059DC5228B7");
             if (condition == ClientCondition.Unmeasured && row.SnapshotStatus != null) {
                 result.Explanation = ClientMonitor.SnapshotStatusText(row.SnapshotStatus);
                 if (row.SnapshotStatus == "MonitoringDisabled")
-                    result.NextStep = L("Enable responsiveness monitoring in Settings → Accounts, then enable Nexus Health Monitor in this character's AOSharp profile.",
-                        "Aktivér overvågning af svartider i Indstillinger → Konti, og aktivér derefter Nexus Health Monitor i karakterens AOSharp-profil.");
+                    result.NextStep = AOLauncher.Localization.Texts.Get("Text_Enable_responsiveness_monitoring_in_Settings_Accounts_5A494729D72A");
             }
-            result.ActionStatus = row.HasCastIssue ? L("Recent cast issue: falling", "Nyligt kasteproblem: fald") : "—";
+            result.ActionStatus = row.HasCastIssue ? AOLauncher.Localization.Texts.Get("Text_Recent_cast_issue_falling_C3EE52C0C006") : "—";
             if (row.HasCastIssue) {
                 result.Explanation += "\r\n" + (row.CastIssueConfirmed
-                    ? L("The game reported that a nanoprogram could not be executed while falling.", "Spillet rapporterede, at et nanoprogram ikke kunne udføres under fald.")
-                    : L("A nano cast was attempted while the game reported the character as falling. The cast result was not confirmed.", "Et nanoprogram blev forsøgt, mens spillet registrerede karakteren som faldende. Resultatet er ikke bekræftet."));
-                result.Explanation += L(" Reports in this burst: ", " Rapporter i denne serie: ") + row.CastIssueCount + ".";
-                string actionHelp = L("Let the character land, then retry the nano. If they look grounded, try moving to a clear spot first. Check the result in game. Alerts fade after 30 seconds without a new report; fading does not mean the cast succeeded.",
-                    "Lad karakteren lande, og prøv nanoprogrammet igen. Hvis den står på jorden, så prøv først at flytte til et frit sted. Tjek resultatet i spillet. Advarsler udløber efter 30 sekunder uden en ny rapport; det betyder ikke, at nanoprogrammet lykkedes.");
+                    ? AOLauncher.Localization.Texts.Get("Text_The_game_reported_that_a_nanoprogram_BDA2D1110733")
+                    : AOLauncher.Localization.Texts.Get("Text_A_nano_cast_was_attempted_while_821B0FC8F965"));
+                result.Explanation += AOLauncher.Localization.Texts.Get("Text_Reports_in_this_burst_CE1BEA2A540D") + row.CastIssueCount + ".";
+                string actionHelp = AOLauncher.Localization.Texts.Get("Text_Let_the_character_land_then_retry_949F8B3BB5E8");
                 result.NextStep = condition == ClientCondition.Healthy ? actionHelp : result.NextStep + "\r\n" + actionHelp;
             }
             return result;
@@ -243,11 +270,15 @@ namespace AOLauncher
     internal sealed class ClientStatusDialog : EditorDialog
     {
         readonly Timer refresh = new Timer { Interval = 1000 };
+        // This session's activity log, added (anonymised) to the diagnostic ZIP.
+        internal Func<string> ActivityLog { private get; set; }
+        // How Nexus is set up right now: { app-state.txt, settings-snapshot.json }.
+        internal Func<string[]> AppState { private get; set; }
         internal ClientStatusDialog(Func<string> details, Func<string> snapshot, Func<ClientObservation[]> observations)
             : this(details, snapshot, observations, () => null) { }
 
         internal ClientStatusDialog(Func<string> details, Func<string> snapshot, Func<ClientObservation[]> observations, Func<string> observerError)
-            : base(L("Character status and help", "Karakterstatus og hjælp"), 650)
+            : base(AOLauncher.Localization.Texts.Get("Text_Character_status_and_help_C134ED828E98"), 650)
         {
             ClientSize = new Size(720, 600);
             MinimumSize = new Size(600, 520);
@@ -258,16 +289,15 @@ namespace AOLauncher
             ErrorLabel.MinimumSize = new Size(0, 24);
             ErrorLabel.Visible = false;
             ErrorLabel.TextChanged += (sender, args) => ErrorLabel.Visible = !string.IsNullOrWhiteSpace(ErrorLabel.Text);
-            AddWrappedNote(L("See which characters are responding and what to do next. Select a character for help. These are local game measurements, not server ping.",
-                "Se hvilke karakterer der svarer, og hvad du kan gøre. Vælg en karakter for hjælp. Det er lokale spilmålinger, ikke serverping."), "clientStatusGuide");
+            AddWrappedNote(AOLauncher.Localization.Texts.Get("Text_See_which_characters_are_responding_and_6442A358D311"), "clientStatusGuide");
             var roster = new DataGridView { Name = "clientStatusRoster", Dock = DockStyle.Top, Height = 210,
                 ReadOnly = true, AllowUserToAddRows = false, AllowUserToDeleteRows = false, AllowUserToResizeRows = false,
                 RowHeadersVisible = false, MultiSelect = false, SelectionMode = DataGridViewSelectionMode.FullRowSelect,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill, ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize,
-                BackgroundColor = Theme.Surface, BorderStyle = BorderStyle.None, AccessibleName = L("Character monitoring status", "Karakterernes overvågningsstatus") };
-            roster.Columns.Add(new DataGridViewTextBoxColumn { Name = "character", HeaderText = L("Character", "Karakter"), FillWeight = 30, SortMode = DataGridViewColumnSortMode.NotSortable });
-            roster.Columns.Add(new DataGridViewTextBoxColumn { Name = "status", HeaderText = L("Status", "Status"), FillWeight = 34, SortMode = DataGridViewColumnSortMode.NotSortable });
-            roster.Columns.Add(new DataGridViewTextBoxColumn { Name = "action", HeaderText = L("Recent action issue", "Nyligt handlingsproblem"), FillWeight = 36, SortMode = DataGridViewColumnSortMode.NotSortable });
+                BackgroundColor = Theme.Surface, BorderStyle = BorderStyle.None, AccessibleName = AOLauncher.Localization.Texts.Get("Text_Character_monitoring_status_10981055AB18") };
+            roster.Columns.Add(new DataGridViewTextBoxColumn { Name = "character", HeaderText = AOLauncher.Localization.Texts.Get("Text_Character_C8A1DC62F40D"), FillWeight = 30, SortMode = DataGridViewColumnSortMode.NotSortable });
+            roster.Columns.Add(new DataGridViewTextBoxColumn { Name = "status", HeaderText = AOLauncher.Localization.Texts.Get("Text_Status_7C6F7141D85E"), FillWeight = 34, SortMode = DataGridViewColumnSortMode.NotSortable });
+            roster.Columns.Add(new DataGridViewTextBoxColumn { Name = "action", HeaderText = AOLauncher.Localization.Texts.Get("Text_Recent_action_issue_C05852337CE9"), FillWeight = 36, SortMode = DataGridViewColumnSortMode.NotSortable });
             roster.RowTemplate.Height = 32;
             roster.Margin = new Padding(0, 0, 0, 8);
             Fields.Controls.Add(SlimScrolling.Wrap(roster));
@@ -282,25 +312,32 @@ namespace AOLauncher
                 string previousExplanation = explanation.Text, previousNextStep = nextStep.Text;
                 int index = roster.CurrentCell?.RowIndex ?? -1;
                 if (index < 0 || index >= displayed.Length) {
-                    explanation.Text = L("No Nexus-managed game clients are currently listed.", "Der er ingen Nexus-styrede spilklienter på listen.");
-                    nextStep.Text = L("Launch a character through Nexus. Enable monitoring in Settings → Accounts if you want responsiveness measurements.", "Start en karakter gennem Nexus. Aktivér overvågning i Indstillinger → Konti, hvis du ønsker målinger af svartider.");
+                    explanation.Text = AOLauncher.Localization.Texts.Get("Text_No_Nexus_managed_game_clients_are_6ADDF6EB4573");
+                    nextStep.Text = AOLauncher.Localization.Texts.Get("Text_Launch_a_character_through_Nexus_Enable_BDE638A9AAE5");
                 } else {
                     var state = ClientStatusPresentation.For(displayed[index], observerError());
                     explanation.Text = displayed[index].Name + " · " + state.Status + "\r\n" + state.Explanation;
-                    nextStep.Text = L("Next step: ", "Næste skridt: ") + state.NextStep;
+                    nextStep.Text = AOLauncher.Localization.Texts.Get("Text_Next_step_445F0D9740CC") + state.NextStep;
                 }
                 if (explanation.Text != previousExplanation || nextStep.Text != previousNextStep) QueueContentFit();
             };
             roster.CurrentCellChanged += (sender, args) => showSelection();
 
-            var technicalToggle = Theme.Button(L("Show technical details", "Vis tekniske detaljer"));
+            var technicalToggle = Theme.Button(AOLauncher.Localization.Texts.Get("Text_Show_technical_details_3B6D42F1CC8C"));
             technicalToggle.Name = "clientTechnicalToggle";
             var helpActions = new FlowLayoutPanel { Name = "clientHelpActions", Dock = DockStyle.Top,
                 AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, WrapContents = true,
                 Margin = new Padding(0, 4, 0, 4) };
             technicalToggle.Margin = new Padding(0, 0, 8, 8);
             helpActions.Controls.Add(technicalToggle);
+            var recording=new NexusCheckBox {Name="developmentRecording",Text=AOLauncher.Localization.Texts.Get("Text_Record_diagnostics_B08CD96A6D9C"),AutoSize=false,Size=new Size(180,28),Checked=DevelopmentRecorder.Enabled,Margin=new Padding(8,0,0,8)};
+            recording.CheckedChanged+=(sender,args)=> {
+                try {DevelopmentRecorder.SetEnabled(recording.Checked);}
+                catch(Exception error) {ErrorLabel.Text=error.Message;}
+            };
+            helpActions.Controls.Add(recording);
             Fields.Controls.Add(helpActions);
+            var recordingStatus=AddWrappedNote("", "developmentRecordingStatus");
             var text = new NexusTextBox { Name = "clientMeasurements", ReadOnly = true, Multiline = true, Height = 210, Dock = DockStyle.Top,
                 ScrollBars = ScrollBars.Vertical, BackColor = Theme.Surface, ForeColor = Theme.Foreground };
             var technicalHost = SlimScrolling.Wrap(text);
@@ -309,18 +346,17 @@ namespace AOLauncher
             technicalToggle.Click += (sender, args) => {
                 FitContentOnOpen = false;
                 technicalHost.Visible = !technicalHost.Visible;
-                technicalToggle.Text = technicalHost.Visible ? L("Hide technical details", "Skjul tekniske detaljer") : L("Show technical details", "Vis tekniske detaljer");
+                technicalToggle.Text = technicalHost.Visible ? AOLauncher.Localization.Texts.Get("Text_Hide_technical_details_989661EBFA55") : AOLauncher.Localization.Texts.Get("Text_Show_technical_details_3B6D42F1CC8C");
                 Fields.PerformLayout();
                 QueueContentFit();
             };
-            var setupToggle = Theme.Button(L("Monitoring setup help", "Hjælp til opsætning af overvågning"));
+            var setupToggle = Theme.Button(AOLauncher.Localization.Texts.Get("Text_Monitoring_setup_help_F1EAE046BDF7"));
             setupToggle.Name = "clientSetupToggle";
             setupToggle.Margin = new Padding(0, 0, 8, 8);
             helpActions.Controls.Add(setupToggle);
-            var setupHelp = AddWrappedNote(L("Monitoring is optional and requires AOSharp. In AOSharp, choose Add Plugin → NexusHealthPlugin.dll. Select each character, tick Nexus Health Monitor alongside your usual plugins, then Inject. If already injected, Eject first when it is safe to restart that character's plugins. Keep NexusTelemetry.Protocol.dll next to the plugin and keep Nexus running.",
-                "Overvågning er valgfri og kræver AOSharp. Vælg Add Plugin → NexusHealthPlugin.dll i AOSharp. Vælg hver karakter, sæt flueben ved Nexus Health Monitor sammen med dine normale plugins, og tryk Inject. Hvis allerede indlæst: brug Eject først, når det er sikkert at genstarte karakterens plugins. Behold NexusTelemetry.Protocol.dll ved siden af pluginet og lad Nexus køre."), "measurementHelp");
+            var setupHelp = AddWrappedNote(AOLauncher.Localization.Texts.Get("Text_Monitoring_is_optional_and_requires_AO_14BCF8398723"), "measurementHelp");
             setupHelp.Visible = false;
-            var folder = Theme.Button(L("Open measurement plugin folder", "Åbn mappen med måle-plugin"));
+            var folder = Theme.Button(AOLauncher.Localization.Texts.Get("Text_Open_measurement_plugin_folder_444C30164A07"));
             folder.Name = "clientPluginFolder";
             folder.Margin = new Padding(0, 0, 0, 8);
             folder.Visible = false;
@@ -330,7 +366,7 @@ namespace AOLauncher
                 FitContentOnOpen = false;
                 setupHelp.Visible = !setupHelp.Visible;
                 folder.Visible = setupHelp.Visible;
-                setupToggle.Text = setupHelp.Visible ? L("Hide monitoring setup help", "Skjul hjælp til opsætning") : L("Monitoring setup help", "Hjælp til opsætning af overvågning");
+                setupToggle.Text = setupHelp.Visible ? AOLauncher.Localization.Texts.Get("Text_Hide_monitoring_setup_help_40638619D4D9") : AOLauncher.Localization.Texts.Get("Text_Monitoring_setup_help_F1EAE046BDF7");
                 Fields.PerformLayout();
                 QueueContentFit();
             };
@@ -360,27 +396,34 @@ namespace AOLauncher
                 } finally { updating = false; }
                 showSelection();
             };
-            refresh.Tick += (sender, args) => update(); Shown += (sender, args) => { update(); refresh.Start(); };
-            AddWrappedNote(L("Need help? Save a diagnostic ZIP with recent measurements and available exit reports. Names are replaced by aliases. Nothing is uploaded.",
-                "Brug for hjælp? Gem en diagnose-ZIP med de seneste målinger og tilgængelige afslutningsrapporter. Navne erstattes af aliaser. Intet uploades."), "reportPrivacy");
-            SaveButton.Text = L("Save diagnostic ZIP…", "Gem diagnose-ZIP…");
+            Action updateRecording=()=> {
+                recordingStatus.Text=DevelopmentRecorder.Enabled
+                    ? (DevelopmentRecorder.Error==null?AOLauncher.Localization.Texts.Get("Text_Recording_diagnostics_locally_E651077DB60A"):AOLauncher.Localization.Texts.Get("Text_Recording_failed_3BFE84FAFC96")+DevelopmentRecorder.Error)
+                    : AOLauncher.Localization.Texts.Get("Text_Diagnostic_recording_is_off_F7EAA9741DE4");
+            };
+            refresh.Tick += (sender, args) => {update();updateRecording();}; Shown += (sender, args) => { update();updateRecording();refresh.Start(); };
+            AddWrappedNote(AOLauncher.Localization.Texts.Get("Text_Need_help_Save_a_diagnostic_ZIP_643B81AD8C9D"), "reportPrivacy");
+            SaveButton.Text = AOLauncher.Localization.Texts.Get("Text_Save_diagnostic_ZIP_61E8BC323A2D");
             SaveButton.Click += async (sender, args) => {
                 using (var save = new SaveFileDialog { Filter = "ZIP (*.zip)|*.zip", FileName = "AO-Nexus-client-report-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".zip", OverwritePrompt = true }) {
                     if (save.ShowDialog(this) != DialogResult.OK) return;
                     string report = snapshot();
+                    string log = ActivityLog?.Invoke();
+                    string[] state = null;
+                    try { state = AppState?.Invoke(); } catch (Exception e) { state = new[] { "The app state could not be collected: " + e.Message, null }; }
                     SaveButton.Enabled = false;
                     try {
                         string temporary = save.FileName + "." + Guid.NewGuid().ToString("N") + ".tmp";
                         try {
-                            await Task.Run(() => ClientReport.Export(temporary, report, null));
+                            await Task.Run(() => ClientReport.Export(temporary, report, null, null, log, state?[0], state?.Length > 1 ? state[1] : null));
                             if (File.Exists(save.FileName)) File.Replace(temporary, save.FileName, null); else File.Move(temporary, save.FileName);
                         } finally { if (File.Exists(temporary)) File.Delete(temporary); }
-                        ErrorLabel.Text = L("ZIP saved. Review it before sharing.", "ZIP gemt. Gennemse den før deling.");
+                        ErrorLabel.Text = AOLauncher.Localization.Texts.Get("Text_ZIP_saved_Review_it_before_sharing_67656814773C");
                     } catch (Exception e) { ErrorLabel.Text = e.Message; }
                     finally { if (!IsDisposed) SaveButton.Enabled = true; }
                 }
             };
-            CancelAction.Text = L("Close", "Luk"); CancelAction.Click += (sender, args) => Close();
+            CancelAction.Text = AOLauncher.Localization.Texts.Get("Text_Close_B182D0987175"); CancelAction.Click += (sender, args) => Close();
             AcceptButton = CancelAction;
         }
         protected override void Dispose(bool disposing) { if (disposing) refresh.Dispose(); base.Dispose(disposing); }

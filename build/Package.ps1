@@ -1,9 +1,12 @@
-param([string]$ExecutablePath)
+param([string]$ExecutablePath, [string]$DefenderRuntimeReview)
 $ErrorActionPreference = 'Stop'
 $projectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $distRoot = Join-Path $projectRoot 'dist'
 # A tested staged build can be packaged while Windows locks the installed EXE.
 $executable = if ($ExecutablePath) { [IO.Path]::GetFullPath($ExecutablePath) } else { Join-Path $distRoot 'AONexus.exe' }
+& (Join-Path $PSScriptRoot 'Verify-DefenderRelease.ps1') -ArtifactPath $executable
+. (Join-Path $PSScriptRoot 'DefenderRelease.Policy.ps1')
+Assert-DefenderRuntimeReview $DefenderRuntimeReview (Get-FileHash -LiteralPath $executable -Algorithm SHA256).Hash
 & (Join-Path $PSScriptRoot 'Build-Payload.ps1') -ValidateOnly -VerifyExecutable $executable
 & (Join-Path $env:WINDIR 'SysWOW64\WindowsPowerShell\v1.0\powershell.exe') -NoProfile -ExecutionPolicy Bypass -File (Join-Path $projectRoot 'tests\Verify-EmbeddedMonitoring.ps1') -AssemblyPath $executable
 if ($LASTEXITCODE -ne 0) { throw 'The release must include a verified monitoring companion for single-file upgrades.' }
@@ -49,6 +52,8 @@ try {
     }
 } finally { $reader.Dispose() }
 $destination = Join-Path $projectRoot 'AO-Nexus-Luckyspawn.zip'
+Assert-DefenderRuntimeReview $DefenderRuntimeReview $hashes['AONexus.exe']
+& (Join-Path $PSScriptRoot 'Verify-DefenderRelease.ps1') -ArtifactPath $temporary
 Move-Item -LiteralPath $temporary -Destination $destination -Force
 $archiveHash = (Get-FileHash -LiteralPath $destination -Algorithm SHA256).Hash.ToLowerInvariant()
 [IO.File]::WriteAllText($destination + '.sha256.txt', $archiveHash + '  ' + [IO.Path]::GetFileName($destination) + "`r`n", [Text.Encoding]::ASCII)

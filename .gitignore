@@ -22,6 +22,8 @@
 *.zip
 *.sha256.txt
 /dist/SHA256SUMS.txt
+/dist/components/
+/dist/local-only/
 
 # Local IDE files and temporary output.
 .vs/
@@ -29,6 +31,7 @@
 *.user
 *.suo
 *.tmp
+*.exe.bak
 *.log
 Thumbs.db
 Desktop.ini
@@ -47,3 +50,8 @@ Passwords/
 *.pfx
 *.p12
 *.key
+TestResults/
+
+# Local rollback copies and an out-of-scope renderer prototype.
+/dist/Previous/
+/tools/portrait-prototype/

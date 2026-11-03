@@ -1,0 +1,70 @@
+{
+  "schema": "AONexus.ServerRules",
+  "schemaVersion": 1,
+  "revision": 1,
+  "updated": "2026-10-27",
+  "notes": "Login servers, connection limits and health-check endpoints used by AO Nexus. Raise 'revision' for every change; Nexus only applies a higher revision. Servers the user has edited are left alone, and address changes always ask before they apply.",
+  "defaultServerId": "rebirth",
+  "servers": [
+    {
+      "id": "rebirth",
+      "name": "AO Rebirth - Live",
+      "kind": "rebirth",
+      "host": "2.24.96.30",
+      "port": 7500,
+      "maxAccountsOnline": 0,
+      "maxCharactersOnlinePerAccount": 0,
+      "characterSlots": 6,
+      "health": {
+        "zone": { "port": 7501 },
+        "chat": { "port": 7012 }
+      }
+    },
+    {
+      "id": "live",
+      "name": "Funcom AO - Rubi-Ka",
+      "kind": "live",
+      "host": "37.18.192.41",
+      "port": 7505,
+      "maxAccountsOnline": 0,
+      "maxCharactersOnlinePerAccount": 1,
+      "characterSlots": 0,
+      "health": {
+        "chat": { "host": "chat.d1.funcom.com", "port": 7105 }
+      }
+    },
+    {
+      "id": "live-2019",
+      "name": "Funcom AO - Rubi-Ka 2019",
+      "kind": "live",
+      "host": "37.18.192.41",
+      "port": 7506,
+      "maxAccountsOnline": 0,
+      "maxCharactersOnlinePerAccount": 1,
+      "characterSlots": 0,
+      "health": {
+        "chat": { "host": "chat.d1.funcom.com", "port": 7106 }
+      }
+    },
+    {
+      "id": "prk",
+      "name": "Project Rubi-Ka - Ithaca",
+      "kind": "prk",
+      "host": "5.161.243.214",
+      "port": 7000,
+      "maxAccountsOnline": 2,
+      "maxCharactersOnlinePerAccount": 1,
+      "characterSlots": 0
+    },
+    {
+      "id": "rebirth-local",
+      "name": "AO Rebirth — Local development (localhost)",
+      "kind": "custom",
+      "host": "127.0.0.1",
+      "port": 7500,
+      "maxAccountsOnline": 0,
+      "maxCharactersOnlinePerAccount": 0,
+      "characterSlots": 0
+    }
+  ]
+}

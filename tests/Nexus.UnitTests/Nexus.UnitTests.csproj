@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <PlatformTarget>x86</PlatformTarget>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+    <LangVersion>7.3</LangVersion>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+  <!-- Compile the production sources, without optional payloads or a game install.
+       No MainForm instance, native hook, network login or plugin is executed. -->
+  <ItemGroup>
+    <EmbeddedResource Include="../../src/Launcher/Assets/Launcher.ico" LogicalName="AOLauncher.Assets.Launcher.ico" />
+    <EmbeddedResource Include="../../src/Common/Resources/Strings.en.xml"><LogicalName>AOLauncher.Strings.en.xml</LogicalName><WithCulture>false</WithCulture></EmbeddedResource>
+    <EmbeddedResource Include="../../src/Common/Resources/Strings.da.xml"><LogicalName>AOLauncher.Strings.da.xml</LogicalName><WithCulture>false</WithCulture></EmbeddedResource>
+    <ProjectReference Include="../../src/Core/Nexus.Core.csproj" />
+    <Compile Include="../../src/Launcher/*.cs" />
+    <Compile Include="../../src/Common/*.cs" />
+    <Compile Include="../../src/Shared/*.cs" />
+    <Compile Include="../../src/Backend/NexusEngine/FastStartup.cs" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Security" />
+    <EmbeddedResource Include="../../config/servers.json" LogicalName="AOLauncher.servers.json" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+    <PackageReference Include="MSTest.TestFramework" Version="4.5.2" />
+    <PackageReference Include="MSTest.TestAdapter" Version="4.5.2" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net48" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+</Project>

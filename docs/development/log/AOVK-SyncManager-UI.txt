@@ -1,0 +1,93 @@
+﻿SYNC MANAGER UI PREVIEW — LOCAL TEST 14
+30 October 2026
+
+Enable
+Close clients using the game folder. In Nexus Settings > Graphics, select
+that folder, enable Use AO-VK and Modern plugin windows — SyncManager preview,
+then save. Start a character through Nexus with Z SyncManager and Nexus
+Shortcuts loaded. /syncmanager opens the modern window. Other plugin windows
+retain their existing appearance. The preview is off by default.
+
+The window has grouped settings, search, tooltips, channel and update interval,
+Save settings, and Use classic UI. Changes use the original SyncManager model;
+no second automation engine runs. Channel and interval use its existing handlers.
+Escape closes the panel. Game input is paused while the panel is open and the
+game has focus. Zoning closes it. Focus loss releases input and keeps the panel
+open; returning clears held inputs before interaction resumes. A stale bridge
+heartbeat releases input after 2 s. A cursor is drawn above the overlay controls.
+Test 14 additionally treats focus on an AO child window as game focus, maps
+client mouse coordinates to render dimensions, and retains open state when
+the graphics device is recreated. Test 13 was installed during the reported
+failure, so the earlier focus/cursor fix was insufficient on the live client.
+
+Updating from tests 11/12/13
+Close the game, select its folder in Graphics and Save. Nexus recognizes the
+previous pinned UI renderer/repair pair and offers the matched replacement;
+original backups and graphics choices are preserved. Cancel changes no files.
+The prior pair remains supported until Save. Test fixtures retain the earlier
+payloads as runtime/AOVKPackage/randy31-ui11.dll and version-rebirth-ui11.dll.
+
+Fallback
+Use classic UI or /nexusui classic switches this character to the original
+window. /nexusui modern switches back. NexusUI.mode is stored under the
+character's AOSharp preferences. Geometry is stored under
+%LOCALAPPDATA%\AONexus\Overlay, keyed by the character preference path.
+Without the renderer bridge, the original /syncmanager command is untouched.
+A managed adapter failure restores it and reports the fallback in chat.
+
+To restore the previously accepted AO-VK renderer, close the game, clear just
+Modern plugin windows and save. To restore original graphics, clear Use AO-VK
+and save. The existing verified backups and transactional rollback are used.
+The preview does not promise recovery from GPU device loss or native crashes.
+
+Implementation
+The AO-VK fork is based on 0.7.1, commit 22f2506. It exposes a versioned C ABI
+for state snapshots and bounded action queues. AOSharp accesses game settings
+only on its update thread. The renderer never calls managed/plugin code.
+Dear ImGui v1.91.9b renders a separate transparent Vulkan layer, composited
+after game UI and included in the frame-generation overlay. Renderer input
+uses the existing input-block coordinator. All 797 original export names,
+ordinals and forwarders are preserved; NexusUi_Exchange is export 798.
+NexusShortcuts adapts the locally packaged Z SyncManager via its existing
+settings/configuration APIs. SyncManager.dll itself is unchanged. A different
+plugin API may fall back to classic and needs its own compatibility review.
+
+The new renderer and Rebirth repair DLL are hash-pinned as a pair. The repair
+also retains acceptance of the previous AO-VK renderer and validates the
+original renderer before applying its existing instruction/import checks.
+Startup retains the tested AO-VK profile: texture hooks and admission
+pipelining remain disabled. Graphics effects are not changed by this opt-in.
+
+Local build sources
+AO-VK-Rebirth-Test: tools/Restore-NexusUiBuild.ps1 restores pinned portable
+dependencies; tools/build-nexus-ui.ps1 builds x86 randy31 and nexus_ui_test.
+third_party/imgui/NEXUS-SOURCE.txt records the vendored source revision.
+AO-Rebirth-AOVK-Patch: Tools/AOClientRoomSpaceGuard/ProxyDll/Build-Package.cmd
+--dll-only builds the matching repair. That repository also contains earlier
+local repair work. The preserved local patch records the combined build source.
+merged-source: build/Build.ps1 -AOSharpPack runtime/Local13Pack -RebuildBackend
+builds Nexus. build/Build-AovkPayload.ps1 records the accepted DLL hashes.
+Local source bundles and the repair patch are alongside merged-source in source/.
+Licenses for AO-VK and Dear ImGui are included in the test package.
+
+Validation and limitations
+Managed fixtures cover ABI layout, unsupported renderer, all twelve boolean
+settings, command validation, save, classic preference, close and bounded
+queues. Temporary-folder integration checks cover renderer/repair opt-in,
+rollback, stock fallback, remembering preferences and returning to accepted
+AO-VK. WinForms fixtures cover both languages and 100%/150% sizes.
+An isolated real-Vulkan fixture covers drawing, checkbox input, Escape,
+reopening, child focus, device recreation, resize and teardown at 100%/150%;
+preview images come from it.
+These fixtures do not establish live-game stability or correct automation.
+
+Live acceptance still required: /syncmanager; setting changes and saving;
+restart persistence; repeated zoning; F10; frame generation on/off; resize;
+Alt-Tab and Escape; switching to classic and back; AO-VK disabled fallback.
+Use a test character outside combat. Record the selected game folder and
+renderer choice with any failure. Do not qualify other plugins from this test.
+
+
+Test 15 adds NexusTools_Exchange @799, a formation/timer board, classic fallback and a click-through pinned timer HUD. See Formations-And-Timers.txt. Existing SyncManager @798 and original renderer exports are preserved.
+
+Test 16: Movement embeds Formation, pattern and spacing. Classic Z SyncManager receives equivalent XML controls through Nexus Shortcuts. Local teammates on the same sync channel receive stable slots automatically, with no rejoin of a manually/safety-stopped request. Existing native ABI is retained (tools flag 16 advertises SyncManager availability). See Formations-And-Timers.txt.

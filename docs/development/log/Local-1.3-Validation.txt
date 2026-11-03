@@ -1,0 +1,49 @@
+LOCAL MERGE VALIDATION - 28 OCTOBER 2026
+
+Final executable: merged-test\AONexus-Test.exe
+Version: 1.3.0-local-aovk.1
+SHA256: FB9FD16C93153694720E29E6B7AD93D6E88A33080D70C51036847820506BF121
+
+Build: launcher, native/managed backend, telemetry, plugin host and the local
+113-plugin pack compiled successfully. Six existing launcher compiler
+warnings (hidden Scale member and test-seam fields), no compile errors.
+The final binary was checked against all 200 published backend payload files.
+
+PASS: 148 plugin/server-rule checks, including launch history, probing policy,
+empty restore and connected-but-silent/partial shortcut pipe regressions.
+PASS: 7 plugin-host lifecycle checks.
+PASS: 25 AO-VK file/configuration checks using a temporary game copy.
+PASS: 30 AO-VK UI checks, English/Danish at 100% and 150% scaling.
+PASS: native/managed AO-VK startup isolation and read-only client preflight.
+PASS: static dependency/reference validation of all 113 plugins, 0 problems.
+PASS: 83 sidebar/status/settings checks, including container disposal.
+PASS: 227 GUI-manager workflow/layout/callback checks.
+PASS: 1453 GUI usability, action gating, profile isolation and layout checks.
+
+Every default check in build/Verify.ps1 completed successfully across the
+initial and resumed runs. Stale UI/reflection expectations were corrected and
+the affected tests rerun. The last two GUI layout fixes were verified against
+the final compiled executable; unchanged backend and other earlier checks
+were retained. This was not one uninterrupted all-green suite invocation.
+LiveNews and optional TelemetryTransport were not enabled for this run.
+
+Main logs (under merged-source\logs):
+  Verify-Merged-Final.txt                  through SlimScrolling
+  Verify-Merged-Remaining.txt              ResizePainting through WindowConfirmations
+  Verify-Merged-Remaining2.txt             ServerSidebar
+  Verify-Merged-Remaining3.txt             HealthEndpoints through StarterGuiLayouts
+  Verify-Merged-Remaining5.txt             GuiManager
+  Verify-GameGuiUsability.txt              final 1453-check GUI pass
+  Verify-Merged-Remaining6.txt             GuiSessions through final payload check
+  Verify-PluginsAndServerRules.txt
+  Verify-PluginHostLifecycle.txt
+  Verify-AovkGraphics.txt
+  Verify-AovkGraphicsUi.txt
+  plugin-load-check\results.txt
+Per-test output files contain detailed assertions; previous failing aggregate
+logs are retained as diagnostic history and are superseded by these reruns.
+
+Tests use isolated files/profiles, synthetic accounts, local pipe/socket
+fixtures and inert processes. No real game login/injection was performed.
+The user's gameplay testing is separate; no claim of all-plugin runtime or
+long-duration renderer stability follows from these automated checks.

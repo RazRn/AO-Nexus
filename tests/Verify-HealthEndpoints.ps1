@@ -69,13 +69,14 @@ Static 'Localization.Texts' 'SetLanguage' @('en')
 $main=Dialog 'MainForm' @($true)
 try {
     Show-Fixture $main;$config=Field $main 'settings';$config.HealthServerIds.Clear();$config.HealthServerIds.Add('rebirth')
-    Call $main 'ConfigureSidebar';$sidebar=Field $main 'serverSidebar';$tabs=$sidebar.GetType().GetProperty('Tabs',$f).GetValue($sidebar);$tabs.SelectedIndex=1
+    Call $main 'ConfigureSidebar';$sidebar=Field $main 'serverSidebar'
     [Windows.Forms.Application]::DoEvents()
     $health=$sidebar.GetType().GetProperty('Health',$f).GetValue($sidebar);$picker=Field $health 'picker'
+    Assert $health.Visible 'Status is visible directly in the stacked sidebar'
     Assert (!$picker.Visible -and (Field $health 'serverName').Visible) 'Single server uses a plain name'
     Assert ($health.Controls.Find('healthRefresh',$true).Count -eq 0) 'No manual health refresh control'
     Assert ($null -eq $health.GetType().GetField('guide',$f)) 'Health footer paragraphs are absent'
-    $config.HealthServerIds.Add('live');Call $main 'ConfigureSidebar';$tabs=$sidebar.GetType().GetProperty('Tabs',$f).GetValue($sidebar);$tabs.SelectedIndex=1
+    $config.HealthServerIds.Add('live');Call $main 'ConfigureSidebar'
     [Windows.Forms.Application]::DoEvents()
     Assert ($picker.Visible -and !(Field $health 'serverName').Visible) 'Multiple servers retain picker'
     $picker.DroppedDown=$true;[Windows.Forms.Application]::DoEvents()

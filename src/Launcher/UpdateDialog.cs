@@ -41,7 +41,7 @@ namespace AOLauncher
     internal sealed class WhatsNewDialog : EditorDialog
     {
         internal WhatsNewDialog() : this(true) { }
-        internal WhatsNewDialog(bool installedNotice) : base(F("What's new in AO Nexus {0}", AppUpdates.CurrentVersion.ToString(3)), 520)
+        internal WhatsNewDialog(bool installedNotice) : base(F("What's new in AO Nexus {0}", AppUpdates.DisplayVersion), 520)
         {
             if (installedNotice) AddWrappedNote(T("Update installed successfully. Your accounts, passwords and team presets are preserved."), "updateSuccess");
             var notes = new NexusTextBox { Name = "installedReleaseNotes", ReadOnly = true, Multiline = true,
@@ -56,7 +56,7 @@ namespace AOLauncher
             SaveButton.Text = T("View release on GitHub");
             SaveButton.Click += (sender, e) =>
             {
-                try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(AppUpdates.Repository + "/releases/tag/v" + AppUpdates.CurrentVersion.ToString(3)) { UseShellExecute = true }); }
+                try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(AppUpdates.Repository + "/releases") { UseShellExecute = true }); }
                 catch (Exception ex) { ErrorLabel.Text = ex.Message; }
             };
             AcceptButton = CancelAction;
@@ -81,7 +81,7 @@ namespace AOLauncher
         {
             this.canInstall = canInstall;
             release = knownRelease;
-            AddWrappedNote(F("Installed version: {0}", AppUpdates.CurrentVersion.ToString(3)), "installedVersion");
+            AddWrappedNote(F("Installed version: {0}", AppUpdates.DisplayVersion), "installedVersion");
             AddWrappedNote(T("Updates come from RazRn/AO-Nexus on GitHub. Installation closes and reopens Nexus. Game windows and your saved profile are kept. Save any pending settings first."), "updateGuide");
             status = AddWrappedNote(T("Checking for updates…"), "updateStatus");
             ClientSize = new Size(620, 600);
@@ -94,7 +94,7 @@ namespace AOLauncher
         }
         private void ShowRelease()
         {
-            if (release.Version <= AppUpdates.CurrentVersion)
+            if (!AppUpdates.IsNewer(release.Version))
             {
                 status.Text = T("You are using the latest version."); release = null; SaveButton.Text = T("Check again");
                 notesViewport.Visible = false;

@@ -1,84 +1,68 @@
-# AO Nexus
+# AO Nexus 1.3.0 Beta
 
-**A Windows launcher for your Anarchy Online accounts, characters and teams.**
+**A Windows launcher and Control Panel for your Anarchy Online accounts, characters and teams.**
 
-Keep separate game folders and login servers for Funcom AO, Project Rubi-Ka and AO Rebirth, then launch a saved team from one place.
+Keep separate game folders and login servers, launch a saved team in your chosen order, and compare your characters in one Control Panel.
 
-**[Download the latest release](https://github.com/RazRn/AO-Nexus/releases/latest)** · [Player guide](docs/Player-Guide.md) · [Release notes](https://github.com/RazRn/AO-Nexus/releases)
+**[Published downloads](https://github.com/RazRn/AO-Nexus/releases)** · [Player guide](docs/user/Player-Guide.md) · [1.3.0 Beta notes](docs/user/releases/Whats-New-1.3.0.md)
 
-**New in 1.2.2:** clearer monitoring diagnostics, session summaries that retain earlier peaks and gaps, consistent report aliases and accurate Windows information. [What changed](docs/Whats-New-1.2.2.md).
+This branch contains **1.3.0 Beta 1**. The Beta label reflects ongoing compatibility and live-game testing. A source update does not publish a new download: check the version on the Releases page. Binary distribution still has outstanding licensing and runtime-validation gates.
 
-![AO Nexus with a team preset, accounts grouped by server, details and news](docs/images/published/launcher-overview-27637d6f30ce9c52.png)
+![AO Nexus Beta with example accounts, team presets and server information](docs/user/images/published/launcher-overview-30d37baf26af28af.png)
 
-*AO Nexus 1.2.1 with example accounts and offline news. [Screenshot provenance](docs/images/SCREENSHOTS.md).*
+*Captured from the Beta with example accounts and offline results. [Screenshot provenance](docs/user/images/SCREENSHOTS.md).*
 
 ## Quick start
 
-1. Download **AO-Nexus-Luckyspawn.zip** from the latest release's **Assets**. The automatically generated “Source code” ZIP is for developers.
-2. Extract the whole ZIP into a writable folder, such as `%LOCALAPPDATA%\Programs\AO Nexus`, and run **AONexus.exe**.
-3. Choose **Add account**. Enter your game username; under **Game and server**, select its server and the game folder containing `AnarchyOnline.exe`.
-4. Import existing characters with **Find Prefs folders…** and **Find characters**, or save the account and use **Add character** to enter their IDs manually.
-5. Check the characters you want and choose **Log in selected**. Review the confirmation if enabled and enter passwords when asked.
+1. Choose a published release and download **AO-Nexus-Luckyspawn.zip** from its Assets, when available. The automatic Source code archives are for developers.
+2. Extract the complete ZIP into a writable folder and start **AONexus.exe**.
+3. Add your account, choose its game server and folder, then import characters from Prefs or add their IDs.
+4. Select characters and save a team preset. Set its login order; the first character is the initial leader for optional automatic team formation.
+5. Choose **Log in selected**. Open **Control Panel ↗** at the right of the navigation bar to monitor the running clients.
 
-Requires Windows 10/11, **.NET Framework 4.8 or 4.8.1**, and an installed game client prepared for the chosen server. See [installation and download verification](docs/Player-Guide.md#install-and-first-launch) for folder, runtime and unsigned-app guidance.
+Requires Windows 10/11, .NET Framework 4.8 or 4.8.1, and a separately installed compatible game client. [Installation, passwords and download verification](docs/user/Player-Guide.md#install-and-first-launch).
 
-## What you can do
+## What is new in the Beta
 
-| Feature | How it helps | Guide |
-| --- | --- | --- |
-| Accounts and team presets | Search by character name, ID, account or server; save teams across accounts; choose an optional startup default. | [Accounts](docs/Player-Guide.md#accounts-and-characters) · [Team presets](docs/Player-Guide.md#team-presets) |
-| Launch and logout | Start independent accounts in parallel, with serial logins within each account. Assign team shortcuts for login and normal `/quit`, with separate confirmation preferences. | [Launch, stop and logout](docs/Player-Guide.md#launch-stop-and-logout) |
-| Password choices | Remember a password per account, encrypted for your Windows user, or enter it each time. Update or remove saved copies. | [Passwords](docs/Player-Guide.md#passwords) |
-| News and server health | Choose news sources and connection checks; optionally monitor in the background and receive tray notifications. | [News and health](docs/Player-Guide.md#server-news-and-health) |
-| Tray, updates and logs | Keep Nexus out of Alt+Tab, opt into update checks, and search the activity log. Update installation always requires confirmation. | [Everyday settings](docs/Player-Guide.md#settings-tray-and-updates) |
-| Problem reports | Anonymised diagnostics and crash reports, shared as a prefilled GitHub issue only when you choose to. | [Report a problem](docs/Player-Guide.md#report-a-problem) |
-| Game GUI · Experimental | Follow clear steps to reuse layouts, select skins, copy script files or character macros, and review backups before restoring. | [Layouts, skins, scripts and recovery](docs/Game-GUI.md) |
-| Character status and help | See responsiveness and recent casts while falling separately, with explanations and next steps. Expand measurements or save a diagnostic ZIP. | [Monitoring and reports](docs/Player-Guide.md#character-status-and-monitoring) |
-
-The interface supports English and Danish. It initially follows Windows' language, with a manual override in Settings.
-
-### Faster loading
-
-**Settings → Accounts → Faster game loading** enables the measured startup improvements on the verified classic 18.8.62 client: zero-duration initial logo fades and faster initial texture filtering. With **Skip login screens** enabled, cosmetic login-scene models are skipped too. Login errors remain visible. The setting is on by default and can be disabled independently of quiet login.
-
-Nexus checks the client files before enabling these version-specific hooks. Other builds and character creation retain normal loading. Game executables and DLLs are not patched on disk. Client preparation can overlap while account login claims are serialized; the log shows each character's loading time and total team time. These changes do not remove network latency or the work needed to load a zone.
-
-AO Nexus uses its integrated **NexusEngine** for login and client startup. Moving from the standalone AOQuickLauncher to a Nexus-maintained engine gives us direct control over loading performance, login timing and future improvements. No separate launcher installation is needed. See [integration and validation notes](docs/Fast-Startup.txt) for measured changes and supported clients.
-
-## Scope and privacy
-
-Nexus launches supported Windows AO clients. It does not install or patch the game, include the AOSharp injector, or automatically support replacement clients with a different login protocol. The server controls which logins are allowed; configurable launcher limits help prevent invalid selections. Optional monitoring includes an AOSharp plugin and helper; you choose whether to enable it in your existing AOSharp profiles.
-
-Accounts, settings, saved passwords and GUI templates stay on your PC. The app connects to your chosen game servers, enabled news/health sources, GitHub for requested update checks/downloads, and skin sources when you request a download. Optional client monitoring uses AOSharp's UDP multicast IPC; it can reach the local network. It has no analytics or cloud account sync, and problem reports are only shared when you submit them yourself. Read [Privacy and security](docs/Privacy-and-Security.md) for storage, connections, retention and update verification.
-
-## Need help?
-
-| Problem | Start here |
+| Area | What you can do |
 | --- | --- |
-| No characters appear after adding an account | [Find Prefs or add an ID manually](docs/Player-Guide.md#accounts-and-characters). |
-| A team does not retain checkbox changes | Select the preset and choose **Update** after changing its members. [Preset behavior](docs/Player-Guide.md#team-presets). |
-| A saved game password changed | Select the account and choose **Update saved password** in Details. [Password options](docs/Player-Guide.md#passwords). |
-| A game will not launch, update or close as expected | [Troubleshooting](docs/Player-Guide.md#troubleshooting). |
-| Something else is broken or Nexus crashed | **Settings → General → Report a problem…** builds an anonymised report and opens a prefilled GitHub issue. [How it works](docs/Player-Guide.md#report-a-problem). |
+| [Control Panel](docs/user/Player-Guide.md#control-panel) | View health, nano, attack targets, observed aggro, zones and local client measurements. Select and reorder cards; collapse and reorder Team, Damage Dumper and Timers. |
+| [Damage Dumper](docs/user/Player-Guide.md#damage-dumper) | Sort damage, nano damage, individual pets, healing and experience. Compare totals and rates; export clickable in-game report scripts. Optional All and NPC views use nearby observations. |
+| [AO# plugins](docs/user/Player-Guide.md#ao-plugins) | Use your own installation, assign profession sets and select shared plugins under ALL. See load status and missing plugins. |
+| [Team startup](docs/user/Player-Guide.md#team-presets) | Save login order and keep the first client focused while followers start in the background. Logout/relog pauses formation movement. |
+| [Timers](docs/user/Player-Guide.md#timers) | Create manual timers, reminders and optional observed-death timers. A predicted spawn is not a confirmed sighting. |
+| [Settings](docs/user/Player-Guide.md#settings-tray-and-updates) | Apply recommended settings as a draft, keep existing opt-ins, and review graphics, diagnostics and experiments separately. |
+| [Game GUI](docs/user/Game-GUI.md) | Manage layouts, skins, scripts, character macros and recovery backups. |
 
-Reports from Nexus replace logins, account and character names, IDs and personal paths with codes. Nothing is sent until you submit the issue yourself. If you write an issue by hand, leave out passwords, usernames and personal paths.
+English and Danish are supported. Accounts, settings and saved passwords remain local; remembered passwords are encrypted for your Windows user.
 
-## More documentation
+## Core and experiments
 
-- [Performance investigation](docs/Performance-Investigation.md): Fiddler and Process Monitor findings, startup experiments, measured gains, rejected approaches, and limitations.
-- [Player guide](docs/Player-Guide.md): setup and everyday use, with focused red callouts.
-- [Game GUI](docs/Game-GUI.md): experimental character templates, macros, installation skins, scripts and backups.
-- [Server health](docs/Server-Health.md): endpoints, timing and what check results mean.
-- [Privacy and security](docs/Privacy-and-Security.md): local data and network behavior.
-- [Build and test](docs/Building.md): contributor requirements, commands and source map.
-- [Offline quick guide](dist/README.txt): the text guide prepared for download packages.
+Normal account/team management, supported fast startup, Control Panel monitoring, Team statistics, manual timers, recovery and diagnostics are core. Measurements and game commands require the relevant Nexus helpers loaded through your own compatible AO# installation.
+
+AO-VK management, automatic invitations/leader recovery, formations, movement refresh, auto regroup and nearby combat reports remain **opt-in experiments**. [Read what each option changes](docs/user/Experiments.md). Minimize inactive game clients is also optional: it can reduce background rendering cost, but previews may freeze and behavior depends on the client/renderer. Recommended settings preserve your choice and do not enable it on a fresh profile.
+
+Nexus does not bundle AO# or third-party plugin packs. The retired AO-VK 0.7.1 download is not offered. No Defender exclusions or disabled protection are required or recommended.
+
+## Known limitations
+
+- A reproduced Engineer startup issue can repeatedly say “You must be standing up to execute a nano program” while the character looks standing. Detection/recovery is not yet reliable; it remains an open Beta issue.
+- Minimized windows may stop drawing while health and other telemetry continue. On the tested AO-VK setup, disabling Offscreen surface technology resolved one character's white ICC scene; this is not a universal renderer fix.
+- Formations and regrouping require fresh team state. Zoning, obstacles, stale data and unsupported clients can stop automation. Auto regroup is bounded, not obstacle-aware navigation.
+- Service graphs measure connection response, not server simulation or backend processing. Aggro is observed targeting, not a server threat list.
+
+See [Beta compatibility and update notes](docs/user/releases/Whats-New-1.3.0.md) for details. New helper code requires a client relog; restarting Nexus alone cannot replace code already loaded into the game.
+
+## Help and development
+
+Use **Settings → Diagnostics → Report a problem…** to prepare an anonymised report. Review it before submitting; nothing is uploaded automatically. [Troubleshooting](docs/user/Player-Guide.md#troubleshooting) · [Privacy and security](docs/user/Privacy-and-Security.md) · [Build and test](docs/development/Building.md) · [Offline guide](dist/README.txt).
+
+User documentation is in [docs/user](docs/user/README.md); implementation notes and test history are in [docs/development](docs/development/README.md).
 
 ## Credits and licensing
 
-**AO Nexus is developed and maintained by [Luckyspawn (RazRn)](https://github.com/RazRn).** This includes the launcher interface, account and team management, Game GUI tools, monitoring and NexusEngine integration.
+**Developed and maintained by [Luckyspawn (RazRn)](https://github.com/RazRn).** NexusEngine and LoginHandler retain code derived from [AOQuickLauncher](https://gitlab.com/never-knows-best/aoquicklauncher), by never-knows-best and contributors. The optional monitor uses AOSharp.Common. [Full credits](dist/CREDITS.txt) · [Artwork](assets/ARTWORK.txt).
 
-NexusEngine and LoginHandler retain code derived from [AOQuickLauncher](https://gitlab.com/never-knows-best/aoquicklauncher), originally by **never-knows-best and contributors**. The optional monitor uses **AOSharp.Common** from the same authors. See [full third-party credits](dist/CREDITS.txt) and [artwork provenance](assets/ARTWORK.txt).
-
-**Upstream licensing remains unresolved.** Public source and download availability are not grants of redistribution rights. See [LICENSE-NOTICE.txt](LICENSE-NOTICE.txt) before redistributing or publishing derived work. Dependency notices remain in [dist/Licenses](dist/Licenses).
+**Upstream licensing remains unresolved.** Public source/download availability does not grant redistribution rights. See [LICENSE-NOTICE.txt](LICENSE-NOTICE.txt) and [dependency notices](dist/Licenses) before redistributing derived work. Beta branding does not clear these restrictions.
 
 AO Nexus is an independent community project, not an official Funcom, Project Rubi-Ka or AO Rebirth product.

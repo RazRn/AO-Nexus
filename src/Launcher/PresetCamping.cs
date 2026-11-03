@@ -84,8 +84,36 @@ namespace AOLauncher
             }
             catch { return false; }
         }
-        internal static string SendCamp(Client client)
+        // Fresh read-only game-thread handshake. null means an older login module;
+        // false includes zoning, incomplete startup and an unresponsive window thread.
+        internal static bool? PluginsReady(Client client)
         {
+            if (!IsSameProcess(client)) return false;
+            return QueryPluginReadiness(client);
+        }
+        internal static bool? QueryPluginReadiness(Client client)
+        {
+            if (!ValidToken(client.CampToken)) return null;
+            try {
+                using (var request = EventWaitHandle.OpenExisting(EventName(client, "plugins.request"), EventWaitHandleRights.Modify))
+                using (var ready = EventWaitHandle.OpenExisting(EventName(client, "plugins.ready"), EventWaitHandleRights.Modify | EventWaitHandleRights.Synchronize))
+                using (var waiting = EventWaitHandle.OpenExisting(EventName(client, "plugins.waiting"), EventWaitHandleRights.Modify | EventWaitHandleRights.Synchronize))
+                {
+                    ready.Reset(); waiting.Reset(); request.Set();
+                    int response = WaitHandle.WaitAny(new WaitHandle[] { ready, waiting }, 400);
+                    request.Reset();
+                    return response == 0;
+                }
+            }
+            catch (WaitHandleCannotBeOpenedException) { return null; }
+            catch { return false; }
+        }
+
+        internal static string SendCamp(Client client)
+            => SendCamp(client,out var ignored);
+        internal static string SendCamp(Client client,out bool acknowledged)
+        {
+            acknowledged=false;
             if (!IsSameProcess(client) || !ValidToken(client.CampToken)) return "Client changed or exited; /quit was not sent.";
             try
             {
@@ -97,6 +125,7 @@ namespace AOLauncher
                     if (!IsSameProcess(client)) return "Client changed or exited; /quit was not sent.";
                     request.Set();
                     int reply = WaitHandle.WaitAny(new WaitHandle[] { accepted, rejected }, 3000);
+                    acknowledged=reply==0;
                     if (reply == 0) return "/quit accepted by the client. Waiting for the game's normal logout; no forced close.";
                     if (reply == 1) return "The client declined /quit. Check combat, zoning or its current character.";
                     request.Reset();

@@ -1,4 +1,4 @@
-param([string]$AssemblyPath=(Join-Path $PSScriptRoot '../dist/AONexus.exe'))
+﻿param([string]$AssemblyPath=(Join-Path $PSScriptRoot '../dist/AONexus.exe'))
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.Web.Extensions,System.IO.Compression,System.IO.Compression.FileSystem
 $a=[Reflection.Assembly]::LoadFrom((Resolve-Path -LiteralPath $AssemblyPath).Path)
@@ -25,11 +25,12 @@ Assert ($summary.StateSamples['Unmeasured'] -eq 179 -and $summary.SamplesWithPlu
 Assert ($summary.LongestObserverSampleIntervalMs -eq 1000 -and $summary.FirstObservedUtc -eq $start) 'Observer interval and coverage are explicit'
 Assert ($null -eq $s.Zoning -and $null -eq $s.ReplyMs) 'Missing measurements remain unknown'
 $now=[Diagnostics.Stopwatch]::GetTimestamp()
-$pulse=New ClientPulse;$pulse.Version=1;$pulse.Pid=123;$pulse.StartTicks=$start.Ticks;$pulse.Instance='fixture';$pulse.PublishedQpc=$now;$pulse.LastUpdateQpc=$now
+$pulse=New ClientPulse;$pulse.Version=2;$pulse.Pid=123;$pulse.StartTicks=$start.Ticks;$pulse.Instance='fixture';$pulse.PublishedQpc=$now;$pulse.LastUpdateQpc=$now
 function Validate{Static ClientMonitor ValidatePulse @($pulse,123,$start.Ticks,$now)}
 Assert ((Validate) -eq 'SnapshotAccepted') 'Valid process-specific snapshot accepted'
 $pulse.Pid=124;Assert ((Validate) -eq 'SnapshotIdentityMismatch') 'Wrong process rejected with reason';$pulse.Pid=123
-$pulse.Version=2;Assert ((Validate) -eq 'SnapshotVersionUnsupported') 'Unsupported version diagnosed';$pulse.Version=1
+$pulse.Version=99;Assert ((Validate) -eq 'SnapshotVersionUnsupported') 'Unsupported version diagnosed';$pulse.Version=2
+ $pulse.Version=1;Assert ((Validate) -eq 'SnapshotVersionUnsupported') 'Old multicast monitor requires an update, not a false hang report';$pulse.Version=2
 $pulse.Instance='';Assert ((Validate) -eq 'SnapshotInvalid') 'Incomplete snapshot diagnosed';$pulse.Instance='fixture'
 $pulse.PublishedQpc=$now+1;Assert ((Validate) -eq 'SnapshotInvalid') 'Future snapshot rejected';$pulse.PublishedQpc=$now
 $pulse.MaxMs=[double]::NaN;Assert ((Validate) -eq 'SnapshotInvalid') 'Invalid metrics rejected'
@@ -77,7 +78,7 @@ try {
  $report2=New 'ClientReport+SavedExit';$report2.Client='SECRET_OLD_ALIAS';$report2.ProcessId=123;$report2.StartedUtc=$start.AddMinutes(-10);$report2.StartedUtcTicks=$report2.StartedUtc.Ticks;$report2.Samples=@()
  [IO.File]::WriteAllText((Join-Path $temp 'reused-pid.json'),$json.Serialize($report2))
  $zipPath=Join-Path $temp 'report.zip'
- Static ClientReport Export @($zipPath,$json.Serialize($session),'Fixture evidence',$temp)|Out-Null
+ Static ClientReport Export @($zipPath,$json.Serialize($session),'Fixture evidence',$temp,$null,$null,$null)|Out-Null
  $zip=[IO.Compression.ZipFile]::OpenRead($zipPath)
  try {
   Assert ($zip.Entries.Count -eq 5) 'Duplicate exit omitted; different lifetime of reused PID retained'
@@ -95,7 +96,7 @@ try {
  [IO.File]::WriteAllText((Join-Path $temp 'distinct.json'),$json.Serialize($report))
  $session.Clients[0].Summary=$null
  $second=Join-Path $temp 'distinct.zip'
- Static ClientReport Export @($second,$json.Serialize($session),'Fixture evidence',$temp)|Out-Null
+ Static ClientReport Export @($second,$json.Serialize($session),'Fixture evidence',$temp,$null,$null,$null)|Out-Null
  $zip=[IO.Compression.ZipFile]::OpenRead($second)
  try{
   $entries=@($zip.Entries|Where-Object FullName -like 'saved-exits/Client-1-*')

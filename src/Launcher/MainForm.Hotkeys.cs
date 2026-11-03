@@ -63,6 +63,18 @@ namespace AOLauncher
                 }
         }
         protected override void OnHandleDestroyed(EventArgs e) { UnregisterPresetHotkeys(); base.OnHandleDestroyed(e); }
+        private static bool HasBlockingShortcutWindow(Form owner)
+        {
+            // Persistent companion windows are part of normal play. Editors and
+            // confirmations (including ones owned by a companion) still block actions.
+            return owner.OwnedForms.Any(form => form.Visible &&
+                (!form.Enabled || !(form is LogViewer || form is TeamWindow || form is TimersWindow)
+                    || HasBlockingShortcutWindow(form)));
+        }
+        private bool PresetShortcutContextAvailable()
+            => !running && !closing && Enabled && !editingPreset && !HasBlockingShortcutWindow(this)
+                && (teamWindow == null || teamWindow.IsDisposed || !teamWindow.Visible
+                    || (teamWindow.Enabled && !HasBlockingShortcutWindow(teamWindow)));
         protected override void WndProc(ref Message m)
         {
             if (m.Msg == 0x0112 && (m.WParam.ToInt64() & 0xFFF0) == 0xF020 && trayIcon != null)
@@ -70,8 +82,7 @@ namespace AOLauncher
             Tuple<string, bool> action;
             if (m.Msg == 0x0312 && registeredHotkeys.TryGetValue(m.WParam.ToInt32(), out action))
             {
-                if (!shortcutActionBusy && !running && !closing && Enabled
-                    && !OwnedForms.Any(form => form.Visible && !(form is LogViewer)) && !editingPreset)
+                if (!shortcutActionBusy && PresetShortcutContextAvailable())
                 {
                     shortcutActionBusy = true; // Before BeginInvoke: suppress queued repeats and modal reentrancy.
                     BeginInvoke((Action)(async () => await InvokePresetShortcut(action.Item1, action.Item2)));
@@ -84,7 +95,8 @@ namespace AOLauncher
         {
             try
             {
-                if (closing || running || smoke) return;
+                // A dialog may have opened since the Windows message was queued.
+                if (smoke || !PresetShortcutContextAvailable()) return;
                 var preset = settings.Presets.FirstOrDefault(item => item.Id == id);
                 if (preset == null) return;
                 ShowLauncher();
@@ -105,41 +117,76 @@ namespace AOLauncher
             var clients = PresetCamping.Find(settings, preset);
             if (clients.Count == 0)
             { ShowInfo(T("No running clients could be matched safely to this preset. Start its characters with Nexus first.")); return; }
+            await CampClients(clients, count => F("Send /quit to {0} clients from preset “{1}”?", count, preset.Name));
+        }
+        private async Task LogoutTeamClients(List<PresetCamping.Client> requested)
+        {
+            if(smoke || shortcutActionBusy || !PresetShortcutContextAvailable()) return;
+            shortcutActionBusy=true;
+            try {
+                var clients=requested.Where(PresetCamping.IsSameProcess).GroupBy(c=>c.ProcessId+":"+c.StartTimeUtcTicks).Select(g=>g.First()).ToList();
+                if(clients.Count==0) { ShowInfo(AOLauncher.Localization.Texts.Get("Text_These_clients_have_closed_or_can_0E44E6EC6D6B"));return; }
+                await CampClients(clients,count=>string.Format(AOLauncher.Localization.Texts.Get("Text_Log_out_0_clients_from_the_C229B59F2A22"),count),teamWindow);
+            } catch(Exception ex) {
+                DiagnosticJournal.Exception("team-window","Logout failed",ex);
+                if(!closing) ShowInfo(ex.Message);
+            } finally { shortcutActionBusy=false; }
+        }
+        private async Task CampClients(List<PresetCamping.Client> clients, Func<int,string> heading, IWin32Window confirmationOwner=null)
+        {
             var supported = clients.Where(client => client.CanCamp).ToList();
             string names = string.Join("\r\n", clients.Select(client => "• " + client.CharacterName + " — " + client.Server + ":" + client.Port
                 + (client.CanCamp ? "" : " — " + T("restart with this Nexus version to enable /quit"))));
             if (supported.Count == 0) { ShowInfo(names); return; }
-            string question = F("Send /quit to {0} clients from preset “{1}”?", supported.Count, preset.Name)
+            string question = heading(supported.Count)
                 + "\r\n\r\n" + names + "\r\n\r\n" + T("The game handles the normal logout countdown. Combat, movement or cancellation may prevent logout. Clients are never forcibly closed.");
-            if (!ConfirmGameAction(true, question)) return;
+            if (confirmationOwner is TeamWindow) {
+                string compact = supported.Count==1
+                    ? string.Format(AOLauncher.Localization.Texts.Get("Text_Log_out_0_767A3261AAB4"), supported[0].CharacterName)
+                    : string.Format(AOLauncher.Localization.Texts.Get("Text_Log_out_these_0_characters_84A6586DB616"), supported.Count)
+                        + "\r\n\r\n" + string.Join(", ", supported.Select(client=>client.CharacterName));
+                if (!ConfirmTeamWindowLogout(compact, confirmationOwner)) return;
+            } else if (!ConfirmGameActionWithOwner(true, question, confirmationOwner)) return;
             foreach (var control in editingControls) control.Enabled = false;
             startButton.Enabled = false;
             var processes = new List<System.Diagnostics.Process>();
+            TeamWindow movementPanel=null;
             header.BeginActivity(supported.Count);
             try
             {
                 foreach (var client in supported) processes.Add(GuiSessions.OpenConfirmed(client));
+                if(teamWindow!=null && !teamWindow.IsDisposed) {
+                    movementPanel=teamWindow;
+                    await movementPanel.PrepareMovementForLogout();
+                }
                 // Snapshot identities are checked again immediately before each signal. Never discover extra clients after confirmation.
+                var waiting=new List<System.Diagnostics.Process>();
                 foreach (var client in supported)
                 {
                     if (closing) break;
-                    string result = await Task.Run(() => PresetCamping.SendCamp(client));
+                    bool accepted=false;
+                    DevelopmentRecorder.Action("logout",client,"normal logout requested");
+                    string result = await Task.Run(() => PresetCamping.SendCamp(client,out accepted));
+                    DevelopmentRecorder.Action("logout",client,result);if(accepted)waiting.Add(processes[supported.IndexOf(client)]);
                     if (!closing) AppendLog(client.CharacterName + ": " + T(result));
                 }
                 var elapsed = System.Diagnostics.Stopwatch.StartNew();
-                while (!closing && elapsed.Elapsed < TimeSpan.FromSeconds(90))
+                while (!closing && waiting.Count>0 && elapsed.Elapsed < TimeSpan.FromSeconds(90))
                 {
                     int exited = processes.Count(process => process.HasExited);
                     header.ReportActivity(exited);
-                    if (exited == processes.Count) break;
+                    if (waiting.All(process=>process.HasExited)) break;
                     await Task.Delay(250);
                 }
-                if (!closing && processes.Any(process => !process.HasExited))
-                    AppendLog(SidebarText.L("Some clients are still open. Logout may have been interrupted; no clients were forcibly closed.",
-                        "Nogle klienter er stadig åbne. Logout kan være afbrudt; ingen klienter blev tvangslukket."));
+                if (!closing && processes.Any(process => !process.HasExited)) {
+                    AppendLog(AOLauncher.Localization.Texts.Get("Text_Some_clients_are_still_open_Logout_D1C478726969"));
+                    if(confirmationOwner is TeamWindow) ShowInfo(AOLauncher.Localization.Texts.Get("Text_Logout_did_not_complete_If_the_25CA5E62057B"));
+                }
+                for(int i=0;i<supported.Count;i++)DevelopmentRecorder.Action("logout",supported[i],processes[i].HasExited?"exit confirmed":"still running");
             }
             finally
             {
+                movementPanel?.FinishMovementLogout();
                 foreach (var process in processes) process.Dispose();
                 if (!header.IsDisposed) header.EndActivity();
                 if (!closing) { foreach (var control in editingControls) control.Enabled = true; UpdateSelection(); }

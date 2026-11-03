@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -7,8 +7,9 @@ namespace AOLauncher
     internal static class Program
     {
         [STAThread]
-        private static void Main(string[] args)
+        internal static void Run(string[] args)
         {
+            // Renderer experiments are carried explicitly in the saved launch request.
             // Synthetic previews and tests keep the default exception behaviour, so failures stay visible.
             if (!args.Any(arg => arg == "--preview-ui" || arg == "--smoke" || arg == "--check-ui")) CrashReporter.Install();
             Application.EnableVisualStyles();
@@ -25,8 +26,14 @@ namespace AOLauncher
                     if (!startup) instance.RequestShow();
                     return;
                 }
+                // Loading screen while the main window is built; the window appears once it is fully laid out.
+                bool splash = !smoke && !startup;
+                if (splash) StartupSplash.Begin();
+                try
+                {
                 using (var form = new MainForm(smoke))
                 {
+                    if (splash) form.RevealWhenReady();
                     form.Shown += (sender, e) =>
                     {
                         if (startup) form.MinimizeToTray();
@@ -40,6 +47,8 @@ namespace AOLauncher
                     }
                     Application.Run(form);
                 }
+                }
+                finally { StartupSplash.End(); }
             }
         }
     }

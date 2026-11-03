@@ -32,6 +32,8 @@ if ($TelemetryTransport) {
 & $x86 -NoProfile -ExecutionPolicy Bypass -STA -File (Join-Path $testRoot 'Verify-FastStartup.ps1') -AssemblyPath $launcher *> (Join-Path $logRoot 'Verify-FastStartup.txt')
 if ($LASTEXITCODE -ne 0) { throw 'Failed: Verify-FastStartup. See logs.' }
 Write-Host 'PASS: Verify-FastStartup'
+& (Join-Path $testRoot 'Verify-AOVKStartup.ps1') *> (Join-Path $logRoot 'Verify-AOVKStartup.txt')
+Write-Host 'PASS: Verify-AOVKStartup'
 & $x86 -NoProfile -ExecutionPolicy Bypass -STA -File (Join-Path $testRoot 'Verify-FirstPaint.ps1') -AssemblyPath $launcher *> (Join-Path $logRoot 'Verify-FirstPaint.txt')
 if ($LASTEXITCODE -ne 0) { throw 'Failed: Verify-FirstPaint. See logs.' }
 Write-Host 'PASS: Verify-FirstPaint'

@@ -94,9 +94,15 @@ namespace NexusFastStartup {
         if (Active()) return true;
         if (isCreation || !EnvironmentIs("AONexusFastStartupValidated", "True")) return false;
         gui = reinterpret_cast<BYTE*>(GetModuleHandleW(L"GUI.dll"));
-        auto randy = reinterpret_cast<BYTE*>(GetModuleHandleW(L"randy31.dll"));
+        // The GUI/login hooks do not depend on Randy's private texture function.
+        // Never resolve an offset into AO-VK's replacement DLL or its original DLL.
+        bool texture = EnvironmentIs("AONexusFastTextureValidated", "True");
+        bool stock = EnvironmentIs("AONexusFastStartupProfile", "Stock");
+        bool aovk = EnvironmentIs("AONexusFastStartupProfile", "AOVK");
+        if ((!stock && !aovk) || texture != stock) return false;
+        auto randy = texture ? reinterpret_cast<BYTE*>(GetModuleHandleW(L"randy31.dll")) : nullptr;
         auto protocol = reinterpret_cast<BYTE*>(GetModuleHandleW(L"MessageProtocol.dll"));
-        if (!ImageMatches(gui, 0x647A09DA, 0x2B1000) || !ImageMatches(randy, 0x647A069E, 0x1ED000)
+        if (!ImageMatches(gui, 0x647A09DA, 0x2B1000) || (texture && !ImageMatches(randy, 0x647A069E, 0x1ED000))
             || !ImageMatches(protocol, 0x647A0672, 0xD000)
             || !FadeDataValid()) { StatusSend("fast-startup unsupported"); return false; }
         auto decoder = GetProcAddress(reinterpret_cast<HMODULE>(protocol), "?DataBlockToMessage@@YAPAVMessage_t@@IPAX@Z");
@@ -104,7 +110,7 @@ namespace NexusFastStartup {
         decode = reinterpret_cast<DecodeFn>(decoder);
         expectedCharacter = static_cast<uint32_t>(atoi(std::getenv("AOCharId")));
         const uint8_t signature[] = {0x55,0x8b,0xec,0x83,0xec,0x60,0x53,0x8b,0x5d,0x10};
-        if (memcmp(randy + 0x6BFC1, signature, sizeof(signature))
+        if ((texture && memcmp(randy + 0x6BFC1, signature, sizeof(signature)))
             || !Resolve(initialize, "?InitialiseMessage@ServerLogin3DModule_t@@CAXXZ", 0x1779D)
             || !Resolve(loggedIn, "?CharacterLoggedInMessage@ServerLogin3DModule_t@@CAXXZ", 0x16F8F)
             || !Resolve(fadeStart, "?StartClosingLoadscreenMessage@ServerLogin3DModule_t@@CAXXZ", 0x16F37)
@@ -112,7 +118,7 @@ namespace NexusFastStartup {
             || !Resolve(addMesh, "?AddMesh@LoginWorld_c@@AAEXW4Stage_e@1@PBD@Z", 0x16000)) {
             StatusSend("fast-startup unsupported"); return false;
         }
-        bilinear = reinterpret_cast<BilinearRow>(randy + 0x6BFC1);
+        bilinear = texture ? reinterpret_cast<BilinearRow>(randy + 0x6BFC1) : nullptr;
         quiet = isQuiet;
         if (DetourTransactionBegin() != NO_ERROR) return false;
         LONG result = DetourUpdateThread(GetCurrentThread());
@@ -122,13 +128,14 @@ namespace NexusFastStartup {
         NEXUS_FAST_ATTACH(fadeStart, FadeStartHook);
         NEXUS_FAST_ATTACH(frame, FrameHook);
         NEXUS_FAST_ATTACH(addMesh, AddMeshHook);
-        NEXUS_FAST_ATTACH(bilinear, BilinearHook);
+        if (texture) { NEXUS_FAST_ATTACH(bilinear, BilinearHook); }
         NEXUS_FAST_ATTACH(decode, DecodeHook);
 #undef NEXUS_FAST_ATTACH
         if (result != NO_ERROR) { DetourTransactionAbort(); StatusSend("fast-startup attach-failed"); return false; }
         bool attached = DetourTransactionCommit() == NO_ERROR;
         InterlockedExchange(&installed, attached ? 1 : 0);
-        StatusSend(attached ? "fast-startup active" : "fast-startup commit-failed");
+        if (attached) StatusSend("fast-startup active profile=%s texture=%s", aovk ? "aovk-test" : "stock", texture ? "on" : "off");
+        else StatusSend("fast-startup commit-failed");
         return attached;
     }
 }

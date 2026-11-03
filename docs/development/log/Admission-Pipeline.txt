@@ -1,0 +1,248 @@
+AO Nexus: acceptance-controlled Rebirth login
+===========================================
+
+Evidence
+--------
+Inspected upstream server revision 2d4edfded3bfee27f5c89753e1250e9c94b107e7
+in the separate server-source checkout. WorldState was inspected with
+git show HEAD, so this conclusion does not rely on the local pending-grants
+patch in that separate repository. No server files or deployment were changed.
+
+In WorldEngine/State/WorldState.cs, BeginLogin replaces the account's pending
+generation. Claim rejects a login ticket whose generation is no longer current.
+Successful Claim creates/refreshes an independent character lease and removes
+the ticket. Starting the next authentication after Claim avoids that race.
+
+ZoneEngine_New/Core/MessageHandlers/ZoneLoginHandler.cs awaits ClaimAsync at
+line 116, closes rejected sessions at 123-131, and only after successful admission
+and hydration sends InitiateCompression, ChatServerInfo, then PlayfieldAnarchyF
+at 216-218. ChatServerInfo is therefore evidence of completed admission on this
+path. It is not a promise that later rendering, spawn or networking cannot fail.
+The exact revision deployed on the public endpoint has not been independently
+verified. Live tests corroborated the observed response and successful sequencing.
+
+Client implementation
+---------------------
+The version-pinned MessageProtocol.dll DataBlockToMessage export exposes decoded
+frames after decompression. The hook calls the original decoder first, then
+recognizes a successful SystemMessage 0x43 addressed to the requested character.
+It checks the complete frame length and only reports once after character
+selection. It neither logs packet payloads nor changes the game protocol.
+
+Each preloaded client waits on private local ready/cancel events before its
+normal ConnectToLH call. A UI-thread timer checks readiness; the UI thread is
+never blocked waiting for the previous client. Readiness is released on receipt
+of ChatServerInfo. Cancellation, launcher exit, missing gate handles and gate
+timeout leave the manual login UI available without authenticating automatically.
+There is no configured delay between successive authentications. A timer dispatch
+and normal scheduling latency remain; the timer is not a server-readiness guess.
+
+The queue retains final character-window confirmation, session identity checks,
+account limits and normal /quit. Missing acceptance telemetry falls back to full
+confirmation. Failed confirmation stops further starts in that account queue.
+Already-preloaded clients whose prerequisite fails are cancelled, not force-killed.
+
+Scope and controls
+------------------
+Enabled by default only for 2.24.96.30:7500 with FastStartup enabled and all six
+classic-client hashes verified. Unknown builds, Funcom and PRK retain serial
+behavior. Turning off Fast loading also disables preloading. Internal stdin
+request controls AcceptancePipeline=false and MaxConcurrentPreloads=1..6 allow
+bounded local comparison. Unsafe fixed-delay experiment controls were removed.
+No UI setting or saved profile was rewritten by the experiments.
+
+Local testing
+-------------
+A six-character preset; one saved Rebirth account and one installation.
+Tests used saved credentials in memory, private worker stdin, the normal injector,
+normal confirmation and normal /quit. No forced client termination. These are
+warm-machine observations at the characters' current location, not an absolute
+minimum or a guarantee for another machine, zone, server load or cold cache.
+
+Timing starts at the helper stopwatch before request preparation. The headline
+time is the last client's native world-ready event (initial overlay removal).
+It is distinct from the later queue confirmation/worker exit and not a measured
+physical screen-present timestamp. All six clients were matched by the production
+session registry; do not interpret this as manual visual inspection of every client.
+
+See logs/acceptance-results.json for measured runs and event-order checks.
+Original serial run: 31.908 s. Fixed 1000 ms / two-in-flight run: 18.065 s.
+Fixed 500 ms run: first client exited before world-ready; test stopped early.
+Acceptance before spawning next: 25.928 s, 6/6.
+Acceptance with three preloads / 500 ms start gap: 15.645 s, 6/6.
+Acceptance with six preloads / 500 ms start gap: 14.142 s, 6/6.
+Acceptance with six preloads / zero added gap: 13.505 s, 6/6.
+Acceptance with four preloads / zero added gap: 14.802 s, 6/6.
+Final default repeats: 13.481 s and 13.265 s, both 6/6. Including the matching
+zero-gap exploratory run, the chosen configuration completed 18/18 logins across
+three runs. The fastest observed result is about 58% below the earlier serial
+baseline. These runs were not randomized or a statistical latency guarantee.
+Preloading trades first-character latency for team completion: the first world
+was ready at 7.921/7.870 s in the final runs versus 4.587 s in the serial run.
+It also puts more startup CPU, memory and I/O demand on the machine at once.
+All recorded gate releases followed the preceding character's acceptance event.
+Final client reuse skipped all six existing sessions without spawning duplicates;
+the helper exited in 0.539 s. Normal preset logout completed after each run.
+Exact binary hashes are recorded in the JSON results.
+
+Offline tests cover truncated/wrong-character/wrong-opcode frames, guarded-page
+reads, once-only gate release, cancellation precedence, timeout and parent exit,
+missing telemetry, failed confirmation, late acceptance after disposal, endpoint
+restrictions and existing session/account policies. The launcher's first-paint
+changes are separately checked for theme/handle creation and composed painting.
+
+These measurements were captured during local development before release.
+
+Regression verification note
+----------------------------
+The first broad preview verification run failed one AccountDialog Space-key
+checkbox assertion at English 150% scale. An unchanged rerun passed all 525
+dialog-theme/input checks; the earlier first-paint build also passed them.
+The precise cause of this intermittent test failure is not established. Both
+the failing log and passing retry are preserved rather than hiding the failure.
+All remaining checks in build/Verify.ps1 subsequently passed, including account
+limits, creation monitoring, backend lifecycle, normal camp control, scripts,
+macros, diagnostics, updates and embedded payload verification. The preview
+contains the same NexusEngine.dll and LoginHandler.dll hashes as the final live
+tests. All 200 embedded backend files were verified and the real payload was
+extracted and verified twice. All live test game processes were logged out.
+
+Current release entry point: dist/AONexus.exe.
+Close the existing AO Nexus instance before opening a newer build. Select the
+usual preset and keep Fast loading enabled. Quiet launch was enabled in the
+timing runs. The existing dist/AONexus.exe was not overwritten while it was open.
+
+Visible loading timers
+----------------------
+Each newly confirmed client now gets a readable activity-log line, for example
+"Character loaded in 9.56 s." The interval starts immediately before client spawn
+and ends at its native world-ready report. It includes preload/admission waits.
+The final team time runs from launch-queue entry to the last new client's
+world-ready event. It includes gaps between starts; it does not add overlapping
+per-client times or include initial launcher-component preparation.
+
+Existing clients are excluded from new-client loading time. An entirely reused
+preset reports that no clients needed loading. Missing world-ready reports use
+explicitly labelled login-confirmation times instead. Partial/failed runs report
+elapsed run time and the confirmed/selected counts rather than claiming that
+all clients loaded. English and Danish text and number formats are supported.
+
+The timing-log verification run confirmed all six individual displayed values
+against native events. The visible team total was 9.92 s; the external helper's
+last world-ready timestamp was 10.088 s, including earlier request preparation.
+This subsequent warm run had different timing from the earlier benchmark;
+the logging change does not itself establish a performance improvement.
+Reuse and normal logout also passed. See logs/aor-visible-timing*.txt.
+112 policy/admission/timing checks and 51 creation-monitor checks passed; the
+200-file payload was verified. A synthetic UI render checked the left-aligned
+credit and delivery of timing messages into the visible activity log.
+
+
+Test 15 local experiment: recognized AO-VK Rebirth profile may use admission-gated overlap, capped at two preloads. Existing fast-startup/pipeline opt-outs and confirmation fallback remain. No live speedup measured.
+
+1 November 2026: verified AO-VK fast path restored
+------------------------------------------------
+The earlier blanket AO-VK opt-out made the normal six-character launch serial:
+the 09:39 local diagnostic run took 53.55 seconds, with 8-9 seconds per client.
+The failed compatibility patch suspension had since been repaired separately.
+
+Normal Fast loading now recognizes one additional exact profile: the classic
+EXE/GUI/Interfaces/Utils/MessageProtocol files, original Randy renderer, AO-VK UI13
+renderer SHA256 4BAED22CA29039224AD0167F74E0A9793AF0A396CF3FE868DC99B66992E88151,
+and startup repair 2-aovk-startup.2 SHA256
+BB7581048F77D3BD89D95F983BD472B5ABB7FDA8D0B920D2825E499998A25B2A.
+This AOVKVerified profile uses GUI fade/login-scene optimization with NO private
+texture hook. It permits up to six preloads on the existing Rebirth endpoint.
+Authentication still waits for the preceding character's exact server acceptance.
+Old/missing/changed repairs and unknown client files do not get this normal path.
+Other recognized AO-VK profiles remain developer opt-in with the two-preload cap.
+Fast loading off, pipeline off, other servers, admission failure and fallback
+confirmation behavior remain as before.
+
+Live warm-cache checks using the saved six-character selection and existing
+startup repair (no game files modified):
+  One fast client: 3.74 s to native world-ready.
+  Six clients / two preloads: 13.83 s to last native world-ready.
+  Six clients / normal verified profile, experimental flag OFF: 9.26 s, then 9.13 s.
+Both six-preload runs confirmed 6/6 characters; all six remained alive/responding
+after each run, and normal /quit cleanup succeeded between runs. No associated
+Application Error / WER event appeared in the inspected test interval.
+These are measured warm runs, not a cold-start or every-machine guarantee.
+The separate end-to-end benchmark process includes approximately one extra
+second for request handling and final confirmation. Timing must not be confused
+with server acceptance or the sum of the six overlapping client durations.
+
+Reproduction: tools/Measure-Startup.ps1 defaults to validation-only. -Run explicitly
+launches the saved six Rebirth clients (or -Count 1), refuses existing game
+processes, uses CredentialStore and private stdin, and writes redacted timing logs.
+Mode pipeline-6 deliberately leaves the experimental flag OFF. Normal logout uses
+tools/Stop-StartupBenchmark.ps1 with explicit test process IDs and session identity
+checks; it never force-kills a game. No credential-bearing request is written to disk.
+
+Packaged-launcher check, 2026-11-01 10:01 local: installed dist/AONexus.exe
+(SHA256 B89CEBD5CC18E32E3F074701EB8DF3A51BCFCBC51F3172634A425BCA7DBD479C),
+restarted Nexus normally, and clicked Log in 6 selected with saved preferences.
+The normal UI run completed in 10.4 s including preparation; all six reported
+native world-ready and all six character confirmations arrived. The run-end log
+count was briefly 5/6 because the final UI observer callback arrived afterwards.
+All six remained alive/responding with fresh health/nano and nearby-meter snapshots
+at 10:01:59. No matching Application Error/WER events were found in the inspected
+eight-minute interval. The startup repair log reported READY. Clients were left
+running. FastStartup preference/serialization and embedded backend validation
+(55 regression checks plus real packaged extraction) also passed.
+
+1 November 2026, 14:11 local: AO-VK 0.8.1 fast-path regression repaired
+----------------------------------------------------------------------
+Root cause: FastStartup was false in the current settings, and the exact official
+AO-VK 0.8.1 + compatibility-repair pair was absent from FastStartup.GetProfile.
+The earlier UI13 fast-path verification above did NOT cover the replacement
+renderer. The 13:28 local launch took 51.46 s native / 52.5 s GUI end-to-end,
+serially waiting around eight seconds for each of six clients. This run predates
+the saved-team ordered-start changes. Plugin dispatch was not the long wait.
+
+The normal verified profile now additionally accepts these exact SHA256 files:
+ randy31.dll: 191B55E33790ECA78FEC2926D12A95344734BB3FE7969C4FA70879E17E497E15
+ version.dll: 8691D59A0F4C13859FAA094432156E7461E40F7F58A3A3A9E931B7DE675425F6
+All existing executable (including LAA), GUI, Interfaces, Utils, MessageProtocol
+and original-renderer pins still apply. No game files changed. GUI/login-scene
+fast hooks are used; the private renderer texture hook remains disabled. Normal
+six-preload admission gating is enabled for this verified pair, without the
+experimental-startup command-line flag. Unknown/missing/changed files still
+fail closed to normal startup. The selected 64-plugin installation is unchanged.
+
+Warm-cache live progression, all with saved team start order preserved:
+ one client: 3.70 s native world-ready (3.75 s batch total).
+ six clients, cap two: 13.51 s native batch total.
+ six clients, cap six: 8.57 s native batch total.
+ packaged GUI, normal startup flags: 8.98 s native batch total; 11.5 s including
+ launcher preparation and final in-game confirmation; all six confirmed in game.
+These are warm measurements, not cold-start or every-machine guarantees.
+Benchmark logs: logs/startup-serial-fast-20261101-140156.log,
+logs/startup-aovk081-pipeline2.log and logs/startup-aovk081-pipeline6.log.
+The benchmark executable's logout mode checked process start time and game path,
+then normally camped every benchmark client out. No force-kills were used.
+
+Installed dist/AONexus.exe SHA256:
+ 2594835A7F5FE8182DB61C48D4AC01ADEA7BF9A010B2E6699FA6F9995A896364
+Previous EXE and settings were backed up; FastStartup was restored to true.
+The launcher now visibly reports Fast loading ready/off/unsupported by compiling
+THE SAME FastStartup.cs as the backend. This prevents two compatibility tables
+from drifting. The footer was visually verified, including the Settings link.
+Backend also logs an explicit explanation when Fast loading is off.
+
+Validation: Verify-AOVKStartup passed native/managed compatibility tests, including
+one-file-at-a-time 0.8.1 pin rejection and experimental flag non-bypass checks.
+Verify-TeamWindow: 258 passed, including mode labels and preference roundtrip.
+The packaged executable was validated against all 200 published backend files.
+Defender custom scan found no threats in this executable; Antivirus and RealTime
+Protection stayed enabled, with no new threat detection in the inspected interval.
+No matching AO/Nexus Application Error or WER event in the inspected interval.
+
+At 14:12 local, all six had normal response time, live telemetry, and auto-minimize
+support. Automatic formation completed at 14:11:57, Overwhelming as leader and all
+five followers joined. Plugin readiness and team formation finish AFTER native
+world-ready; the ~9 s number must not be presented as all plugins/team ready.
+The startup log transiently says updated Nexus Shortcuts is needed before that
+helper loads; it recovered automatically and did not require a client restart.
+This wording is misleading and should be corrected in a future UI cleanup.
+All six clients were left running in the AO-VK test installation.

@@ -72,7 +72,11 @@ namespace NexusEngine
         public int StartSpacingMs { get; set; } = 1500;
         // Experimental: LoginHandler skips drawing the login and character screens.
         public bool QuietLaunch { get; set; }
+        public bool AllowExperimentalAovk { get; set; }
         public bool FastStartup { get; set; }
+        public bool OrderedStarts { get; set; }
+        public bool KeepLeaderActive { get; set; }
+        public int LauncherProcessId { get; set; }
         // Only enabled for the verified Rebirth endpoint/client below. Each
         // preloaded client's authentication waits for the previous admission.
         public bool AcceptancePipeline { get; set; } = true;
@@ -319,10 +323,11 @@ namespace NexusEngine
 
         private static async Task<int> LaunchSelectedAsync(LaunchRequest request)
         {
+            using var windows = new PresetLaunchWindows(request.KeepLeaderActive && request.OrderedStarts && request.Characters.Count>1,request.LauncherProcessId);
             var batchTimer = Stopwatch.StartNew();
             var timings = new LaunchTimings(request.Characters.Count);
             if (!request.Characters.Any(entry => entry.CreateCharacter))
-                Console.WriteLine(Texts.T("Accounts start in parallel; characters on the same account log in one at a time."));
+                Console.WriteLine(request.OrderedStarts ? "Starting characters in saved team order." : Texts.T("Accounts start in parallel; characters on the same account log in one at a time."));
             var queueSizes = request.Characters.GroupBy(AccountQueueKey, StringComparer.OrdinalIgnoreCase).Select(group => group.Count()).ToArray();
             var confirmations = new ConcurrentDictionary<string, List<Task<bool>>>(StringComparer.OrdinalIgnoreCase);
             var admissions = new ConcurrentDictionary<string, Task<bool>>(StringComparer.OrdinalIgnoreCase);
@@ -332,8 +337,10 @@ namespace NexusEngine
                 var pending = confirmations.GetOrAdd(AccountQueueKey(entry), _ => new List<Task<bool>>());
                 if (pending.Any(task => task.IsCompleted && !task.GetAwaiter().GetResult())) return false;
                 var target = entry.ResolvedTarget;
-                bool pipeline = CanPipeline(request, target, request.FastStartup && FastStartup.IsSupported(target.GamePath));
-                while (pending.Count(task => !task.IsCompleted) >= (pipeline ? request.MaxConcurrentPreloads : 1))
+                var pipelineProfile = request.FastStartup ? FastStartup.GetAllowedProfile(target.GamePath, request.AllowExperimentalAovk) : StartupProfile.None;
+                bool pipeline = CanPipeline(request, target, pipelineProfile != StartupProfile.None);
+                int preloadLimit = PreloadLimit(request, pipelineProfile);
+                while (pending.Count(task => !task.IsCompleted) >= (pipeline ? preloadLimit : 1))
                     if (!await pending.First(task => !task.IsCompleted).ConfigureAwait(false)) return false;
                 if (entry.CreateCharacter)
                 {
@@ -342,6 +349,10 @@ namespace NexusEngine
                 string runningName = ClientSessions.TryGetRunningName(entry, target);
                 if (runningName != null)
                 {
+                    if(ReferenceEquals(entry,request.Characters[0])) {
+                        var record=ClientSessions.ReadValidatedRecords().FirstOrDefault(r=>ClientSessions.MatchesIdentity(r,entry,target));
+                        if(record!=null)windows.Add(record.ProcessId,record.StartTimeUtcTicks,target.GamePath,true,true);
+                    }
                     timings.AlreadyOpen(entry);
                     ReportCharacter(entry, runningName);
                     Console.WriteLine(Texts.F("{0} (ID {1}): already running; skipped.", runningName, entry.CharacterId));
@@ -359,17 +370,20 @@ namespace NexusEngine
                 var status = LoginStatusChannel.TryStart(spawnTimer,
                     (stage, ms) => {
                         timings.Observe(entry, stage, ms);
+                        if (stage.StartsWith("fast-startup ", StringComparison.Ordinal))
+                            Console.WriteLine("Startup hooks: " + stage);
                         Diagnostic("stage", entry, new { Stage = stage, Ms = ms });
                     });
                 Process spawned;
                 LoginGate gate = null;
                 try
                 {
-                    if (pipeline) gate = new LoginGate(admissions.GetOrAdd(AccountQueueKey(entry), _ => Task.FromResult(true)));
+                    if (pipeline) gate = new LoginGate(admissions.GetOrAdd(request.OrderedStarts ? "ordered-team" : AccountQueueKey(entry), _ => Task.FromResult(true)));
                     spawned = Program.SpawnAOProcess(new Program.Options {
                         Username = entry.Account, Password = entry.Password, CharacterId = entry.CharacterId,
                         CampToken = Guid.NewGuid().ToString("N"), StatusPipe = status?.PipeName, Quiet = request.QuietLaunch,
-                        FastStartup = request.FastStartup, LoginGate = gate?.Name
+                        FastStartup = request.FastStartup, AllowExperimentalAovk = request.AllowExperimentalAovk, LoginGate = gate?.Name,
+                        StartMinimized = windows.Enabled && !ReferenceEquals(entry,request.Characters[0])
                     }, target);
                 }
                 catch (Exception error)
@@ -377,6 +391,7 @@ namespace NexusEngine
                     // Type and system error codes only: exception text may contain request data.
                     Diagnostic("start-failed", entry, new { Stage = "start or LoginHandler injection", ElapsedMs = spawnTimer.ElapsedMilliseconds,
                         Type = error.GetType().FullName, HResult = "0x" + error.HResult.ToString("X8"),
+                        Frames = new StackTrace(error, false).GetFrames()?.Take(10).Select(frame => frame.GetMethod()?.DeclaringType?.FullName + "." + frame.GetMethod()?.Name).ToArray(),
                         Win32Error = (error as System.ComponentModel.Win32Exception)?.NativeErrorCode,
                         Inner = error.InnerException?.GetType().FullName, GameExecutableExists = File.Exists(Path.Combine(target.GamePath, "AnarchyOnline.exe")) });
                     status?.Dispose();
@@ -384,6 +399,8 @@ namespace NexusEngine
                     throw;
                 }
                 var client = spawned;
+                windows.Add(client.Id,client.StartTime.ToUniversalTime().Ticks,target.GamePath,
+                    ReferenceEquals(entry,request.Characters[0]),pipelineProfile==StartupProfile.Stock || pipelineProfile==StartupProfile.AOVKVerified);
                 Task<bool> confirmation;
                 try
                 {
@@ -400,13 +417,13 @@ namespace NexusEngine
                 pending.Add(confirmation);
                 if (pipeline)
                 {
-                    admissions[AccountQueueKey(entry)] = AdmissionOrConfirmationAsync(confirmation, status);
+                    admissions[request.OrderedStarts ? "ordered-team" : AccountQueueKey(entry)] = AdmissionOrConfirmationAsync(confirmation, status);
                     return !confirmation.IsCompleted || await confirmation.ConfigureAwait(false);
                 }
                 bool confirmed = await confirmation.ConfigureAwait(false);
                 if (confirmed) await Task.Delay(250).ConfigureAwait(false);
                 return confirmed;
-            });
+            }, request.OrderedStarts);
             bool[] confirmedClients = await Task.WhenAll(confirmations.Values.SelectMany(tasks => tasks)).ConfigureAwait(false);
             if (confirmedClients.Any(confirmed => !confirmed)) result = 2;
             Console.WriteLine(Texts.T(result == 0 ? "All login queues finished. Game clients remain open." :
@@ -414,6 +431,8 @@ namespace NexusEngine
             Console.WriteLine(timings.Summary(result == 0, batchTimer.ElapsedMilliseconds));
             return result;
         }
+
+        internal static int PreloadLimit(LaunchRequest request, StartupProfile profile) => profile == StartupProfile.AOVK ? Math.Min(2, request.MaxConcurrentPreloads) : request.MaxConcurrentPreloads;
 
         internal static bool CanPipeline(LaunchRequest request, LaunchTarget target, bool supportedClient)
         {
@@ -452,8 +471,9 @@ namespace NexusEngine
                 Console.WriteLine(timings.Confirmed(entry, actualName, confirmedAtMs));
                 return true;
             }
-            catch (Exception)
+            catch (Exception error)
             {
+                Diagnostic("confirmation-error", entry, new { ExceptionType = error.GetType().FullName, error.HResult });
                 Console.Error.WriteLine(Texts.F("Could not start ID {0}. The remaining characters on this account were stopped; other accounts continue.", entry.CharacterId));
                 return false;
             }
@@ -465,11 +485,11 @@ namespace NexusEngine
         }
 
         internal static async Task<int> RunAccountQueuesAsync(IReadOnlyList<CharacterLaunch> characters,
-            Func<CharacterLaunch, Task<bool>> launch)
+            Func<CharacterLaunch, Task<bool>> launch, bool ordered = false)
         {
             // Pending login generations are scoped to an endpoint and username.
             // Separate installations or saved IDs for the same login must still serialize.
-            var groups = characters.GroupBy(AccountQueueKey, StringComparer.OrdinalIgnoreCase)
+            var groups = ordered ? new[] { characters.ToArray() } : characters.GroupBy(AccountQueueKey, StringComparer.OrdinalIgnoreCase)
                 .Select(group => group.ToArray()).ToArray();
             var queues = groups.Select(group => Task.Run(async () =>
             {
@@ -486,6 +506,7 @@ namespace NexusEngine
                             // Never expose account credentials or callback exception data.
                             Console.Error.WriteLine(entry.CreateCharacter
                                 ? Texts.T("Could not start character creation. Check the game window; an already opened client stays open.")
+                                : ordered ? "Could not start ID " + entry.CharacterId + ". Remaining ordered team starts were stopped."
                                 : Texts.F("Could not start ID {0}. The remaining characters on this account were stopped; other accounts continue.", entry.CharacterId));
                             return 2;
                         }

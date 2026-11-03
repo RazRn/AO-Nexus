@@ -1,0 +1,542 @@
+diff --git a/AOSharp.Bootstrap/IPC/Messages/LoadAssemblyMessage.cs b/AOSharp.Bootstrap/IPC/Messages/LoadAssemblyMessage.cs
+index 2f11779..fff3dd8 100644
+--- a/AOSharp.Bootstrap/IPC/Messages/LoadAssemblyMessage.cs
++++ b/AOSharp.Bootstrap/IPC/Messages/LoadAssemblyMessage.cs
+@@ -7,17 +7,20 @@ namespace AOSharp.Bootstrap.IPC
+     public class LoadAssemblyMessage : IPCMessage
+     {
+         public IEnumerable<string> Assemblies;
++        public string RequestId;
+ 
+         public LoadAssemblyMessage() : base((byte)HookOpCode.LoadAssembly) { }
+ 
+         protected override void OnSerialize(BinaryWriter writer)
+         {
+             writer.Write(JsonConvert.SerializeObject(Assemblies));
++            writer.Write(RequestId ?? "");
+         }
+ 
+         protected override void OnDeserialize(BinaryReader reader)
+         {
+             Assemblies = JsonConvert.DeserializeObject<List<string>>(reader.ReadString());
++            RequestId = reader.BaseStream.Position < reader.BaseStream.Length ? reader.ReadString() : null;
+         }
+     }
+ }
+diff --git a/AOSharp.Bootstrap/Main.cs b/AOSharp.Bootstrap/Main.cs
+index bca9b52..28aefe6 100644
+--- a/AOSharp.Bootstrap/Main.cs
++++ b/AOSharp.Bootstrap/Main.cs
+@@ -71,9 +71,9 @@ namespace AOSharp.Bootstrap
+ 
+         private void OnAssembliesChanged(object pipe, IPCMessage message)
+         {
++            LoadAssemblyMessage msg = message as LoadAssemblyMessage;
+             try
+             {
+-                LoadAssemblyMessage msg = message as LoadAssemblyMessage;
+ 
+                 if (_pluginAppDomain != null)
+                 {
+@@ -95,6 +95,7 @@ namespace AOSharp.Bootstrap
+                 Type type = typeof(PluginProxy);
+                 _pluginProxy = (PluginProxy)_pluginAppDomain.CreateInstanceAndUnwrap(type.Assembly.FullName, type.FullName);
+ 
++                _pluginProxy.BeginSession(msg.Assemblies, msg.RequestId);
+                 _pluginProxy.LoadCore(_pluginAppDomain.BaseDirectory + "\\AOSharp.Core.dll");
+ 
+                 foreach (string assembly in msg.Assemblies)
+@@ -104,7 +105,8 @@ namespace AOSharp.Bootstrap
+             }
+             catch (Exception e)
+             {
+-                //TODO: Send IPC message back to loader on error
++                AOSharp.Common.PluginRuntimeStatus.Begin(msg?.Assemblies ?? new string[0], msg?.RequestId);
++                foreach (var path in msg?.Assemblies ?? new string[0]) AOSharp.Common.PluginRuntimeStatus.State(path, "Failed", e);
+                 Log.Error(e.Message);
+             }
+         }
+diff --git a/AOSharp.Bootstrap/PluginProxy.cs b/AOSharp.Bootstrap/PluginProxy.cs
+index 7a06876..44ed79b 100644
+--- a/AOSharp.Bootstrap/PluginProxy.cs
++++ b/AOSharp.Bootstrap/PluginProxy.cs
+@@ -137,6 +137,8 @@ namespace AOSharp.Bootstrap
+             return Delegate.CreateDelegate(typeof(T), m) as T;
+         }
+ 
++        public void BeginSession(IEnumerable<string> paths, string requestId) => AOSharp.Common.PluginRuntimeStatus.Begin(paths, requestId);
++
+         public void LoadCore(string assemblyPath)
+         {
+             //Load main assembly
+@@ -184,6 +186,9 @@ namespace AOSharp.Bootstrap
+         {
+             try
+             {
++                AOSharp.Common.PluginRuntimeStatus.State(assemblyPath, "Loading");
++                AOSharp.Common.PluginRuntimeStatus.SetOwner(assemblyPath);
++                bool found = false;
+                 //Load main assembly
+                 Assembly assembly = Assembly.LoadFrom(assemblyPath);
+ 
+@@ -232,12 +237,16 @@ namespace AOSharp.Bootstrap
+                     if (instance == null) //Is this even possible?
+                         continue;
+ 
+-                    _plugins.Add(new Plugin(instance, initMethod, teardownMethod, Path.GetDirectoryName(assemblyPath)));
++                    _plugins.Add(new Plugin(instance, initMethod, teardownMethod, Path.GetDirectoryName(assemblyPath), assemblyPath));
++                    found = true;
+                 }
++                if (!found) AOSharp.Common.PluginRuntimeStatus.State(assemblyPath, "Failed", new InvalidOperationException("No supported plugin entrypoint found."));
+             }
+             catch (Exception ex)
+             {
++                AOSharp.Common.PluginRuntimeStatus.State(assemblyPath, "Failed", ex);
+             }
++            finally { AOSharp.Common.PluginRuntimeStatus.SetOwner(null); }
+         }
+ 
+         public void RunPluginInitializations()
+@@ -268,23 +277,32 @@ namespace AOSharp.Bootstrap
+         private MethodInfo _initMethod;
+         private MethodInfo _teardownMethod;
+         private string _assemblyDir;
++        private string _assemblyPath;
+ 
+         public Plugin(object instance, MethodInfo initMethod, MethodInfo teardownMethod, string assemblyDir)
++            : this(instance, initMethod, teardownMethod, assemblyDir, instance.GetType().Assembly.Location) { }
++
++        public Plugin(object instance, MethodInfo initMethod, MethodInfo teardownMethod, string assemblyDir, string assemblyPath)
+         {
+             Initialized = false;
+             _instance = instance;
+             _initMethod = initMethod;
+             _teardownMethod = teardownMethod;
+             _assemblyDir = assemblyDir;
++            _assemblyPath = assemblyPath;
+         }
+ 
+         public void Initialize()
+         {
+             try
+             {
++                AOSharp.Common.PluginRuntimeStatus.SetOwner(_assemblyPath);
++                AOSharp.Common.PluginRuntimeStatus.State(_assemblyPath, "Initializing");
+                 _initMethod.Invoke(_instance, new object[] { _assemblyDir });
++                AOSharp.Common.PluginRuntimeStatus.State(_assemblyPath, "Started");
+             }
+-            catch { }
++            catch (Exception ex) { AOSharp.Common.PluginRuntimeStatus.State(_assemblyPath, "Failed", ex); }
++            finally { AOSharp.Common.PluginRuntimeStatus.SetOwner(null); }
+ 
+             Initialized = true;
+         }
+@@ -294,8 +312,9 @@ namespace AOSharp.Bootstrap
+             try
+             {
+                 _teardownMethod.Invoke(_instance, null);
++                AOSharp.Common.PluginRuntimeStatus.State(_assemblyPath, "Stopped");
+             }
+-            catch { }
++            catch (Exception ex) { AOSharp.Common.PluginRuntimeStatus.State(_assemblyPath, "Failed", ex); }
+         }
+     }
+ }
+diff --git a/AOSharp.Common/AOSharp.Common.csproj b/AOSharp.Common/AOSharp.Common.csproj
+index 2c86bf5..baf1074 100644
+--- a/AOSharp.Common/AOSharp.Common.csproj
++++ b/AOSharp.Common/AOSharp.Common.csproj
+@@ -40,6 +40,7 @@
+     </Reference>
+     <Reference Include="System" />
+     <Reference Include="System.Core" />
++    <Reference Include="System.Security" />
+     <Reference Include="System.Xml.Linq" />
+     <Reference Include="System.Data.DataSetExtensions" />
+     <Reference Include="Microsoft.CSharp" />
+@@ -58,6 +59,8 @@
+     <Compile Include="GameData\PlayfieldId.cs" />
+     <Compile Include="GameData\Vector4.cs" />
+     <Compile Include="IPC\IPCChannel.cs" />
++    <Compile Include="IPC\AuthenticatedPacket.cs" />
++    <Compile Include="PluginRuntimeStatus.cs" />
+     <Compile Include="IPC\IPCMessage.cs" />
+     <Compile Include="Math\AOMath.cs" />
+     <Compile Include="SmokeLounge\AOtomation\Messaging\GameData\AdvantagesItem.cs" />
+@@ -480,4 +483,4 @@
+     <None Include="packages.config" />
+   </ItemGroup>
+   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+-</Project>
+\ No newline at end of file
++</Project>
+diff --git a/AOSharp.Common/IPC/IPCChannel.cs b/AOSharp.Common/IPC/IPCChannel.cs
+index 9488d14..7692f2b 100644
+--- a/AOSharp.Common/IPC/IPCChannel.cs
++++ b/AOSharp.Common/IPC/IPCChannel.cs
+@@ -28,6 +28,7 @@ namespace AOSharp.Core.IPC
+ 
+         private byte _channelId;
+         private UdpClient _udpClient;
++        private readonly AuthenticatedPacket _authentication;
+ 
+         private static SerializerResolver _serializerResolver = new SerializerResolverBuilder<IPCMessage>().Build();
+         private static TypeInfo _typeInfo = new TypeInfo(typeof(IPCMessage));
+@@ -40,6 +41,7 @@ namespace AOSharp.Core.IPC
+         protected IPCChannelBase(byte channelId)
+         {
+             _channelId = channelId;
++            _authentication = new AuthenticatedPacket(LocalIpcKey.Get());
+ 
+             _udpClient = new UdpClient();
+             _udpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+@@ -80,10 +82,8 @@ namespace AOSharp.Core.IPC
+             byte[] receiveBytes = _udpClient.EndReceive(ar, ref _localEndPoint);
+             _udpClient.BeginReceive(ReceiveCallback, null);
+ 
+-            if (receiveBytes.Length < 11)
+-                return;
+-
+-            _packetQueue.Enqueue(receiveBytes);
++            if (_authentication.TryUnprotect(receiveBytes, out byte[] payload) && _packetQueue.Count < 256)
++                _packetQueue.Enqueue(payload);
+         }
+ 
+         private void ProcessIPCMessage(byte[] msgBytes)
+@@ -161,7 +161,7 @@ namespace AOSharp.Core.IPC
+                 writer.WriteInt16((short)length);
+                 writer.Dispose();
+ 
+-                byte[] serialized = stream.ToArray();
++                byte[] serialized = _authentication.Protect(stream.ToArray());
+                 _udpClient.Send(serialized, serialized.Length, _remoteEndPoint);
+             }
+         }
+diff --git a/AOSharp.Core/Combat/CombatHandler.cs b/AOSharp.Core/Combat/CombatHandler.cs
+index ab5bb60..ce841d4 100644
+--- a/AOSharp.Core/Combat/CombatHandler.cs
++++ b/AOSharp.Core/Combat/CombatHandler.cs
+@@ -27,6 +27,7 @@ namespace AOSharp.Core.Combat
+         protected delegate bool SpellConditionProcessor(Spell spell, SimpleChar fightingTarget, ref (SimpleChar Target, bool ShouldSetTarget) actionTarget);
+ 
+         public static CombatHandler Instance { get; private set; }
++        private static string _handlerOwner;
+ 
+         protected virtual bool ShouldUseSpecialAttack(SpecialAttack specialAttack)
+         {
+@@ -35,6 +36,10 @@ namespace AOSharp.Core.Combat
+ 
+         public static void Set(CombatHandler combatHandler)
+         {
++            string owner = AOSharp.Common.PluginRuntimeStatus.Owner(combatHandler?.GetType().Assembly.GetName().Name);
++            if (Instance != null && combatHandler != null && !ReferenceEquals(Instance, combatHandler))
++                AOSharp.Common.PluginRuntimeStatus.ClaimConflict("Combat handler", _handlerOwner, owner);
++            _handlerOwner = owner;
+             Instance = combatHandler;
+         }
+ 
+diff --git a/AOSharp.Core/Pet.cs b/AOSharp.Core/Pet.cs
+index 2e46839..f954c27 100644
+--- a/AOSharp.Core/Pet.cs
++++ b/AOSharp.Core/Pet.cs
+@@ -9,7 +9,34 @@ namespace AOSharp.Core
+     public class Pet : PetBase
+     {
+         public SimpleChar Character => DynelManager.GetDynel<SimpleChar>(Identity);
+-        public PetType Type => Character != null ? (PetType)Character.GetStat(Stat.PetType) : PetType.Unknown;
++        public PetType Type
++        {
++            get
++            {
++                var character = Character;
++                if (character == null)
++                    return PetType.Unknown;
++
++                var reportedType = (PetType)character.GetStat(Stat.PetType);
++                if (reportedType != PetType.Unknown)
++                    return reportedType;
++
++                return ResolveType(reportedType, character.GetStat(Stat.NPCFamily));
++            }
++        }
++
++        internal static PetType ResolveType(PetType reportedType, int npcFamily)
++        {
++            // Rebirth's starter MP, Engineer and Bureaucrat pets can omit PetType
++            // while supplying their family in NPCFamily. Preserve explicit types,
++            // particularly Support for Engineer dogs, and unrelated unknowns.
++            if (reportedType == PetType.Unknown &&
++                (npcFamily == (int)NpcClan.MPAttackPets || npcFamily == (int)NpcClan.EngineerAttackPet))
++                return PetType.Attack;
++
++            return reportedType;
++        }
++
+         public Pet(Identity identity) : base(identity)
+         {
+         }
+diff --git a/AOSharp.Core/UI/Chat.cs b/AOSharp.Core/UI/Chat.cs
+index 1676b56..94e175f 100644
+--- a/AOSharp.Core/UI/Chat.cs
++++ b/AOSharp.Core/UI/Chat.cs
+@@ -14,6 +14,7 @@ namespace AOSharp.Core.UI
+     public static class Chat
+     {
+         private static Dictionary<string, Action<string, string[], ChatWindow>> _customCommands = new Dictionary<string, Action<string, string[], ChatWindow>>();
++        private static Dictionary<string, string> _commandOwners = new Dictionary<string, string>();
+         private static ConcurrentQueue<(string, ChatColor)> _messageQueue = new ConcurrentQueue<(string, ChatColor)>();
+         public static EventHandler<GroupMessageEventArgs> GroupMessageReceived;
+         public static Action<string> FeedbackReceived;
+@@ -23,8 +24,14 @@ namespace AOSharp.Core.UI
+ 
+         public static void RegisterCommand(string command, Action<string, string[], ChatWindow> callback)
+         {
++            string owner = AOSharp.Common.PluginRuntimeStatus.Owner(callback?.Method.DeclaringType?.Assembly.GetName().Name);
+             if(!_customCommands.ContainsKey(command))
++            {
+                 _customCommands.Add(command, callback);
++                _commandOwners[command] = owner;
++            }
++            else
++                AOSharp.Common.PluginRuntimeStatus.ClaimConflict("/" + command, _commandOwners.TryGetValue(command, out var previous) ? previous : "Unknown plugin", owner);
+         }
+ 
+         internal static void Update()
+@@ -145,4 +152,4 @@ namespace AOSharp.Core.UI
+         Shout = 2,
+         Me = 3
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/AOSharp.Common/IPC/AuthenticatedPacket.cs b/AOSharp.Common/IPC/AuthenticatedPacket.cs
+new file mode 100644
+index 0000000..1cef9f4
+--- /dev/null
++++ b/AOSharp.Common/IPC/AuthenticatedPacket.cs
+@@ -0,0 +1,141 @@
++using System;
++using System.Collections.Generic;
++using System.Diagnostics;
++using System.IO;
++using System.IO.MemoryMappedFiles;
++using System.Linq;
++using System.Security.AccessControl;
++using System.Security.Cryptography;
++using System.Security.Principal;
++using System.Text;
++using System.Threading;
++
++namespace AOSharp.Core.IPC
++{
++    // Nexus v1 is deliberately same-machine/current-Windows-user only. Public plugin
++    // APIs and their payloads are unchanged; legacy unsigned peers are never accepted.
++    internal sealed class AuthenticatedPacket
++    {
++        const int Header = 4 + 16 + 8 + 8, Tag = 32, MaximumSenders = 1024;
++        static readonly byte[] Magic = { 65, 79, 78, 1 };
++        readonly byte[] key, sender = Guid.NewGuid().ToByteArray();
++        readonly Func<long> now;
++        readonly long started, lifetime;
++        long sequence;
++        readonly object gate = new object();
++        sealed class Seen { internal long Sequence, At; internal ulong Window; }
++        readonly Dictionary<Guid, Seen> seen = new Dictionary<Guid, Seen>();
++        internal AuthenticatedPacket(byte[] secret, Func<long> clock = null, long frequency = 0)
++        {
++            if (secret == null || secret.Length != 32) throw new ArgumentException("IPC key must be 32 bytes.");
++            key = (byte[])secret.Clone(); now = clock ?? Stopwatch.GetTimestamp;
++            lifetime = checked((frequency == 0 ? Stopwatch.Frequency : frequency) * 5);
++            started = now();
++        }
++        internal byte[] Protect(byte[] payload)
++        {
++            if (payload == null || payload.Length < 11 || payload.Length > 65000) throw new InvalidDataException("Invalid IPC payload length.");
++            using (var stream = new MemoryStream())
++            using (var writer = new BinaryWriter(stream))
++            {
++                writer.Write(Magic); writer.Write(sender); writer.Write(Interlocked.Increment(ref sequence)); writer.Write(now()); writer.Write(payload);
++                writer.Flush(); var bytes = stream.ToArray();
++                using (var hmac = new HMACSHA256(key)) writer.Write(hmac.ComputeHash(bytes));
++                return stream.ToArray();
++            }
++        }
++        internal bool TryUnprotect(byte[] packet, out byte[] payload)
++        {
++            payload = null;
++            if (packet == null || packet.Length < Header + 11 + Tag || packet.Length > Header + 65000 + Tag) return false;
++            for (int i = 0; i < Magic.Length; i++) if (packet[i] != Magic[i]) return false;
++            byte[] expected;
++            using (var hmac = new HMACSHA256(key)) expected = hmac.ComputeHash(packet, 0, packet.Length - Tag);
++            int difference = 0;
++            for (int i = 0; i < Tag; i++) difference |= expected[i] ^ packet[packet.Length - Tag + i];
++            if (difference != 0) return false;
++            using (var reader = new BinaryReader(new MemoryStream(packet, false)))
++            {
++                reader.ReadBytes(4); Guid identity = new Guid(reader.ReadBytes(16));
++                long seq = reader.ReadInt64(), timestamp = reader.ReadInt64(), current = now();
++                if (seq <= 0 || timestamp < started || timestamp > current || current - timestamp > lifetime) return false;
++                lock (gate)
++                {
++                    if (!seen.TryGetValue(identity, out var previous))
++                    {
++                        foreach (var expired in seen.Where(pair => current - pair.Value.At > lifetime).Select(pair => pair.Key).ToArray()) seen.Remove(expired);
++                        if (seen.Count >= MaximumSenders) return false; // Never evict a still-replayable entry.
++                        previous = new Seen { Sequence = seq, At = timestamp, Window = 1 }; seen.Add(identity, previous);
++                    }
++                    else if (seq > previous.Sequence)
++                    {
++                        long shift = seq - previous.Sequence;
++                        previous.Window = shift >= 64 ? 1 : (previous.Window << (int)shift) | 1;
++                        previous.Sequence = seq; previous.At = Math.Max(previous.At, timestamp);
++                    }
++                    else
++                    {
++                        long offset = previous.Sequence - seq;
++                        if (offset >= 64 || (previous.Window & (1UL << (int)offset)) != 0) return false;
++                        previous.Window |= 1UL << (int)offset; previous.At = Math.Max(previous.At, timestamp);
++                    }
++                }
++                payload = reader.ReadBytes(packet.Length - Header - Tag);
++                return true;
++            }
++        }
++    }
++
++    internal static class LocalIpcKey
++    {
++        static readonly Lazy<byte[]> Key = new Lazy<byte[]>(Load);
++        // Holding this handle keeps the random session key alive. No key survives the
++        // last participant or a reboot, so boot-relative clocks cannot revive captures.
++        static MemoryMappedFile sharedKey;
++        internal static byte[] Get() => Key.Value;
++        static byte[] Load() => OpenSessionKey(null);
++        internal static byte[] OpenSessionKey(string testSuffix)
++        {
++            using (var identity = WindowsIdentity.GetCurrent())
++            {
++                var sid = identity.User;
++                string name = "Local\\AONexus.SecureIPC.v1." + sid.Value + (testSuffix == null ? "" : ".test." + testSuffix);
++                var mutexAccess = new MutexSecurity(); mutexAccess.SetAccessRuleProtection(true, false); mutexAccess.SetOwner(sid);
++                mutexAccess.AddAccessRule(new MutexAccessRule(sid, MutexRights.FullControl, AccessControlType.Allow));
++                bool created;
++                using (var mutex = new Mutex(false, name + ".Lock", out created, mutexAccess))
++                {
++                    bool held = false;
++                    try
++                    {
++                        if (!sid.Equals(mutex.GetAccessControl().GetOwner(typeof(SecurityIdentifier)))) throw new IOException("Unexpected IPC mutex owner.");
++                        try { held = mutex.WaitOne(TimeSpan.FromSeconds(10)); } catch (AbandonedMutexException) { held = true; }
++                        if (!held) throw new IOException("Another client is preparing secure IPC. Try again.");
++                        var access = new MemoryMappedFileSecurity(); access.SetAccessRuleProtection(true, false); access.SetOwner(sid);
++                        access.AddAccessRule(new AccessRule<MemoryMappedFileRights>(sid, MemoryMappedFileRights.FullControl, AccessControlType.Allow));
++                        var map = MemoryMappedFile.CreateOrOpen(name, 36, MemoryMappedFileAccess.ReadWrite, MemoryMappedFileOptions.None, access, HandleInheritability.None);
++                        try
++                        {
++                            if (!sid.Equals(map.GetAccessControl().GetOwner(typeof(SecurityIdentifier)))) throw new IOException("Unexpected IPC key owner.");
++                            using (var view = map.CreateViewAccessor(0, 36, MemoryMappedFileAccess.ReadWrite))
++                            {
++                                byte[] key = new byte[32]; int state = view.ReadInt32(0);
++                                if (state == 0)
++                                {
++                                    using (var random = RandomNumberGenerator.Create()) random.GetBytes(key);
++                                    view.WriteArray(4, key, 0, key.Length); view.Write(0, 1); view.Flush();
++                                }
++                                else if (state == 1) view.ReadArray(4, key, 0, key.Length);
++                                else throw new IOException("Invalid secure IPC key state.");
++                                sharedKey = map;
++                                return key;
++                            }
++                        }
++                        catch { map.Dispose(); throw; }
++                    }
++                    finally { if (held) mutex.ReleaseMutex(); }
++                }
++            }
++        }
++    }
++}
+diff --git a/AOSharp.Common/PluginRuntimeStatus.cs b/AOSharp.Common/PluginRuntimeStatus.cs
+new file mode 100644
+index 0000000..8d9270b
+--- /dev/null
++++ b/AOSharp.Common/PluginRuntimeStatus.cs
+@@ -0,0 +1,78 @@
++using System;
++using System.Collections.Generic;
++using System.Diagnostics;
++using System.IO;
++using System.Linq;
++using Newtonsoft.Json;
++
++namespace AOSharp.Common
++{
++    // Optional diagnostics consumed by Nexus. A write failure must never disrupt a game callback.
++    public static class PluginRuntimeStatus
++    {
++        public sealed class Entry { public string Path, State, Error; }
++        public sealed class Conflict { public string Resource, Previous, Current; }
++        public sealed class Report
++        {
++            public int Format = 1, Pid;
++            public long StartTicks;
++            public string RequestId;
++            public List<Entry> Plugins = new List<Entry>();
++            public List<Conflict> Conflicts = new List<Conflict>();
++        }
++        static readonly object gate = new object();
++        static Report report;
++        internal static string directoryOverride;
++        [ThreadStatic] static string owner;
++        public static string Owner(string fallback) => owner ?? fallback ?? "Unknown plugin";
++        public static void SetOwner(string path) { owner = path; }
++        public static void Begin(IEnumerable<string> paths, string requestId)
++        {
++            lock (gate)
++            {
++                using (var process = Process.GetCurrentProcess()) report = new Report { Pid = process.Id, StartTicks = process.StartTime.ToUniversalTime().Ticks, RequestId = requestId };
++                foreach (string path in paths.Take(128)) report.Plugins.Add(new Entry { Path = path, State = "Requested" });
++                Save();
++            }
++        }
++        public static void State(string path, string state, Exception error = null)
++        {
++            lock (gate)
++            {
++                var entry = report?.Plugins.FirstOrDefault(item => string.Equals(item.Path, path, StringComparison.OrdinalIgnoreCase));
++                if (entry == null) return;
++                // A DLL with multiple entrypoints is failed if any one fails.
++                if (entry.State == "Failed" && state != "Stopped") return;
++                entry.State = state;
++                var cause = error?.GetBaseException();
++                entry.Error = cause == null ? null : (cause.GetType().Name + ": " + cause.Message);
++                if (entry.Error?.Length > 1000) entry.Error = entry.Error.Substring(0, 1000);
++                Save();
++            }
++        }
++        public static void ClaimConflict(string resource, string previous, string current)
++        {
++            lock (gate)
++            {
++                if (report == null || report.Conflicts.Count >= 128) return;
++                if (report.Conflicts.Any(item => item.Resource == resource && item.Previous == previous && item.Current == current)) return;
++                report.Conflicts.Add(new Conflict { Resource = resource, Previous = previous, Current = current }); Save();
++            }
++        }
++        static void Save()
++        {
++            string temporary = null;
++            try
++            {
++                string folder = directoryOverride ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AONexus", "PluginRuntime");
++                Directory.CreateDirectory(folder);
++                string file = Path.Combine(folder, report.Pid + "-" + report.StartTicks + ".json");
++                temporary = file + "." + Guid.NewGuid().ToString("N") + ".tmp";
++                File.WriteAllText(temporary, JsonConvert.SerializeObject(report));
++                if (File.Exists(file)) File.Replace(temporary, file, null); else File.Move(temporary, file);
++            }
++            catch (Exception ex) { Debug.WriteLine("Nexus runtime status: " + ex.Message); }
++            finally { try { if (temporary != null && File.Exists(temporary)) File.Delete(temporary); } catch { } }
++        }
++    }
++}

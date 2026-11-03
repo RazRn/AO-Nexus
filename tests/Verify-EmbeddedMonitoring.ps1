@@ -10,6 +10,7 @@ try{
  $portable=Join-Path $root 'AONexus.exe'
  Copy-Item -LiteralPath $AssemblyPath -Destination $portable
  $a=[Reflection.Assembly]::Load([IO.File]::ReadAllBytes($portable))
+ Assert (@($a.GetManifestResourceNames() | Where-Object {$_ -match '^AOLauncher\.(AOSharp|AOVK\..*\.dll$)'}).Count -eq 0) 'Default release has no embedded optional runtime binaries'
  $type=$a.GetType('AOLauncher.EmbeddedMonitoring',$true)
  $extract=$type.GetMethod('Extract',[Reflection.BindingFlags]'Static,NonPublic')
  $cache=Join-Path $root 'cache'
@@ -17,7 +18,7 @@ try{
  $arguments[0]=[string]$cache
  $folder=$extract.Invoke($null,$arguments)
  Assert ($folder.StartsWith($cache+'\',[StringComparison]::OrdinalIgnoreCase)) 'Companion extracts inside chosen cache'
- $names=@('NexusHealthHost.exe','NexusHealthPlugin.dll','NexusTelemetry.Protocol.dll','AOSharp.Common.dll','Newtonsoft.Json.dll','README.txt')
+ $names=@('NexusHealthHost.exe','NexusHealthPlugin.dll','NexusTelemetry.Protocol.dll','README.txt')
  Assert (@(Get-ChildItem -LiteralPath $folder -File).Count -eq $names.Count) 'Only allowlisted companion files extract'
  $stream=$a.GetManifestResourceStream('AOLauncher.Monitoring.manifest.json')
  $reader=[IO.StreamReader]::new($stream)

@@ -70,6 +70,57 @@ try {
         $dialog.DialogResult = [Windows.Forms.DialogResult]::Cancel
     } finally { $dialog.Dispose() }
     Assert ($preset.StartHotkey.Key -eq 117 -and $preset.CampHotkey.Key -eq 118) 'Cancel leaves both saved shortcuts unchanged'
+    # Dispatch real WM_HOTKEY handling against a synthetic, smoke-mode form.
+    # The queued callback exits in smoke mode, so it cannot launch or quit games.
+    function DispatchFixtureHotkey($id) {
+        $message = [Windows.Forms.Message]::Create($form.Handle, 0x0312, [IntPtr]$id, [IntPtr]::Zero)
+        $form.GetType().GetMethod('WndProc', $private).Invoke($form, [object[]]@($message)) | Out-Null
+    }
+    $map = Field 'registeredHotkeys'
+    $map.Add(0x1001, [Tuple[string,bool]]::new($preset.Id,$false))
+    $map.Add(0x1002, [Tuple[string,bool]]::new($preset.Id,$true))
+    try {
+        Call 'ShowTeamWindow'; [Windows.Forms.Application]::DoEvents()
+        $team = Field 'teamWindow'
+        Assert ($team.Visible -and (Call 'PresetShortcutContextAvailable')) 'Visible Team Window allows preset shortcuts'
+        foreach ($id in @(0x1001,0x1002)) {
+            DispatchFixtureHotkey $id
+            Assert (Field 'shortcutActionBusy') 'Team Window allows both start and logout WM_HOTKEY dispatch'
+            [Windows.Forms.Application]::DoEvents()
+            Assert (!(Field 'shortcutActionBusy')) 'Smoke-mode shortcut completes without game actions'
+        }
+        Call 'ShowTimers'; [Windows.Forms.Application]::DoEvents()
+        Assert (Call 'PresetShortcutContextAvailable') 'Timers companion also allows shortcuts'
+        $blocker = New-Object Windows.Forms.Form
+        try {
+            $blocker.ShowInTaskbar=$false; $blocker.Show($team); [Windows.Forms.Application]::DoEvents()
+            Assert (!(Call 'PresetShortcutContextAvailable')) 'A dialog owned by Team Window still blocks shortcuts'
+            DispatchFixtureHotkey 0x1002
+            Assert (!(Field 'shortcutActionBusy')) 'Blocked logout never queues a game action'
+            $blocker.Hide()
+            Assert (Call 'PresetShortcutContextAvailable') 'Closing the child dialog restores shortcut availability'
+        } finally { $blocker.Dispose() }
+        foreach ($flag in @('editingPreset','running','closing','shortcutActionBusy')) {
+            $form.GetType().GetField($flag,$private).SetValue($form,$true)
+            try {
+                if ($flag -ne 'shortcutActionBusy') {
+                    DispatchFixtureHotkey 0x1002
+                    Assert (!(Field 'shortcutActionBusy')) "$flag blocks hotkey dispatch"
+                } else {
+                    DispatchFixtureHotkey 0x1002
+                    [Windows.Forms.Application]::DoEvents()
+                    Assert (Field 'shortcutActionBusy') 'Busy action suppresses another callback'
+                }
+            } finally { $form.GetType().GetField($flag,$private).SetValue($form,$false) }
+        }
+        $team.Enabled=$false
+        Assert (!(Call 'PresetShortcutContextAvailable')) 'Disabled companion with a modal dialog blocks shortcuts'
+        $team.Enabled=$true
+    } finally {
+        $map.Clear()
+        if (Field 'teamWindow') { (Field 'teamWindow').Dispose() }
+        if (Field 'timersWindow') { (Field 'timersWindow').Dispose() }
+    }
     # Only registration is enabled on this synthetic form. Never invoke a launch action or save a real profile.
     $preset.StartHotkey = Binding 133 7; $preset.CampHotkey = Binding 134 7
     $form.GetType().GetField('smoke', $private).SetValue($form, $false)

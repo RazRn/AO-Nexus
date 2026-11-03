@@ -7,6 +7,7 @@
     <OutputType>WinExe</OutputType>
     <RootNamespace>AOLauncher</RootNamespace>
     <AssemblyName>AONexus</AssemblyName>
+    <StartupObject>AOLauncher.CoreBootstrap</StartupObject>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <PlatformTarget>x86</PlatformTarget>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -14,6 +15,9 @@
     <ApplicationIcon>Assets\Launcher.ico</ApplicationIcon>
     <EmbeddedBackendDirectory Condition=" '$(EmbeddedBackendDirectory)' == '' ">$(MSBuildProjectDirectory)\obj\EmbeddedBackend</EmbeddedBackendDirectory>
     <EmbeddedMonitoringDirectory Condition=" '$(EmbeddedMonitoringDirectory)' == '' ">$(MSBuildProjectDirectory)\obj\EmbeddedMonitoring</EmbeddedMonitoringDirectory>
+    <EmbeddedPluginHostDirectory Condition=" '$(EmbeddedPluginHostDirectory)' == '' ">$(MSBuildProjectDirectory)\obj\EmbeddedPluginHost</EmbeddedPluginHostDirectory>
+    <!-- Local builds only: Build.ps1 -AOSharpPack <folder> embeds AOSharp and its plugins. Public builds leave this empty. -->
+    <EmbeddedAOSharpDirectory Condition=" '$(EmbeddedAOSharpDirectory)' == '' ">$(MSBuildProjectDirectory)\obj\EmbeddedAOSharp</EmbeddedAOSharpDirectory>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -27,6 +31,8 @@
     <OutputPath>bin\Release\</OutputPath>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="../Common/Resources/Strings.en.xml"><LogicalName>AOLauncher.Strings.en.xml</LogicalName><WithCulture>false</WithCulture></EmbeddedResource>
+    <EmbeddedResource Include="../Common/Resources/Strings.da.xml"><LogicalName>AOLauncher.Strings.da.xml</LogicalName><WithCulture>false</WithCulture></EmbeddedResource>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
@@ -42,6 +48,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
+    <Compile Include="CoreBootstrap.cs" />
+    <Compile Include="FailureDiagnostics.cs" />
     <Compile Include="NexusForm.cs" />
     <Compile Include="DesktopLifetime.cs" />
     <Compile Include="PresetHotkeys.cs" />
@@ -52,6 +60,23 @@
     <Compile Include="ClientMonitor.cs" />
     <Compile Include="ClientReport.cs" />
     <Compile Include="MainForm.ClientMonitor.cs" />
+    <Compile Include="TimersWindow.cs" />
+    <Compile Include="..\Shared\PlayTools.cs" />
+    <Compile Include="TeamWindow.cs" />
+    <Compile Include="TeamWindow.Formation.cs" />
+    <Compile Include="..\Shared\PanelFormation.cs" />
+    <Compile Include="..\Shared\SyncRefresh.cs" />
+    <Compile Include="..\Shared\AutoRegroup.cs" />
+    <Compile Include="TeamWindow.Scripts.cs" />
+    <Compile Include="ControlPanelPreferences.cs" />
+    <Compile Include="ControlPanelSections.cs" />
+    <Compile Include="CombatScripts.cs" />
+    <Compile Include="TeamStatsTable.cs" />
+    <Compile Include="TeamCombatStats.cs" />
+    <Compile Include="ObservedCombatStats.cs" />
+    <Compile Include="..\Common\CombatMeterSnapshot.cs" />
+    <Compile Include="..\Common\MovementSnapshot.cs" />
+    <Compile Include="MovementTracking.cs" />
     <Compile Include="LauncherBootstrap.cs" />
     <Compile Include="NexusControls.cs" />
     <Compile Include="NexusMessageBox.cs" />
@@ -72,6 +97,9 @@
     <Compile Include="GuiManagerDialog.Workflows.cs" />
     <Compile Include="GuiSessions.cs" />
     <Compile Include="MainForm.GameGui.cs" />
+    <Compile Include="MainForm.TeamRelog.cs" />
+    <Compile Include="ClientRecovery.cs" />
+    <Compile Include="DevelopmentRecorder.cs" />
     <Compile Include="ServerSidebar.cs" />
     <Compile Include="Models.cs" />
     <Compile Include="Presets.cs" />
@@ -81,6 +109,8 @@
     <Compile Include="AppArtwork.cs" />
     <Compile Include="Dialogs.cs" />
     <Compile Include="SettingsDialog.cs" />
+    <Compile Include="AovkGraphics.cs" />
+    <Compile Include="AovkGraphicsPage.cs" />
     <Compile Include="SetupWizard.cs" />
     <Compile Include="SetupNewOptions.cs" />
     <Compile Include="MainForm.Setup.cs" />
@@ -102,10 +132,49 @@
     <Compile Include="PrefsDiscovery.cs" />
     <Compile Include="PrefsPickerDialog.cs" />
     <Compile Include="PrefsTargetResolver.cs" />
+    <Compile Include="ServerRules.cs" />
+    <Compile Include="AOSharpPack.cs" />
+    <Compile Include="OptionalComponents.cs" />
+    <Compile Include="ComponentDownloadDialog.cs" />
+    <Compile Include="PluginSets.cs" />
+    <Compile Include="PluginCuration.cs" />
+    <Compile Include="PluginAutoInjector.cs" />
+    <Compile Include="PluginsDialog.cs" />
+    <Compile Include="MainForm.Plugins.cs" />
+    <Compile Include="MainForm.Navigation.cs" />
+    <Compile Include="MainForm.Graphics.cs" />
+    <Compile Include="MainForm.Preflight.cs" />
+    <Compile Include="LoginPreflight.cs" />
+    <Compile Include="LogTone.cs" />
+    <Compile Include="ForeignAOSharp.cs" />
+    <Compile Include="AppStateReport.cs" />
+    <Compile Include="StartupSplash.cs" />
+    <Compile Include="PlayStyles.cs" />
+    <Compile Include="PluginTestDialog.cs" />
+    <Compile Include="PluginTestPolicy.cs" />
+    <Compile Include="PluginHealth.cs" />
+    <Compile Include="PluginRuntimeReport.cs" />
+    <Compile Include="PluginGrid.cs" />
+    <Compile Include="ShortcutClient.cs" />
+    <Compile Include="AutoTeamStartup.cs" />
+    <Compile Include="TeamRecoveryController.cs" />
+    <Compile Include="..\Shared\TeamRecoveryTracker.cs"><Link>TeamRecoveryTracker.cs</Link></Compile>
+    <Compile Include="..\Shared\TeamRecoveryPlan.cs"><Link>TeamRecoveryPlan.cs</Link></Compile>
+    <Compile Include="..\Shared\AutoTeamPlan.cs"><Link>AutoTeamPlan.cs</Link></Compile>
+    <Compile Include="..\Backend\NexusEngine\FastStartup.cs"><Link>StartupCompatibility.cs</Link></Compile>
+    <Compile Include="GuiManagerDialog.Embedded.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Assets\WhatsNew.en.txt"><WithCulture>false</WithCulture><LogicalName>AOLauncher.WhatsNew.en.txt</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Assets\PluginTestPolicy.json"><LogicalName>AOLauncher.PluginTestPolicy.json</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="obj\EmbeddedAOVK\randy31.dll" Condition=" '$(EmbedOptionalComponents)' == 'true' "><LogicalName>AOLauncher.AOVK.randy31.dll</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="obj\EmbeddedAOVK\version-rebirth.dll" Condition=" '$(EmbedOptionalComponents)' == 'true' "><LogicalName>AOLauncher.AOVK.version-rebirth.dll</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="obj\EmbeddedAOVK\randy31-ui.dll" Condition=" '$(EmbedOptionalComponents)' == 'true' "><LogicalName>AOLauncher.AOVK.randy31-ui.dll</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="obj\EmbeddedAOVK\version-rebirth-ui.dll" Condition=" '$(EmbedOptionalComponents)' == 'true' "><LogicalName>AOLauncher.AOVK.version-rebirth-ui.dll</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="..\..\config\components\aovk.json" Condition="Exists('..\..\config\components\aovk.json')"><LogicalName>AOLauncher.Components.aovk.json</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Assets\AovkDefault.ini"><LogicalName>AOLauncher.AOVK.defaults.ini</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Assets\ao-vk-LICENSE.txt"><LogicalName>AOLauncher.AOVK.LICENSE.txt</LogicalName></EmbeddedResource>
     <EmbeddedResource Include="Assets\WhatsNew.da.txt"><WithCulture>false</WithCulture><LogicalName>AOLauncher.WhatsNew.da.txt</LogicalName></EmbeddedResource>
     <EmbeddedResource Include="Assets\NexusBackdrop.png"><LogicalName>AOLauncher.Assets.NexusBackdrop.png</LogicalName></EmbeddedResource>
     <EmbeddedResource Include="Assets\Launcher.ico">
@@ -117,9 +186,16 @@
     <EmbeddedResource Include="$(EmbeddedBackendDirectory)\Backend.zip">
       <LogicalName>AOLauncher.Backend.zip</LogicalName>
     </EmbeddedResource>
+    <EmbeddedResource Include="..\..\dist\Shortcuts\NexusShortcuts.dll">
+      <LogicalName>AOLauncher.NexusShortcuts.dll</LogicalName>
+    </EmbeddedResource>
     <EmbeddedResource Include="$(EmbeddedBackendDirectory)\Backend.manifest.json">
       <LogicalName>AOLauncher.Backend.manifest.json</LogicalName>
     </EmbeddedResource>
+    <EmbeddedResource Include="..\..\config\servers.json"><LogicalName>AOLauncher.servers.json</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="$(EmbeddedPluginHostDirectory)\NexusPluginHost.exe"><LogicalName>AOLauncher.NexusPluginHost.exe</LogicalName></EmbeddedResource>
+    <EmbeddedResource Condition=" '$(EmbedOptionalComponents)' == 'true' And Exists('$(EmbeddedAOSharpDirectory)\AOSharpPack.zip')" Include="$(EmbeddedAOSharpDirectory)\AOSharpPack.zip"><LogicalName>AOLauncher.AOSharpPack.zip</LogicalName></EmbeddedResource>
+    <EmbeddedResource Condition=" '$(EmbedOptionalComponents)' == 'true' And Exists('$(EmbeddedAOSharpDirectory)\AOSharpPack.zip')" Include="$(EmbeddedAOSharpDirectory)\AOSharpPack.manifest.json"><LogicalName>AOLauncher.AOSharpPack.manifest.json</LogicalName></EmbeddedResource>
     <EmbeddedResource Include="$(EmbeddedMonitoringDirectory)\Monitoring.zip"><LogicalName>AOLauncher.Monitoring.zip</LogicalName></EmbeddedResource>
     <EmbeddedResource Include="$(EmbeddedMonitoringDirectory)\Monitoring.manifest.json"><LogicalName>AOLauncher.Monitoring.manifest.json</LogicalName></EmbeddedResource>
   </ItemGroup>
@@ -127,5 +203,11 @@
     <Error Condition="!Exists('$(EmbeddedMonitoringDirectory)\Monitoring.zip') Or !Exists('$(EmbeddedMonitoringDirectory)\Monitoring.manifest.json')" Text="Bundled monitoring files are missing. Run build/Build.ps1 to prepare them." />
     <Error Condition="!Exists('$(EmbeddedBackendDirectory)\Backend.zip') Or !Exists('$(EmbeddedBackendDirectory)\Backend.manifest.json')" Text="The compressed launcher backend is missing. Run build/Build.ps1 to prepare the bundled login engine." />
   </Target>
+  <ItemGroup>
+    <ProjectReference Include="..\Core\Nexus.Core.csproj">
+      <Project>{E615CB41-AC5A-4ED3-8628-030334C87D93}</Project><Name>Nexus.Core</Name><Private>true</Private>
+    </ProjectReference>
+    <EmbeddedResource Include="..\Core\bin\$(Configuration)\Nexus.Core.dll"><LogicalName>AOLauncher.Nexus.Core.dll</LogicalName></EmbeddedResource>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

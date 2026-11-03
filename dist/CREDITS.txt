@@ -18,6 +18,13 @@ to Luckyspawn and does not replace their copyright or license terms.
 
 Included dependencies and upstream source projects:
 
+AO-VK 0.7.1 - wannabuh
+https://github.com/wannabuh/ao-vk
+The MIT license is preserved in Licenses/ao-vk/LICENSE.txt and in the launcher.
+The local merged test also embeds the AORebirth 2-aovk-test.1 compatibility
+patch. Source and binary provenance: docs/AOVK-Managed-Install.txt in merged-source.
+Original game renderer files are backed up from the selected client, not bundled.
+
 AOSharp.Common - never-knows-best and contributors
 https://gitlab.com/never-knows-best/aosharp
 Used by the optional responsiveness monitor's IPC companion. Source revision:

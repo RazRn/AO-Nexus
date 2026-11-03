@@ -10,6 +10,7 @@ try {
     $sources = @(
         (Join-Path $PSScriptRoot 'AccountLimits.Tests.cs'),
         (Join-Path $repo 'src\Backend\NexusEngine\LaunchQueue.cs'),
+        (Join-Path $repo 'src\Backend\NexusEngine\PresetLaunchWindows.cs'),
         (Join-Path $repo 'src\Backend\NexusEngine\ClientSessions.cs'),
         (Join-Path $repo 'src\Backend\NexusEngine\LoginStatus.cs'),
         (Join-Path $repo 'src\Backend\NexusEngine\LoginGate.cs'),
@@ -20,7 +21,10 @@ try {
         (Join-Path $repo 'src\Common\Texts.cs')
     )
     $compile = ($sources | ForEach-Object { '<Compile Include="' + [Security.SecurityElement]::Escape($_) + '" />' }) -join [Environment]::NewLine
-    $project = '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><EnableDefaultCompileItems>false</EnableDefaultCompileItems><StartupObject>NexusEngine.AccountLimitsTests</StartupObject></PropertyGroup><ItemGroup>' + $compile + '</ItemGroup></Project>'
+    $resourceItems = (@('en','da') | ForEach-Object {
+        '<EmbeddedResource Include="' + [Security.SecurityElement]::Escape((Join-Path $repo ('src/Common/Resources/Strings.' + $_ + '.xml'))) + '" LogicalName="AOLauncher.Strings.' + $_ + '.xml" WithCulture="false" />'
+    }) -join [Environment]::NewLine
+    $project = '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><EnableDefaultCompileItems>false</EnableDefaultCompileItems><StartupObject>NexusEngine.AccountLimitsTests</StartupObject></PropertyGroup><ItemGroup>' + $compile + $resourceItems + '</ItemGroup></Project>'
     $projectPath = Join-Path $testRoot 'TrackedLimits.csproj'
     [IO.File]::WriteAllText($projectPath, $project)
     & $DotNetPath build $projectPath --configuration Release --output $output --nologo --verbosity quiet

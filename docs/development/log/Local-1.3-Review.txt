@@ -1,0 +1,85 @@
+1.3.0 LOCAL REVIEW AND AO-VK MERGE - 2026-10-28
+
+Scope: launcher changes in the supplied 1.3.0 source through 8247a49, with
+attention to plugin selection/lifecycle, server rules, process cleanup and
+the AO-VK settings merge. This is a targeted correctness review, not a claim
+that every possible defect or every third-party plugin has been verified.
+
+CONFIRMED AND FIXED
+1. High: duplicate login replaced the running character's launch context.
+   PluginAutoInjector.RecordLaunch overwrote the earlier team record before
+   the engine decided whether to skip an already-running character. Lookup
+   then returned no team for the older process, losing its plugin policy.
+   Retain timestamped history and choose the latest record before process
+   start; keep history used by registered clients, including long sessions.
+   Tests cover the older process, a new process and launcher restart.
+
+2. High: stale login cleanup trusted an earlier inspection.
+   LoginPreflight.Close/ForceClose could close a client that had since reached
+   the game or become the user's foreground window. Recheck process lifetime,
+   executable, in-game title and foreground state immediately before action.
+   Approval to close a login window never overrides an in-game title.
+   Tests cover changed title/path/lifetime, focus and explicit approval.
+
+3. High: eject ignored process start time and swallowed disconnect failures.
+   NexusPluginHost.Eject accepted a PID alone and reported Ejected even when
+   Disconnect threw. Require the matching start time and return failure while
+   retaining the previous state if disconnection fails. Launcher and host now
+   use protocol v2 to avoid silently attaching to the old implementation.
+   Seven synthetic-host checks cover stale/missing identity, disconnect
+   failure, retry and the new protocol. Real clients must restart for testing.
+
+4. Medium: an automatic profession probe continued after auto-load was off.
+   PluginAutoInjector.Poll now gates both starting and continuing a probe on
+   auto-load, team policy and whether a manual plugin test is running.
+   Regression checks cover each opt-out and the allowed case.
+
+5. Medium: restoration after Test plugins could falsely report success.
+   LoadNow trusted a stale Loaded row when an empty set failed validation.
+   Require no load error as well as Loaded state. PluginTestDialog catches
+   restore/unload exceptions and reports failed cleanup honestly instead of
+   always claiming test plugins were removed. Regression test uses an empty
+   restore set and an already-Loaded row without injecting into a game.
+
+6. High: Nexus Shortcuts' response timeout did not bound a blocking read.
+   ShortcutClient.Send checked elapsed time around synchronous pipe.Read;
+   a connected, hung peer could leave polling or a plugin test waiting forever.
+   Use asynchronous reads with a bounded wait and dispose on timeout. Require
+   the complete newline-terminated response. Synthetic pipe tests cover a
+   complete response, a partial response and a connected silent peer.
+
+7. Medium: replacing the stacked sidebar leaked its old containers.
+   ServerSidebar.Configure detached News/Health but cleared their former
+   stacks/cards without disposing them. Dispose replaced containers after
+   detaching the reusable panels. UI tests now check disposal, both panel
+   visibility switches and status above news in the 1.3.0 layout.
+
+8. Medium: GUI-manager controls became cramped/clipped at minimum size.
+   Four buttons wrapped into four rows in the source column, leaving a 48px
+   list. Move file management actions into one full-width row below the three
+   columns. Move the skin website action out of the overflowing acquisition
+   column at 150% scaling into the installed-skins column. Existing
+   minimum-size, EN/DA and 100/150% usability tests verify
+   readable lists, reachable actions and unchanged file operations.
+
+VALIDATION
+Verify-PluginsAndServerRules.ps1 includes these launcher regressions and
+server-rule, pack extraction, plugin selection and diagnostics checks.
+Verify-PluginHostLifecycle.ps1 exercises the production host with a fake pipe.
+The general build/Verify.ps1 suite checks UI, settings, synthetic login/backend,
+telemetry, diagnostics and embedded assets. Per-test outputs are in logs.
+AO-VK file/config tests and English/Danish graphics UI tests use a temporary
+copy of the prepared installation. Stock/AO-VK startup preflight is read-only.
+Static load/reference checking of the rebuilt pack: 113 OK, 0 problems.
+
+Existing reflection tests were updated for the expanded report-export
+signature; resize painting tests now account for 1.3.0's compact panel without
+a legend. Sidebar tests now expect the stacked layout and five Settings tabs.
+Skin workflow tests check the three-column order introduced in 1.3.0.
+Plugin tests expect the 113-plugin pack and Z starter sets actually
+shipped in this source. These are test-harness adjustments, not removed checks.
+
+LIMITS
+No real game login, plugin injection, account migration or graphics switching
+in the user's live installation was performed for this review. Third-party
+plugin behaviour and renderer stability still need gameplay validation.

@@ -56,17 +56,23 @@ try {
     foreach($language in @('en','da')){
         $settings.Language=$language;Call $main 'ApplyLanguage'
         foreach($mode in @(@($true,$true),@($true,$false),@($false,$true),@($false,$false))){
+            $oldStack=$sidebar.Controls.Find('serverSidebarStack',$true) | Select-Object -First 1
             $settings.ShowServerNews=$mode[0];$settings.ShowServerHealth=$mode[1];Call $main 'ConfigureSidebar';[Windows.Forms.Application]::DoEvents()
+            if ($oldStack) { Assert $oldStack.IsDisposed 'Replaced sidebar containers release their handles' }
             $tabs=$sidebar.GetType().GetProperty('Tabs',$f).GetValue($sidebar)
-            Assert (($null -ne $tabs) -eq ($mode[0] -and $mode[1])) 'Tabs appear exactly when both panels are enabled'
+            $stack=$sidebar.Controls.Find('serverSidebarStack',$true) | Select-Object -First 1
+            Assert ($null -eq $tabs -and ($null -ne $stack) -eq ($mode[0] -and $mode[1])) 'Both panels use the stacked 1.3.0 sidebar layout'
+            $healthPanel=$sidebar.GetType().GetProperty('Health',$f).GetValue($sidebar)
+            Assert ($news.Visible -eq $mode[0] -and $healthPanel.Visible -eq $mode[1]) 'News and status visibility follows each selection'
+            if ($stack) { Assert ($stack.GetRow($healthPanel.Parent) -eq 0 -and $stack.GetRow($news.Parent) -eq 1) 'Status appears above news' }
             Assert ($sidebar.Visible -eq ($mode[0] -or $mode[1])) 'Turning both off hides the sidebar'
             Assert (((Field $main 'sidebarLayout').ColumnStyles[1].Width -gt 0) -eq ($mode[0] -or $mode[1])) 'Hidden sidebar returns its width to accounts'
         }
         $dialog=[Activator]::CreateInstance($a.GetType('AOLauncher.SettingsDialog'),[object[]]@($settings))
         try{
             Show-Fixture $dialog;$tabs=Field $dialog 'settingsTabs'
-            Assert ($tabs.TabCount -eq 4) 'Settings groups controls into four tabs'
-            for($i=0;$i -lt 4;$i++){$tabs.SelectedIndex=$i;[Windows.Forms.Application]::DoEvents();Assert ($tabs.GetTabRect($i).Right -le $tabs.ClientSize.Width) 'Every settings tab fits without clipping'}
+            Assert ($tabs.TabCount -eq 6) 'Settings includes the six tabs, including Graphics and Experiments'
+            for($i=0;$i -lt $tabs.TabCount;$i++){$tabs.SelectedIndex=$i;[Windows.Forms.Application]::DoEvents();Assert ($tabs.GetTabRect($i).Right -le $tabs.ClientSize.Width) 'Every settings tab fits without clipping'}
             $draft=Field $dialog 'sidebarOptions'
             $before=$json.Serialize($settings);$dialog.Controls.Find('showServerNews',$true)[0].Checked=$true
             $dialog.Controls.Find('newsSource-prk',$true)[0].Checked=$false

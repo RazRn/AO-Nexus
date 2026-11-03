@@ -1,0 +1,18 @@
+{
+  "comment": "AO Nexus's own in-game helper, built from src/Shortcuts. Added to every set automatically while 'In-game shortcuts' is on.",
+  "Plugins": [
+    {
+      "Id": "Nexus.Shortcuts",
+      "Name": "Nexus Shortcuts",
+      "Group": "AO Nexus",
+      "Suite": "Nexus",
+      "Path": "Plugins/Nexus/NexusShortcuts.dll",
+      "Commands": [
+        "nexustools",
+        "nexustimers",
+        "nexusformation"
+      ],
+      "About": "Nexus in-game buttons, plugin health, local timers and formation controls. Formation movement is opt-in."
+    }
+  ]
+}

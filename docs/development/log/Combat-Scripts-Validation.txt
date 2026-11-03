@@ -1,0 +1,12 @@
+Research/reference (original Nexus implementation, no third-party code copied):
+https://github.com/nicgalehouse/AODamageMeter
+https://github.com/nicgalehouse/AODamageMeter/blob/master/AODamageMeter.UI/ViewModels/RowBase.cs
+The project demonstrates text:// report sharing and the 1024-character limit.
+
+Validation 2026-11-01:
+- Build and combat export tests, including large reports, no lost actors,
+  complete markup, private-only previews, pet respawns, rates and rollback.
+- Existing 304 Control Panel checks pass.
+- Live AO-VK 0.8.1: exported to AORebirth-AOVK-Test scripts; Overwhelming opened
+  both private damage pages and the coloured pet page. Current pet names were
+  correct. No public chat messages sent; no game clients restarted.

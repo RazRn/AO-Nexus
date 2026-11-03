@@ -26,6 +26,27 @@ namespace AOLauncher
         public long ActionIssueQpc { get; set; }
         public int ActionIssueCount { get; set; }
         public bool ActionIssueConfirmed { get; set; }
+        public long VitalsQpc { get; set; }
+        public int Health { get; set; }
+        public int MaxHealth { get; set; }
+        public int Nano { get; set; }
+        public int MaxNano { get; set; }
+        public string Profession { get; set; }
+        public bool? IsTeamLeader { get; set; }
+        public long TeamStateQpc { get; set; }
+        public string FightingTarget { get; set; }
+        public bool Attacking { get; set; }
+        public long AggroQpc { get; set; }
+        public int AggroCount { get; set; }
+        public string[] AggroNames { get; set; }
+        public long CastAttemptQpc { get; set; }
+        public int CastNanoId { get; set; }
+        public string CastNanoName { get; set; }
+        public NexusTelemetry.CombatMeterSnapshot CombatMeter { get; set; }
+        public NexusTelemetry.CombatMeterSnapshot ObservedCombatMeter { get; set; }
+        public NexusTelemetry.CombatMeterSnapshot NpcCombatMeter { get; set; }
+        public int PlayfieldId { get; set; }
+        public NexusTelemetry.MovementSnapshot Movement { get; set; }
     }
     internal sealed class ClientPing
     {
@@ -65,6 +86,14 @@ namespace AOLauncher
         public bool Foreground { get; set; }
         public bool? Zoning { get; set; }
         public long WorkingSetBytes { get; set; }
+        public bool? WindowResponding { get; set; }
+        public int WindowUnresponsiveSamples { get; set; }
+        public double? CpuTotalMs { get; set; }
+        public double? CpuPercent { get; set; }
+        public long? FreeClientBytes { get; set; }
+        public long? LargestFreeClientBytes { get; set; }
+        public long? ClientAddressBytes { get; set; }
+        public long MemoryMeasuredQpc { get; set; }
     }
     internal sealed class ClientObservationSummary
     {
@@ -108,6 +137,8 @@ namespace AOLauncher
     }
     internal sealed class ClientObservation
     {
+        internal PresetCamping.Client Client;
+        internal ClientPulse Pulse;
         internal string Name, Alias;
         internal int Pid;
         internal long StartTicks;
@@ -121,6 +152,50 @@ namespace AOLauncher
         internal int CastIssueCount;
         internal bool HasCastIssue => Measured && !ExitedUtc.HasValue && Condition != ClientCondition.Unloaded && CastWhileFalling;
     }
+    // Read-only address-map inspection; never reads or modifies game memory contents.
+    // The process handle is retained by ClientMonitor, protecting against PID reuse.
+    internal sealed class ClientAddressSpace
+    {
+        internal long Free, Largest, Total;
+        [StructLayout(LayoutKind.Sequential)] struct Region {
+            internal IntPtr Base, AllocationBase;
+            internal uint AllocationProtect;
+            internal UIntPtr Size;
+            internal uint State, Protect, Type;
+        }
+        [DllImport("kernel32.dll",SetLastError=true)] static extern UIntPtr VirtualQueryEx(IntPtr process,IntPtr address,out Region region,UIntPtr size);
+        [DllImport("kernel32.dll",SetLastError=true)] static extern bool IsWow64Process(IntPtr process,out bool wow64);
+        internal static ClientAddressSpace Read(IntPtr process)
+        {
+            try {
+                if(!Environment.Is64BitOperatingSystem || !IsWow64Process(process,out bool wow64) || !wow64)return null;
+                var result=new ClientAddressSpace();ulong address=0x10000;
+                var budget=Stopwatch.StartNew();var size=new UIntPtr((uint)Marshal.SizeOf(typeof(Region)));
+                for(int count=0;count<65536 && budget.ElapsedMilliseconds<50;count++) {
+                    var pointer=IntPtr.Size==4?new IntPtr(unchecked((int)(uint)address)):new IntPtr((long)address);
+                    if(VirtualQueryEx(process,pointer,out var region,size)==UIntPtr.Zero) {
+                        if(Marshal.GetLastWin32Error()!=87 || address<0x7fff0000)return null;
+                        result.Total=(long)address;return result;
+                    }
+                    ulong start=IntPtr.Size==4?unchecked((uint)region.Base.ToInt32()):(ulong)region.Base.ToInt64();
+                    ulong end=Math.Min(0x100000000UL,start+region.Size.ToUInt64());
+                    if(start>address || end<=address)return null;
+                    if(region.State==0x10000) {long bytes=(long)(end-address);result.Free+=bytes;result.Largest=Math.Max(result.Largest,bytes);}
+                    address=end;
+                    if(address==0x100000000UL) {result.Total=(long)address;return result;}
+                }
+            } catch { }
+            return null; // Incomplete/denied measurements must never look like zero free memory.
+        }
+        internal static int Warning(long? free,long? largest) => !free.HasValue || !largest.HasValue?0:
+            free<256L*1024*1024 || largest<32L*1024*1024?2:free<512L*1024*1024 || largest<64L*1024*1024?1:0;
+        internal static double? CpuPercent(double? before,double? after,long ticks,int processors)
+            => !before.HasValue || !after.HasValue || after<before || ticks<=0 || processors<=0?null:
+                (double?)Math.Min(100,100*(after.Value-before.Value)/(ticks*1000.0/Stopwatch.Frequency)/processors);
+        internal static bool Fresh(ClientSample sample,long now)=>sample?.MemoryMeasuredQpc>0 && now>=sample.MemoryMeasuredQpc
+            && now-sample.MemoryMeasuredQpc<=12*Stopwatch.Frequency && sample.FreeClientBytes.HasValue;
+    }
+
     internal sealed class ClientMonitor : IDisposable
     {
         [DllImport("user32.dll")] static extern bool IsIconic(IntPtr window);
@@ -137,6 +212,11 @@ namespace AOLauncher
             internal int? ExitCode;
             internal bool CastIssueVisible;
             internal string SnapshotStatus;
+            internal int WindowUnresponsiveSamples;
+            internal ClientAddressSpace Memory;
+            internal long MemoryCheckedQpc, CpuCheckedQpc;
+            internal double? PreviousCpuMs;
+            internal int MemoryWarning;
             internal readonly ClientObservationSummary Summary = new ClientObservationSummary();
             internal readonly Queue<ClientSample> Samples = new Queue<ClientSample>();
             public void Dispose() { Process?.Dispose(); }
@@ -169,7 +249,7 @@ namespace AOLauncher
             string reason;
             return Assess(pulse, ping, now, firstPulse, out reason);
         }
-        static ClientCondition Assess(ClientPulse pulse, ClientPing ping, long now, long firstPulse, out string reason)
+        internal static ClientCondition Assess(ClientPulse pulse, ClientPing ping, long now, long firstPulse, out string reason)
         {
             reason = null;
             if (pulse == null) return ClientCondition.Unmeasured;
@@ -180,31 +260,46 @@ namespace AOLauncher
             // A snapshot's delivery age is not a measured pause in Game.OnUpdate.
             double gap = Age(pulse.PublishedQpc, pulse.LastUpdateQpc);
             if (freshPulse && (pulse.LastUpdateQpc != 0 || !grace) && gap >= 2000) {
-                reason = SidebarText.L("No game update at snapshot", "Ingen spilopdatering ved måling");
+                reason = AOLauncher.Localization.Texts.Get("Text_No_game_update_at_snapshot_283A80008284");
                 return ClientCondition.NoResponse;
             }
             if (freshHelper && !grace && (ping.LastReplyQpc < firstPulse || Age(now, ping.LastReplyQpc) >= 3000)) {
-                reason = SidebarText.L("IPC reply missing; helper is reporting", "IPC-svar mangler; hjælperen rapporterer");
+                reason = AOLauncher.Localization.Texts.Get("Text_IPC_reply_missing_helper_is_reporting_A04D7E5C19F0");
                 return ClientCondition.NoResponse;
             }
             if (!freshPulse) {
-                reason = SidebarText.L("Measurement snapshot is stale", "Målingens øjebliksbillede er forældet");
+                reason = AOLauncher.Localization.Texts.Get("Text_Measurement_snapshot_is_stale_0C7996911B2C");
                 return ClientCondition.MeasurementUnavailable;
             }
             if (!freshHelper) {
-                reason = SidebarText.L("IPC helper measurement unavailable", "IPC-hjælperens måling er utilgængelig");
+                reason = grace ? AOLauncher.Localization.Texts.Get("Text_Waiting_for_first_IPC_measurement_7129B72E59DA")
+                    : AOLauncher.Localization.Texts.Get("Text_IPC_helper_measurement_unavailable_60EAE3168FBC");
                 return grace ? ClientCondition.Waiting : ClientCondition.MeasurementUnavailable;
             }
             if (ping.LastReplyQpc < firstPulse || pulse.LastUpdateQpc == 0) return ClientCondition.Waiting;
-            if (pulse.RecentMaxMs >= 100 || gap >= 1000) {
-                reason = SidebarText.L("Measured game update gap", "Målt pause i spilopdatering");
+            if (gap >= 1000) {
+                reason = AOLauncher.Localization.Texts.Get("Text_Game_update_stalled_at_snapshot_BF20F7ACA3FC");
                 return ClientCondition.Delayed;
             }
             if (ping.LastMs >= 100) {
-                reason = SidebarText.L("Slow IPC round trip", "Langsom IPC-rundtur");
+                reason = AOLauncher.Localization.Texts.Get("Text_Slow_IPC_round_trip_E3C7593B1ABA");
+                return ClientCondition.Delayed;
+            }
+            if (pulse.RecentMaxMs >= 100) {
+                reason = AOLauncher.Localization.Texts.Get("Text_Recent_game_update_spike_last_10_587A7692084E");
                 return ClientCondition.Delayed;
             }
             return ClientCondition.Healthy;
+        }
+        internal static string ChangeDetail(ClientSample sample)
+        {
+            if (string.IsNullOrEmpty(sample.Reason)) return "";
+            Func<double?, string, string> ms = (value, format) => value.HasValue && !double.IsInfinity(value.Value) && !double.IsNaN(value.Value)
+                ? value.Value.ToString(format) + " ms" : AOLauncher.Localization.Texts.Get("Text_unavailable_52FDD89E09B1");
+            return string.Format(" — {0} (snapshot {1}; update gap {2}; max/10s {3}; helper {4}; reply age {5}; RTT {6}; timeouts {7})",
+                sample.Reason, ms(sample.PulseAgeMs, "F0"), ms(sample.ObservedUpdateGapMs, "F0"), ms(sample.RecentMaxGapMs, "F1"),
+                ms(sample.HelperAgeMs, "F0"), ms(sample.ReplyAgeMs, "F0"), ms(sample.ReplyMs, "F1"),
+                sample.Timeouts.HasValue ? sample.Timeouts.Value.ToString() : AOLauncher.Localization.Texts.Get("Text_unavailable_52FDD89E09B1"));
         }
         internal static ClientPulse ReadPulse(string path)
         {
@@ -213,9 +308,10 @@ namespace AOLauncher
             for (int attempt = 0; ; attempt++) {
                 try {
                     using (var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete)) {
-                        if (file.Length >= 8192) return null;
+                        // Two independent, bounded 128-actor feeds (players and NPCs).
+                        if (file.Length >= 512 * 1024) return null;
                         using (var reader = new StreamReader(file)) {
-                            var buffer = new char[8192];
+                            var buffer = new char[(int)file.Length + 1];
                             int count = reader.ReadBlock(buffer, 0, buffer.Length);
                             return count == buffer.Length ? null : Json().Deserialize<ClientPulse>(new string(buffer, 0, count));
                         }
@@ -230,7 +326,7 @@ namespace AOLauncher
         internal static string ValidatePulse(ClientPulse pulse, int pid, long startTicks, long now)
         {
             if (pulse == null) return "SnapshotInvalid";
-            if (pulse.Version != 1) return "SnapshotVersionUnsupported";
+            if (pulse.Version != 2) return "SnapshotVersionUnsupported";
             if (pulse.Pid != pid || pulse.StartTicks != startTicks) return "SnapshotIdentityMismatch";
             if (string.IsNullOrEmpty(pulse.Instance) || pulse.Instance.Length > 64 || pulse.PublishedQpc <= 0 || pulse.PublishedQpc > now
                 || pulse.LastUpdateQpc < 0 || pulse.LastUpdateQpc > pulse.PublishedQpc || pulse.RecentMaxMs < 0 || pulse.MaxMs < 0
@@ -241,14 +337,14 @@ namespace AOLauncher
         internal static string SnapshotStatusText(string status)
         {
             switch (status) {
-                case "MonitoringDisabled": return SidebarText.L("Responsiveness monitoring is turned off in Nexus settings.", "Overvågning af svartider er slået fra i Nexus-indstillingerne.");
-                case "SnapshotMissing": return SidebarText.L("No monitoring snapshot was found for this process and start time. Check that Nexus Health Monitor is loaded into this character through AOSharp under the same Windows user.", "Ingen overvågningsfil blev fundet til denne proces og starttid. Tjek, at Nexus Health Monitor er indlæst i karakteren via AOSharp under samme Windows-bruger.");
-                case "SnapshotIdentityMismatch": return SidebarText.L("A snapshot was found, but its process identity did not match. Nexus rejected it rather than attribute another client's measurements.", "En måling blev fundet, men procesidentiteten passede ikke. Nexus afviste den for ikke at vise en anden klients målinger.");
-                case "SnapshotVersionUnsupported": return SidebarText.L("The monitoring snapshot uses an unsupported version. Update Nexus and its monitoring plugin together.", "Overvågningsfilens version understøttes ikke. Opdatér Nexus og overvågnings-pluginet sammen.");
-                case "SnapshotUnreadable": return SidebarText.L("The monitoring snapshot could not be read. Check file access and reload the monitoring plugin when safe.", "Overvågningsfilen kunne ikke læses. Tjek filadgang, og genindlæs overvågnings-pluginet, når det er sikkert.");
-                case "SnapshotInvalid": return SidebarText.L("The monitoring snapshot was incomplete or invalid. Reload the matching monitoring plugin when safe.", "Overvågningsfilen var ufuldstændig eller ugyldig. Genindlæs det tilhørende plugin, når det er sikkert.");
-                case "SnapshotAccepted": return SidebarText.L("A snapshot matching this process was read; check its freshness and responsiveness state separately.", "En måling til denne proces blev læst; tjek dens alder og svartilstand særskilt.");
-                default: return SidebarText.L("The reason was not recorded by this Nexus version.", "Årsagen blev ikke registreret af denne Nexus-version.");
+                case "MonitoringDisabled": return AOLauncher.Localization.Texts.Get("Text_Responsiveness_monitoring_is_turned_off_in_437F19F1A683");
+                case "SnapshotMissing": return AOLauncher.Localization.Texts.Get("Text_No_monitoring_snapshot_was_found_for_A3BEEB3479FD");
+                case "SnapshotIdentityMismatch": return AOLauncher.Localization.Texts.Get("Text_A_snapshot_was_found_but_its_9251CEA08084");
+                case "SnapshotVersionUnsupported": return AOLauncher.Localization.Texts.Get("Text_The_monitoring_snapshot_uses_an_unsupported_93A13FDCC2F3");
+                case "SnapshotUnreadable": return AOLauncher.Localization.Texts.Get("Text_The_monitoring_snapshot_could_not_be_29E3C18E4B8F");
+                case "SnapshotInvalid": return AOLauncher.Localization.Texts.Get("Text_The_monitoring_snapshot_was_incomplete_or_0F226EA6069B");
+                case "SnapshotAccepted": return AOLauncher.Localization.Texts.Get("Text_A_snapshot_matching_this_process_was_DF908D5C65F8");
+                default: return AOLauncher.Localization.Texts.Get("Text_The_reason_was_not_recorded_by_44FF701CBCCB");
             }
         }
         internal void Poll(LauncherSettings settings)
@@ -270,9 +366,11 @@ namespace AOLauncher
                         clients.Add(key, new Tracked { Client = client, Process = process, Alias = "Client-" + (++nextAlias),
                             Version = process.MainModule.FileVersionInfo.FileVersion });
                         process = null; // ownership moved to Tracked
-                    } catch { } finally { process?.Dispose(); }
+                    } catch (ArgumentException) { /* The process exited before its handle was opened. */ }
+                    catch (Exception error) { FailureDiagnostics.Monitor.Report("track-client", "Could not inspect client", error, pid: client.ProcessId, startTicks: client.StartTimeUtcTicks); } finally { process?.Dispose(); }
                 }
-            } catch { Error = "Session discovery unavailable"; }
+                FailureDiagnostics.Monitor.Recovered("session-discovery", "Client discovery resumed");
+            } catch (Exception error) { Error = "Session discovery unavailable"; FailureDiagnostics.Monitor.Report("session-discovery", Error, error); }
             long now = Stopwatch.GetTimestamp();
             foreach (var entry in clients.ToArray()) {
                 var item = entry.Value;
@@ -282,8 +380,8 @@ namespace AOLauncher
                         item.ExitedUtc = DateTime.UtcNow;
                         try { item.ExitCode = item.Process.ExitCode; } catch { }
                         item.Condition = ClientCondition.Exited;
-                        Changes.Add(item.Client.CharacterName + ": " + SidebarText.L("client exited", "klienten afsluttet"));
-                        if (settings.CollectClientExitReports) try { SaveExit(item); } catch { Error = "Could not save exit report"; }
+                        Changes.Add(item.Client.CharacterName + ": " + AOLauncher.Localization.Texts.Get("Text_client_exited_4C1F302F4AAB"));
+                        if (settings.CollectClientExitReports) try { SaveExit(item); } catch (Exception error) { Error = "Could not save exit report"; FailureDiagnostics.Monitor.Report("save-exit", Error, error, pid: item.Client.ProcessId, startTicks: item.Client.StartTimeUtcTicks); }
                         continue;
                     }
                     string path = Path.Combine(pulseRoot, entry.Key + ".json");
@@ -300,9 +398,16 @@ namespace AOLauncher
                                     lock (pingGate) pings.Remove(item.Client.ProcessId);
                                 }
                                 item.Pulse = pulse;
+                                FailureDiagnostics.Monitor.Recovered("read-snapshot", "Valid snapshot received", item.Client.ProcessId, item.Client.StartTimeUtcTicks);
                             }
-                        }
-                    } catch { item.SnapshotStatus = "SnapshotUnreadable"; /* Retain prior evidence; Assess checks its age. */ }
+                        }                    } catch (Exception error) {
+                        item.SnapshotStatus = "SnapshotUnreadable";
+                        // Parser exceptions may quote source data. Report the type without the payload.
+                        FailureDiagnostics.Monitor.Report("read-snapshot", item.SnapshotStatus,
+                            detail: error.GetType().Name + " HRESULT=" + error.HResult,
+                            pid: item.Client.ProcessId, startTicks: item.Client.StartTimeUtcTicks);
+                        // Retain prior evidence; Assess checks its age.
+                    }
                     ClientPing ping;
                     lock (pingGate) pings.TryGetValue(item.Client.ProcessId, out ping);
                     if (item.Pulse == null || (ping != null && ping.StartTicks != item.Client.StartTimeUtcTicks)) ping = null;
@@ -312,7 +417,22 @@ namespace AOLauncher
                     if (condition == ClientCondition.Unmeasured) reason = SnapshotStatusText(item.SnapshotStatus);
                     item.Process.Refresh();
                     IntPtr window = item.Process.MainWindowHandle;
+                    bool? windowResponding=ClientRecovery.WindowResponding(window,item.Client.ProcessId);
+                    item.WindowUnresponsiveSamples=windowResponding==false?Math.Min(1000,item.WindowUnresponsiveSamples+1):0;
+                    double? cpuMs=null;try {cpuMs=item.Process.TotalProcessorTime.TotalMilliseconds;}catch { }
+                    double? cpuPercent=ClientAddressSpace.CpuPercent(item.PreviousCpuMs,cpuMs,now-item.CpuCheckedQpc,Environment.ProcessorCount);
+                    item.PreviousCpuMs=cpuMs;item.CpuCheckedQpc=now;
+                    if(item.MemoryCheckedQpc==0 || now-item.MemoryCheckedQpc>=5*Stopwatch.Frequency) {
+                        item.Memory=ClientAddressSpace.Read(item.Process.Handle);item.MemoryCheckedQpc=Stopwatch.GetTimestamp();
+                        int warning=ClientAddressSpace.Warning(item.Memory?.Free,item.Memory?.Largest);
+                        if(warning>0 && warning!=item.MemoryWarning)Changes.Add(item.Client.CharacterName+": "+AOLauncher.Localization.Texts.Get("Text_Low_client_memory_368F71A32633")
+                            +(item.Memory.Free/(1024*1024))+AOLauncher.Localization.Texts.Get("Text_MB_free_consider_relogging_before_zoning_174154FEA63A"));
+                        item.MemoryWarning=warning;
+                    }
                     var sample = new ClientSample { Utc = DateTime.UtcNow, State = condition.ToString(), Reason = reason, SnapshotStatus = item.SnapshotStatus,
+                        WindowResponding=windowResponding,WindowUnresponsiveSamples=item.WindowUnresponsiveSamples,CpuTotalMs=cpuMs,
+                        CpuPercent=cpuPercent,FreeClientBytes=item.Memory?.Free,LargestFreeClientBytes=item.Memory?.Largest,
+                        ClientAddressBytes=item.Memory?.Total,MemoryMeasuredQpc=item.Memory!=null?item.MemoryCheckedQpc:0,
                         PulseAgeMs = item.Pulse != null ? (double?)Age(now, item.Pulse.PublishedQpc) : null,
                         ObservedUpdateGapMs = item.Pulse?.LastUpdateQpc > 0 ? (double?)Age(item.Pulse.PublishedQpc, item.Pulse.LastUpdateQpc) : null,
                         HelperAgeMs = ping != null ? (double?)Age(now, ping.PublishedQpc) : null,
@@ -323,25 +443,24 @@ namespace AOLauncher
                         Sent = ping?.Sent, Replies = ping?.Replies, Timeouts = ping?.Timeouts, Late = ping?.Late, Pending = ping?.Pending,
                         Zoning = item.Pulse?.Zoning, Minimized = window != IntPtr.Zero && IsIconic(window),
                         Foreground = window != IntPtr.Zero && window == GetForegroundWindow(), WorkingSetBytes = item.Process.WorkingSet64 };
+                    if(item.WindowUnresponsiveSamples==3)Changes.Add(item.Client.CharacterName+": "+AOLauncher.Localization.Texts.Get("Text_game_window_is_not_responding_use_B703DA225262"));
                     if (condition != item.Condition && item.Pulse != null) {
-                        string detail = reason == null ? "" : string.Format(" — {0} (snapshot {1:F0} ms; update gap {2:F0} ms; max/10s {3:F1} ms; helper {4:F0} ms; reply age {5:F0} ms; RTT {6:F1} ms; timeouts {7})",
-                            reason, sample.PulseAgeMs, sample.ObservedUpdateGapMs, sample.RecentMaxGapMs, sample.HelperAgeMs, sample.ReplyAgeMs, sample.ReplyMs, sample.Timeouts);
-                        Changes.Add(item.Client.CharacterName + ": AOSharp · " + ConditionText(condition) + detail);
+                        string detail = ChangeDetail(sample);
+                        Changes.Add(item.Client.CharacterName + ": AO# · " + ConditionText(condition) + detail);
                     }
                     item.Condition = condition;
                     bool castIssue = HasRecentCastIssue(item.Pulse, now);
                     if (castIssue && !item.CastIssueVisible)
-                        Changes.Add(item.Client.CharacterName + ": " + SidebarText.L("Nano cast attempted while falling. Check the game window, let the character land, then retry. Repeated reports are grouped in character status.",
-                            "Nanoprogram forsøgt under fald. Tjek spilvinduet, lad karakteren lande, og prøv igen. Gentagne rapporter samles i karakterstatus."));
+                        Changes.Add(item.Client.CharacterName + ": " + AOLauncher.Localization.Texts.Get("Text_Nano_cast_attempted_while_falling_Check_38960E16A363"));
                     item.CastIssueVisible = castIssue;
                     item.Summary.Observe(sample);
                     item.Samples.Enqueue(sample); while (item.Samples.Count > 120) item.Samples.Dequeue();
-                } catch { Error = "One client could not be inspected"; }
+                } catch (Exception error) { Error = "One client could not be inspected"; FailureDiagnostics.Monitor.Report("inspect-client", Error, error, pid: item.Client.ProcessId, startTicks: item.Client.StartTimeUtcTicks); }
             }
             foreach (var old in clients.Where(c => c.Value.ExitedUtc.HasValue).OrderByDescending(c => c.Value.ExitedUtc).Skip(20).ToArray()) {
                 old.Value.Dispose(); clients.Remove(old.Key);
             }
-            Current = clients.Values.Select(t => new ClientObservation { Name = t.Client.CharacterName, Alias = t.Alias, Pid = t.Client.ProcessId,
+            Current = clients.Values.Select(t => new ClientObservation { Client=t.Client, Pulse=t.Pulse, Name = t.Client.CharacterName, Alias = t.Alias, Pid = t.Client.ProcessId,
                 StartTicks = t.Client.StartTimeUtcTicks, Condition = t.Condition, Measured = t.Pulse != null && t.Condition != ClientCondition.Unloaded,
                 Sample = t.Samples.LastOrDefault(), SnapshotStatus = t.SnapshotStatus, ExitedUtc = t.ExitedUtc, ExitCode = t.ExitCode,
                 CastWhileFalling = !t.ExitedUtc.HasValue && HasRecentCastIssue(t.Pulse, now),
@@ -365,33 +484,34 @@ namespace AOLauncher
                         CreateNoWindow = true, RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true } };
                     host.OutputDataReceived += (sender, args) => {
                         if (args.Data == null || args.Data.Length > 4096) return;
-                        try { var ping = Json().Deserialize<ClientPing>(args.Data); if (ping != null) lock (pingGate) pings[ping.Pid] = ping; } catch { }
+                        try { var ping = Json().Deserialize<ClientPing>(args.Data); if (ping != null) lock (pingGate) pings[ping.Pid] = ping; } catch (Exception error) { FailureDiagnostics.Monitor.Report("parse-helper", "Invalid helper response", detail: error.GetType().Name + " HRESULT=" + error.HResult); }
                     };
-                    host.ErrorDataReceived += (sender, args) => { };
+                    host.ErrorDataReceived += (sender, args) => { if (!string.IsNullOrEmpty(args.Data)) FailureDiagnostics.Monitor.Report("helper-stderr", "Helper reported an error", detail: args.Data); };
                     host.Start(); host.BeginOutputReadLine(); host.BeginErrorReadLine(); targets = "";
                 }
                 string next = Json().Serialize(desired);
                 if (targets != next) { host.StandardInput.WriteLine(next); host.StandardInput.Flush(); targets = next; }
-            } catch { Error = "IPC helper unavailable"; StopHost(); }
+                FailureDiagnostics.Monitor.Recovered("ipc-helper", "Helper available");
+            } catch (Exception error) { Error = "IPC helper unavailable"; FailureDiagnostics.Monitor.Report("ipc-helper", Error, error); StopHost(); }
         }
         void StopHost()
         {
             if (host == null) return;
-            try { host.StandardInput.Close(); if (!host.WaitForExit(500)) host.Kill(); } catch { }
+            try { host.StandardInput.Close(); if (!host.WaitForExit(500)) host.Kill(); } catch (InvalidOperationException) { /* Helper already exited. */ } catch (Exception error) { FailureDiagnostics.Monitor.Report("stop-helper", "Could not stop owned helper", error); }
             host.Dispose(); host = null; targets = "";
             lock (pingGate) pings.Clear();
         }
         internal static string ConditionText(ClientCondition state)
         {
             switch (state) {
-                case ClientCondition.Healthy: return SidebarText.L("Responding", "Svarer");
-                case ClientCondition.Delayed: return SidebarText.L("Delayed", "Forsinket");
-                case ClientCondition.NoResponse: return SidebarText.L("No response", "Intet svar");
-                case ClientCondition.MeasurementUnavailable: return SidebarText.L("Measurement unavailable", "Måling utilgængelig");
-                case ClientCondition.Waiting: return SidebarText.L("Waiting for measurement", "Venter på måling");
-                case ClientCondition.Unloaded: return SidebarText.L("Measurement unloaded", "Måling afkoblet");
-                case ClientCondition.Exited: return SidebarText.L("Client exited", "Klient afsluttet");
-                default: return SidebarText.L("Not measured", "Ikke målt");
+                case ClientCondition.Healthy: return AOLauncher.Localization.Texts.Get("Text_Responding_35E6019771E7");
+                case ClientCondition.Delayed: return AOLauncher.Localization.Texts.Get("Text_Delayed_17C12ABE1A14");
+                case ClientCondition.NoResponse: return AOLauncher.Localization.Texts.Get("Text_No_response_1C26BD324EDD");
+                case ClientCondition.MeasurementUnavailable: return AOLauncher.Localization.Texts.Get("Text_Measurement_unavailable_20443020E9B2");
+                case ClientCondition.Waiting: return AOLauncher.Localization.Texts.Get("Text_Waiting_for_measurement_3C7611EBF965");
+                case ClientCondition.Unloaded: return AOLauncher.Localization.Texts.Get("Text_Measurement_unloaded_A5A74531791E");
+                case ClientCondition.Exited: return AOLauncher.Localization.Texts.Get("Text_Client_exited_F38A078665CD");
+                default: return AOLauncher.Localization.Texts.Get("Text_Not_measured_61E24E1E3CEB");
             }
         }
         internal string Capture()

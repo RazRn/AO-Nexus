@@ -5,7 +5,7 @@ $source=[IO.Path]::GetFullPath($InputDirectory)
 $destination=[IO.Path]::GetFullPath($OutputDirectory)
 [IO.Directory]::CreateDirectory($destination)|Out-Null
 # Never enumerate a user's AOSharp installation. Only these companion files ship.
-$names=@('NexusHealthHost.exe','NexusHealthPlugin.dll','NexusTelemetry.Protocol.dll','AOSharp.Common.dll','Newtonsoft.Json.dll','README.txt')
+$names=@('NexusHealthHost.exe','NexusHealthPlugin.dll','NexusTelemetry.Protocol.dll','README.txt')
 $files=@(foreach($name in $names){
  $path=Join-Path $source $name
  if(!(Test-Path -LiteralPath $path -PathType Leaf)){throw "Missing monitoring input $name. Run Build-Telemetry.ps1 first."}

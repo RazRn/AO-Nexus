@@ -19,24 +19,24 @@ namespace AOLauncher
         internal int Failures;
         internal bool Issue;
         internal string Label => ServerName + " · " + ServiceName(Service);
-        internal static string ServiceName(string key) => key == "login" ? L("Login connection", "Loginforbindelse")
-            : key == "zone" ? L("World / zone connection", "Verden / zoneforbindelse")
-            : key == "chat" ? L("Chat connection", "Chatforbindelse") : L("Official service report", "Officiel servicerapport");
+        internal static string ServiceName(string key) => key == "login" ? AOLauncher.Localization.Texts.Get("Text_Login_connection_FCAB618BCA91")
+            : key == "zone" ? AOLauncher.Localization.Texts.Get("Text_World_zone_connection_5913DA769000")
+            : key == "chat" ? AOLauncher.Localization.Texts.Get("Text_Chat_connection_3F0928C8585A") : AOLauncher.Localization.Texts.Get("Text_Official_service_report_0B0A5458EEA6");
         internal string Status(DateTime now)
         {
             if (now - CheckedUtc > TimeSpan.FromSeconds(150) || State == HealthState.Unknown)
-                return Issue ? L("Issue unresolved · no fresh confirmation", "Problem uafklaret · ingen ny bekræftelse") : L("Unknown", "Ukendt");
-            if (Issue) return Service == "report" ? L("Reported issue", "Rapporteret problem") : L("Unreachable from this PC", "Utilgængelig fra denne pc");
-            if (Failures > 0) return L("Failed check · confirming", "Fejlet tjek · bekræfter");
-            return Service == "report" ? L("Reported online", "Rapporteret online") : L("Reachable", "Tilgængelig");
+                return Issue ? AOLauncher.Localization.Texts.Get("Text_Issue_unresolved_no_fresh_confirmation_22BF3160FC7E") : AOLauncher.Localization.Texts.Get("Text_Unknown_D8D7AE0368FB");
+            if (Issue) return Service == "report" ? AOLauncher.Localization.Texts.Get("Text_Reported_issue_A629ABE96E16") : AOLauncher.Localization.Texts.Get("Text_Unreachable_from_this_PC_227C73CAE214");
+            if (Failures > 0) return AOLauncher.Localization.Texts.Get("Text_Failed_check_confirming_00036207BC98");
+            return Service == "report" ? AOLauncher.Localization.Texts.Get("Text_Reported_online_E847C0DF1229") : AOLauncher.Localization.Texts.Get("Text_Reachable_54DB153474A9");
         }
     }
     internal sealed class HealthTransition
     {
         internal HealthObservation Observation;
         internal bool Recovered;
-        internal string Text => Observation.Label + ": " + (Recovered ? L("recovered", "genoprettet")
-            : Observation.Service == "report" ? L("reported issue", "rapporteret problem") : L("unreachable from this PC", "utilgængelig fra denne pc"));
+        internal string Text => Observation.Label + ": " + (Recovered ? AOLauncher.Localization.Texts.Get("Text_recovered_6CD4F048F2BA")
+            : Observation.Service == "report" ? AOLauncher.Localization.Texts.Get("Text_reported_issue_09DF6D000C0D") : AOLauncher.Localization.Texts.Get("Text_unreachable_from_this_PC_B0C4C465DE77"));
     }
     // Session-local evidence. Unknown/stale reports never resolve an existing outage.
     internal sealed class HealthAlerts

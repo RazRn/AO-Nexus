@@ -328,7 +328,8 @@ namespace AOLauncher
 
     internal sealed class SlimScrollBar : Control
     {
-        private readonly SlimScrollHost owner;
+        private readonly Control content;
+        private readonly Action<int> setPosition, wheel;
         private readonly bool vertical;
         private ScrollState state = ScrollState.Empty;
         private bool dragging;
@@ -340,8 +341,13 @@ namespace AOLauncher
         internal int Position => state.Position;
 
         internal SlimScrollBar(SlimScrollHost owner, bool vertical)
+            : this(owner.Content, vertical, position => owner.SetScrollPosition(vertical, position), delta => owner.ForwardWheel(vertical, delta)) { }
+
+        internal SlimScrollBar(Control content, bool vertical, Action<int> setPosition, Action<int> wheel)
         {
-            this.owner = owner;
+            this.content = content;
+            this.setPosition = setPosition;
+            this.wheel = wheel;
             this.vertical = vertical;
             SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
             TabStop = false;
@@ -356,11 +362,11 @@ namespace AOLauncher
             bool changed = state.Minimum != value.Minimum || state.Maximum != value.Maximum || state.PageSize != value.PageSize || state.Position != value.Position;
             state = value;
             if (Visible != visible) Visible = visible;
-            if (BackColor != owner.BackColor) { BackColor = owner.BackColor; changed = true; }
+            if (BackColor != content.BackColor) { BackColor = content.BackColor; changed = true; }
             if (changed) Invalidate();
         }
 
-        internal void ScrollTo(int position) { owner.SetScrollPosition(vertical, position); }
+        internal void ScrollTo(int position) { setPosition(position); }
 
         private Rectangle Thumb
         {
@@ -395,7 +401,7 @@ namespace AOLauncher
         {
             base.OnMouseDown(e);
             if (e.Button != MouseButtons.Left || state.Maximum <= state.Minimum) return;
-            owner.Content.Focus();
+            content.Focus();
             Rectangle thumb = Thumb;
             int cursor = vertical ? e.Y : e.X, begin = vertical ? thumb.Top : thumb.Left;
             if (thumb.Contains(e.Location))
@@ -425,6 +431,6 @@ namespace AOLauncher
             base.OnMouseCaptureChanged(e);
             if (!Capture) { dragging = false; Invalidate(); }
         }
-        protected override void OnMouseWheel(MouseEventArgs e) { base.OnMouseWheel(e); owner.ForwardWheel(vertical, e.Delta); }
+        protected override void OnMouseWheel(MouseEventArgs e) { base.OnMouseWheel(e); wheel(e.Delta); }
     }
 }

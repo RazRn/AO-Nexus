@@ -1,0 +1,9 @@
+{
+  "Id": "aovk",
+  "Retired": true,
+  "Version": "components-1.3.0-preview.1",
+  "Url": "https://github.com/RazRn/AO-Nexus/releases/download/components-1.3.0-preview.1/AO-Nexus-aovk.zip",
+  "Size": 11628655,
+  "RequiredFile": "randy31.dll",
+  "Manifest": "{\r\n  \"PayloadSha256\": \"0b17dd38e2815018a65c71578a25f9fb5128df3a8bbe0bac231aa014c25d3e48\",\r\n  \"Files\": [\r\n    {\r\n      \"Path\": \"randy31.dll\",\r\n      \"Length\": 11475968,\r\n      \"Sha256\": \"60759c61c7383efa39ae4f09981ed3e42d7a25ce7c9d093e6791a5c4a98040c6\"\r\n    },\r\n    {\r\n      \"Path\": \"randy31-ui.dll\",\r\n      \"Length\": 12042752,\r\n      \"Sha256\": \"baf83111e172fa8bb833f2615b02d1162c0f6125cf6836421f22c714445825ee\"\r\n    },\r\n    {\r\n      \"Path\": \"Licenses/ao-vk.txt\",\r\n      \"Length\": 1086,\r\n      \"Sha256\": \"91ece8e233a1078d04849ce9a5990e3efcee074d0403baea3381957e4326941e\"\r\n    },\r\n    {\r\n      \"Path\": \"Licenses/imgui.txt\",\r\n      \"Length\": 1104,\r\n      \"Sha256\": \"55e058cc5899e6077a819ad1005d6d1f4528f65ae100795c9692f9fa6525a8ce\"\r\n    },\r\n    {\r\n      \"Path\": \"Licenses/fsr2.txt\",\r\n      \"Length\": 1186,\r\n      \"Sha256\": \"1c255ca4b9d6e7440efdc5229e5d83ec68f7f1e7b296b2b4cc09a74b37728692\"\r\n    },\r\n    {\r\n      \"Path\": \"Licenses/ffx-sdk.txt\",\r\n      \"Length\": 1136,\r\n      \"Sha256\": \"c93d509cd69d50698796c9c3274247352736ef122a3197ace2010f0978e21aa6\"\r\n    }\r\n  ]\r\n}"
+}

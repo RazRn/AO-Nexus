@@ -27,6 +27,11 @@ try {
     Call DiagnosticRedactor Update @($settings)
     $raw='Starting Fixturespawn (ID 123456789) from C:\Users\fixture-user\Games\AO Rebirth\AnarchyOnline.exe for fixturelogin on 10.20.30.40:7500. ID 987654321: detected as Aster. Prefs ...\Char987654321\prefs.xml. Mail someone@example.com. Team Raid team Fixturespawn. Private Test Server. ALTLOGIN. Public 2.24.96.30:7500. Exit code 2. maximum.'
     $redacted=Redact $raw
+    $longToken=('x'*100000)+' someone@example.com'
+    $redactionClock=[Diagnostics.Stopwatch]::StartNew()
+    $longRedacted=Redact $longToken
+    $redactionClock.Stop()
+    Assert ($longRedacted.EndsWith(' <email>') -and $redactionClock.Elapsed.TotalSeconds -lt 5) 'Long diagnostic tokens remain responsive and still hide email addresses'
     foreach($secret in @('Fixturespawn','123456789','987654321','Aster','fixturelogin','fixture-user','10.20.30.40','someone@example.com','Raid team','Private Test','AltLogin')){Assert ($redacted.IndexOf($secret,[StringComparison]::OrdinalIgnoreCase) -lt 0) "Redaction hides $secret"}
     Assert ($redacted.Contains('2.24.96.30:7500') -and $redacted.Contains('Exit code 2') -and $redacted.Contains('maximum')) 'Public endpoints, small numbers and ordinary words are kept'
     $ellipsis=Redact 'Waiting for the game window for ID 123456789... and ID 987654321.'

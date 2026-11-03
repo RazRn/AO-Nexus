@@ -45,7 +45,9 @@ try {
       $pixels=[Drawing.Bitmap]::new($panel.Width,$panel.Height)
       try {
         $panel.DrawToBitmap($pixels,[Drawing.Rectangle]::new(0,0,$panel.Width,$panel.Height))
-        Assert ($pixels.GetPixel($panel.Width-4,2).ToArgb() -eq $panel.Parent.BackColor.ToArgb()) "$name uses the surrounding background above its legend border"
+        $legend=$panel.GetType().GetProperty('Legend',[Reflection.BindingFlags]'Instance,NonPublic').GetValue($panel,$null)
+        $above=if ([string]::IsNullOrEmpty($legend)) { $panel.BackColor } else { $panel.Parent.BackColor }
+        Assert ($pixels.GetPixel($panel.Width-4,2).ToArgb() -eq $above.ToArgb()) "$name paints its current legend or compact-panel background"
         Assert ($pixels.GetPixel($panel.Width-4,$panel.Font.Height+2).ToArgb() -eq $panel.BackColor.ToArgb()) "$name retains its surface inside the border"
       } finally {$pixels.Dispose()}
     }

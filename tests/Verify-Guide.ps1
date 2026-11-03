@@ -12,8 +12,8 @@ function Anchors([string]$body){
     }
     return $result
 }
-$documents=@('README.md','docs/Player-Guide.md','docs/Game-GUI.md','docs/Building.md','docs/Privacy-and-Security.md','docs/Server-Health.md','docs/images/README.md','docs/images/SCREENSHOTS.md')
-$narrative=@('README.md','docs/Player-Guide.md','docs/Game-GUI.md')
+$documents=@('README.md','docs/user/Player-Guide.md','docs/user/Game-GUI.md','docs/development/Building.md','docs/user/Privacy-and-Security.md','docs/user/Server-Health.md','docs/user/images/README.md','docs/user/images/SCREENSHOTS.md')
+$narrative=@('README.md','docs/user/Player-Guide.md','docs/user/Game-GUI.md')
 $imageRefs=@()
 . (Join-Path $PSScriptRoot 'Guide-ImagePlan.ps1')
 foreach($document in $documents){
@@ -43,7 +43,7 @@ Assert (@($imageRefs | Select-Object -Unique).Count -eq $GuideImagePlan.Count) '
 $readme=[IO.File]::ReadAllText((Join-Path $repo 'README.md'))
 Assert ([regex]::Matches($readme,'!\[').Count -eq 1) 'README should contain only the overview image'
 Assert (($readme -split "`n").Count -le 100) 'README has grown beyond the quick-start overview'
-$manifest=[IO.File]::ReadAllText((Join-Path $repo 'docs/images/SCREENSHOTS.md'))
+$manifest=[IO.File]::ReadAllText((Join-Path $repo 'docs/user/images/SCREENSHOTS.md'))
 Add-Type -AssemblyName System.Drawing
 foreach($image in $imageRefs){
     $hash=(Get-FileHash -LiteralPath $image -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -69,6 +69,6 @@ foreach($image in $imageRefs){
         }
     } finally {$bitmap.Dispose()}
 }
-$pngs=@(Get-ChildItem -LiteralPath (Join-Path $repo 'docs/images') -Recurse -Filter '*.png')
-Assert ($pngs.Count -eq $GuideImagePlan.Count) 'Stale/duplicate screenshot files remain in docs/images'
+$pngs=@(Get-ChildItem -LiteralPath (Join-Path $repo 'docs/user/images') -Recurse -Filter '*.png')
+Assert ($pngs.Count -eq $GuideImagePlan.Count) 'Stale/duplicate screenshot files remain in docs/user/images'
 Write-Output "PASS: $checks documentation link, anchor, image, hash, callout and structure checks."

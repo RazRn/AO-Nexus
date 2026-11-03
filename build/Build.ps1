@@ -1,9 +1,9 @@
-param([switch]$RebuildBackend, [switch]$RebuildTelemetry, [switch]$Package, [string]$PlatformToolset = 'v145', [string]$MonitoringDirectory)
+param([switch]$RebuildBackend, [switch]$RebuildTelemetry, [switch]$Package, [string]$PlatformToolset = 'v145', [string]$MonitoringDirectory, [string]$AOSharpPack, [switch]$EmbedOptionalComponents, [switch]$PrepareOptionalComponents, [string]$ComponentReleaseTag='components-1.3.0-preview.1', [string]$DefenderRuntimeReview)
 $ErrorActionPreference = 'Stop'
 $projectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 if (!$MonitoringDirectory) { $MonitoringDirectory = Join-Path $projectRoot 'dist\Monitoring' }
 if ($RebuildTelemetry -or !(Test-Path -LiteralPath (Join-Path $MonitoringDirectory 'NexusHealthPlugin.dll'))) { & (Join-Path $PSScriptRoot 'Build-Telemetry.ps1') -OutputDirectory $MonitoringDirectory }
-Copy-Item -LiteralPath (Join-Path $projectRoot 'docs\Client-Monitoring.txt') -Destination (Join-Path $MonitoringDirectory 'README.txt') -Force
+Copy-Item -LiteralPath (Join-Path $projectRoot 'docs\development\log\Client-Monitoring.txt') -Destination (Join-Path $MonitoringDirectory 'README.txt') -Force
 & (Join-Path $PSScriptRoot 'Build-MonitoringPayload.ps1') -InputDirectory $MonitoringDirectory
 $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
 $msbuild = & $vswhere -latest -products '*' -find 'MSBuild\Current\Bin\MSBuild.exe' | Select-Object -First 1
@@ -21,11 +21,22 @@ if ($RebuildBackend) {
     Copy-Item -LiteralPath (Join-Path $projectRoot 'src\Backend\Build\Release\net5.0\LoginHandler.dll') -Destination (Join-Path $projectRoot 'runtime\NexusEngine\LoginHandler.dll') -Force
 }
 & (Join-Path $PSScriptRoot 'Build-Payload.ps1')
-& $msbuild (Join-Path $projectRoot 'src\Launcher\AONexus.csproj') /p:Configuration=Release /p:PlatformTarget=x86 /m:1 /nologo /verbosity:minimal
+& (Join-Path $PSScriptRoot 'Build-PluginHost.ps1')
+& (Join-Path $PSScriptRoot 'Build-Shortcuts.ps1')
+
+# Embedding requires an explicit pack and is for private local builds only.
+if ($Package -and $EmbedOptionalComponents) { throw 'Public packages cannot embed private optional components. Build without -EmbedOptionalComponents.' }
+if ($EmbedOptionalComponents -and !$AOSharpPack) { throw 'Specify -AOSharpPack when creating a private embedded build.' }
+if ($EmbedOptionalComponents) { & (Join-Path $PSScriptRoot 'Build-AovkPayload.ps1') }
+$aosharpPayload = Join-Path $projectRoot 'src\Launcher\obj\EmbeddedAOSharp'
+if ($AOSharpPack) { & (Join-Path $PSScriptRoot 'Build-AOSharpPack.ps1') -PackDirectory $AOSharpPack -OutputDirectory $aosharpPayload }
+$componentArgs=@{ReleaseTag=$ComponentReleaseTag}
+if ($PrepareOptionalComponents) { & (Join-Path $PSScriptRoot 'Build-OptionalComponents.ps1') @componentArgs }
+& $msbuild (Join-Path $projectRoot 'src\Launcher\AONexus.csproj') "/p:EmbedOptionalComponents=$($EmbedOptionalComponents.IsPresent.ToString().ToLowerInvariant())" /p:Configuration=Release /p:PlatformTarget=x86 /m:1 /nologo /verbosity:minimal
 if ($LASTEXITCODE -ne 0) { throw 'AO Nexus build failed.' }
 $compiled = Join-Path $projectRoot 'src\Launcher\bin\Release\AONexus.exe'
 [IO.Directory]::CreateDirectory((Join-Path $projectRoot 'dist')) | Out-Null
 Copy-Item -LiteralPath $compiled -Destination (Join-Path $projectRoot 'dist\AONexus.exe') -Force
 & (Join-Path $PSScriptRoot 'Build-Payload.ps1') -ValidateOnly -VerifyExecutable (Join-Path $projectRoot 'dist\AONexus.exe')
-if ($Package) { & (Join-Path $PSScriptRoot 'Package.ps1') }
+if ($Package) { & (Join-Path $PSScriptRoot 'Package.ps1') -DefenderRuntimeReview $DefenderRuntimeReview }
 Write-Host ('Ready: ' + (Join-Path $projectRoot 'dist\AONexus.exe'))

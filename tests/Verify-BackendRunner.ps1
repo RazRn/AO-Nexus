@@ -14,7 +14,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using AOLauncher;
+using Nexus.Core;
 
 internal static class BackendRunnerTest
 {
@@ -127,7 +127,7 @@ internal static class BackendRunnerTest
 '@
 [IO.File]::WriteAllText($sourcePath, $source, [Text.UTF8Encoding]::new($false))
 $framework = 'C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8'
-& $Compiler /nologo /langversion:7.3 /target:exe /platform:x86 /nostdlib+ "/out:$exePath" "/reference:$framework\mscorlib.dll" "/reference:$framework\System.dll" "/reference:$framework\System.Core.dll" (Join-Path $PSScriptRoot '..\src\Launcher\BackendRunner.cs') (Join-Path $PSScriptRoot '..\src\Common\Texts.cs') $sourcePath
+& $Compiler /nologo /langversion:7.3 /target:exe /platform:x86 /nostdlib+ "/out:$exePath" "/reference:$framework\mscorlib.dll" "/reference:$framework\System.dll" "/reference:$framework\System.Core.dll" (Join-Path $PSScriptRoot '..\src\Core\BackendRunner.cs') $sourcePath
 if ($LASTEXITCODE -ne 0) { throw 'BackendRunner regression harness compilation failed.' }
 & $exePath
 if ($LASTEXITCODE -ne 0) { throw 'BackendRunner regression failed.' }

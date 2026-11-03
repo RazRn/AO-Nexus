@@ -1,0 +1,22 @@
+{
+  "test": 14,
+  "renderer_commit": "df64bc9b015ecbabd5df4331cb08dcc6cae3ab23",
+  "repair_base": "6a371f29730172f8af6f445ef2ed1a0721fd1943",
+  "repair_local_patch": "ao-rebirth-nexus-ui-test14.patch",
+  "repair_patch_sha256": "25710C646593D2B335C72807FC108655FEDB942C2C2744CB03FBFBDD87AED255",
+  "payloads": {
+    "randy31-ui.dll": "8E76F6F587C7258CDD30F6C481FCC68503094F1AA3B83D854004CEDDA3D05D74",
+    "version-rebirth-ui.dll": "7E85971B6142303D9BF474E28CDAC30BE827DD3BEA34D6E49E465862BAC56231"
+  },
+  "launcher_sha256": "F55A0FA6094A09AF2CDE97B9346E838B972E7849C70BB067D81DE3A49E69BA7C",
+  "checks": {
+    "team_window": 26,
+    "graphics": 122,
+    "graphics_ui": 61,
+    "client_monitor": 176,
+    "embedded_monitoring": 17,
+    "snapshots": "1000 atomic publications, 1008 concurrent reads",
+    "native_overlay": "100% and 150%: cursor, child focus, focus loss/return, background Escape, Alt-Tab, device recreation, resize, close; cursor screenshot inspected",
+    "live_game": "pending"
+  }
+}

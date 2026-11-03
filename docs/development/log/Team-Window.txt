@@ -1,0 +1,75 @@
+AO NEXUS CONTROL PANEL
+
+Open Control Panel at the right of the navigation bar. This is a detachable view of clients
+started and tracked by Nexus. Choose a saved team or all running characters.
+Click a card (or focus it and press Enter) to switch to that game window.
+Live previews can be disabled for compact cards; Always on top is optional.
+Control Panel choices are saved automatically in AONexus.json: previews, always-on-top,
+team filter, active tab, observer, window size/position/maximized state, and divider.
+Each Team/All/NPC tab remembers its metric, sorting, column widths and collapsed pets.
+The observer is saved by character identity and reconnects after relog; an offline
+observer stays explicitly selected. Combat script destination/report choices are
+remembered too. Changes are debounced and flushed on close; telemetry refreshes do
+not write settings. Existing profiles keep the previous defaults until changed.
+These are view preferences, not saved combat counters or pending logout/relog actions.
+
+Client health monitoring must be enabled. Health/nano and activity require
+the updated Nexus Health Monitor plugin; restart existing game clients through
+this build. No AO-VK requirement for the Team Window. Classic AOSharp windows
+and the existing AO-VK opt-out remain available.
+
+Cards show health/nano, responsiveness, attacking/idle, fighting target,
+client CPU and memory, and the observed team leader.
+Precise attack/cast progress bars are not implemented. Unknown, stale or zoning
+vitals are blank; no values are guessed. Local reply time is not server ping.
+
+Stats are sampled on the game update thread up to five times per second,
+published through the existing bounded local snapshot twice per second, and
+read through the existing monitor. No new listener or injection mechanism.
+The view sends no combat commands or broadcast input. DWM supplies previews;
+minimized-client previews pause, and offscreen tiles hide their thumbnails.
+
+Validation: fixture data checks, two-language layouts, filtering, stale and
+identity handling, DWM registration/properties/release, existing monitor and
+snapshot tests. Live AO previews and multi-client gameplay still need user
+acceptance; fixture screenshots contain simulated character data.
+
+Pet breakdowns and team recovery - 2026-11-01
+Team and All show expandable pet rows beneath their owners. Names update from
+the current pet roster, including renames. Same-name pets under one owner are
+combined across summons and sorted by name; IDs remain internal. Pet rows are
+a breakdown of owner totals, so the footer does not count their damage twice.
+All uses one observer's events and local rosters only for names/ownership.
+Automatic observer selection moves to another client after its process exits;
+temporary zoning does not silently switch the measurement source.
+
+With updated Nexus Shortcuts loaded, Nexus remembers observed teams while it
+runs. A member's process exit/replacement arms bounded recovery. The actual
+remaining leader invites returning members; after the roster has rejoined,
+leadership is restored to the prior leader. Ordinary manual team changes do
+not arm recovery. Raids and teams containing unmanaged outsiders are excluded.
+Full relog also forms a matching automatic saved team even when no preset is
+selected in the main window. If no actual team was observed, its first saved
+character leads. Nexus does not automatically restart a crashed game process.
+Recovery needs the clients to return nearby, with their helpers loaded. It
+keeps pending recovery for up to ten minutes, with a five-minute action window
+and bounded invite/transfer retries. Recovery memory ends when Nexus closes.
+
+Validation: 304 Control Panel checks, 21 startup-plan checks, 23 recovery
+checks. Live full relog formed all six characters with Overwhelming leading.
+Live leader-only relog: Sexologist succeeded him, invited him back, and
+transferred leadership to Overwhelming; all six clients confirmed membership
+and leader ID. Crash detection is covered by tests; no live crash was induced.
+Both tabs verified live with named pet rows and one beeep row across summons.
+
+Control Panel sections (2026-11-01)
+Damage Dumper, Team and Timers each have a collapsible header. Click a header
+for a compact bar; drag it onto another header or use its up/down arrows to
+reorder. Drag the bottom edge of an expanded section to resize it. Order,
+collapsed state, expanded height and the timers server selection are saved.
+The old divider height migrates to Damage Dumper on first use. Timers starts
+collapsed and shares the existing timer store and editor with the Timers window.
+Collapsing Team hides DWM previews; collecting combat/health data continues.
+Validation: 328 TeamWindow checks, including persistence, invalid saved layouts,
+all-collapsed geometry, inline timers and existing timer UI behavior. Defender
+custom scan of the Release executable returned no threats.

@@ -1,0 +1,79 @@
+AO NEXUS / AO-VK GRAPHICS TEST 2 - 28 October 2026
+Launcher version: 1.2.2-aovk-test.2
+
+Historical test notes. For the current merged launcher and automatic installation
+in ordinary compatible game folders, see AOVK-Managed-Install.txt.
+
+START
+Run D:\Games\AO-Nexus-AOVK-Test\Start-Test.cmd.
+Open Settings > Graphics and choose D:\Games\AORebirth-AOVK-Test.
+Use AO-VK selects the Vulkan renderer; clearing it selects the stock renderer.
+Click Save to apply. Close every AO client using this folder before saving.
+Other Settings edits still save without closing the game if graphics are unchanged.
+Use Nexus to launch the test game, rather than the game's patching launcher.
+
+GRAPHICS
+The page exposes the lighting configuration exercised in the user's gameplay tests:
+enhancements, per-pixel and nearby lights, sun/contact/point-light shadows,
+HDR lighting, generated bump maps, anisotropic filtering and the performance HUD.
+The enhancement master keeps the individual choices when switched off.
+The AO-VK renderer toggle keeps the graphics choices when switched off.
+Choices are stored in the installation's randy-vk.ini, shared by its accounts.
+Cancel discards pending changes; Save applies pending changes across game folders.
+
+Use tested lighting preset enables the listed controls and 16x filtering, and
+disables unverified environment/texture-pack groups. Ordinary edits preserve
+the other previously configured environment flags. Neither path enables new
+native replacement hooks. FrameGen, TAA, upscaling, sky/weather/atmosphere,
+motion blur and depth of field are kept off when applying AO-VK graphics.
+Turning the renderer off alone preserves the exact INI bytes for next time.
+
+FEATURE STATUS
+User reports gameplay, F10 and zoning success with the accepted lighting settings.
+Later environment rollback restored visibility. Enhanced grass has not been
+confirmed: the log reports zero blades. Water, foliage and particles still need
+visual verification. Normal/PBR/albedo maps have no installed texture-pack assets.
+FrameGen + TAA reproduced hangs. Sky/weather/atmosphere caused scene obstruction.
+These features are excluded from the selectable controls for now.
+This launcher build does not repair those renderer compatibility gaps or establish
+long-duration stability. Motion blur and depth of field remain unwanted/off.
+AOSharp windows remain available; no replacement in-game windows are installed.
+
+SWITCHING AND RECOVERY
+Only the prepared Rebirth test installation is admitted in this first build.
+Missing files, unrecognized client/DLL hashes or mismatched renderer/patch pairs
+are rejected. No general AO-VK download/installation is included yet.
+Nexus swaps both randy31.dll and the matching Rebirth version.dll. It never
+replaces Rebirth's login/crash repair with the optional AOReloaded version.dll.
+It rejects a running client or an active Nexus launch/game-file operation.
+All destination files are locked and compared against the opened Settings view
+before writing. Failed writes are rolled back and verified. Recovery copies of
+both DLLs and the INI are retained under the game folder's NexusGraphicsBackups.
+The existing Use-Stock.cmd and Use-AOVK.cmd helpers remain available.
+Normal D:\Games\AORebirth-Live and the normal Nexus profile are unchanged.
+
+VERIFICATION
+Release build and embedded backend payload validation passed.
+25 filesystem/configuration checks: pair switching, remembering choices,
+failure rollback, locked destinations, stale view, unknown payload rejection,
+backups and disabled-effects policy. Tests modify temporary copies only.
+30 UI checks: English/Danish at 100%/150%, dependencies, preset, visible Save,
+and Settings Save switching a temporary installation to stock. Previews reviewed.
+The assistant did not launch AO. In-game off/on acceptance for the new launcher
+page remains a user test; existing renderer and Rebirth DLLs are unchanged.
+
+UPSTREAM
+https://github.com/wannabuh/ao-vk/releases/tag/v0.7.1
+Documentation and settings reviewed against the pinned v0.7.1 source.
+Historical tests, failures and patch provenance: AOVK-Startup-Test.txt and the
+installed package's TEST-RESULTS.txt.
+
+2026-11-03 — Wazoo white scene after Subway -> ICC
+User identified the in-game "Offscreen surface technology" setting as the
+trigger and reported that changing it resolved the white scene. Previously
+reported only on Wazoo, after switching back, with zoning into Subway clearing
+it temporarily. Treat disabling this setting as the user-confirmed workaround;
+the precise renderer defect has not been isolated or independently reproduced.
+Checked current Nexus source: BackgroundClients performs window minimization
+only and does not modify this rendering preference on focus changes. No
+production setting was changed by this investigation.

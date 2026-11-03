@@ -186,6 +186,13 @@ namespace AOLauncher
             }
         }
 
+        internal static GuiScriptBackup WriteReports(string prefsRoot, Dictionary<string, byte[]> files, string backupRoot)
+        {
+            if (files == null || files.Count == 0 || files.Count > MaxScripts || files.Any(p => !(p.Key == "nexus" || p.Key.StartsWith("nexus-", StringComparison.Ordinal)) || p.Value == null))
+                throw new InvalidDataException("Invalid Nexus report scripts.");
+            lock (Sync) return Commit(ScriptsRoot(prefsRoot), backupRoot, "Combat reports", files);
+        }
+
         internal static GuiScriptBackup Delete(string prefsRoot, IEnumerable<string> names, string backupRoot)
         {
             lock (Sync)

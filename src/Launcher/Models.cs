@@ -21,13 +21,19 @@ namespace AOLauncher
         public bool SkipLoginConfirmation { get; set; }
         public bool SkipTeamLogoutConfirmation { get; set; }
         public int MaxLogSizeMb { get; set; } = 5;
+        public bool WrapActivityLog { get; set; }
         public bool KeepDiagnostics { get; set; } = true;
         // The login handler skips drawing the login and character screens (measured ~1.5 s faster per character).
         // Missing in older profiles: they get the faster default as well.
         public bool QuietLaunch { get; set; } = true;
         public bool FastStartup { get; set; } = true;
+        public bool ExperimentalAovk { get; set; }
+        public bool ExperimentalTeamAutomation { get; set; }
+        public bool ExperimentalNearbyCombat { get; set; }
         public bool MinimizeInactiveClients { get; set; }
         public bool MonitorClientHealth { get; set; }
+        public List<string> TeamCardOrder { get; set; } = new List<string>();
+        public ControlPanelPreferences ControlPanel { get; set; } = new ControlPanelPreferences();
         public bool CollectClientExitReports { get; set; }
         public int OptionsReviewVersion { get; set; }
         public string GamePath { get; set; } = string.Empty;
@@ -47,6 +53,32 @@ namespace AOLauncher
         public bool HealthTrayNotifications { get; set; }
         public Dictionary<string, HealthEndpoints> HealthCheckEndpoints { get; set; } = new Dictionary<string, HealthEndpoints>();
         public List<string> HealthServerIds { get; set; } = new List<string> { "rebirth", "prk", "live", "live-2019" };
+        // Server rules (config/servers.json): last applied revision, optional source override,
+        // and catalog servers the user removed so updates do not add them back.
+        public int ServerRulesRevision { get; set; }
+        public string ServerRulesSource { get; set; }
+        public bool CheckServerRulesOnStartup { get; set; } = true;
+        public List<string> RemovedServerIds { get; set; } = new List<string>();
+        // AOSharp plugins: named plugin sets, per-character defaults (CharacterConfig) and
+        // per-preset overrides (PresetCharacter). Plugins load automatically when enabled.
+        public bool AutoInjectPlugins { get; set; }
+        // Nexus Health Monitor rides along with every set Nexus loads, so loaded clients are measured.
+        public bool IncludeHealthMonitor { get; set; } = true;
+        public bool PluginSetsInitialized { get; set; }
+        // Nexus Shortcuts rides along like the health monitor, so the in-game buttons work.
+        public bool IncludeShortcuts { get; set; } = true;
+        // Play style for characters launched outside a team (see PlayStyles).
+        public string DefaultPlayStyle { get; set; }
+        // 1 = starter sets moved to the Z suite (done once; see PluginSets.MigrateToZ).
+        public int PluginSuiteVersion { get; set; }
+        public string AOSharpPackPath { get; set; }
+        // Preserve existing configurations; fresh installs have no runtime and never download automatically.
+        public bool AOSharpDisabled { get; set; }
+        public List<string> SharedPlugins { get; set; } = new List<string>();
+        public List<PluginSet> PluginSets { get; set; } = new List<PluginSet>();
+        public List<CustomPlugin> CustomPlugins { get; set; } = new List<CustomPlugin>();
+        // Latest in-game test result per plugin (Plugins page > Test plugins).
+        public List<PluginTestRecord> PluginTests { get; set; } = new List<PluginTestRecord>();
     }
 
     internal sealed class LoginServerProfile
@@ -58,21 +90,11 @@ namespace AOLauncher
         public int? MaxAccounts { get; set; }
         public int? MaxCharactersPerAccount { get; set; }
         public int? CharacterSlots { get; set; }
+        // True when the user edited a server that also exists in the server list.
+        public bool Customized { get; set; }
         public override string ToString() => Name;
-        internal static List<LoginServerProfile> Defaults()
-        {
-            var profiles = new List<LoginServerProfile>
-            {
-                new LoginServerProfile { Id = "rebirth", Name = "AO Rebirth - Live", Server = "2.24.96.30", Port = 7500, MaxAccounts = 0, MaxCharactersPerAccount = 0 },
-                new LoginServerProfile { Id = "live", Name = "Funcom AO - Rubi-Ka", Server = "37.18.192.41", Port = 7505, MaxAccounts = 0, MaxCharactersPerAccount = 1 },
-                new LoginServerProfile { Id = "live-2019", Name = "Funcom AO - Rubi-Ka 2019", Server = "37.18.192.41", Port = 7506, MaxAccounts = 0, MaxCharactersPerAccount = 1 },
-                new LoginServerProfile { Id = "prk", Name = "Project Rubi-Ka - Ithaca", Server = "5.161.243.214", Port = 7000, MaxAccounts = 2, MaxCharactersPerAccount = 1 },
-                new LoginServerProfile { Id = "rebirth-local", Name = "AO Rebirth — Local development (localhost)", Server = "127.0.0.1", Port = 7500, MaxAccounts = 0, MaxCharactersPerAccount = 0 }
-            };
-            foreach (var profile in profiles)
-                profile.CharacterSlots = AccountTargets.DefaultCharacterSlots(profile.Server, profile.Port);
-            return profiles;
-        }
+        // Defaults come from config/servers.json (built in, or a newer cached revision).
+        internal static List<LoginServerProfile> Defaults() => ServerRules.Current.Servers.Select(ServerRules.ToProfile).ToList();
     }
 
     internal sealed class HotkeyBinding
@@ -96,6 +118,12 @@ namespace AOLauncher
         public string Id { get; set; } = Guid.NewGuid().ToString("D");
         public string Name { get; set; }
         public List<PresetCharacter> Characters { get; set; } = new List<PresetCharacter>();
+        // Off: characters launched with this team get no plugins (e.g. a crafting team).
+        public bool LoadPlugins { get; set; } = true;
+        // Adds the plugins for an activity (team play, Inferno, City raid...) to every member's set.
+        public string PlayStyle { get; set; }
+        public bool OrderedLogin { get; set; }
+        public bool AutoFormTeam { get; set; }
         public override string ToString() => Name;
     }
 
@@ -103,6 +131,8 @@ namespace AOLauncher
     {
         public string AccountId { get; set; }
         public int CharacterId { get; set; }
+        // Null uses the character's default plugin set; PluginSet.None loads nothing.
+        public string PluginSetId { get; set; }
     }
 
     internal sealed class AccountConfig
@@ -124,6 +154,19 @@ namespace AOLauncher
         public List<CharacterConfig> Characters { get; set; } = new List<CharacterConfig>();
     }
 
+    internal sealed class PluginTestRecord
+    {
+        public string TestKind { get; set; }
+        public string PluginSha256 { get; set; }
+        public string Profession { get; set; }
+        public string ServerEndpoint { get; set; }
+        public string PluginId { get; set; }
+        public string Status { get; set; }
+        public string Message { get; set; }
+        public string Character { get; set; }
+        public long TestedUtcTicks { get; set; }
+    }
+
     internal sealed class CharacterConfig
     {
         public string PendingGuiTemplateId { get; set; }
@@ -131,6 +174,7 @@ namespace AOLauncher
         public int CharacterId { get; set; }
         public bool Selected { get; set; } = true;
         public bool NamePending { get; set; }
+        public string PluginSetId { get; set; }
     }
 
     internal sealed class LaunchRequest
@@ -141,8 +185,12 @@ namespace AOLauncher
         public int Port { get; set; }
         public int ReadyTimeoutSeconds { get; set; } = 120;
         public bool QuietLaunch { get; set; }
+        public bool AllowExperimentalAovk { get; set; }
         public bool FastStartup { get; set; }
         public List<LaunchCharacter> Characters { get; set; } = new List<LaunchCharacter>();
+        public bool OrderedStarts { get; set; }
+        public bool KeepLeaderActive { get; set; }
+        public int LauncherProcessId { get; set; }
     }
 
     internal sealed class LaunchCharacter
@@ -222,7 +270,7 @@ namespace AOLauncher
         internal static int DefaultCharacterSlots(string server, int port)
         {
             // Zero means no known launcher limit. Account overrides can reflect purchased slots.
-            return NormalizeEndpoint(server + ":" + port) == "2.24.96.30:7500" ? 6 : 0;
+            return ServerRules.Find(server, port)?.CharacterSlots ?? 0;
         }
 
         internal static void ValidateCharacterSlots(int slots)
@@ -374,10 +422,10 @@ namespace AOLauncher
             string.Equals(Endpoint(left), Endpoint(right), StringComparison.OrdinalIgnoreCase);
 
         internal static bool IsOfficialLive(AccountConfig account) =>
-            (Endpoint(account) == "37.18.192.41:7505" || Endpoint(account) == "37.18.192.41:7506");
+            ServerRules.Kind(account.Server ?? "", account.Port) == "live";
 
         internal static bool IsProjectRubika(AccountConfig account) =>
-            Endpoint(account) == "5.161.243.214:7000";
+            ServerRules.Kind(account.Server ?? "", account.Port) == "prk";
 
         internal static bool GameExists(string path)
         {
@@ -413,22 +461,8 @@ namespace AOLauncher
             return ReadFromDirectory(DirectoryPath);
         }
 
-        private static string GetReadPath(string directory)
-        {
-            string current = Path.Combine(directory, "AONexus.json");
-            string legacy = Path.Combine(directory, "RebirthLauncher.json");
-            // A present current file is authoritative, including when it cannot be read.
-            return PathExists(current) || !PathExists(legacy) ? current : legacy;
-        }
-
-        private static bool PathExists(string path)
-        {
-            // File.Exists also hides access errors and directory collisions as "absent".
-            // Those must reach startup error handling instead of restoring stale settings.
-            try { File.GetAttributes(path); return true; }
-            catch (FileNotFoundException) { return false; }
-            catch (DirectoryNotFoundException) { return false; }
-        }
+        private static string GetReadPath(string directory) => Nexus.Core.SettingsStorage.ReadPath(directory);
+        private static bool PathExists(string path) => Nexus.Core.SettingsStorage.Exists(path);
 
         internal static LauncherSettings ReadFromDirectory(string directory)
         {
@@ -447,6 +481,15 @@ namespace AOLauncher
             var fields = new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(json);
             if (!fields.ContainsKey(nameof(LauncherSettings.HasCompletedSetup))) value.HasCompletedSetup = true;
             if (value.LoginServers == null) value.LoginServers = LoginServerProfile.Defaults();
+            value.RemovedServerIds = (value.RemovedServerIds ?? new List<string>()).Where(id => !string.IsNullOrWhiteSpace(id)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            // Settings from before server rules (1.2.x) have no "customised"/"removed" markers. Record
+            // what the user already chose, so the first rules update cannot overwrite it.
+            if (!fields.ContainsKey(nameof(LauncherSettings.ServerRulesRevision))) ServerRules.MarkExistingChoices(value);
+            value.PluginSets = (value.PluginSets ?? new List<PluginSet>()).Where(set => set != null && !string.IsNullOrWhiteSpace(set.Id)).ToList();
+            foreach (var set in value.PluginSets) set.Plugins = (set.Plugins ?? new List<string>()).Where(id => !string.IsNullOrWhiteSpace(id)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            value.SharedPlugins = (value.SharedPlugins ?? new List<string>()).Where(id => !string.IsNullOrWhiteSpace(id)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            value.TeamCardOrder = (value.TeamCardOrder ?? new List<string>()).Where(id => !string.IsNullOrWhiteSpace(id)).Distinct(StringComparer.Ordinal).ToList();
+            value.CustomPlugins = (value.CustomPlugins ?? new List<CustomPlugin>()).Where(plugin => plugin != null && !string.IsNullOrWhiteSpace(plugin.Id) && !string.IsNullOrWhiteSpace(plugin.Path)).ToList();
             value.CollapsedServers = (value.CollapsedServers ?? new List<string>())
                 .Where(endpoint => !string.IsNullOrWhiteSpace(endpoint)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
             value.NewsSourceIds = ServerNews.NormalizeSourceIds(value.NewsSourceIds).ToList();
@@ -478,23 +521,15 @@ namespace AOLauncher
 
         internal static void SaveToDirectory(LauncherSettings settings, string directory)
         {
-            string path = Path.Combine(directory, "AONexus.json");
-            Directory.CreateDirectory(directory);
-            string tempFile = Path.Combine(directory, Guid.NewGuid().ToString("N") + ".tmp");
             try
             {
-                if (File.Exists(path) && !File.Exists(path + ".before-account-targets.bak"))
-                {
-                    var previous = new JavaScriptSerializer().Deserialize<LauncherSettings>(File.ReadAllText(path));
-                    if (previous?.Version == 1) File.Copy(path, path + ".before-account-targets.bak");
-                }
-                File.WriteAllText(tempFile, new JavaScriptSerializer().Serialize(settings));
-                if (File.Exists(path)) File.Replace(tempFile, path, null);
-                else File.Move(tempFile, path);
+                Nexus.Core.SettingsStorage.Save(directory, new JavaScriptSerializer().Serialize(settings),
+                    json => new JavaScriptSerializer().Deserialize<LauncherSettings>(json)?.Version == 1);
             }
-            finally
+            catch (Exception error)
             {
-                if (File.Exists(tempFile)) File.Delete(tempFile);
+                FailureDiagnostics.Install.Report("settings-save", "Settings were not saved", error);
+                throw;
             }
         }
     }

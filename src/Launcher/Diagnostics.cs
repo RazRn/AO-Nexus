@@ -47,7 +47,11 @@ namespace AOLauncher
         {
             if (string.IsNullOrWhiteSpace(message)) return;
             string entry;
-            try { entry = Format(DateTime.UtcNow, area, DiagnosticRedactor.Current.Redact(message)); }
+            try {
+                string redacted=DiagnosticRedactor.Current.Redact(message);
+                entry = Format(DateTime.UtcNow, area, redacted);
+                DevelopmentRecorder.Write("event",new {Area=area,Message=redacted});
+            }
             catch (Exception) { return; } // Diagnostics must never become a new source of failures.
             lock (Sync)
             {
@@ -144,7 +148,9 @@ namespace AOLauncher
         private static DiagnosticRedactor current = new DiagnosticRedactor(null, null);
         private static readonly object KeySync = new object();
         private static byte[] key;
-        private static readonly Regex EmailPattern = new Regex(@"[\w.+-]+@[\w-]+(\.[\w-]+)+", RegexOptions.CultureInvariant);
+        // Start only at the beginning of a candidate token, rather than retrying
+        // every suffix of a long diagnostic word (quadratic work on the UI thread).
+        private static readonly Regex EmailPattern = new Regex(@"(?<![\w.+-])[\w.+-]+@[\w-]+(\.[\w-]+)+", RegexOptions.CultureInvariant);
         // Character IDs also appear glued to text (Prefs folders are named Char123456789) or before
         // punctuation ("ID 123456789..."); only digits and decimal fractions such as 1.123456 are excluded.
         private static readonly Regex NumberPattern = new Regex(@"(?<prefix>Char)?(?<!\d|\d\.)(?<id>\d{3,10})(?!\d|\.\d)", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
@@ -241,7 +247,7 @@ namespace AOLauncher
                 result = ReplaceIgnoreCase(result, pair.Key, pair.Value);
             if (wordPattern != null)
                 result = wordPattern.Replace(result, match => words.TryGetValue(match.Value, out var replacement) ? replacement : "<redacted>");
-            result = EmailPattern.Replace(result, "<email>");
+            if (result.IndexOf('@') >= 0) result = EmailPattern.Replace(result, "<email>");
             if (numbers.Count > 0)
                 result = NumberPattern.Replace(result, match => numbers.TryGetValue(match.Groups["id"].Value, out var replacement) ? replacement : match.Value);
             return result;
@@ -385,9 +391,7 @@ namespace AOLauncher
             try
             {
                 // A plain system dialog: the themed controls may be what failed.
-                string message = SidebarText.L(
-                    "AO Nexus ran into an unexpected error. " + (saved != null ? "An anonymised report was saved on this PC.\r\n\r\nYou can share it with Settings → General → Report a problem…" : "The details could not be saved.") + "\r\n\r\nContinue using AO Nexus? Choose No to close it. Game windows stay open.",
-                    "AO Nexus fik en uventet fejl. " + (saved != null ? "En anonymiseret rapport er gemt på denne pc.\r\n\r\nDu kan dele den via Indstillinger → Generelt → Rapportér et problem…" : "Detaljerne kunne ikke gemmes.") + "\r\n\r\nVil du fortsætte med at bruge AO Nexus? Vælg Nej for at lukke. Spilvinduer forbliver åbne.");
+                string message = AOLauncher.Localization.Texts.Get(saved != null ? "UnexpectedError_Saved" : "UnexpectedError_NotSaved");
                 if (MessageBox.Show(message, "AO Nexus", MessageBoxButtons.YesNo, MessageBoxIcon.Error, MessageBoxDefaultButton.Button1) == DialogResult.No)
                     Application.Exit();
             }
@@ -482,7 +486,7 @@ namespace AOLauncher
         {
             var text = new StringBuilder();
             text.AppendLine("Environment:");
-            Line(text, "AO Nexus", Safe(() => AppUpdates.CurrentVersion.ToString(3)) + " (" + (Environment.Is64BitProcess ? "64-bit" : "32-bit") + " process)");
+            Line(text, "AO Nexus", Safe(() => AppUpdates.DisplayVersion) + " (" + (Environment.Is64BitProcess ? "64-bit" : "32-bit") + " process)");
             Line(text, "Nexus location", Safe(() => LocationCategory(Application.StartupPath)));
             Line(text, "Windows", Safe(WindowsVersion) + (Environment.Is64BitOperatingSystem ? ", 64-bit" : ", 32-bit"));
             Line(text, ".NET Framework", Safe(FrameworkVersion));
@@ -733,7 +737,7 @@ namespace AOLauncher
         internal static string BuildIssueUrl(ProblemArea area, string summary, string report, out bool truncated)
         {
             string prefix = IssueUrl + "?template=bug_report.yml&title=" + Uri.EscapeDataString(Title(area, summary))
-                + "&version=" + Uri.EscapeDataString(AppUpdates.CurrentVersion.ToString(3)) + "&diagnostics=";
+                + "&version=" + Uri.EscapeDataString(AppUpdates.DisplayVersion) + "&diagnostics=";
             string body = report ?? "";
             truncated = false;
             string url = prefix + Uri.EscapeDataString(body);

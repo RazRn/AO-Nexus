@@ -1,0 +1,46 @@
+MOVEMENT SEPARATION INVESTIGATION - 2026-11-02
+
+The selected AOSP Manager.Sync receiver ignores movement while active/zoning,
+in another playfield, when the sender is not visible, or when the received
+position is farther than 2 * (1 + follower RunSpeed / 100). Accepted messages
+assign position/rotation and movement action. Increasing that limit is not
+part of this change.
+
+Nexus Health Monitor now samples positions, RunSpeed, playfield, visible
+players and the supported ManagerSync.ManagerSync public settings on the
+game thread every 0.5 seconds. It records the last outbound move timestamp
+and the plugin's last accepted sender identity. It does not install or replace
+IPC callbacks. Unsupported/absent plugins remain explicit.
+
+Control Panel compares followers with the most recently viewed client.
+Warnings mean a measured distance/channel/visibility condition, not proof
+that any particular IPC packet was lost. Independently sampled positions can
+differ in time, so the distance is diagnostic, not a delivery acknowledgement.
+Snapshots older than three seconds, mismatched identities and invalid
+coordinates cannot authorize regroup. The opt-in development recorder keeps
+the bounded snapshots alongside update gaps and minimized state.
+
+Recover/context menu offers Regroup with viewed character. Nexus confirms
+the requested follower/leader, checks process identity and queues a command.
+Nexus Shortcuts validates again on the game thread: same team and channel,
+visible player, alive, not attacking/casting/zoning, within 60 units and five
+vertical units, clear line of sight, no active formation/navigation. It uses
+the game's normal follow request. The queue acknowledgement does not mean
+follow succeeded; the in-game chat reports the validation result.
+
+Loading requires restarting Nexus and loading the updated Health Monitor and
+Nexus Shortcuts inside each game client. Existing loaded assemblies remain
+old until restarted. Do not reset plugin preferences or change sync limits.
+
+Automated validation: 49 unit tests, 18 probe/regroup fixture checks, 335
+Control Panel checks, 52 play-tools checks, 75 local mailbox checks and 12
+NPC transport checks passed. Final executable and both companion directories
+were scanned by enabled Defender with no threats found. Isolated --smoke passed.
+
+Live comparison remains pending: the user agreed to run the same short route
+with auto-minimization on, then off. Keep leader, route and speed buffs the
+same; begin with followers together and stay in the same playfield. Compare
+distances to each follower's cutoff and game-update gaps over both periods.
+Do not conclude that minimization caused separation without those results.
+
+The 38 production-plugin/real-IPC checks also passed, including movement JSON transport, frozen-loop recovery and retained exit reporting. Build staged with rollback backup; running clients unchanged.

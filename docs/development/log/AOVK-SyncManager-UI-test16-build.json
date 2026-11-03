@@ -1,0 +1,22 @@
+{
+  "test": 16,
+  "renderer_commit": "043babbb171bbdc7d57c7d848a1182db857da92e",
+  "repair_base": "6a371f29730172f8af6f445ef2ed1a0721fd1943",
+  "repair_local_patch": "ao-rebirth-nexus-ui-test16.patch",
+  "repair_patch_sha256": "AB8E44D9F1623CA8D62F8FCEFE63E1E1F864EC390BF6140FF267236DCB4CD2D5",
+  "payloads": {
+    "randy31-ui.dll": "BAF83111E172FA8BB833F2615B02D1162C0F6125CF6836421F22C714445825EE",
+    "version-rebirth-ui.dll": "3E3DBE6DB4B12F8E5A5BABC7F3079C18D644CE44344A58398EA46FB903222826"
+  },
+  "checks": {
+    "play_tools": 50,
+    "sync_ui": 38,
+    "graphics": 148,
+    "graphics_ui": 61,
+    "startup": "native and managed profile checks passed",
+    "native_overlay": "100%/150% rendering, checkbox input, focus, device recreation, HUD click-through, embedded Movement controls; screenshots inspected",
+    "exports": "797 original exports plus bridges 798/799 retained",
+    "live_game": "pending: classic AO controls, automatic team formation movement, zoning, spacing"
+  },
+  "launcher_sha256": "11C5B4A3C1FF3F61D8319A907C70F87FD9147F81FE10D344B0346ECE97FA6AC7"
+}

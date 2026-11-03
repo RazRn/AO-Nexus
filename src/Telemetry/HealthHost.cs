@@ -4,15 +4,34 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Web.Script.Serialization;
-using AOSharp.Core.IPC;
+using System.IO;
 
 namespace NexusTelemetry
 {
-    sealed class Endpoint : IPCChannelBase
+    sealed class Endpoint : IDisposable
     {
-        protected override int _localDynelId => -Process.GetCurrentProcess().Id;
-        internal Endpoint() : base(238) { }
-        internal void Pump() => Update();
+        readonly Dictionary<string, LocalHealthChannel> channels = new Dictionary<string, LocalHealthChannel>();
+        readonly int origin, epoch;
+        internal Action<HealthPing> Reply;
+        internal Endpoint(int origin, int epoch) { this.origin = origin; this.epoch = epoch; }
+        static string Key(int pid, long start) => pid + "-" + start;
+        internal void SetTargets(Target[] targets)
+        {
+            var keys = new HashSet<string>(targets.Select(t => Key(t.Pid, t.StartTicks)));
+            foreach (var key in channels.Keys.Where(key => !keys.Contains(key)).ToArray()) { channels[key].Dispose(); channels.Remove(key); }
+        }
+        internal void Broadcast(HealthPing ping)
+        {
+            string key = Key(ping.Target, ping.StartTicks);
+            LocalHealthChannel channel;
+            if (!channels.TryGetValue(key, out channel)) {
+                try { channel = new LocalHealthChannel(ping.Target, ping.StartTicks, false); channels.Add(key, channel); }
+                catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is WaitHandleCannotBeOpenedException) { return; }
+            }
+            channel.Send(ping);
+        }
+        internal void Pump() { foreach (var channel in channels.Values) foreach (var reply in channel.Receive(origin, epoch)) Reply?.Invoke(reply); }
+        public void Dispose() { foreach (var channel in channels.Values) channel.Dispose(); channels.Clear(); }
     }
     static class HealthHost
     {
@@ -28,10 +47,8 @@ namespace NexusTelemetry
                 finally { Volatile.Write(ref ended, true); } }) { IsBackground = true };
             input.Start();
             try {
-                IPCChannelBase.LoadMessages(typeof(HealthPing).Assembly);
-                var endpoint = new Endpoint();
-                endpoint.RegisterCallback(32002, (sender, message) => {
-                    var reply = (HealthPing)message;
+                using (var endpoint = new Endpoint(origin, epoch)) {
+                endpoint.Reply = reply => {
                     Pending request; PingResult result;
                     if (reply.Reply != 1 || reply.Origin != origin || reply.Epoch != epoch || !pending.TryGetValue(reply.Sequence, out request)
                         || request.Pid != reply.Target || request.Start != reply.StartTicks || !results.TryGetValue(reply.Target, out result)) return;
@@ -41,13 +58,14 @@ namespace NexusTelemetry
                     if (request.Expired) result.Late++;
                     result.Replies++; result.LastMs = ms; result.MaxMs = Math.Max(result.MaxMs, ms); result.LastReplyQpc = now;
                     pending.Remove(reply.Sequence);
-                });
+                };
                 long next = 0;
                 while (!Volatile.Read(ref ended)) {
                     string update = Interlocked.Exchange(ref command, null);
                     if (update != null) {
                         var targets = serializer.Deserialize<Target[]>(update) ?? new Target[0];
                         if (targets.Length > 128) throw new InvalidOperationException("Too many clients");
+                        endpoint.SetTargets(targets);
                         foreach (var old in results.Keys.Where(pid => !targets.Any(t => t.Pid == pid && t.StartTicks == results[pid].StartTicks)).ToArray()) results.Remove(old);
                         foreach (var target in targets) if (!results.ContainsKey(target.Pid)) results[target.Pid] = new PingResult { Pid = target.Pid, StartTicks = target.StartTicks };
                         foreach (var key in pending.Where(p => !results.ContainsKey(p.Value.Pid) || results[p.Value.Pid].StartTicks != p.Value.Start).Select(p => p.Key).ToArray()) pending.Remove(key);
@@ -73,6 +91,7 @@ namespace NexusTelemetry
                     Thread.Sleep(5);
                 }
                 return 0;
+                }
             } catch (Exception error) { Console.Error.WriteLine(error.GetType().Name); return 1; }
         }
     }

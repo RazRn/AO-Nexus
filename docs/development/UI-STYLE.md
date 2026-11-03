@@ -1,0 +1,23 @@
+# AO Nexus layout conventions
+
+- Use the existing dark theme and `NexusPanel` border for distinct sections.
+- Put dashboard section titles into the top border as fieldset-style legends. Place related controls together immediately below the legend, with consistent top edges and vertical text alignment. Avoid dedicated heading rows that consume content space.
+- Section legends use the shared UI font in bold, with uppercase captions in both languages. Keep preset, accounts and details headings identical in size and weight; normal controls retain sentence case.
+- Above a legend border, paint the surrounding container background; only the enclosed panel uses the raised surface color. Keep stacked Settings actions at a consistent width with 8 px gaps, 12 px after explanatory text, and a larger break before a new group. Empty feedback must not reserve a blank row.
+- Keep actions for a particular field beside that field: for example, preset Save new/Update/Edit/Delete stay next to the preset picker.
+- Inline dropdowns and buttons have equal visible heights and aligned top edges. Match the dropdown to the established button height, including DPI scaling; do not shrink the buttons. Vertically center the text in each control.
+- Use 12 px inset padding and consistent spacing between sections. Keep headings, controls and content aligned to the same inset edges.
+- Allow more rows only where content or the supported window size requires them. Check English and Danish text for overlap and clipping.
+- Keep preset selection and Update together in Team presets, without an explanatory status row. Enable Update only when the checked characters differ from the saved selection. Put names and editable shortcuts in the create/edit dialog, and apply them only on Save. Place account actions inside ACCOUNTS BY SERVER, above its list. Wrap the toolbar when needed rather than clipping actions or shrinking their button height.
+- Do not add hover tooltips. Put necessary information in Details, dialog labels or visible help text; suppress native tree and grid hints as well.
+- Use text links for lightweight view actions such as Expand all and Collapse all, inline with the section's other actions. Preserve keyboard focus, hover feedback and disabled states.
+- Fit short dialogs to their measured contents, bounded by the monitor work area. Recalculate when switching tabs. Keep scrolling for long documents, lists and screens too small to fit the form; keep Save/Cancel reachable.
+- Use hand cursors for clickable actions, tree hit targets and tabs. Keep text cursors for editable inputs. The entire log preview opens the log viewer, including keyboard Enter/Space access.
+
+Reference: [Microsoft Windows layout guidelines](https://learn.microsoft.com/en-us/windows/win32/uxguide/vis-layout), especially top alignment, text baselines and consistent control sizing. Nexus keeps its existing dark palette and button dimensions.
+
+- Use a dark terminal panel with a readable monospace font for logs. Keep search and detailed reading in a separate window.
+- News dates share the source-name row, right aligned. Measure wrapped headline height and leave a small consistent gap before the summary.
+- Group settings by purpose in dark tabs (General, Accounts, Sidebar, Updates); keep Save/Cancel outside the tab content. Move long privacy documentation into its own readable dialog. Preserve drafts until Save.
+- Optional news and health share sidebar tabs. Remove source selection from the dashboard when it is available in Settings. Health cards must distinguish a local connection check from a public report, include a text state as well as color, and label missing/stale data explicitly.
+- Game GUI uses three tabs: Layouts, Skins and Backups. Keep character-level choices separate from installation-level skin changes. Show independent component checkboxes, review the rollout scope and retain an independent target selection without changing the dashboard's team. Keep Cancel/Close outside the working tab and show operation feedback in the dialog.

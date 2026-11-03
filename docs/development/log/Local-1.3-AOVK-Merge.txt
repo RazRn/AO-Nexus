@@ -1,0 +1,184 @@
+﻿AO NEXUS 1.3.0 - LOKAL AO-VK TEST
+Version: 1.3.0-local-aovk.16
+30. oktober 2026
+
+START
+Test 16: Formation er nu direkte under Movement i /syncmanager, baade i
+klassisk AOSharp og moderne AO-VK. Vaelg formation og Spacing (metres), og
+markeer Formation paa den karakter, der skal lede. Egne lokale holdkammerater
+paa samme SyncManager-kanal faar automatisk pladser. Ingen ID'er eller
+kommandoer er noedvendige. Apply formation sender aendrede valg til holdet.
+Team Window / Holdvindue ligger oeverst i Nexus, ved siden af Plugins.
+Luk spillet, start denne test, og genstart klienterne med SyncManager og
+Nexus Shortcuts. For moderne UI: Settings > Graphics, vaelg spilmappe, og Gem
+med AO-VK + Modern plugin windows aktiveret. Det opdaterer test 11-15-parret.
+Se docs/development/log/Formations-And-Timers.txt. Isolerede tests bestaaet; spiltest udestaar.
+
+Test 15: Lokale timere og formationer med afstandsvalg.
+Luk spilklienterne. Start denne Nexus, vælg spillets mappe under Settings >
+Graphics, behold Use AO-VK + Modern plugin windows, og tryk Save. Kendte
+renderer/repair-par fra test 11-14 opdateres samlet. Start spillet igen med
+Nexus Shortcuts og SyncManager. Åbn /nexusformation eller /nexustimers.
+Nexus har også en Timers-knap. Timere gælder kun din Windows-bruger, opdelt
+pr. serverens Prefs-mappe, og kræver ingen bot eller ekstern server.
+De fortsætter efter logout. Varsler kræver Nexus åbent; ved genåbning er
+sluttidspunktet bevaret. In-game HUD kræver en aktiv spilklient.
+Formationer og højst to overlappende Rebirth AO-VK-login er eksperimentelle;
+bevægelse i terræn og faktisk loginhastighed kræver spiltest.
+Se docs/development/log/Formations-And-Timers.txt for brug og begrænsninger.
+
+Test 14: Ny knap "Team Window" / "Holdvindue" ved siden af Plugins åbner et
+separat vindue med live-visninger, responsstatus, health/nano, angrebsmål og
+nylige nanoforsøg. Kræver klientovervågning; health/nano kræver den nye Health
+Monitor i klienten. Genstart spillet gennem denne test. Minimerede klienters
+visninger pauses. Cast/recharge-progress er ikke tilgængelig i denne version.
+
+SyncManager: Test 13 var ikke tilstrækkelig på den aktive klient. Denne test
+bevarer panelet ved genskabelse af grafik-enheden, håndterer fokus til AO's
+undervinduer og omregner musens koordinater til rendererens størrelse.
+Luk spillet. Start denne Nexus, vælg spillets mappe i Settings > Graphics og
+tryk Save med Modern plugin windows aktiveret. Det opdaterer det kendte
+renderer/repair-par fra test 11/12/13. Start spillet igen. Prøv /syncmanager,
+klik på den anden skærm, vend tilbage og kontrollér mus, klik og scrolling.
+Isolerede tests er bestået; rettelsen skal stadig bekræftes i det rigtige spil.
+
+Test 13: SyncManager-vinduet tegner nu en synlig musemarkør oven på sine
+kontroller og bliver åbent, når spillet mister fokus. Tastatur/mus frigives,
+mens du bruger andre programmer, og nulstilles ved tilbagevenden.
+Luk spillet. Åbn Grafik, vælg den mappe hvor det moderne vindue er slået til,
+og tryk Gem. Nexus opdaterer det kendte test 11/12-renderer/repair-par samlet.
+Grafikvalg og originalbackup bevares. Genstart spillet og prøv /syncmanager.
+
+Test 12: Automatisk AOSharp-indlæsning starter ved et frisk klarsignal fra
+spiltråden i stedet for en fast pause på otte sekunder. Signalet kræver den
+rigtige karakter, en spilmotor, ingen zoning og afsluttet fast-startup, hvis
+den er aktiv. Nexus spørger ved loginbekræftelsen og derefter hvert sekund.
+En klient, der ikke svarer eller endnu ikke er klar, venter fortsat. Ældre
+klienter uden signalet beholder den tidligere otte-sekunders ventetid.
+Loggen måler klargøring samt AOSharp-tilkobling/afsendelse separat; dette er
+ikke en bekræftelse på, at alle plugins har afsluttet deres opstart.
+Genstart spillet gennem test 12 for at få det nye klarsignal. Ingen ændring
+af AO-VK-renderer, grafikvalg eller Health Monitors målekrav i denne test.
+
+Test 11: Valgfrit moderne SyncManager-vindue gennem AO-VK. Luk spilklienten,
+vælg Indstillinger > Grafik og den rigtige spilmappe, og slå Brug AO-VK samt
+Modern plugin windows / Moderne pluginvinduer til. Gem og start klienten
+gennem Nexus med Z SyncManager og Nexus Shortcuts. Åbn med /syncmanager.
+Use classic UI eller /nexusui classic vælger det gamle vindue pr. karakter;
+/nexusui modern vælger det nye igen. Andre pluginvinduer er uændrede.
+Fjern kun det nye tilvalg for at bruge den hidtidige AO-VK-renderer igen.
+Kontroller i spil: ændringer/gem, genstart, zoning, F10, frame generation og
+klassisk fallback. Automatiske fixtures er bestået; spiltest udestår.
+Se docs/development/log/AOVK-SyncManager-UI.txt for detaljer og byggekilder.
+
+Test 10: Manglende valgfrie AOSharp-indstillinger ved første start bliver ikke
+fejlagtigt meldt som pluginfejl. Nexus Shortcuts genkender Settings.Loads
+håndterede opslag. Andre exceptions vises som observerede og kan være
+håndteret af pluginet; en bekræftet opstartsfejl vises fortsat særskilt.
+Genstart spilklienten gennem den nye Nexus for at få det nye plugin.
+
+Test 9: Aktivitetsloggen har nu Ombryd linjer / Wrap lines ved søgefeltet.
+Til ombryder lange linjer; fra giver vandret rulning. Valget huskes i Nexus.
+Søgning, logfarver og Følg nye linjer fungerer i begge tilstande.
+
+Test 8: Under login-knappen vises AO-VK til/fra for de valgte karakterers
+spilmapper. Forskellige valg vises som blandet; ukendte filer kræver tjek.
+Klik på statuslinjen for at åbne Grafik med en valgt spilmappe. Brug AO-VK
+og Gem slår til; fjern markeringen og Gem for originalgrafik. Ved flere
+spilmapper vælges hver mappe i Grafik. Valget gælder alle konti i mappen.
+Kontrollen læser i baggrunden og genopfriskes, når Nexus får fokus igen.
+Ingen rendererændring sker ved blot at vælge karakterer eller åbne Grafik.
+
+Test 7: Den indbyggede Health Monitor bruger nu lokal delt hukommelse i stedet
+for UDP-multicast. Dens hjælpeproces behøver ingen netværksport eller firewall-
+tilladelse. Den starter stadig automatisk og usynligt fra Nexus. Genstart
+Nexus og spilklienterne én gang, så det nye måleplugin bliver indlæst.
+Gamle måleplugins giver besked om opdatering, ikke en falsk melding om hæng.
+Login-knappen holder nu også sin bredde under og efter login. Skiftet mellem
+Stop login og automatisk pluginindlæsning udvider ikke længere bundpanelet.
+
+Test 6: Plugins > Test plugins starter med grundpakkens kandidater. Kun en
+handler, der matcher karakterens profession, og Z.SyncManager indgår som
+testmål. Ét mål indlæses ad gangen med Nexus Shortcuts til observation.
+Specialiserede plugins kræver tilvalg. GraceBot9000/9001, Neko, TemplateBuddy
+og ukendte/ændrede filer udelades. Testen stopper ved observerede opstartsfejl.
+Resultater knyttes til DLL-hash, profession og server. Opstart er ikke bevis
+for korrekt gameplay eller stabilitet. De 16 grundpakkefiler og deres direkte
+pakkede referencer har bestået filkontrol; faktisk spiltest udestår.
+Brug en testkarakter uden for kamp. Genstart ved ubekræftet unload-oprydning.
+Se docs/development/log/plugin-inventory/index.html og core-file-checks.json i kildekoden.
+
+Test 5: Den indbyggede pluginpakke klargøres i baggrunden, når hovedvinduet er
+vist. Åbnes Plugins med det samme, vises en indlæsningsstatus. Andre sider kan
+bruges imens, og en forsinket indlæsning overtager ikke en anden side.
+Filkontrol og verificering af pluginpakken er bevaret.
+
+Test 4: Menupunktet hedder nu Scripts / Macros (dansk: Scripts / Makroer).
+
+Test 3: AO-VK installeres nu automatisk fra Grafik på understøttede spilmapper.
+Deaktivering gendanner originalfilerne og bevarer grafikvalgene. Pluginsidens
+stylede scrollbars og plugin-sæt-dropdowns fra test 2 er også med.
+
+Luk den gamle Nexus og spilklienterne inden første test med denne version.
+Kør Start-Merged-Test.cmd i AO-Nexus-Local-1.3.0.
+Den starter merged-test\AONexus-Test.exe. En tidligere AONexus.exe i den mappe
+er en foreløbig build; brug startfilen fremover. Den oprindelige 1.3.0-pakke og dens
+Join-AONexus.cmd er bevaret.
+
+Denne version bruger den normale Nexus-profil i %LOCALAPPDATA%\AONexus,
+så dine gemte konti og hold kan bruges fremover. Den isolerede profil fra den
+tidligere AO-VK-launcher indlæses ikke automatisk. Kør kun én Nexus-version
+ad gangen, når du redigerer konti, hold og plugin-sæt.
+
+AO-VK
+Vælg kontoens spilmappe under Indstillinger > Grafik. Brug eventuelt Vælg en
+anden spilmappe. Markér Brug AO-VK og Gem. Første aktivering installerer og
+sikkerhedskopierer automatisk; mappen behøver ikke være klargjort på forhånd.
+Fjern markeringen og Gem for at gendanne de præcise originalfiler.
+Luk spilklienter fra den mappe inden Gem. Start spillet gennem Nexus.
+Grafikvalget ændrer ikke kontiens spilmappe og gælder alle konti i samme mappe.
+
+De kendte klassiske klienter i AORebirth-Live, Project Rubi-ka og Steam-udgaven
+af Anarchy Online understøttes. Den tidligere AORebirth-AOVK-Test virker fortsat.
+AORebirth-Local har en anden version.dll og blokeres, indtil en tilsvarende
+kompatibilitetspatch findes. Ukendte klientversioner og New Engine blokeres også.
+
+Lys, skygger, HDR, bump maps, anisotropisk filtrering og ydelsesvisning er med.
+Frame generation/TAA og sky/weather/atmosphere er udeladt efter de observerede
+hæng og billedfejl. Motion blur og DoF holdes fra som aftalt. Græs, vand og
+andre ubekræftede effekter er endnu ikke valgbare. AOSharp-vinduer er bevaret.
+
+Dette er automatisk grafikinstallation pr. understøttet spilmappe. Det konverterer
+ikke én serverklient til en anden. Kontiers server- og mappevalg bruges fortsat.
+En afbrudt ændring blokerer login og tilbyder gendannelse i Grafik. Se
+merged-source\docs\development\log\AOVK-Managed-Install.txt for kompatibilitet, backup og recovery.
+
+KODE OG REVIEW
+merged-source er den lokale Git-kilde på codex/local-1.3-aovk.
+Grundlag: nyeste 1.3.0-bundle, commit 8247a497268fb9f5d9d32046fd4515f2eaaa4f80.
+AO-VK-import: ce42cbb på codex/aovk-integration-import.
+Ingen remote push eller udgivelse er udført.
+
+Pluginvalg ved gentaget login, oprydning af loginvinduer, plugin-afkobling,
+automatisk professionstest, gendannelse efter plugin-test og timeout i
+Nexus Shortcuts er rettet. Sidepanelets oprydning og pladsen til scriptlisten
+er også rettet. Se merged-source\docs\development\log\Local-1.3-Review.txt.
+
+Den indlejrede lokale pakke har 113 plugins og 715 filer. Z-plugins er bygget
+fra kilde sammen med launcher, backend, pluginvært og Nexus Shortcuts.
+Kilde-revisioner ligger i merged-source\runtime\Local13Pack\SOURCE-REVISIONS.json.
+Licenser og credits følger merged-test. Denne pakke er til lokal brug.
+
+NÆSTE SPILTEST
+Test login, holdets pluginvalg, F10, zone-skift og AO-VK til/fra efter at have
+lukket klienten. Kontrollér også Test plugins og gendannelse af eget sæt.
+Automatiske tests bruger midlertidige profiler og isolerede klientkopier; de
+erstatter ikke afprøvning af de 113 plugins og langvarig stabilitet i spillet.
+Gameplay med denne integration på officiel AO og PRK mangler stadig brugertest.
+
+GENBYG
+Fra merged-source: .\build\Build-LocalMerged.ps1
+Det bruger de klargjorte lokale afhængigheder i runtime\Local13Pack og backend
+i runtime\NexusEngine samt de verificerede AO-VK-filer i runtime\AOVKPackage.
+Tilføj -RebuildBackend ved ændring af backend-koden.
+Testlogs ligger i merged-source\logs. SHA256SUMS.txt identificerer test-EXE'en.

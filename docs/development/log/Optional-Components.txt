@@ -1,0 +1,95 @@
+AO NEXUS OPTIONAL COMPONENTS - LOCAL PREVIEW, 31 OCTOBER 2026
+
+Distribution decision
+AO# and the supplied plugin bundles have no verified redistribution
+permission. The earlier MIT claim was withdrawn. The default Nexus executable
+does not embed or download AO#, its plugins or the Rebirth compatibility
+patch. Monitoring embeds only NexusHealthHost, NexusHealthPlugin, the Nexus
+telemetry protocol and its README. AO# references come from the user's
+installation when the monitoring plugin runs.
+
+Using the preview
+Build: build/Build.ps1. Output: dist/AONexus.exe.
+Plugins > Enable AO# opens an existing-folder picker when needed. Choose
+a pack containing AOSharp/ and Plugins/. Save changes, then separately choose
+automatic loading. Disable preserves plugin sets, settings and files; unload
+running plugins first. Existing configurations keep their choices.
+
+Graphics > Enable AO-VK > Save downloads the renderer on demand, verifies the
+pinned archive and each extracted file, then applies the existing transactional
+install with backups. Cancellation, missing releases and failed verification
+leave the game configuration unchanged. A verified cache works offline.
+The renderer package contains randy31.dll, randy31-ui.dll and four license
+notices. Rebirth additionally requires an exact matching, user-supplied
+compatibility patch. No patch is obtained from this public download.
+
+The package is prepared under dist/components/components-1.3.0-preview.1.
+Nothing has been uploaded. GitHub downloads cannot succeed until the matching
+AO-Nexus-aovk.zip is published at the pinned repository/tag. Do not mark a
+component release as the latest application release. Changed packages require
+a new tag and a rebuilt launcher descriptor. AO# has no download descriptor.
+
+Plugin organization and feedback
+Z is the recommended starting suite when present; AOSP is the fallback.
+Alternatives remain selectable and existing sets are not migrated automatically.
+Specialist plugins are grouped separately. Mail forwarding and accept-any-invite
+behaviour are called out in the plugin details. These defaults are curation,
+not a claim that all 113 plugins have passed gameplay testing.
+
+An unmodified runtime remains supported, but cannot provide the new definitive
+startup acknowledgement. The UI distinguishes "Load requested; startup
+unconfirmed" from "Startup confirmed" and startup failures. Initialization
+success means Init returned; it does not prove gameplay works.
+
+Local-only AO# changes
+build/AOSharp-Nexus-Local.patch is a local source patch against upstream commit
+d55eb12b5a763e5ed65851e69c50343de6c6d73c. It includes the existing Pet type fix,
+startup reports, command/combat-handler conflict reports and authenticated IPC.
+Do not publish this source patch or its binaries without establishing permission.
+
+For a clean local source checkout with its original dependencies restored:
+  git apply --check <absolute-path-to>/build/AOSharp-Nexus-Local.patch
+  git apply <absolute-path-to>/build/AOSharp-Nexus-Local.patch
+The current sibling AO# checkout already contains these changes; do not
+apply the patch to it again. Its unrelated existing edits were preserved.
+Build a separate pack without changing the original installation:
+  ./build/Build-AOSharpNexusLocal.ps1 -AOSharpSource <local-source-folder>
+Default output: dist/local-only/AOSharp-Nexus. Select that folder in Plugins
+to test the new runtime. Close existing game clients before switching runtimes.
+The build refuses to overwrite an existing output folder.
+
+Binary plugin APIs remain .NET Framework compatible. Load requests append an
+optional request ID; old messages still work. Reports match PID, process start
+time and request ID. Duplicate commands and competing combat handlers are
+reported without changing the original first-command/last-handler behaviour.
+
+IPC uses HMAC-SHA256, short expiry, sequence replay windows and a random key
+shared through a current-user ACL-protected local memory map. The key lasts
+only while participants hold it. All communicating clients must use this
+runtime under the same Windows user and logon session. Unmodified AO#,
+other Windows sessions and other PCs cannot join. No unsigned fallback exists.
+This deliberately changes wire compatibility while retaining plugin DLL APIs.
+It authenticates traffic; it does not encrypt it. The original LAN multicast
+transport remains. This is not a sandbox against another process/plugin running
+as the same Windows user, and does not fix risky plugin choices such as sending
+credits to a configured recipient or accepting all invitations.
+
+Validation and remaining work
+Passed: 1,201 authenticated-envelope/key-lifecycle checks, 10 runtime diagnostics
+checks using plugins compiled against the old runtime, 26 optional installer/
+report/curation checks, 13 existing exception-attribution checks, 75 local
+monitoring-channel checks, 45 plugin layout/edit checks, and eight synthetic
+graphics transaction checks. Also passed: 24 production monitoring transport
+checks, plus offline install verification of the actual renderer archive and
+reuse of an existing verified renderer. The default executable passes the
+embedded monitoring allowlist check. The source patch passes reverse-apply verification.
+Earlier plugin loading, host lifecycle and server/selection checks also passed.
+
+The full Rebirth graphics fixture is blocked by Windows security when reading
+the local compatibility patch; protection was not disabled. The existing
+PluginStartupFlow fixture rejects stale pinned plugin hashes in the local pack;
+its production allowlist was not weakened to force a pass.
+No game was launched or injected for these checks. Live Doctor + SyncManager +
+one third-party-plugin gameplay remains necessary, including actual multicast
+dispatch and multiple clients. Native settings adapters and broader screen
+redesigns are future work, not included in this preview.

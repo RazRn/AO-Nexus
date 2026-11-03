@@ -1,0 +1,11 @@
+Team leader badge — 2026-11-02
+Observed: all six active Health Monitor snapshots reported IsTeamLeader=false; all six read-only TEAMVIEW replies reported Leader=0 and Members=[] while the game Team window displayed the six-person team with Overwhelming first.
+Change: badge telemetry reads the existing TeamViewModule_c GUI exports on the game update thread. If no Team window exists, it uses the original engine query. No preset-order inference, no automation or invitations changed. Exceptions still clear the badge to unknown; zoning and stale-snapshot gates remain unchanged.
+Validation: production monitor and launcher compile; 6 source-selection checks pass; 38 production monitoring/IPC regression checks pass. Defender custom command returned success but explicitly SKIPPED the executable; this is NOT a new clean-scan result.
+Candidate: src/Launcher/bin/Release/AONexus.exe includes the newly built monitoring payload from logs/TeamLeaderFix/Monitoring.
+Deployment pending: running Nexus and six clients are unchanged. Requested permission to restart Nexus and relog Overwhelming for in-game verification. Live GUI export results and persistence across zoning are not yet verified.
+Installed and tested with user approval: Nexus dist hash 50742943E7DC80E8FF67E26732BAFD8345A177AEA23C35E3FCE41D8ADE88C9F3; previous executable backed up in dist/Previous/AONexus.before-team-leader-20261102.exe.
+Only Overwhelming relogged: new PID 34108, start 639292318923800560. Other five PIDs unchanged. New monitor SHA256 44E1C18848F0287A6BA85510DD35150EC7650881C10FF5F3810C860AE78FF758 matches extracted payload.
+Sexologist inherited leadership; automatic return was not armed because pre-relog engine team views were empty. Used the existing bounded TEAMRESTORE protocol for those two clients to invite Overwhelming back and return leadership. Both clients now report leader 173 with all six members; updated Overwhelming telemetry IsTeamLeader=true, Sexologist=false.
+This confirms a working badge after rejoining/transfer, not yet persistence across zoning; underlying engine team-state disagreement remains a separate automation concern.
+Visual verification completed: Control Panel screenshot and fresh accessibility state both show Overwhelming with LEADER badge and Sexologist without it. All six are responding. Persistence after another zone is still unverified.

@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <AssemblyName>NexusEngine</AssemblyName>
     <RootNamespace>NexusEngine</RootNamespace>
     <Product>AO Nexus Launch Engine</Product>
@@ -10,9 +11,8 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <Compile Include="..\..\Common\Texts.cs" Link="Localization\Texts.cs" />
-    <Compile Include="..\..\Common\ServerAccountPolicy.cs" Link="ServerAccountPolicy.cs" />
-    <PackageReference Include="Reloaded.Injector" Version="1.2.5" />
+    <Compile Include="EntryPoint.cs" />
+    <ProjectReference Include="../../Core/Launch/Nexus.Launch.Core.csproj" />
   </ItemGroup>
 
 

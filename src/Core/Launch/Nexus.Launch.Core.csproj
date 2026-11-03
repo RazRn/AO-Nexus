@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>Nexus.Launch.Core</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Backend/NexusEngine/*.cs" Exclude="../../Backend/NexusEngine/EntryPoint.cs" />
+    <Compile Include="../../Common/Texts.cs" />
+    <Compile Include="../../Common/ServerAccountPolicy.cs" />
+    <EmbeddedResource Include="../../Common/Resources/Strings.en.xml" LogicalName="AOLauncher.Strings.en.xml" WithCulture="false" />
+    <EmbeddedResource Include="../../Common/Resources/Strings.da.xml" LogicalName="AOLauncher.Strings.da.xml" WithCulture="false" />
+    <PackageReference Include="Reloaded.Injector" Version="1.2.5" />
+  </ItemGroup>
+</Project>

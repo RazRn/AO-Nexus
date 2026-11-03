@@ -28,6 +28,7 @@ internal static class EmbeddedBackendTests
 
     private static int Main(string[] args)
     {
+        AOLauncher.Localization.Texts.SetLanguage("en");
         try
         {
             if (args.Length == 4 && args[0] == "--extract")

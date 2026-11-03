@@ -48,6 +48,22 @@ try {
     $calls = $script:promptCalls; $script:accept = $false
     Assert (Call $main 'ConfirmGameAction' @($true,'Synthetic team logout')) 'A remembered logout skips its prompt'
     Assert ($calls -eq $script:promptCalls) 'Skipped logout must not invoke the prompt'
+    Assert (!(Call $main 'ConfirmTeamWindowLogout' @('Log out Fixture?', $null))) 'Team Window logout still asks and can cancel when preset confirmations are disabled'
+    Assert ($script:promptCalls -eq $calls+1 -and $script:lastSummary -eq 'Log out Fixture?') 'Team Window confirmation receives exactly the selected target summary'
+    $script:accept=$true
+    Assert (Call $main 'ConfirmTeamWindowLogout' @('Log out these 6 characters?', $null)) 'Explicit Team Window confirmation allows logout'
+    Assert ($settings.SkipTeamLogoutConfirmation) 'Team Window prompt leaves preset confirmation preferences unchanged'
+    $script:accept=$false
+    Assert (!(Call $main 'ConfirmTeamWindowRelog' @('Relog Fixture?', $null))) 'Relog always confirms even when preset confirmations are disabled'
+    $script:accept=$true
+    Assert (Call $main 'ConfirmTeamWindowRelog' @('Relog Fixture?', $null)) 'Explicit confirmation allows the exact relog request'
+    $script:accept=$false
+    Assert (!(Call $main 'ConfirmTeamWindowRecovery' @('Fixture',$true,$null))) 'Force restart can be cancelled regardless of saved confirmation preferences'
+    Assert ($script:lastSummary.Contains('Fixture') -and $script:lastSummary.Contains('Unsaved') -and $script:lastSummary.Contains('original process has exited')) 'Force restart identifies the character and explains loss and exit requirements'
+    $script:accept=$true
+    Assert (Call $main 'ConfirmTeamWindowRecovery' @('Fixture',$false,$null)) 'Force close requires its own explicit confirmation'
+    Assert ($script:lastSummary.Contains('Force close') -and !$script:lastSummary.Contains('back in')) 'Force close does not promise a restart'
+    $script:accept=$false
     $copy = $serializer.Deserialize($serializer.Serialize($settings), $settings.GetType())
     Assert ($copy.SkipLoginConfirmation -and $copy.SkipTeamLogoutConfirmation) 'Both choices survive profile serialization'
     $settings.SkipLoginConfirmation = $false
@@ -63,12 +79,34 @@ $preview = Join-Path $PSScriptRoot '../logs/game-confirmations'
 foreach ($language in @('en','da')) {
     $assembly.GetType('AOLauncher.Localization.Texts').GetMethod('SetLanguage', $statics).Invoke($null, @($language)) | Out-Null
     foreach ($scale in @(1.0,1.5)) {
-        foreach ($kind in @('LaunchConfirmationDialog','LogoutConfirmationDialog')) {
+        foreach ($kind in @('LaunchConfirmationDialog','LogoutConfirmationDialog','TeamWindowLogoutDialog','TeamWindowRelogDialog')) {
             $summary = if ($kind -eq 'LaunchConfirmationDialog') { "Log in 2 accounts on 1 login server?`r`n`r`n6 characters selected." } else { "Send /quit to 6 clients from team 'Evening team'?`r`n`r`nDoctor`r`nEnforcer`r`nSoldier`r`nKeeper`r`nFixer`r`nTrader`r`n`r`nThe game handles its normal logout countdown." }
-            $dialog = [Activator]::CreateInstance($assembly.GetType('AOLauncher.' + $kind), [object[]]@($summary))
+            if ($kind -eq 'TeamWindowLogoutDialog') { $summary = "Log out these 6 characters?`r`n`r`nCalm, Fatale, Geek, Overwhelming, Sexologist, Wazoo" }
+            if ($kind -eq 'TeamWindowRelogDialog') {
+                $summary = "Relog these 6 characters?`r`n`r`nCalm, Fatale, Geek, Overwhelming, Sexologist, Wazoo"
+                $dialog = [Activator]::CreateInstance($assembly.GetType('AOLauncher.TeamWindowLogoutDialog'), [object[]]@($summary,$true))
+            } else { $dialog = [Activator]::CreateInstance($assembly.GetType('AOLauncher.' + $kind), [object[]]@($summary)) }
             try {
                 if ($scale -gt 1) { $dialog.Font = [Drawing.Font]::new($dialog.Font.FontFamily,$dialog.Font.Size*$scale); $dialog.Scale([Drawing.SizeF]::new($scale,$scale)) }
                 Show-Fixture $dialog
+                if ($kind -eq 'TeamWindowLogoutDialog' -or $kind -eq 'TeamWindowRelogDialog') {
+                    Assert ($dialog.Controls.Find('dontShowAgain',$true).Count -eq 0) 'Team Window logout always confirms, without a remember checkbox'
+                    Assert ([object]::ReferenceEquals($dialog.AcceptButton,$dialog.CancelButton)) 'Team Window Enter and Escape default to Cancel'
+                    $label=$dialog.Controls.Find('logoutSummary',$true)[0]
+                    Assert ($label.Text -eq $summary -and $label.Parent.ClientRectangle.Contains($label.Bounds)) 'Compact logout summary is visible and names the selected characters'
+                    if ($kind -eq 'TeamWindowRelogDialog') {
+                        $note=$dialog.Controls.Find('logoutCountdown',$true)[0]
+                        Assert ($note.Parent.ClientRectangle.Contains($note.Bounds)) 'Relog explanation fits at normal and enlarged text size'
+                        Assert ($dialog.Text -eq $(if ($language -eq 'da') {'Bekræft genlogin'} else {'Confirm relog'})) 'Relog has its own localized title'
+                    }
+                    if ($scale -eq 1) {
+                        $bitmap=[Drawing.Bitmap]::new($dialog.Width,$dialog.Height)
+                        try {$dialog.DrawToBitmap($bitmap,[Drawing.Rectangle]::new(0,0,$dialog.Width,$dialog.Height));$bitmap.Save((Join-Path $preview "$kind-$language.png"),[Drawing.Imaging.ImageFormat]::Png)} finally {$bitmap.Dispose()}
+                    }
+                    $dialog.CancelButton.PerformClick();[Windows.Forms.Application]::DoEvents()
+                    Assert ($dialog.DialogResult -eq 'Cancel') 'Cancel dismisses the compact logout dialog'
+                    continue
+                }
                 $remember = $dialog.Controls.Find('dontShowAgain',$true)[0]
                 Assert (!$remember.Checked -and $remember.Visible) 'Remember is visible and unchecked on every new prompt'
                 Assert ($remember.Parent.ClientRectangle.Contains($remember.Bounds)) "$kind $language $scale checkbox fits its viewport"

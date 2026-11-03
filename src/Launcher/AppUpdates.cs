@@ -29,6 +29,12 @@ namespace AOLauncher
         internal const long MaxPackageBytes = 100 * 1024 * 1024;
         internal const long MaxExecutableBytes = 150 * 1024 * 1024;
         internal static Version CurrentVersion => typeof(AppUpdates).Assembly.GetName().Version;
+        internal static string InformationalVersion => typeof(AppUpdates).Assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? CurrentVersion.ToString(3);
+        internal static bool IsPrerelease => InformationalVersion.Split('+')[0].Contains("-");
+        internal static string DisplayVersion => InformationalVersion.Replace("-beta.", " Beta ");
+        // A stable release of the same numeric version supersedes a Beta build.
+        internal static bool IsNewer(Version version) => version > CurrentVersion || (version == CurrentVersion && IsPrerelease);
         internal static string FormatReleaseNotes(string markdown)
         {
             string text = (markdown ?? "").Replace("\r\n", "\n").Replace('\r', '\n');
@@ -104,7 +110,7 @@ namespace AOLauncher
 
         internal static async Task<string> StageAsync(UpdateRelease release, string target, CancellationToken cancellation, IProgress<int> progress)
         {
-            if (release.Version <= CurrentVersion) throw new InvalidDataException("Updates must be newer than the installed version.");
+            if (!IsNewer(release.Version)) throw new InvalidDataException("Updates must be newer than the installed version.");
             // Fail before downloading if this installation requires elevation. Never request administrator access.
             string probe = Path.Combine(Path.GetDirectoryName(target), ".nexus-write-" + Guid.NewGuid().ToString("N"));
             using (File.Create(probe)) { }

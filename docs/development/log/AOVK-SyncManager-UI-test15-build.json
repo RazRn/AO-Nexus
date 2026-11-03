@@ -1,0 +1,25 @@
+{
+  "test": 15,
+  "renderer_commit": "3e2de9bcd6a74b4a89b2f2b905e4a1f92ee80876",
+  "repair_base": "6a371f29730172f8af6f445ef2ed1a0721fd1943",
+  "repair_local_patch": "ao-rebirth-nexus-ui-test15.patch",
+  "repair_patch_sha256": "AD2129DC1FD53455BB875239DE4FC01A020EEFB2BC0DA4F88358A9C8426E1A92",
+  "payloads": {
+    "randy31-ui.dll": "430BF85A8B23049C63A4FF0CD152FCF134860AA3D080967BDAF2EF3BB86B8A61",
+    "version-rebirth-ui.dll": "37587FD0315268ABD592C0971F2E8BB8F235EB0781226DCEC95B75E7E6D23132"
+  },
+  "checks": {
+    "play_tools": 36,
+    "sync_ui": 38,
+    "account_limits": 114,
+    "team_and_timer_windows": 28,
+    "graphics": 135,
+    "graphics_ui": 61,
+    "shortcuts_exceptions": 13,
+    "startup": "native and managed profile tests passed",
+    "native_overlay": "100% and 150%; focus, input, ABI, click-through HUD, teardown/recreation",
+    "exports": "797 original preserved; bridges 798/799",
+    "live_game": "pending: formation movement, death observations, mouse/focus, login timing"
+  },
+  "launcher_sha256": "4D07D06E982627A2312F716384A5EA741976B3EE546ADD60556E4464EB101C63"
+}

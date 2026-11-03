@@ -49,8 +49,13 @@ namespace AOLauncher
                 AppendLog(separator >= 0 ? value.Substring(separator + 1).Trim() : value);
             }
         }
-        private readonly TextBox log = new TextBox();
+        // The footer log is a short coloured preview; LogViewer shows the full history.
+        private readonly RichTextBox log = new RichTextBox { DetectUrls = false, ScrollBars = RichTextBoxScrollBars.None, WordWrap = true };
+        private string logPreview = "";
         private NexusHero header;
+        private FlowLayoutPanel headerFlow;
+        private LinkLabel detailPluginLink;
+        private readonly ToolTip loginTips = new ToolTip();
         private LaunchRequest progressRequest;
         private readonly HashSet<CharacterConfig> completedLogins = new HashSet<CharacterConfig>();
         private int activityLogBytes;
@@ -153,13 +158,14 @@ namespace AOLauncher
                 // Configure before the redactor, so the anonymisation key is stored with the journal.
                 DiagnosticJournal.Configure(settings.KeepDiagnostics);
                 DiagnosticRedactor.Update(settings);
+                DevelopmentRecorder.Start();
                 CrashReporter.SettingsProvider = () => settings;
                 ServerNews.FailureObserved = message => DiagnosticJournal.Record("news", message);
-                DiagnosticJournal.Record("session", "AO Nexus " + AppUpdates.CurrentVersion.ToString(3) + " started"
+                DiagnosticJournal.Record("session", "AO Nexus " + AppUpdates.DisplayVersion + " started"
                     + (startupError != null ? "; settings could not be read: " + startupError : "") + Environment.NewLine + DiagnosticSnapshot.Build(settings, false));
             }
             if (startupError != null) startupError = F("Could not read settings: {0}\r\n\r\nThe existing file is preserved. Changes will not be saved in this session.\r\n{1}", startupError, startupSettingsPath);
-            Text = smoke ? T("AO Nexus — preview") : "AO Nexus";
+            Text = "AO Nexus " + AppUpdates.DisplayVersion + (smoke ? " — preview" : "");
             AppArtwork.ApplyIcon(this);
             Font = new Font("Segoe UI", 10F);
             ForeColor = Theme.Navy;
@@ -168,11 +174,17 @@ namespace AOLauncher
             MinimumSize = new Size(1100, 850);
             StartPosition = FormStartPosition.CenterScreen;
             AutoScaleMode = AutoScaleMode.Dpi;
+            StartupSplash.Status(AOLauncher.Localization.Texts.Get("Text_Building_the_window_A560D71DB98C"));
             BuildLayout();
+            StartupSplash.Status(AOLauncher.Localization.Texts.Get("Text_Loading_accounts_and_characters_CED7C4B50064"));
             RefreshPresetPicker();
             RefreshTree();
             InitializeTray();
+            InitializeBossTimers();
             InitializeClientStatus();
+            StartupSplash.Status(AOLauncher.Localization.Texts.Get("Text_Preparing_plugins_and_server_rules_9E00EEEAFC46"));
+            InitializePlugins();
+            StartupSplash.Status(AOLauncher.Localization.Texts.Get("Text_Almost_ready_29446B576C33"));
             Shown += (sender, e) =>
             {
                 if (!smoke && !storageBlocked && !settings.HasCompletedSetup) RunSetup();
@@ -204,14 +216,32 @@ namespace AOLauncher
                     SaveSettings();
                 }
                 if (!smoke && !storageBlocked && settings.HasCompletedSetup && settings.CheckForUpdatesOnStartup) CheckStartupUpdate();
+                if (!smoke && !storageBlocked && settings.HasCompletedSetup) CheckServerRulesAtStartup();
                 if (!smoke && CrashReporter.HasPending) BeginInvoke((Action)OfferCrashReport);
             };
             FormClosing += OnFormClosing;
             if (!smoke && !storageBlocked)
             {
-                backgroundClients = new BackgroundClients(() => settings);
+                backgroundClients = new BackgroundClients(() => settings,AppendLog);
                 backgroundClients.SetEnabled(settings.MinimizeInactiveClients);
             }
+        }
+
+        // Startup: stay invisible until the first full layout and paint, then show in one step
+        // (the loading screen covers the time until then). Runs before the Shown handlers, so
+        // setup and other prompts never open over an invisible window.
+        bool revealPending;
+        internal void RevealWhenReady() { revealPending = true; Opacity = 0; }
+
+        protected override void OnShown(EventArgs e)
+        {
+            if (revealPending)
+            {
+                revealPending = false;
+                try { PerformLayout(); Refresh(); }
+                finally { Opacity = 1; StartupSplash.End(); Activate(); }
+            }
+            base.OnShown(e);
         }
 
         private NewsPanel newsPanel;
@@ -363,7 +393,9 @@ namespace AOLauncher
         {
             if (disposing)
             {
+                teamWindow?.Dispose(); teamWindow = null;
                 DisposeClientMonitor();
+                bossTimer?.Dispose(); bossTray?.Dispose();
                 backgroundClients?.Dispose();
                 backgroundClients = null;
                 if (trayIcon != null)
@@ -380,62 +412,64 @@ namespace AOLauncher
 
         private void BuildLayout()
         {
-            var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, Margin = Padding.Empty, Padding = Padding.Empty };
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 125));
+            var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 4, Margin = Padding.Empty, Padding = Padding.Empty };
+            // Compact header, section tabs, page, and a footer with the log and the login button.
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 84));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 46)); // section tabs (MainForm.Navigation.cs)
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 96));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 184));
             Controls.Add(layout);
 
             header = new NexusHero { Dock = DockStyle.Fill, Margin = Padding.Empty };
             var headerMark = AppArtwork.CreateHeaderMark();
-            headerMark.Location = new Point(27, 38);
-            headerMark.Size = new Size(66, 66);
+            headerMark.Location = new Point(28, 18);
+            headerMark.Size = new Size(48, 48);
             header.Controls.Add(headerMark);
-            header.Controls.Add(new Label { Name = "brandTagline", Text = T("YOUR GATEWAY TO RUBI-KA"), Font = new Font("Segoe UI", 8.5F, FontStyle.Bold), ForeColor = Theme.Accent, BackColor = Color.Transparent, Location = new Point(109, 80), Size = new Size(260, 17) });
-            header.Controls.Add(new Label { Name = "brandTitle", Text = "AO NEXUS", Font = new Font("Segoe UI", 33F, FontStyle.Bold), ForeColor = Theme.Foreground, BackColor = Color.Transparent, Location = new Point(103, 25), Size = new Size(280, 55) });
+            header.Controls.Add(new Label { Name = "brandTagline", Text = T("YOUR GATEWAY TO RUBI-KA"), Font = new Font("Segoe UI", 8F, FontStyle.Bold), ForeColor = Theme.Accent, BackColor = Color.Transparent, Location = new Point(90, 52), Size = new Size(260, 16) });
+            header.Controls.Add(new Label { Name = "brandTitle", Text = "AO NEXUS", Font = new Font("Segoe UI", 21F, FontStyle.Bold), ForeColor = Theme.Foreground, BackColor = Color.Transparent, Location = new Point(86, 12), Size = new Size(220, 40) });
             var settingsButton = Theme.Button(T("Settings"));
             settingsButton.AutoSize = false;
             settingsButton.Size = new Size(124, 36);
             settingsButton.Dock = DockStyle.Right;
             settingsButton.Click += OpenSettings;
-            var headerActions = new Panel { Dock = DockStyle.Right, Width = 374, Padding = new Padding(0, 22, 24, 7), BackColor = Color.Transparent };
-            string versionText = "v" + typeof(MainForm).Assembly.GetName().Version.ToString(3);
+            var headerActions = new Panel { Dock = DockStyle.Right, Width = 640, Padding = new Padding(0, 24, 24, 0), BackColor = Color.Transparent };
+            headerFlow = new FlowLayoutPanel { Name = "headerActions", Dock = DockStyle.Fill, FlowDirection = FlowDirection.RightToLeft, WrapContents = false, BackColor = Color.Transparent, Margin = Padding.Empty };
+            string versionText = "v" + AppUpdates.DisplayVersion;
             var versionLabel = new LinkLabel
             {
-                Name = "appVersion", Text = versionText, AccessibleName = SidebarText.L("Changelog for AO Nexus ", "Ændringslog for AO Nexus ") + versionText,
-                Dock = DockStyle.Bottom, Height = 19, TextAlign = ContentAlignment.TopRight,
+                Name = "appVersion", Text = versionText, AccessibleName = AOLauncher.Localization.Texts.Get("Text_Changelog_for_AO_Nexus_ED589CA73420") + versionText,
+                AutoSize = true, Margin = new Padding(12, 11, 0, 0),
                 Font = new Font("Segoe UI", 8F), ForeColor = Theme.Muted, BackColor = Color.Transparent,
                 LinkColor = Theme.Accent, VisitedLinkColor = Theme.Accent, ActiveLinkColor = Theme.Amber,
                 LinkBehavior = LinkBehavior.HoverUnderline, TabStop = true
             };
             versionLabel.LinkClicked += (sender, e) => { using (var dialog = new WhatsNewDialog(false)) dialog.ShowDialog(this); };
-            headerActions.Controls.Add(versionLabel);
-            updateAvailableLink = new LinkLabel { Text = T("Update available…"), Dock = DockStyle.Bottom, Height = 24, Visible = false,
-                LinkColor = Theme.Accent, VisitedLinkColor = Theme.Accent, ActiveLinkColor = Theme.Amber, BackColor = Color.Transparent, TextAlign = ContentAlignment.MiddleRight };
+            headerFlow.Controls.Add(versionLabel);
+            settingsButton.Dock = DockStyle.None; settingsButton.Margin = Padding.Empty;
+            headerFlow.Controls.Add(settingsButton);
+            updateAvailableLink = new LinkLabel { Text = T("Update available…"), AutoSize = true, Visible = false, Margin = new Padding(0, 10, 14, 0),
+                LinkColor = Theme.Accent, VisitedLinkColor = Theme.Accent, ActiveLinkColor = Theme.Amber, BackColor = Color.Transparent };
             updateAvailableLink.LinkClicked += (sender, e) => OpenUpdates(this);
-            headerActions.Controls.Add(updateAvailableLink);
-            var headerButtons = new Panel { Dock = DockStyle.Top, Height = 36, BackColor = Color.Transparent };
-            headerButtons.Controls.Add(settingsButton);
-            var gameGuiButton = Theme.Button(SidebarText.L("Game GUI · Experimental", "Spil-GUI · Eksperimentel"));
-            gameGuiButton.Name = "gameGuiManager";
-            gameGuiButton.AutoSize = false; gameGuiButton.Size = new Size(218, 36);
-            gameGuiButton.Dock = DockStyle.Left; gameGuiButton.Click += OpenGameGui;
-            headerButtons.Controls.Add(gameGuiButton);
-            headerActions.Controls.Add(headerButtons);
-            editingControls.Add(gameGuiButton);
+            headerFlow.Controls.Add(updateAvailableLink);
+            // The character status link (MainForm.ClientMonitor.cs) joins this row, left of Settings.
+            headerActions.Controls.Add(headerFlow);
             header.Controls.Add(headerActions);
             editingControls.Add(settingsButton);
             layout.Controls.Add(header, 0, 0);
 
-            var body = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Margin = Padding.Empty, Padding = new Padding(24, 20, 24, 0) };
+            var body = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Margin = Padding.Empty, Padding = new Padding(24, 16, 24, 0) };
             sidebarLayout = body;
             body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 358));
-            layout.Controls.Add(body, 0, 1);
-            var workspace = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, Margin = new Padding(0, 0, 18, 0) };
-            workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 84));
+            body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 320));
+            charactersPage = new Panel { Name = "charactersPage", Dock = DockStyle.Fill, Margin = Padding.Empty, BackColor = Theme.Background };
+            pageHost = new Panel { Name = "pageHost", Dock = DockStyle.Fill, Margin = Padding.Empty, BackColor = Theme.Background };
+            charactersPage.Controls.Add(body);
+            pageHost.Controls.Add(charactersPage);
+            layout.Controls.Add(pageHost, 0, 2);
+            BuildNavigation(layout);
+            var workspace = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Margin = new Padding(0, 0, 18, 0) };
+            workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 62));
             workspace.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            workspace.RowStyles.Add(new RowStyle(SizeType.Absolute, 102));
             body.Controls.Add(workspace, 0, 0);
 
             var toolbar = new FlowLayoutPanel { Name = "accountActions", Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = Padding.Empty, WrapContents = true, Margin = Padding.Empty };
@@ -454,10 +488,15 @@ namespace AOLauncher
                 button.Margin = new Padding(0, 0, 5, 6);
             }
 
-            var presetFrame = new NexusPanel { Name = "presetSection", Legend = T("Team presets"), AccessibleName = T("Team presets"), Dock = DockStyle.Fill, Margin = new Padding(0, 0, 0, 12), Padding = new Padding(12, 22, 12, 12) };
-            var presets = new TableLayoutPanel { Dock = DockStyle.Fill, Margin = Padding.Empty, Padding = Padding.Empty, BackColor = Theme.Surface, ColumnCount = 5, RowCount = 2 };
+            // Team bar: TEAM · preset · actions · "Plugins for this team".
+            var presetFrame = new NexusPanel { Name = "presetSection", AccessibleName = T("Team presets"), Dock = DockStyle.Fill, Margin = new Padding(0, 0, 0, 12), Padding = new Padding(12, 7, 12, 7) };
+            var presets = new TableLayoutPanel { Dock = DockStyle.Fill, Margin = Padding.Empty, Padding = Padding.Empty, BackColor = Theme.Surface, ColumnCount = 7, RowCount = 2 };
+            presets.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             presets.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            for (int index = 0; index < 4; index++) presets.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            for (int index = 0; index < 5; index++) presets.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            var teamCaption = new Label { Name = "teamCaption", Text = AOLauncher.Localization.Texts.Get("Text_TEAM_3FEA109FFAC4"), AutoSize = true, Anchor = AnchorStyles.Left, ForeColor = Theme.Muted,
+                Font = new Font("Segoe UI", 8.5F, FontStyle.Bold), Margin = new Padding(0, 0, 10, 0), BackColor = Theme.Surface };
+            presets.Controls.Add(teamCaption, 0, 1);
             presets.RowStyles.Add(new RowStyle(SizeType.Absolute, 0));
             presets.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
             presetPicker.DropDownStyle = ComboBoxStyle.DropDownList;
@@ -468,7 +507,7 @@ namespace AOLauncher
             presetPicker.Dock = DockStyle.Fill;
             presetPicker.Margin = new Padding(0, 1, 8, 0);
             presetPicker.SelectionChangeCommitted += ApplySelectedPreset;
-            presets.Controls.Add(presetPicker, 0, 1);
+            presets.Controls.Add(presetPicker, 1, 1);
             editingControls.Add(presetPicker);
             var savePresetButton = Theme.Button(T("Save new…"));
             savePresetButton.Click += SaveNewPreset;
@@ -485,19 +524,31 @@ namespace AOLauncher
                 presetButtons[index].Font = new Font("Segoe UI", 9F);
                 presetButtons[index].Padding = new Padding(7, 2, 7, 2);
                 presetButtons[index].Margin = new Padding(0, 1, index == presetButtons.Length - 1 ? 0 : 5, 0);
-                presets.Controls.Add(presetButtons[index], index + 1, 1);
+                presets.Controls.Add(presetButtons[index], index + 2, 1);
                 editingControls.Add(presetButtons[index]);
             }
             ((NexusComboBox)presetPicker).MatchHeight(savePresetButton);
+            teamPluginsCheck = new NexusCheckBox { Name = "teamLoadsPlugins", AutoSize = true, Enabled = false, Margin = new Padding(14, 6, 0, 0),
+                Text = AOLauncher.Localization.Texts.Get("Text_Plugins_for_this_team_E3B416A86206") };
+            teamPluginsCheck.CheckedChanged += (sender, e) =>
+            {
+                var preset = CurrentPreset;
+                if (refreshingTeamPlugins || preset == null || preset.LoadPlugins == teamPluginsCheck.Checked) return;
+                preset.LoadPlugins = teamPluginsCheck.Checked; SaveSettings();
+                AppendLog(string.Format(preset.LoadPlugins ? AOLauncher.Localization.Texts.Get("Text_Team_0_loads_plugins_when_it_9492048442C0")
+                    : AOLauncher.Localization.Texts.Get("Text_Team_0_logs_in_without_plugins_A8971F50DA2C"), preset.Name));
+            };
+            presets.Controls.Add(teamPluginsCheck, 6, 1);
             presetFrame.Controls.Add(presets);
             workspace.Controls.Add(presetFrame, 0, 0);
 
             var content = new TableLayoutPanel { Dock = DockStyle.Fill, Margin = Padding.Empty, ColumnCount = 2, RowCount = 1 };
             content.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            content.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 260));
+            content.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 250));
             content.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             var leftFrame = new NexusPanel { Legend = T("ACCOUNTS BY SERVER"), AccessibleName = T("ACCOUNTS BY SERVER"), Dock = DockStyle.Fill, Margin = Padding.Empty, Padding = new Padding(12, 22, 12, 12), Name = "accountsByServer" };
-            var left = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, Margin = Padding.Empty, BackColor = Theme.Surface };
+            var left = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 4, Margin = Padding.Empty, BackColor = Theme.Surface };
+            left.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             left.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             left.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             left.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
@@ -611,11 +662,14 @@ namespace AOLauncher
                 { e.Handled = true; e.SuppressKeyPress = true; CreateCharacter(sender, e); }
             };
             tree.HandleCreated += (sender, e) => HideCreationCheckboxes();
-            left.Controls.Add(SlimScrolling.Wrap(tree), 0, 2);
+            var columnCaption = new Label { Name = "pluginSetCaption", Text = AOLauncher.Localization.Texts.Get("Text_PLUGIN_SET_8F30C51F7BF9"), Dock = DockStyle.Top, Height = 22,
+                TextAlign = ContentAlignment.MiddleRight, ForeColor = Theme.Muted, Font = new Font("Segoe UI", 8.5F, FontStyle.Bold), Margin = new Padding(0, 0, 18, 0), BackColor = Theme.Surface };
+            left.Controls.Add(columnCaption, 0, 2);
+            left.Controls.Add(SlimScrolling.Wrap(tree), 0, 3);
             editingControls.Add(tree);
             content.Controls.Add(leftFrame, 0, 0);
 
-            var rightFrame = new NexusPanel { Legend = T("DETAILS"), AccessibleName = T("DETAILS"), Dock = DockStyle.Fill, Margin = new Padding(12, 0, 0, 0), Padding = new Padding(12, 22, 12, 12), Name = "selectionDetails" };
+            var rightFrame = new NexusPanel { Legend = "", AccessibleName = T("DETAILS"), Dock = DockStyle.Fill, Margin = new Padding(12, 0, 0, 0), Padding = new Padding(10), Name = "selectionDetails" };
             var right = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 4, Margin = Padding.Empty, BackColor = Theme.Surface };
             right.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             right.RowStyles.Add(new RowStyle(SizeType.Absolute, 0));
@@ -626,7 +680,7 @@ namespace AOLauncher
             detailTitle.AutoSize = true;
             detailTitle.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             detailTitle.ForeColor = Theme.Foreground;
-            detailTitle.Margin = new Padding(0, 0, 0, 10);
+            detailTitle.Margin = new Padding(0, 0, 0, 5);
             detailTitle.TextAlign = ContentAlignment.TopLeft;
             detailText.Dock = DockStyle.None;
             detailText.AutoSize = true;
@@ -643,6 +697,14 @@ namespace AOLauncher
             detailsFlow.Controls.Add(detailTitle);
             detailsFlow.Controls.Add(detailText);
             detailsFlow.Controls.Add(detailHelp);
+            detailPluginLink = new LinkLabel { Name = "changePluginSet", Text = AOLauncher.Localization.Texts.Get("Text_Change_plugin_set_BFF6DF5400D7"), AutoSize = true, Visible = false,
+                Margin = new Padding(0, 10, 0, 0), LinkColor = Theme.Accent, VisitedLinkColor = Theme.Accent, ActiveLinkColor = Theme.Amber, LinkBehavior = LinkBehavior.HoverUnderline };
+            detailPluginLink.LinkClicked += (sender, e) =>
+            {
+                var node = tree.SelectedNode;
+                if (node?.Tag is CharacterConfig) ShowPluginSetPicker(node, new Rectangle(tree.PointToClient(detailPluginLink.PointToScreen(Point.Empty)), detailPluginLink.Size));
+            };
+            detailsFlow.Controls.Add(detailPluginLink);
             detailsBody.Controls.Add(detailsFlow);
             detailsBody.ClientSizeChanged += (sender, e) =>
             {
@@ -671,25 +733,21 @@ namespace AOLauncher
             content.Controls.Add(rightFrame, 1, 0);
             workspace.Controls.Add(content, 0, 1);
 
-            var logPanel = new NexusPanel { Name = "terminalLog", Dock = DockStyle.Fill, Padding = new Padding(10), Margin = new Padding(0, 8, 0, 0), BackColor = LogViewer.TerminalBackground };
+            var logPanel = new NexusPanel { Name = "terminalLog", Dock = DockStyle.Fill, Padding = new Padding(10, 8, 10, 8), Margin = new Padding(0, 0, 14, 0), BackColor = LogViewer.TerminalBackground };
             log.Dock = DockStyle.Fill;
-            log.Multiline = true;
             log.ReadOnly = true;
-            log.ScrollBars = ScrollBars.Vertical;
             log.BackColor = LogViewer.TerminalBackground;
             log.ForeColor = LogViewer.TerminalForeground;
             log.BorderStyle = BorderStyle.None;
             log.Font = new Font("Consolas", 9F);
             log.AccessibleName = T("Activity log");
             log.Margin = Padding.Empty;
-            log.ScrollBars = ScrollBars.None;
             log.Cursor = logPanel.Cursor = Cursors.Hand;
             log.AccessibleRole = AccessibleRole.PushButton;
             log.Click += (sender, e) => OpenLog();
             logPanel.Click += (sender, e) => OpenLog();
             log.KeyDown += (sender, e) => { if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space) { e.Handled = e.SuppressKeyPress = true; OpenLog(); } };
             logPanel.Controls.Add(log);
-            workspace.Controls.Add(logPanel, 0, 2);
 
             serverSidebar = new ServerSidebar(smoke);
             newsPanel = serverSidebar.News;
@@ -701,43 +759,43 @@ namespace AOLauncher
             body.Controls.Add(serverSidebar, 1, 0);
             ConfigureSidebar();
 
-            var footerFrame = new NexusPanel { Dock = DockStyle.Fill, Margin = new Padding(24, 10, 24, 18), Padding = new Padding(14, 10, 10, 10), BackColor = Theme.SurfaceRaised };
-            var footer = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 2, Margin = Padding.Empty };
+            // Footer: the activity log on the left; login, selection summary and auto-load on the right.
+            var footerFrame = new Panel { Dock = DockStyle.Fill, Margin = new Padding(24, 12, 24, 16), BackColor = Theme.Background };
+            var footer = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Margin = Padding.Empty, BackColor = Theme.Background };
             footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            footer.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 116));
-            footer.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 214));
-            footer.RowStyles.Add(new RowStyle(SizeType.Absolute, 25));
+            footer.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 260));
             footer.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            selectionLabel.Dock = DockStyle.Fill;
-            selectionLabel.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
-            selectionLabel.ForeColor = Theme.Foreground;
-            selectionLabel.AutoEllipsis = true;
-            selectionLabel.Margin = Padding.Empty;
-            pathLabel.Dock = DockStyle.Fill;
+            footer.Controls.Add(logPanel, 0, 0);
+            var launch = new TableLayoutPanel { Name = "launchPanel", Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 6, Margin = Padding.Empty, BackColor = Theme.Background };
+            // An implicit auto-sized column retains the combined width when footer options swap.
+            launch.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            // Button, then rows that size to their text so nothing is clipped at any display scale.
+            launch.RowStyles.Add(new RowStyle(SizeType.Absolute, 46));
+            launch.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            launch.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            launch.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            launch.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            launch.RowStyles.Insert(4,new RowStyle(SizeType.AutoSize));
+            selectionLabel.Visible = false; // its summary is the login button's text and tooltip
+            pathLabel.Dock = DockStyle.Top;
+            pathLabel.AutoSize = false;
+            pathLabel.Height = 22;
             pathLabel.ForeColor = Theme.Muted;
             pathLabel.AutoEllipsis = true;
+            pathLabel.TextAlign = ContentAlignment.MiddleCenter;
             pathLabel.Font = new Font("Segoe UI", 8.5F);
             pathLabel.LinkColor = Theme.Accent;
             pathLabel.ActiveLinkColor = Theme.Foreground;
             pathLabel.VisitedLinkColor = Theme.Accent;
             pathLabel.LinkBehavior = LinkBehavior.HoverUnderline;
-            pathLabel.Margin = Padding.Empty;
+            pathLabel.Margin = new Padding(0, 2, 0, 0);
+            pathLabel.FontChanged += (sender, e) => pathLabel.Height = pathLabel.Font.Height + 8;
             pathLabel.LinkClicked += (sender, e) =>
             {
                 string details = BuildSelectedTargetDetails();
                 if (string.IsNullOrEmpty(details)) return;
                 using (var dialog = new SelectedTargetsDialog(details)) dialog.ShowDialog(this);
             };
-            footer.Controls.Add(selectionLabel, 0, 0);
-            footer.Controls.Add(pathLabel, 0, 1);
-            stopButton = Theme.Button(T("Stop login"));
-            stopButton.Dock = DockStyle.Fill;
-            stopButton.Enabled = false;
-            stopButton.Font = new Font("Segoe UI", 9F);
-            stopButton.Margin = new Padding(0, 0, 8, 0);
-            stopButton.Click += (sender, e) => StopLogin();
-            footer.Controls.Add(stopButton, 1, 0);
-            footer.SetRowSpan(stopButton, 2);
             startButton = Theme.Button(T("Log in selected  →"), true);
             startButton.BackColor = Theme.Amber;
             startButton.ForeColor = Theme.Background;
@@ -745,13 +803,49 @@ namespace AOLauncher
             startButton.FlatAppearance.MouseOverBackColor = Color.FromArgb(240, 190, 103);
             startButton.FlatAppearance.MouseDownBackColor = Color.FromArgb(199, 140, 47);
             startButton.Dock = DockStyle.Fill;
+            startButton.AutoSize = false;
             startButton.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             startButton.Margin = Padding.Empty;
             startButton.Click += StartSelected;
-            footer.Controls.Add(startButton, 2, 0);
-            footer.SetRowSpan(startButton, 2);
+            launch.Controls.Add(startButton, 0, 0);
+            graphicsLink = new LinkLabel { Name = "launchGraphics", Text = GraphicsStatusText(new bool?[0]), Dock = DockStyle.Top,
+                AutoSize = false, Height = 24, AutoEllipsis = true, TextAlign = ContentAlignment.MiddleCenter,
+                Font = new Font("Segoe UI", 8.5F), LinkColor = Theme.Accent, ActiveLinkColor = Theme.Foreground,
+                VisitedLinkColor = Theme.Accent, Margin = Padding.Empty, LinkBehavior = LinkBehavior.HoverUnderline };
+            graphicsLink.LinkClicked += OpenSettings;
+            graphicsLink.FontChanged += (sender, e) => graphicsLink.Height = graphicsLink.Font.Height + 8;
+            launch.Controls.Add(graphicsLink, 0, 1);
+            launch.Controls.Add(pathLabel, 0, 2);
+            startupLink = new LinkLabel {Name="launchStartup",Text=AOLauncher.Localization.Texts.Get("Text_Fast_loading_checking_2ED0BFA94293"),Dock=DockStyle.Top,
+                AutoSize=false,Height=24,AutoEllipsis=true,TextAlign=ContentAlignment.MiddleCenter,Font=new Font("Segoe UI",8.5F),
+                LinkColor=Theme.Accent,ActiveLinkColor=Theme.Foreground,Margin=Padding.Empty,LinkBehavior=LinkBehavior.HoverUnderline};
+            startupLink.LinkClicked+=OpenSettings;
+            startupLink.FontChanged+=(sender,e)=>startupLink.Height=startupLink.Font.Height+8;
+            launch.Controls.Add(startupLink,0,3);
+            Activated += (sender, e) => RefreshGraphicsStatus(true);
+            var launchOptions = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, WrapContents = false, Margin = Padding.Empty, BackColor = Theme.Background };
+            launchOptions.Layout += (sender, e) => {
+                if (autoLoadCheck == null) return;
+                var margin = new Padding(Math.Max(0, (launchOptions.ClientSize.Width - autoLoadCheck.Width) / 2), 2, 0, 0);
+                if (autoLoadCheck.Margin != margin) autoLoadCheck.Margin = margin;
+            };
+            autoLoadCheck = new NexusCheckBox { Name = "autoLoadPlugins", AutoSize = false, Size = new Size(252, 26), Margin = new Padding(0, 2, 0, 0),
+                Text = AOLauncher.Localization.Texts.Get("Text_Auto_load_plugins_in_game_DD977138344B"), Checked = settings.AutoInjectPlugins };
+            autoLoadCheck.CheckedChanged += (sender, e) => SetAutoLoadPlugins(autoLoadCheck.Checked);
+            stopButton = Theme.Button(T("Stop login"));
+            stopButton.Enabled = false;
+            stopButton.Visible = false;
+            stopButton.Font = new Font("Segoe UI", 9F);
+            stopButton.AutoSize = false;
+            stopButton.Size = new Size(260, 30);
+            stopButton.Margin = new Padding(0, 4, 0, 0);
+            stopButton.Click += (sender, e) => StopLogin();
+            launchOptions.Controls.Add(autoLoadCheck);
+            launchOptions.Controls.Add(stopButton);
+            launch.Controls.Add(launchOptions, 0, 4);
+            footer.Controls.Add(launch, 1, 0);
             footerFrame.Controls.Add(footer);
-            layout.Controls.Add(footerFrame, 0, 2);
+            layout.Controls.Add(footerFrame, 0, 3);
         }
 
         private static Label Caption(string text) => new Label {
@@ -924,6 +1018,7 @@ namespace AOLauncher
         private void UpdatePresetStatus()
         {
             var preset = CurrentPreset;
+            UpdateTeamPluginsToggle(preset);
             updatePresetButton.Enabled = preset != null && !running && !PresetService.Matches(settings, preset);
             editPresetButton.Enabled = preset != null && !running;
             deletePresetButton.Enabled = preset != null && !running;
@@ -987,6 +1082,7 @@ namespace AOLauncher
                     preset?.StartHotkey, preset?.CampHotkey, settings.Accounts.Sum(account => account.Characters.Count(character => character.Selected)), preset != null))
                 {
                     dialog.UseAsStartupDefault = preset != null && string.Equals(preset.Id, settings.DefaultPresetId, StringComparison.OrdinalIgnoreCase);
+                    dialog.ConfigureTeam(settings, preset);
                     dialog.ValidateShortcuts = (start, logout) => ValidatePresetHotkeys(preset, start, logout);
                     if (dialog.ShowDialog(this) != DialogResult.OK) return;
                     ChangePreset(() =>
@@ -998,6 +1094,9 @@ namespace AOLauncher
                         }
                         target.StartHotkey = dialog.StartHotkey;
                         target.CampHotkey = dialog.LogoutHotkey;
+                        target.Characters = dialog.TeamOrder;
+                        target.OrderedLogin = dialog.OrderedLogin;
+                        target.AutoFormTeam = dialog.AutoFormTeam;
                         PresetService.SetStartupDefault(settings, target, dialog.UseAsStartupDefault);
                     });
                 }
@@ -1042,19 +1141,19 @@ namespace AOLauncher
         private void UpdateCharacterSearchStatus()
         {
             bool searching = HasCharacterSearch;
-            characterSearchLabel.Text = SidebarText.L("Search", "Søg");
-            characterSearch.AccessibleName = SidebarText.L("Search characters by name, ID, account or server", "Søg efter chars via navn, ID, konto eller server");
+            characterSearchLabel.Text = AOLauncher.Localization.Texts.Get("Text_Search_26E69CF119BB");
+            characterSearch.AccessibleName = AOLauncher.Localization.Texts.Get("Text_Search_characters_by_name_ID_account_6533FA31AF00");
             if (clearCharacterSearchButton != null)
             {
-                clearCharacterSearchButton.Text = SidebarText.L("Clear", "Ryd");
-                clearCharacterSearchButton.AccessibleName = SidebarText.L("Clear character search", "Ryd charsøgning");
+                clearCharacterSearchButton.Text = AOLauncher.Localization.Texts.Get("Text_Clear_9D404388C752");
+                clearCharacterSearchButton.AccessibleName = AOLauncher.Localization.Texts.Get("Text_Clear_character_search_ABD742CB8486");
                 clearCharacterSearchButton.Enabled = characterSearch.Text.Length > 0 && !running;
             }
-            if (selectAllCharactersButton != null) selectAllCharactersButton.Text = searching ? SidebarText.L("Select matches", "Vælg søgeresultater") : T("Select all");
-            if (clearCharacterSelectionButton != null) clearCharacterSelectionButton.Text = searching ? SidebarText.L("Clear matches", "Fravælg søgeresultater") : T("Clear selection");
+            if (selectAllCharactersButton != null) selectAllCharactersButton.Text = searching ? AOLauncher.Localization.Texts.Get("Text_Select_matches_970FF091DF78") : T("Select all");
+            if (clearCharacterSelectionButton != null) clearCharacterSelectionButton.Text = searching ? AOLauncher.Localization.Texts.Get("Text_Clear_matches_6093124273B8") : T("Clear selection");
             if (!searching)
             {
-                characterSearchStatus.Text = SidebarText.L("Find a character by name, ID, account or server.", "Find en char via navn, ID, konto eller server.");
+                characterSearchStatus.Text = AOLauncher.Localization.Texts.Get("Text_Find_a_character_by_name_ID_450618D610AA");
                 characterSearchStatus.ForeColor = Theme.Muted;
                 return;
             }
@@ -1062,10 +1161,10 @@ namespace AOLauncher
             int shown = settings.Accounts.Sum(account => account.Characters.Count(character => CharacterMatchesSearch(account, character)));
             int hiddenSelected = settings.Accounts.Sum(account => account.Characters.Count(character => character.Selected && !CharacterMatchesSearch(account, character)));
             string result = shown == 0
-                ? SidebarText.L("No matching characters. Clear the search to see everyone.", "Ingen chars matcher. Ryd søgningen for at se alle.")
-                : string.Format(SidebarText.L("{0} of {1} characters shown. Selection controls affect matches only.", "{0} af {1} chars vises. Valgknapper og afkrydsninger gælder kun søgeresultater."), shown, total);
+                ? AOLauncher.Localization.Texts.Get("Text_No_matching_characters_Clear_the_search_FB42373FE521")
+                : string.Format(AOLauncher.Localization.Texts.Get("Text_0_of_1_characters_shown_Selection_D44FC62DAB16"), shown, total);
             if (hiddenSelected > 0)
-                result += "\r\n" + string.Format(SidebarText.L("{0} selected outside this search will also log in.", "{0} valgte chars uden for søgningen logger også ind."), hiddenSelected);
+                result += "\r\n" + string.Format(AOLauncher.Localization.Texts.Get("Text_0_selected_outside_this_search_will_765759459419"), hiddenSelected);
             characterSearchStatus.Text = result;
             characterSearchStatus.ForeColor = hiddenSelected > 0 ? Theme.Amber : Theme.Muted;
         }
@@ -1253,7 +1352,11 @@ namespace AOLauncher
             selectionLabel.Text = F("{0} {1} selected across {2} {3}", count, count == 1 ? T("character") : T("characters"), accounts, accounts == 1 ? T("account") : T("accounts"));
             UpdateCharacterSearchStatus();
             UpdateTargetSummary(selectedAccounts);
+            RefreshGraphicsStatus();
             startButton.Enabled = count > 0 && !running && !smoke;
+            if (!running && !guiOperationBusy)
+                startButton.Text = count > 0 ? F(AOLauncher.Localization.Texts.Get("Text_Log_in_0_selected_E6AD83A691D1"), count) : T("Log in selected  →");
+            loginTips.SetToolTip(startButton, selectionLabel.Text);
             addCharacterButton.Enabled = CurrentAccount != null && !running;
             editButton.Enabled = CurrentAccount != null && !running;
             removeButton.Enabled = CurrentAccount != null && !(tree.SelectedNode?.Tag is CreationAction) && !running;
@@ -1266,6 +1369,7 @@ namespace AOLauncher
             createCharacterButton.Visible = creation && account != null && AccountTargets.CanCreateCharacter(settings, account);
             createCharacterButton.Enabled = createCharacterButton.Visible && !running && !smoke;
             detailHelp.Visible = creation;
+            if (detailPluginLink != null) detailPluginLink.Visible = !creation && character != null && !smoke;
             detailHelp.Text = creation
                 ? T("Keep AO Nexus open while you create the char. Once it enters the game, its ID and name are added here automatically. It starts unchecked and is not added to your saved teams.")
                 : T("Select an account or char to see its details. Double-click a char to edit it.");
@@ -1277,7 +1381,8 @@ namespace AOLauncher
             else if (character != null)
             {
                 detailTitle.Text = character.NamePending ? F("Character {0}", character.CharacterId) : character.Name;
-                detailText.Text = F("Account: {0}\r\nCharacter ID: {1}\r\n{2}", account.Label, character.CharacterId, character.Selected ? T("Selected for the next login") : T("Not selected for the next login"));
+                detailText.Text = F("Account: {0}\r\nCharacter ID: {1}\r\n{2}", account.Label, character.CharacterId, character.Selected ? T("Selected for the next login") : T("Not selected for the next login"))
+                    + "\r\n\r\n" + PluginDetails(account, character);
             }
             else if (account != null)
             {
@@ -1291,14 +1396,14 @@ namespace AOLauncher
                 detailTitle.Text = group.Name;
                 detailText.Text = F("Login address: {0}\r\nSelected for login: {1} accounts · {2}/{3} chars",
                     group.Endpoint, SelectedServerAccounts(group), characters.Count(value => value.Selected), characters.Length)
-                    + "\r\n\r\n" + ServerLimitText(group);
+                    + "\r\n" + ServerLimitText(group);
                 if (ServerLimitExceeded(group)) detailText.Text += "\r\n" + T("Selection exceeds the server limits.");
             }
             else
             {
-                detailTitle.Text = HasCharacterSearch ? SidebarText.L("No matching characters", "Ingen chars matcher") : T("Build your team");
+                detailTitle.Text = HasCharacterSearch ? AOLauncher.Localization.Texts.Get("Text_No_matching_characters_1716C0768A5C") : T("Build your team");
                 detailText.Text = HasCharacterSearch
-                    ? SidebarText.L("Try another name, character ID, account or server, or clear the search. Your character selections have been kept.", "Prøv et andet navn, char-ID, konto eller server, eller ryd søgningen. Dine char-valg er bevaret.")
+                    ? AOLauncher.Localization.Texts.Get("Text_Try_another_name_character_ID_account_DBB858AD8658")
                     : T("Start with “Add account”. Save several characters per account and choose your team using the checkboxes.");
             }
             if (account != null) detailText.Text += "\r\n" + F("Server: {0}", ServerName(AccountTargets.Endpoint(account)));
@@ -1503,8 +1608,9 @@ namespace AOLauncher
 
         private void OpenSettings(object sender, EventArgs e)
         {
-            using (var dialog = new SettingsDialog(settings))
+            using (var dialog = new SettingsDialog(settings, sender == graphicsLink ? SelectedGraphicsFolders().FirstOrDefault() : null))
             {
+                if (sender == graphicsLink) dialog.ShowGraphics();
                 try { dialog.StartWithWindows = !smoke && WindowsStartup.IsEnabled; }
                 catch (Exception ex) when (ex is System.Security.SecurityException || ex is UnauthorizedAccessException || ex is IOException)
                 { ShowInfo(T("Windows startup settings could not be read.") + "\r\n" + ex.Message); return; }
@@ -1516,13 +1622,28 @@ namespace AOLauncher
                     { return T("Windows startup settings could not be saved.") + "\r\n" + ex.Message; }
                 };
                 dialog.ForgetPasswordsAction = () => ForgetPasswords(null, EventArgs.Empty);
+                dialog.GraphicsChangeBlocked = () => running || guiOperationBusy;
+                dialog.UpdateServerRulesAction = async () =>
+                {
+                    var catalog = await ServerRules.FetchAsync(settings, CancellationToken.None);
+                    bool changed = ApplyServerRules(catalog, true, dialog);
+                    return string.Format(changed ? AOLauncher.Localization.Texts.Get("Text_Updated_to_revision_0_from_1_3E752B0F8EEF")
+                        : AOLauncher.Localization.Texts.Get("Text_Up_to_date_revision_0_from_B29365004BAC"), catalog.Revision, catalog.Source);
+                };
                 dialog.CheckUpdatesAction = () => { if (smoke) return; OpenUpdates(dialog); };
                 dialog.ReportProblemAction = () => OpenReportProblem(dialog, ProblemArea.Other);
                 dialog.ClearDiagnosticsAction = () => smoke || DiagnosticJournal.Clear();
                 var settingsResult = dialog.ShowDialog(this);
+                RefreshGraphicsStatus(true);
                 if (settingsResult == DialogResult.Retry) { RunSetup(); return; }
                 if (settingsResult != DialogResult.OK) return;
                 var previousTargets = settings.Accounts.ToDictionary(account => account.Id, AccountTargets.Endpoint);
+                // Servers from the server list that were removed stay removed; edited ones stay as edited.
+                foreach (var removed in settings.LoginServers.Where(old => ServerRules.FindById(old.Id) != null && !dialog.LoginServers.Any(item => item.Id == old.Id)))
+                    if (!settings.RemovedServerIds.Contains(removed.Id, StringComparer.OrdinalIgnoreCase)) settings.RemovedServerIds.Add(removed.Id);
+                settings.RemovedServerIds.RemoveAll(id => dialog.LoginServers.Any(item => string.Equals(item.Id, id, StringComparison.OrdinalIgnoreCase)));
+                ServerRules.MarkCustomized(dialog.LoginServers, ServerRules.Current);
+                settings.CheckServerRulesOnStartup = dialog.CheckServerRulesOnStartup;
                 try { AccountTargets.ChangeProfiles(settings, dialog.LoginServers); }
                 catch (ArgumentException ex) { ShowInfo(ex.Message); return; }
                 foreach (var account in settings.Accounts)
@@ -1539,6 +1660,11 @@ namespace AOLauncher
                 settings.MaxLogSizeMb = dialog.MaxLogSizeMb;
                 if (settings.KeepDiagnostics && !dialog.KeepDiagnostics && !smoke) DiagnosticJournal.Clear();
                 settings.KeepDiagnostics = dialog.KeepDiagnostics;
+                settings.ExperimentalAovk = dialog.ExperimentalAovk;
+                settings.ExperimentalTeamAutomation = dialog.ExperimentalTeamAutomation;
+                settings.ExperimentalNearbyCombat = dialog.ExperimentalNearbyCombat;
+                backgroundClients?.SetEnabled(dialog.MinimizeInactiveClients);
+                RefreshGraphicsStatus(true);
                 settings.QuietLaunch = dialog.QuietLaunch;
                 settings.FastStartup = dialog.FastStartup;
                 if (settings.MinimizeInactiveClients != dialog.MinimizeInactiveClients)
@@ -1546,19 +1672,23 @@ namespace AOLauncher
                     settings.MinimizeInactiveClients = dialog.MinimizeInactiveClients;
                     backgroundClients?.SetEnabled(settings.MinimizeInactiveClients);
                     AppendLog(settings.MinimizeInactiveClients
-                        ? SidebarText.L("Automatic minimizing enabled for supported classic clients.", "Automatisk minimering aktiveret for understøttede klassiske klienter.")
-                        : SidebarText.L("Automatic minimizing disabled. Restore game windows with Alt-Tab.", "Automatisk minimering deaktiveret. Gendan spilvinduer med Alt-Tab."));
+                        ? AOLauncher.Localization.Texts.Get("Text_Automatic_minimizing_enabled_for_supported_classic_02CE845DBF2F")
+                        : AOLauncher.Localization.Texts.Get("Text_Automatic_minimizing_disabled_Restore_game_windows_81920FAD6A45"));
                 }
                 if (!smoke) DiagnosticJournal.Configure(settings.KeepDiagnostics);
                 if (!smoke) UpdateJournal.Configure(settings.MaxLogSizeMb);
                 string retained = LogRetention.Tail(activityLog.ToString(), settings.MaxLogSizeMb * 1024 * 1024);
                 activityLog = new StringBuilder(retained);
                 activityLogBytes = Encoding.UTF8.GetByteCount(retained);
-                log.Text = LogRetention.Tail(retained, 16000);
+                logPreview = LogRetention.Tail(retained, 16000);
+                LogTone.Show(log, logPreview, 9F, true);
                 if (logViewer != null && !logViewer.IsDisposed) logViewer.SetLogText(retained);
                 settings.ShowServerNews = dialog.ShowServerNews;
                 settings.ShowServerHealth = dialog.ShowServerHealth;
                 settings.BackgroundHealthChecks = dialog.BackgroundHealthChecks;
+                // Switching monitoring off in Settings also stops adding the monitor to plugin sets.
+                if (settings.MonitorClientHealth && !dialog.MonitorClientHealth) settings.IncludeHealthMonitor = false;
+                if (!settings.MonitorClientHealth && dialog.MonitorClientHealth) settings.IncludeHealthMonitor = true;
                 settings.MonitorClientHealth = dialog.MonitorClientHealth;
                 settings.CollectClientExitReports = dialog.CollectClientExitReports;
                 SetupNewOptions.MarkReviewed(settings);
@@ -1602,6 +1732,7 @@ namespace AOLauncher
             if (!ConfirmSelectedLaunch()) return;
             foreach (var account in accounts)
                 if (!EnsureGameFolder(account)) return;
+            if (!await ResolveStuckClients(accounts)) return;
             try { ValidateSelectedAccounts(settings); }
             catch (ArgumentException ex) { ShowInfo(ex.Message); return; }
             if (!await ApplyPendingGuiBeforeLaunch(accounts)) return;
@@ -1609,6 +1740,7 @@ namespace AOLauncher
             LaunchRequest request;
             try { request = CreateLaunchRequest(settings, credentials); }
             finally { credentials.Clear(); }
+            RecordLaunchPresets(accounts);
             await RunLaunchRequestAsync(request, accounts, false);
         }
 
@@ -1652,6 +1784,10 @@ namespace AOLauncher
         private async Task RunLaunchRequestAsync(LaunchRequest request, List<AccountConfig> accounts, bool creation)
         {
             SaveSettings();
+            if (!creation) { ApplyPresetLaunchOrder(settings,request); BeginAutoTeam(request); }
+            request.AllowExperimentalAovk = settings.ExperimentalAovk;
+            request.LauncherProcessId=Process.GetCurrentProcess().Id;
+            backgroundClients?.ManagePresetStartup(request.KeepLeaderActive);
             stopRequested = false;
             var runner = new BackendRunner();
             var gameLog = new GameLogFilter();
@@ -1679,22 +1815,13 @@ namespace AOLauncher
                         AppendLog(T("Login stopped. Game windows that have already started remain open."));
                         return;
                     }
-                    StatusText = T(creation ? "STATUS · Opening character creation" : "STATUS · Accounts in parallel; one character at a time per account");
+                    StatusText = creation ? T("STATUS · Opening character creation") : request.OrderedStarts
+                        ? AOLauncher.Localization.Texts.Get("Text_STATUS_Starting_in_saved_team_order_D65FFA6597E0")
+                        : T("STATUS · Accounts in parallel; one character at a time per account");
                     AppendLog(creation ? F("Opening character creation for {0} on {1}.", accounts[0].Label, AccountTargets.ServerName(settings, accounts[0]))
+                        : request.OrderedStarts ? AOLauncher.Localization.Texts.Get("Text_Starting_in_team_order_550A0C221B51")+string.Join(" → ",request.Characters.Select(c=>c.CharacterName))
                         : F("Starting {0} selected characters. Accounts start in parallel, one character at a time per account.", request.Characters.Count));
-                    var startInfo = new ProcessStartInfo
-                    {
-                        FileName = backendPath,
-                        Arguments = "--launch-stdin",
-                        WorkingDirectory = Path.GetDirectoryName(backendPath),
-                        UseShellExecute = false,
-                        CreateNoWindow = true,
-                        RedirectStandardInput = true,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        StandardOutputEncoding = new UTF8Encoding(false),
-                        StandardErrorEncoding = new UTF8Encoding(false)
-                    };
+                    var startInfo = Nexus.Core.LaunchPlan.BackendStartInfo(backendPath);
                     // Credentials travel only through this child process's private standard-input pipe.
                     int exitCode = await runner.RunAsync(startInfo, new JavaScriptSerializer().Serialize(request),
                         line => { string visible = gameLog.Filter(line); if (visible != null) HandleOperationLine(visible, request, runner, creation); },
@@ -1720,8 +1847,8 @@ namespace AOLauncher
                         AppendLog(T("Login stopped. Game windows that have already started remain open."));
                         return;
                     }
-                    StatusText = exitCode == 0 ? T(creation ? "STATUS · Continue character creation in game" : "STATUS · Login complete") : T("STATUS · Login finished with errors — see status");
-                    AppendLog(exitCode == 0 ? T(creation ? "Character creation finished. The detected char is available in the account list." : "Done. Game windows remain open. You can choose more characters or close the launcher.") : F("Login finished with errors (code {0}). An error stops the remaining logins for that account. Existing game windows remain open.", exitCode));
+                    StatusText = exitCode == 0 ? (creation ? T("STATUS · Continue character creation in game") : AOLauncher.Localization.Texts.Get("Startup.ClientsLoadedStatus")) : T("STATUS · Login finished with errors — see status");
+                    AppendLog(exitCode == 0 ? (creation ? T("Character creation finished. The detected char is available in the account list.") : AOLauncher.Localization.Texts.Get(autoTeamStartup?.Active == true ? "Startup.ClientsLoadedTeamPending" : settings.AutoInjectPlugins && !settings.AOSharpDisabled ? "Startup.ClientsLoadedPluginsPending" : "Startup.ClientsLoaded")) : F("Login finished with errors (code {0}). An error stops the remaining logins for that account. Existing game windows remain open.", exitCode));
                     if (exitCode != 0)
                     {
                         foreach (var account in accounts) passwords.Remove(account.Id);
@@ -1747,7 +1874,7 @@ namespace AOLauncher
             {
                 foreach (var character in request.Characters) character.Password = null;
                 bool ownedForeground = ReferenceEquals(backendRunner, runner);
-                if (ownedForeground) backendRunner = null;
+                if (ownedForeground) {backendRunner = null;backgroundClients?.ManagePresetStartup(false);}
                 creationMonitors.Remove(runner);
                 if (ReferenceEquals(preparationCancellation, preparation)) preparationCancellation = null;
                 preparation.Dispose();
@@ -1787,6 +1914,8 @@ namespace AOLauncher
                     UpdateSelection();
                 }
             }
+            try { AovkGraphics.EnsureReadyForLaunch(account.GamePath); }
+            catch (IOException error) { ShowInfo(error.Message); return false; }
             return true;
         }
 
@@ -1795,7 +1924,11 @@ namespace AOLauncher
             var accounts = value.Accounts.Where(account => account.Characters.Any(character => character.Selected)).ToList();
             foreach (var account in accounts)
             {
-                try { AccountTargets.Validate(account, true); }
+                try {
+                    AccountTargets.Validate(account, true);
+                    try { AovkGraphics.EnsureReadyForLaunch(account.GamePath); }
+                    catch (IOException error) { throw new ArgumentException(error.Message, error); }
+                }
                 catch (ArgumentException ex) { throw new ArgumentException(F("Account “{0}”: {1}", account.Label, ex.Message)); }
             }
             if (accounts.SelectMany(account => account.Characters.Where(character => character.Selected).Select(character => AccountTargets.Endpoint(account) + "/" + character.CharacterId)).GroupBy(key => key).Any(group => group.Count() > 1))
@@ -1809,6 +1942,7 @@ namespace AOLauncher
             foreach (var account in value.Accounts)
                 foreach (var character in account.Characters.Where(item => item.Selected))
                     request.Characters.Add(new LaunchCharacter { AccountId = account.Id, Account = account.Username, Password = credentials[account.Id], GamePath = account.GamePath, Server = account.Server, ServerName = AccountTargets.ServerName(value, account), Port = account.Port, MaxAccounts = AccountTargets.AccountLimit(value, AccountTargets.Endpoint(account)), MaxCharactersPerAccount = AccountTargets.CharacterLimit(value, AccountTargets.Endpoint(account)), CharacterId = character.CharacterId, CharacterName = character.NamePending ? F("Character {0}", character.CharacterId) : character.Name });
+            ApplyPresetLaunchOrder(value,request);
             return request;
         }
 
@@ -1838,6 +1972,13 @@ namespace AOLauncher
             foreach (var control in editingControls) control.Enabled = !value;
             startButton.Text = value ? T("Logging in…") : T("Log in selected  →");
             stopButton.Enabled = value && !stopRequested;
+            // While a login runs, "Stop login" takes the auto-load switch's place.
+            // Never expose both controls in the non-wrapping row, even during layout.
+            stopButton.Parent.SuspendLayout();
+            try {
+                stopButton.Visible = autoLoadCheck.Visible = false;
+                if (value) stopButton.Visible = true; else autoLoadCheck.Visible = true;
+            } finally { stopButton.Parent.ResumeLayout(true); }
             if (value) StatusText = T("STATUS · Accounts in parallel; one character at a time per account");
             UpdateSelection();
         }
@@ -1847,6 +1988,7 @@ namespace AOLauncher
             if (!running) return;
             stopRequested = true;
             guiCancellation?.Cancel();
+            teamRelogCancellation?.Cancel();
             preparationCancellation?.Cancel();
             backendRunner?.Stop();
             stopButton.Enabled = false;
@@ -1960,9 +2102,10 @@ namespace AOLauncher
             {
                 if (!running) StatusText = T("STATUS · Char detected");
                 AppendLog(F("{0} (ID {1}) is now in the account list. Your saved teams are unchanged.", updated.Name, updated.CharacterId));
-                if (!string.IsNullOrEmpty(updated.PendingGuiTemplateId)) AppendLog(SidebarText.L("A default GUI template is queued. Use Game GUI to apply and relog, or quit normally and let Nexus apply it at the next login.", "Et standard-GUI afventer. Brug Spil-GUI til at anvende og genlogge, eller luk normalt og lad Nexus anvende det ved næste login."));
+                if (!string.IsNullOrEmpty(updated.PendingGuiTemplateId)) AppendLog(AOLauncher.Localization.Texts.Get("Text_A_default_GUI_template_is_queued_6A6E9D6B7EBC"));
             }
             else AppendLog(F("Character {0} logged in as {1}. The name has been updated in the list.", updated.CharacterId, updated.Name));
+            if (!smoke && !storageBlocked) _ = PollPlugins();
         }
 
         internal static bool TryApplyCharacterEvent(string line, LaunchRequest request, LauncherSettings value, out CharacterConfig updated)
@@ -2046,9 +2189,9 @@ namespace AOLauncher
                 AppendLog(T("Checking for updates…"));
                 var release = await AppUpdates.CheckAsync(updateCancellation.Token);
                 if (closing || IsDisposed) return;
-                string message = release.Version <= AppUpdates.CurrentVersion ? T("You are using the latest version.") : F("Version {0} is available.", release.Version.ToString(3));
+                string message = !AppUpdates.IsNewer(release.Version) ? T("You are using the latest version.") : F("Version {0} is available.", release.Version.ToString(3));
                 AppendLog(message); UpdateJournal.Record(message);
-                if (release.Version <= AppUpdates.CurrentVersion) return;
+                if (!AppUpdates.IsNewer(release.Version)) return;
                 availableUpdate = release; updateAvailableLink.Visible = true;
             }
             catch (Exception ex) { if (!closing && !IsDisposed) { string message = F("Could not check for updates: {0}", ex.Message); AppendLog(message); UpdateJournal.Record(message); } }
@@ -2064,7 +2207,8 @@ namespace AOLauncher
         {
             if (logViewer == null || logViewer.IsDisposed)
             {
-                logViewer = new LogViewer();
+                logViewer = new LogViewer { WrapLines = settings.WrapActivityLog };
+                logViewer.WrapLinesChanged = enabled => { settings.WrapActivityLog = enabled; SaveSettings(); };
                 logViewer.ClearLogRequested = ClearActivityLog;
                 logViewer.ReportProblemRequested = () => OpenReportProblem(logViewer, ProblemArea.Other);
                 logViewer.SetLogText(activityLog.ToString());
@@ -2077,6 +2221,7 @@ namespace AOLauncher
         {
             activityLog = new StringBuilder();
             activityLogBytes = 0;
+            logPreview = "";
             log.Clear();
             if (logViewer != null && !logViewer.IsDisposed) logViewer.SetLogText("");
         }
@@ -2104,11 +2249,8 @@ namespace AOLauncher
             }
             else { activityLog.Append(entry); activityLogBytes += entryBytes; }
             // The dashboard is a short preview; the searchable window receives the full retained history.
-            string preview = LogRetention.Tail(entry, 16000);
-            if (log.TextLength + preview.Length > 16000) log.Text = LogRetention.Tail(log.Text + preview, 12000);
-            else log.AppendText(preview);
-            log.SelectionStart = log.TextLength;
-            log.ScrollToCaret();
+            logPreview = logPreview.Length + entry.Length > 16000 ? LogRetention.Tail(logPreview + entry, 12000) : logPreview + entry;
+            LogTone.Show(log, logPreview, 9F, true);
             if (logViewer != null && !logViewer.IsDisposed) logViewer.SetLogText(activityLog.ToString());
         }
 
@@ -2128,6 +2270,7 @@ namespace AOLauncher
                 finally { confirmingWindowAction = false; }
             }
             closing = true;
+            teamRelogCancellation?.Cancel();
             updateCancellation.Cancel();
             stopRequested = true;
             preparationCancellation?.Cancel();

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace AOLauncher
@@ -10,9 +11,14 @@ namespace AOLauncher
         internal static void ApplyIcon(Form form)
         {
             Icon icon;
-            using (var stream = Open("Launcher.ico"))
-            using (var source = new Icon(stream))
-                icon = (Icon)source.Clone();
+            // A window without its icon still works; never let the artwork stop a dialog from opening.
+            try
+            {
+                using (var stream = Open("Launcher.ico"))
+                using (var source = new Icon(stream))
+                    icon = (Icon)source.Clone();
+            }
+            catch (Exception ex) when (ex is ArgumentException || ex is System.ComponentModel.Win32Exception || ex is ExternalException) { return; }
             form.Icon = icon;
             // Each window owns a detached copy, so closing a dialog cannot invalidate another window's icon.
             form.Disposed += (sender, e) => icon.Dispose();

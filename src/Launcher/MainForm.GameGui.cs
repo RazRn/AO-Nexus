@@ -44,15 +44,15 @@ namespace AOLauncher
                 foreach (var target in targets)
                 {
                     if (!settings.Accounts.Contains(target.Account) || (!installationWide && (target.Character == null || !target.Account.Characters.Contains(target.Character))))
-                        throw new IOException(L("The target selection changed. Reopen Game GUI and try again.", "Valget er ændret. Åbn Spil-GUI igen og prøv igen."));
+                        throw new IOException(AOLauncher.Localization.Texts.Get("Text_The_target_selection_changed_Reopen_Game_A27AA84B8C4C"));
                     if (string.IsNullOrWhiteSpace(target.Account.GamePath) || !Path.IsPathRooted(target.Account.GamePath))
-                        throw new IOException(L("Set the affected account's game folder first so running clients can be checked safely.", "Vælg først den berørte kontos spilmappe, så kørende klienter kan kontrolleres sikkert."));
+                        throw new IOException(AOLauncher.Localization.Texts.Get("Text_Set_the_affected_account_s_game_8A2A726F8BE5"));
                 }
                 var inspection = await Task.Run(() => GuiSessions.Inspect(settings, targets, installationWide));
                 cancellation.Token.ThrowIfCancellationRequested();
                 if (inspection.BlockReason != null) throw new IOException(inspection.BlockReason);
                 var clients = inspection.Clients;
-                if (clients.Any(client => !client.CanCamp)) throw new IOException(L("Some affected clients cannot receive /quit. Close them normally, then try again.", "Nogle berørte klienter kan ikke modtage /quit. Luk dem normalt, og prøv igen."));
+                if (clients.Any(client => !client.CanCamp)) throw new IOException(AOLauncher.Localization.Texts.Get("Text_Some_affected_clients_cannot_receive_quit_183EEF72FA89"));
                 string names = string.Join("\r\n", targets.Select(target => "• " + target.Label).Distinct().Take(20));
                 string question = description + "\r\n\r\n" + names;
                 var captureSource = (owner as GuiManagerDialog)?.CaptureSource;
@@ -64,16 +64,15 @@ namespace AOLauncher
                     question += "\r\n\r\n" + GuiSessions.CaptureNotice(captureSource.Label, sourceRunning);
                 }
                 if (targets.Count > 20) question += "\r\n+ " + (targets.Count - 20);
-                if (installationWide) question += "\r\n\r\n" + L("This skin is shared by accounts using the same installation preferences.", "Dette skin deles af konti med de samme installationsindstillinger.");
+                if (installationWide) question += "\r\n\r\n" + AOLauncher.Localization.Texts.Get("Text_This_skin_is_shared_by_accounts_C0E979E2066C");
                 if (clients.Count > 0)
                 {
-                    if (inspection.ExpandedScope) question += "\r\n\r\n" + L("The Prefs-to-installation mapping could not be verified. For safety this includes all identified running AO clients.", "Forbindelsen mellem Prefs og installation kunne ikke verificeres. Af sikkerhedshensyn medtages alle identificerede AO-klienter.");
-                    question += "\r\n\r\n" + L("Relog these clients to apply the change?", "Log disse klienter ud og ind for at anvende ændringen?") + "\r\n"
+                    if (inspection.ExpandedScope) question += "\r\n\r\n" + AOLauncher.Localization.Texts.Get("Text_The_Prefs_to_installation_mapping_could_619FBAAFCE66");
+                    question += "\r\n\r\n" + AOLauncher.Localization.Texts.Get("Text_Relog_these_clients_to_apply_the_888D824AC786") + "\r\n"
                         + string.Join("\r\n", clients.Select(client => "• " + client.CharacterName)) + "\r\n\r\n"
-                        + L("Nexus sends /quit, waits up to 90 seconds for actual exit, then applies the change and logs these characters back in. Cancelled logout leaves files untouched. Clients are never forcibly closed.",
-                            "Nexus sender /quit, venter op til 90 sekunder på fuld lukning, anvender ændringen og logger disse chars ind igen. Afbrudt logout efterlader filerne uændrede. Klienter tvangslukkes aldrig.");
+                        + AOLauncher.Localization.Texts.Get("Text_Nexus_sends_quit_waits_up_to_7F19FBD86109");
                 }
-                if (NexusMessageBox.Show(owner, question, L("Game GUI", "Spil-GUI"), MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.OK) return false;
+                if (NexusMessageBox.Show(owner, question, AOLauncher.Localization.Texts.Get("Text_Game_GUI_D88D4981981C"), MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.OK) return false;
                 var restartAccounts = settings.Accounts.Where(account => clients.Any(client => string.Equals(client.AccountIdentity, "id:" + account.Id, StringComparison.OrdinalIgnoreCase))).ToList();
                 // Ask before quitting, so cancelling a password prompt never logs out a team.
                 if (restartAccounts.Count > 0 && !EnsurePasswords(restartAccounts, out credentials)) return false;
@@ -82,8 +81,8 @@ namespace AOLauncher
                 try
                 {
                     SetRunning(true);
-                    startButton.Text = L("Updating GUI…", "Opdaterer GUI…");
-                    StatusText = L("STATUS · Updating GUI", "STATUS · Opdaterer GUI");
+                    startButton.Text = AOLauncher.Localization.Texts.Get("Text_Updating_GUI_5967946BEF70");
+                    StatusText = AOLauncher.Localization.Texts.Get("Text_STATUS_Updating_GUI_C769A6EE0557");
                     foreach (var client in clients) handles.Add(GuiSessions.OpenConfirmed(client));
                     foreach (var client in clients)
                     {
@@ -93,39 +92,39 @@ namespace AOLauncher
                     }
                     if (clients.Count > 0)
                     {
-                        AppendLog(L("Waiting for game clients to exit before changing GUI files…", "Venter på at spilklienterne lukker, før GUI-filer ændres…"));
+                        AppendLog(AOLauncher.Localization.Texts.Get("Text_Waiting_for_game_clients_to_exit_283197C171FE"));
                         bool exited = await GuiSessions.WaitForExitAsync(() => handles.All(process => process.HasExited), TimeSpan.FromSeconds(90), cancellation.Token);
-                        if (!exited) throw new IOException(L("Logout did not finish. No GUI files were changed. Some clients may already be closed; start them again when ready.", "Logout blev ikke færdigt. Ingen GUI-filer blev ændret. Nogle klienter kan allerede være lukket; start dem igen, når du er klar."));
+                        if (!exited) throw new IOException(AOLauncher.Localization.Texts.Get("Text_Logout_did_not_finish_No_GUI_82CAC24B8DF6"));
                     }
                     cancellation.Token.ThrowIfCancellationRequested();
                     var recheck = await Task.Run(() => GuiSessions.Inspect(settings, targets, installationWide));
                     cancellation.Token.ThrowIfCancellationRequested();
-                    if (recheck.BlockReason != null || recheck.Clients.Count > 0) throw new IOException(recheck.BlockReason ?? L("An affected client started again. No GUI files were changed.", "En berørt klient er startet igen. Ingen GUI-filer blev ændret."));
+                    if (recheck.BlockReason != null || recheck.Clients.Count > 0) throw new IOException(recheck.BlockReason ?? AOLauncher.Localization.Texts.Get("Text_An_affected_client_started_again_No_C2CC4B4FDC69"));
                     // File engines stage, back up and roll back writes. Cancellation is honoured before
                     // the transaction, never between its writes, to keep recovery deterministic.
                     await Task.Run(action);
                     changed = true;
-                    AppendLog(description + ": " + L("completed.", "færdig."));
+                    AppendLog(description + ": " + AOLauncher.Localization.Texts.Get("Text_completed_E4662723D59F"));
                     if (!closing && !cancellation.IsCancellationRequested && request.Characters.Count > 0)
                     {
-                        AppendLog(L("Restarting the clients that were closed for this GUI change…", "Genstarter de klienter, der blev lukket til GUI-ændringen…"));
+                        AppendLog(AOLauncher.Localization.Texts.Get("Text_Restarting_the_clients_that_were_closed_E0D41A79F626"));
                         SetRunning(false);
                         await RunLaunchRequestAsync(request, restartAccounts, false);
                     }
-                    else if (request.Characters.Count > 0) AppendLog(L("Automatic relog cancelled. Start these characters when ready.", "Automatisk genlogin afbrudt. Start disse chars, når du er klar."));
+                    else if (request.Characters.Count > 0) AppendLog(AOLauncher.Localization.Texts.Get("Text_Automatic_relog_cancelled_Start_these_characters_86D85FAC7197"));
                     return true;
                 }
                 finally { foreach (var character in request.Characters) character.Password = null; }
             }
             catch (OperationCanceledException)
             {
-                AppendLog(L("GUI operation cancelled. Clients already closed stay closed; no forced restart.", "GUI-handling afbrudt. Klienter, der allerede er lukket, forbliver lukket; ingen tvungen genstart.")); return changed;
+                AppendLog(AOLauncher.Localization.Texts.Get("Text_GUI_operation_cancelled_Clients_already_closed_31564D95F87F")); return changed;
             }
             catch (Exception error)
             {
                 DiagnosticJournal.Exception("gui", "GUI operation failed", error);
-                AppendLog(L("GUI operation: ", "GUI-handling: ") + error.Message);
-                if (!closing) NexusMessageBox.Show(owner, error.Message, L("Game GUI", "Spil-GUI"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                AppendLog(AOLauncher.Localization.Texts.Get("Text_GUI_operation_795D7F5C28D9") + error.Message);
+                if (!closing) NexusMessageBox.Show(owner, error.Message, AOLauncher.Localization.Texts.Get("Text_Game_GUI_D88D4981981C"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return changed;
             }
             finally
@@ -167,25 +166,25 @@ namespace AOLauncher
                 .Select(character => new GuiCharacterChoice { Account = account, Character = character, CharacterPath = GuiCharacterPath(account, character), Label = character.Name })).ToList();
             if (targets.Count == 0) return true;
             guiOperationBusy = true; guiCancellation = new CancellationTokenSource(); SetRunning(true);
-            startButton.Text = L("Updating GUI…", "Opdaterer GUI…");
-            StatusText = L("STATUS · Applying queued GUI defaults", "STATUS · Anvender ventende GUI-standarder");
+            startButton.Text = AOLauncher.Localization.Texts.Get("Text_Updating_GUI_5967946BEF70");
+            StatusText = AOLauncher.Localization.Texts.Get("Text_STATUS_Applying_queued_GUI_defaults_62887C86032C");
             try
             {
             foreach (var target in targets)
             {
                 if (closing || guiCancellation.IsCancellationRequested) return false;
                 if (!Directory.Exists(target.CharacterPath))
-                { AppendLog(target.Label + ": " + L("default GUI is queued until its Prefs folder exists after a normal logout.", "standard-GUI afventer en Prefs-mappe efter normalt logout.")); continue; }
+                { AppendLog(target.Label + ": " + AOLauncher.Localization.Texts.Get("Text_default_GUI_is_queued_until_its_A72F0E2D9B5B")); continue; }
                 try
                 {
                     var inspection = await Task.Run(() => GuiSessions.Inspect(settings, new[] { target }, false));
                     if (closing || guiCancellation.IsCancellationRequested) return false;
                     if (inspection.BlockReason != null || inspection.Clients.Count > 0)
-                    { AppendLog(target.Label + ": " + L("default GUI is pending. Close the client normally or apply it in Game GUI.", "standard-GUI afventer. Luk klienten normalt eller anvend den under Spil-GUI.")); continue; }
+                    { AppendLog(target.Label + ": " + AOLauncher.Localization.Texts.Get("Text_default_GUI_is_pending_Close_the_457C5493674F")); continue; }
                     string templateId = target.Character.PendingGuiTemplateId;
                     await Task.Run(() => GuiLayouts.Apply(GuiLayouts.DefaultRoot, templateId, target.CharacterPath));
                     target.Character.PendingGuiTemplateId = null; SaveSettings();
-                    AppendLog(target.Label + ": " + L("default GUI applied; previous files backed up.", "standard-GUI anvendt; tidligere filer sikkerhedskopieret."));
+                    AppendLog(target.Label + ": " + AOLauncher.Localization.Texts.Get("Text_default_GUI_applied_previous_files_backed_0138B02E699A"));
                 }
                 catch (Exception error) { ShowInfo(error.Message); return false; }
             }

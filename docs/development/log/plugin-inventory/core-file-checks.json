@@ -1,0 +1,757 @@
+{
+    "Date":  "2026-10-30",
+    "Method":  "Read-only hashes and CLR reflection-only metadata; no game or plugin entry point executed.",
+    "Limit":  "Direct packaged references are located and hash-checked. Framework references are recorded, not runtime-tested. This does not validate binding redirects, indirect/dynamic dependencies, UI assets or functional compatibility.",
+    "Plugins":  [
+                    {
+                        "PluginId":  "pack:Nexus.Shortcuts",
+                        "Sha256":  "D4577352A6DFD8D6CC11FE5E4737DCAFA6EF6ED321A730035A33F34AECB3C8E1",
+                        "Assembly":  "NexusShortcuts",
+                        "AssemblyVersion":  "1.1.0.0",
+                        "FileCheck":  "Passed",
+                        "StartupCheck":  "Not run",
+                        "GameplayCheck":  "Not run",
+                        "References":  [
+                                           {
+                                               "Name":  "mscorlib",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Core",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Core.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "System",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Common",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Common.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "System.Core",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           }
+                                       ]
+                    },
+                    {
+                        "PluginId":  "pack:Z.SyncManager",
+                        "Sha256":  "4B916A150016E5E3357FCC1ADB3F16A650EC61F003275F8E855378056736667B",
+                        "Assembly":  "SyncManager",
+                        "AssemblyVersion":  "0.9.9.98",
+                        "FileCheck":  "Passed",
+                        "StartupCheck":  "Not run",
+                        "GameplayCheck":  "Not run",
+                        "References":  [
+                                           {
+                                               "Name":  "mscorlib",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           },
+                                           {
+                                               "Name":  "Newtonsoft.Json",
+                                               "RequestedVersion":  "13.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\Plugins\\Z\\Managers\\Newtonsoft.Json.dll",
+                                               "ResolvedVersion":  "13.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Core",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Core.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Common",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Common.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "System",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           },
+                                           {
+                                               "Name":  "System.Core",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           }
+                                       ]
+                    },
+                    {
+                        "PluginId":  "pack:Z.Handler.Adv",
+                        "Sha256":  "52F8B6FCC351975191A3751644F89D11463DE1EDB3C85A685E701ABE3651591D",
+                        "Assembly":  "Handler.Adv",
+                        "AssemblyVersion":  "1.4.0.0",
+                        "FileCheck":  "Passed",
+                        "StartupCheck":  "Not run",
+                        "GameplayCheck":  "Not run",
+                        "References":  [
+                                           {
+                                               "Name":  "mscorlib",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           },
+                                           {
+                                               "Name":  "Handler.Generic",
+                                               "RequestedVersion":  "0.9.9.97",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\Plugins\\Z\\Handlers\\Handler.Generic.dll",
+                                               "ResolvedVersion":  "0.9.9.97"
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Common",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Common.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Core",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Core.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "System.Core",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           }
+                                       ]
+                    },
+                    {
+                        "PluginId":  "pack:Z.Handler.Agent",
+                        "Sha256":  "9AA3C32BDF1A562F91D1D702656EB02073B4425EB8FADA17A81EE6FA6F53E342",
+                        "Assembly":  "Handler.Agent",
+                        "AssemblyVersion":  "1.6.0.0",
+                        "FileCheck":  "Passed",
+                        "StartupCheck":  "Not run",
+                        "GameplayCheck":  "Not run",
+                        "References":  [
+                                           {
+                                               "Name":  "mscorlib",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           },
+                                           {
+                                               "Name":  "Handler.Generic",
+                                               "RequestedVersion":  "0.9.9.97",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\Plugins\\Z\\Handlers\\Handler.Generic.dll",
+                                               "ResolvedVersion":  "0.9.9.97"
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Common",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Common.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Core",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Core.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "System.Core",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           }
+                                       ]
+                    },
+                    {
+                        "PluginId":  "pack:Z.Handler.Crat",
+                        "Sha256":  "CAFE85A93638F53883215D79EE6E99983913C20C13210F3BF99BB152067925F3",
+                        "Assembly":  "Handler.Crat",
+                        "AssemblyVersion":  "1.3.0.0",
+                        "FileCheck":  "Passed",
+                        "StartupCheck":  "Not run",
+                        "GameplayCheck":  "Not run",
+                        "References":  [
+                                           {
+                                               "Name":  "mscorlib",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           },
+                                           {
+                                               "Name":  "Handler.Generic",
+                                               "RequestedVersion":  "0.9.9.97",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\Plugins\\Z\\Handlers\\Handler.Generic.dll",
+                                               "ResolvedVersion":  "0.9.9.97"
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Core",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Core.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Common",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Common.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "System.Core",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           }
+                                       ]
+                    },
+                    {
+                        "PluginId":  "pack:Z.Handler.Doc",
+                        "Sha256":  "C621C89A5BB753BB226C93BBEED70247A1A2DA47B96F1392F507BF892D527868",
+                        "Assembly":  "Handler.Doc",
+                        "AssemblyVersion":  "1.4.0.0",
+                        "FileCheck":  "Passed",
+                        "StartupCheck":  "Not run",
+                        "GameplayCheck":  "Not run",
+                        "References":  [
+                                           {
+                                               "Name":  "mscorlib",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           },
+                                           {
+                                               "Name":  "Handler.Generic",
+                                               "RequestedVersion":  "0.9.9.97",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\Plugins\\Z\\Handlers\\Handler.Generic.dll",
+                                               "ResolvedVersion":  "0.9.9.97"
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Core",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Core.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Common",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Common.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "System.Core",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           }
+                                       ]
+                    },
+                    {
+                        "PluginId":  "pack:Z.Handler.Enf",
+                        "Sha256":  "61053761F29F3FF747E5A18D30D60604115BDEDCC48F784531C60B646E3C2E0A",
+                        "Assembly":  "Handler.Enf",
+                        "AssemblyVersion":  "1.3.0.0",
+                        "FileCheck":  "Passed",
+                        "StartupCheck":  "Not run",
+                        "GameplayCheck":  "Not run",
+                        "References":  [
+                                           {
+                                               "Name":  "mscorlib",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           },
+                                           {
+                                               "Name":  "Handler.Generic",
+                                               "RequestedVersion":  "0.9.9.97",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\Plugins\\Z\\Handlers\\Handler.Generic.dll",
+                                               "ResolvedVersion":  "0.9.9.97"
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Core",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Core.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Common",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Common.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "System.Core",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           }
+                                       ]
+                    },
+                    {
+                        "PluginId":  "pack:Z.Handler.Engi",
+                        "Sha256":  "79FB1F2A5A1C4E265ECAF01623CF3EA5C9B2FEF2A5B791340860948494F687CD",
+                        "Assembly":  "Handler.Engi",
+                        "AssemblyVersion":  "1.3.0.0",
+                        "FileCheck":  "Passed",
+                        "StartupCheck":  "Not run",
+                        "GameplayCheck":  "Not run",
+                        "References":  [
+                                           {
+                                               "Name":  "mscorlib",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           },
+                                           {
+                                               "Name":  "Handler.Generic",
+                                               "RequestedVersion":  "0.9.9.97",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\Plugins\\Z\\Handlers\\Handler.Generic.dll",
+                                               "ResolvedVersion":  "0.9.9.97"
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Common",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Common.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Core",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Core.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "System.Core",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           }
+                                       ]
+                    },
+                    {
+                        "PluginId":  "pack:Z.Handler.Fixer",
+                        "Sha256":  "4878851F2746ABEC8D78953A61932A18DC80F24DE6665A35CF3CFFDD9FF464BB",
+                        "Assembly":  "Handler.Fixer",
+                        "AssemblyVersion":  "1.3.0.0",
+                        "FileCheck":  "Passed",
+                        "StartupCheck":  "Not run",
+                        "GameplayCheck":  "Not run",
+                        "References":  [
+                                           {
+                                               "Name":  "mscorlib",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Common",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Common.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Core",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Core.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "Handler.Generic",
+                                               "RequestedVersion":  "0.9.9.97",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\Plugins\\Z\\Handlers\\Handler.Generic.dll",
+                                               "ResolvedVersion":  "0.9.9.97"
+                                           },
+                                           {
+                                               "Name":  "System.Core",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           }
+                                       ]
+                    },
+                    {
+                        "PluginId":  "pack:Z.Handler.Keeper",
+                        "Sha256":  "1FFD2D7F28D86ECAA9176CC74AC8AB3FD4D593A41F8B40A8A549291C67591385",
+                        "Assembly":  "Handler.Keeper",
+                        "AssemblyVersion":  "1.5.0.0",
+                        "FileCheck":  "Passed",
+                        "StartupCheck":  "Not run",
+                        "GameplayCheck":  "Not run",
+                        "References":  [
+                                           {
+                                               "Name":  "mscorlib",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Common",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Common.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "Handler.Generic",
+                                               "RequestedVersion":  "0.9.9.97",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\Plugins\\Z\\Handlers\\Handler.Generic.dll",
+                                               "ResolvedVersion":  "0.9.9.97"
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Core",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Core.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "System.Core",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           }
+                                       ]
+                    },
+                    {
+                        "PluginId":  "pack:Z.Handler.MA",
+                        "Sha256":  "B5D29E39CAEBF207DD953F660AE2EC10FC5FBED3374CEA78FDA226D579090962",
+                        "Assembly":  "Handler.MA",
+                        "AssemblyVersion":  "1.3.0.0",
+                        "FileCheck":  "Passed",
+                        "StartupCheck":  "Not run",
+                        "GameplayCheck":  "Not run",
+                        "References":  [
+                                           {
+                                               "Name":  "mscorlib",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Common",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Common.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "Handler.Generic",
+                                               "RequestedVersion":  "0.9.9.97",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\Plugins\\Z\\Handlers\\Handler.Generic.dll",
+                                               "ResolvedVersion":  "0.9.9.97"
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Core",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Core.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "System.Core",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           }
+                                       ]
+                    },
+                    {
+                        "PluginId":  "pack:Z.Handler.MP",
+                        "Sha256":  "455C26D27D1ADFF90D2C074F35D98931A5D2113A5C968B5BA7994FB420B3936F",
+                        "Assembly":  "Handler.MP",
+                        "AssemblyVersion":  "1.3.0.0",
+                        "FileCheck":  "Passed",
+                        "StartupCheck":  "Not run",
+                        "GameplayCheck":  "Not run",
+                        "References":  [
+                                           {
+                                               "Name":  "mscorlib",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Common",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Common.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Core",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Core.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "Handler.Generic",
+                                               "RequestedVersion":  "0.9.9.97",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\Plugins\\Z\\Handlers\\Handler.Generic.dll",
+                                               "ResolvedVersion":  "0.9.9.97"
+                                           },
+                                           {
+                                               "Name":  "System.Core",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           }
+                                       ]
+                    },
+                    {
+                        "PluginId":  "pack:Z.Handler.NT",
+                        "Sha256":  "A3FA3335F491CC494681A5E6EA3ECFE20ADA9D683B5A5E872D4C34BC4DF6D57C",
+                        "Assembly":  "Handler.NT",
+                        "AssemblyVersion":  "1.3.0.0",
+                        "FileCheck":  "Passed",
+                        "StartupCheck":  "Not run",
+                        "GameplayCheck":  "Not run",
+                        "References":  [
+                                           {
+                                               "Name":  "mscorlib",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Common",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Common.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Core",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Core.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "Handler.Generic",
+                                               "RequestedVersion":  "0.9.9.97",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\Plugins\\Z\\Handlers\\Handler.Generic.dll",
+                                               "ResolvedVersion":  "0.9.9.97"
+                                           },
+                                           {
+                                               "Name":  "System.Core",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           }
+                                       ]
+                    },
+                    {
+                        "PluginId":  "pack:Z.Handler.Shade",
+                        "Sha256":  "B62EB13C4754634CB1F0DE6CBCDDE65164BB296AC37429C421FC64B0E78BE3DE",
+                        "Assembly":  "Handler.Shade",
+                        "AssemblyVersion":  "1.3.0.0",
+                        "FileCheck":  "Passed",
+                        "StartupCheck":  "Not run",
+                        "GameplayCheck":  "Not run",
+                        "References":  [
+                                           {
+                                               "Name":  "mscorlib",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Common",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Common.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Core",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Core.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "Handler.Generic",
+                                               "RequestedVersion":  "0.9.9.97",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\Plugins\\Z\\Handlers\\Handler.Generic.dll",
+                                               "ResolvedVersion":  "0.9.9.97"
+                                           },
+                                           {
+                                               "Name":  "System.Core",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           },
+                                           {
+                                               "Name":  "System",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           }
+                                       ]
+                    },
+                    {
+                        "PluginId":  "pack:Z.Handler.Soldier",
+                        "Sha256":  "ADFE28963A01E07D1EF743A2324E8B343265622973EE8E0A8B128505D5861680",
+                        "Assembly":  "Handler.Soldier",
+                        "AssemblyVersion":  "1.3.0.0",
+                        "FileCheck":  "Passed",
+                        "StartupCheck":  "Not run",
+                        "GameplayCheck":  "Not run",
+                        "References":  [
+                                           {
+                                               "Name":  "mscorlib",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Common",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Common.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Core",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Core.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "Handler.Generic",
+                                               "RequestedVersion":  "0.9.9.97",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\Plugins\\Z\\Handlers\\Handler.Generic.dll",
+                                               "ResolvedVersion":  "0.9.9.97"
+                                           },
+                                           {
+                                               "Name":  "System.Core",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           }
+                                       ]
+                    },
+                    {
+                        "PluginId":  "pack:Z.Handler.Trader",
+                        "Sha256":  "85E3643528412CA768DF91FC277C8308D6201E963D30B75C49BAF1484ED60A9E",
+                        "Assembly":  "Handler.Trader",
+                        "AssemblyVersion":  "1.3.0.0",
+                        "FileCheck":  "Passed",
+                        "StartupCheck":  "Not run",
+                        "GameplayCheck":  "Not run",
+                        "References":  [
+                                           {
+                                               "Name":  "mscorlib",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Common",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Common.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "AOSharp.Core",
+                                               "RequestedVersion":  "1.0.0.0",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\AOSharp\\AOSharp.Core.dll",
+                                               "ResolvedVersion":  "1.0.0.0"
+                                           },
+                                           {
+                                               "Name":  "Handler.Generic",
+                                               "RequestedVersion":  "0.9.9.97",
+                                               "FrameworkReference":  false,
+                                               "ResolvedFile":  "C:\\Users\\redra\\OneDrive\\Dokumenter\\ChatGPT\\AO#\\AO-Nexus-Local-1.3.0\\merged-source\\runtime\\Local13Pack\\Plugins\\Z\\Handlers\\Handler.Generic.dll",
+                                               "ResolvedVersion":  "0.9.9.97"
+                                           },
+                                           {
+                                               "Name":  "System.Core",
+                                               "RequestedVersion":  "4.0.0.0",
+                                               "FrameworkReference":  true,
+                                               "ResolvedFile":  null,
+                                               "ResolvedVersion":  null
+                                           }
+                                       ]
+                    }
+                ]
+}

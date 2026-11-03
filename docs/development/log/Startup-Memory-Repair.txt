@@ -1,0 +1,60 @@
+Local startup incident, 2026-11-01
+
+Overwhelming exited at 09:36:55 and 09:39:46 local time. Windows reported
+randy31.dll, exception c0000409, offset 003251ef. The matching randy-vk-5.log
+records std::bad_alloc followed by abort, with only 52/55 MB total free
+address space and largest contiguous blocks of 2/3 MB. These are address-space
+exhaustion failures, not evidence that the Enforcer plugin itself crashed.
+
+The classic AnarchyOnline.exe has no IMAGE_FILE_LARGE_ADDRESS_AWARE flag.
+On 64-bit Windows, setting it raises the 32-bit process's address-space limit
+from 2 GB to 4 GB. This is per process, not a promise to fix every allocation
+failure or a requirement to allocate 4 GB of physical memory.
+Reference: https://learn.microsoft.com/en-us/windows/win32/memory/memory-limits-for-windows-releases
+
+Sexologist's PID 51564 failed EasyHook injection three times at 09:39:19,
+09:39:39 and 09:40:00: the native completion routine did not signal its remote
+event. That explains its absent plugins/telemetry. The log does not establish
+why injection failed. Memory pressure is a possibility, not a confirmed cause.
+Later launches loaded Doctor successfully; the six-client session beginning
+at 10:01 is healthy. The memory repair still needs a new live launch to verify.
+
+Repair procedure (private local installation; no game binaries distributed):
+1. Build/deploy the Nexus version accepting the exact LAA executable hash in
+   both FastStartup and AovkGraphics. This preserves the verified fast-start
+   profile and graphics/minimize compatibility checks.
+2. Close all clients using this game directory.
+3. Run build/Set-ClassicClientLargeAddressAware.ps1 -GameDirectory <folder>.
+   -ValidateOnly inspects without writing; -Restore reverses the flag.
+   The script accepts only the exact stock/LAA classic executable, opens it
+   exclusively, makes a verified adjacent backup and changes one byte.
+   It does not patch Anarchy.exe or bypass the official launcher's checks.
+4. Launch through Nexus and verify all six clients remain alive, plugins and
+   telemetry load, and the renderer reports the larger address-space limit.
+   Test ordinary play/zoning too; startup success alone is not soak testing.
+
+Stock SHA256: 370C0670CC9CB46626EF24692376AAF492BB1787BAD8A1125365A6BE4F663862
+LAA SHA256:   60647245852D50F6EEA322F2CB49971C73646E2B6EFA0AAE9F7385CE85AC8424
+Only file offset 270 changes from 02 to 22. An official repair/update may
+restore the stock file. Never apply this repair blindly to a new client build.
+
+Installed recovery, 2026-11-01 10:48 local
+Defender removed the startup.2 AO-VK compatibility DLL during reboot. Do not
+restore it or add exclusions. Explicit Defender scans of the stock renderer,
+stock Rebirth patch and staged Nexus produced no new detections.
+Restored randy31.dll from the verified randy31_orig.dll and version.dll from
+version-stock-rebirth.dll (F392CB4EE8810D933C2A13D0DFEADE79981F39A42CAE65302D312726D0A58301).
+AO-VK is off; its preferences remain intact. Recovery receipt/backups:
+D:\Games\AORebirth-Live\NexusStockRecovery-20261101-104822
+Applied LAA with an adjacent verified executable backup. Installed staged Nexus
+SHA256 D73A39F37AB263402527A69E6AEB747E0BEF841DA9C175A911111F926017D911.
+
+Live verification: Nexus's normal six-character launch at 10:49 completed in
+17.16 seconds of backend timing (first launch after reboot). All six received
+their three-plugin sets and fresh health/nano telemetry, including Doctor and
+Enforcer. All reached normal response time. Auto-minimize reports 6 supported,
+0 skipped with the classic renderer. Read-only VirtualQueryEx measured about
+3.2 GB free per client, with about 2 GB of free address space above 0x80000000.
+No new Defender detections or matching Windows application crashes were found
+during verification. This verifies this startup, not long-session stability;
+the original Doctor injection error is not conclusively explained.

@@ -1,0 +1,54 @@
+Circle formation (experimental) - 2026-11-02
+
+Control Panel > Team > Formation: Circle. The selected leader is at the centre;
+the actual follower count divides the full circumference into equal angles.
+Radius is configurable from 1 to 10 m (default 3 m), persisted separately from
+Follow spacing. World-aligned slots avoid orbiting when the leader turns.
+The circle moves with the leader's position using ordinary movement. Existing
+combat, zoning, roster, line-of-sight, distance, progress and lease checks remain.
+Stop restores the prior SyncManager movement setting. Attack sync is unchanged.
+Older helpers must explicitly advertise CircleSupported before Start is allowed.
+
+Checks: 29 FormationLease, 53 PlayTools, 351 TeamWindow, release build passed.
+Circle geometry checks cover actual follower counts, radius and full-circle slots.
+Installed Nexus: 86E5303CA89D24C29FBE67D0A74696049A7DB7AE1CD4E0DEF52F3721CDE9623C
+Installed Shortcuts: 45836A43D3C2B506CEDCED07C7E6ABBA3CF2997D1A3CE3FB65E2289ADE66D5FE
+Rollback: logs/CircleBuild/rollback.
+
+First live test
+All six reloaded and reported CircleSupported=true, same team, refresh rate 0.
+Circle 3 m began at 19:31:31 UTC. Geek crashed immediately with C0000005, read
+address 0x0000000c, instruction ntdll.dll+40d26. The crash logger's raw stack
+contains mss32/SandyInterface/N3 addresses but is not a reliable symbolic call
+stack and does not establish the cause or exclude the new formation code.
+Free virtual space was approximately 2260 MB with a 2039 MB largest block.
+At 19:31:34 UTC the panel detected unavailable Geek and stopped the other clients;
+their SyncMove values returned to true. Four followers had begun reaching their
+circle positions. This is NOT a successful full-team Circle verification.
+Crash prompt declined (nothing sent externally), Geek restarted alone. The server
+placed him about 70 m away, outside the 60 m formation limit; user asked to regroup.
+Evidence: logs/CircleBuild/Geek-AnarchyCrashLog.txt, Geek-randy-vk.log,
+first-trial-events.jsonl and logs/FormationBuild/circle-*.json.
+
+Second live test
+User returned Geek to the group. He was not yet in the team; a bounded two-minute
+TEAMRESTORE request to Geek and Overwhelming, restricted to the six known members,
+restored the roster before Start. All six reported Ready.
+At 19:40:09 UTC Circle 3 m started. Four followers reached radii 2.74-3.21 m and
+angles approximately 0, 72, -72 and -144 degrees (expected slots). Wazoo reached
+only 1.81 m, at the edge of the planted grass bed. At 19:40:17 UTC his no-progress
+check stopped the whole formation and restored SyncMove=true on all six. No client
+crashed on this attempt. User asked to regroup on open flat ground for another test.
+Evidence: circle-second-active.json; formation-stop reason was
+"Wazoo: Cannot reach leader - no movement progress" (UI uses an em dash).
+
+Open-ground verification
+User moved the complete team away from the grass bed. Circle 3 m then placed all
+five followers In position around stationary Overwhelming. Measured bearings were
+0, 72, 144, -144, -72 degrees; radii 2.64-2.71 m, within the 0.45 m stopping
+tolerance. All six remained responsive and no new crash log was produced.
+Stop was invoked and all six confirmed Active=false, SyncMove=true, Rate=0.
+Circle remains selected at 3 m but stopped. Evidence: circle-open-ground.json,
+circle-open-verified.json, circle-stop-verified.json under logs/FormationBuild.
+This verifies stationary circle placement and Stop on open ground, not moving-route
+or combat endurance. The initial native crash remains unexplained.

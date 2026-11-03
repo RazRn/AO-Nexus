@@ -1,0 +1,10 @@
+{
+  "comment": "Primary plugin assemblies in the AOSharp pack. Dependencies and data files in the same folders are not listed. Mirrors BundledPluginCatalog.cs in the AOSharp fork.",
+  "groups": {
+    "Classic": ["Backstabber", "GraceBot9000", "GraceBot9001", "MissionHelper", "NavGen", "Neko", "Qubit", "StackDetector", "TradeskillLeveler"],
+    "Automatons": ["Automaton.City", "Automaton.DB1", "Automaton.DB2", "Automaton.Inf", "Automaton.KiteHill", "Automaton.Mitaar", "Automaton.Roamba", "Automaton.Vortexx"],
+    "Managers": ["Manager.Assist", "Manager.Attack", "Manager.Bag", "Manager.Follow", "Manager.GMI", "Manager.Help", "Manager.Inventory", "Manager.Loot", "Manager.Mail", "Manager.OST", "Manager.Pet", "Manager.PetHunt", "Manager.POH", "Manager.Raid", "Manager.Research", "Manager.SocialPet", "Manager.Sync"],
+    "Profession handlers": ["ProfessionHandler.Adv", "ProfessionHandler.Agent", "ProfessionHandler.Crat", "ProfessionHandler.Doc", "ProfessionHandler.Enf", "ProfessionHandler.Engi", "ProfessionHandler.Fixer", "ProfessionHandler.Keeper", "ProfessionHandler.MA", "ProfessionHandler.MP", "ProfessionHandler.NT", "ProfessionHandler.Shade", "ProfessionHandler.Soldier", "ProfessionHandler.Trader"],
+    "Utilities": ["Utility.AOIABankManager", "Utility.AutoItemLevel", "Utility.BossLogger", "Utility.Coffee", "Utility.CombineNSplit", "Utility.Cookies", "Utility.CrystalFilledByTheSource", "Utility.DefendTheGrove", "Utility.ICE", "Utility.InventoryPrinter", "Utility.MonsterTracker", "Utility.Pearls", "Utility.Plasma", "Utility.Relay", "Utility.SimpleAutoSeller", "Utility.TradeskillAndSell"]
+  }
+}

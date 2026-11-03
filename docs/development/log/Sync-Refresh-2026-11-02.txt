@@ -1,0 +1,68 @@
+Sync refresh experiment — 2026-11-02
+
+Implementation
+The Control Panel Team header has Event only / 5 Hz / 10 Hz choices behind the
+existing team automation experiment. Event only is the default. The setting persists,
+but the runtime requires a renewed five-second Control Panel lease.
+
+This is a local supplemental state channel for updated Nexus clients, NOT an increased
+AO# multicast rate and not a modified third-party plugin binary. A background timer
+exchanges bounded snapshots through the existing mutex-protected local mailbox.
+One foreground publisher samples current position, rotation and moving/stopped state
+on the game thread. Stop snapshots repeat for two seconds after the transition.
+
+An observer on the existing AOSP movement callback records native receive intervals
+and only arms after a nearby accepted message. Followers require the same sender,
+channel, area, visible player, live process start identity and a fresh monotonic
+timestamp (maximum 750ms). Duplicate, old and pre-ownership frames are rejected.
+Moving snapshots can correct an already moving follower only inside the original
+RunSpeed-based distance limit and within five metres vertically. They cannot restart
+a stopped client. A fresh stopped snapshot performs FullStop only, with no position
+or rotation write, including when outside the correction distance.
+
+Formation, navigation, combat/casting, zoning, disabled SyncMove and foreground manual
+control pause the extra corrections. The original separation guard remains installed.
+Original SyncManager packets and attack/target callbacks are unchanged. Native LAN
+packets still have the third-party plugin's existing behavior; this does not claim
+to make those packets fresh, ordered or reliably delivered.
+
+Diagnostics
+sync-refresh journal records every five seconds include native send/receive counts,
+last/max gaps while moving, ages since native events, published/applied/stop/rejection
+counts, snapshot age/distance and I/O errors. Switching rate resets the trial counters.
+Correlate these records with monitor-poll movement, game update gaps and local reply.
+Idle event gaps and independently sampled character positions are not server latency.
+Nominal rates are targets; a stalled game thread cannot produce/apply fresh updates.
+
+Validation
+Release build passed. Verify-SyncRefresh: 22 policy + 15 actual adapter fixture checks.
+Verify-FormationLease: 17 passed. Verify-PlayTools: 53 passed. Verify-TeamWindow: 348 passed.
+Fixtures verify that distant Stop does not reposition, stale/wrong-owner/zone/channel
+state is rejected, a stopped follower is not restarted, formation pauses refresh,
+foreground control is respected, and lease expiry disables the experiment.
+
+Installed Nexus SHA256:
+19E5D95D872C69E2928ADC4B6AAE5DB406FFBEB996BCF680691289FA9E774D66
+Installed Shortcuts SHA256:
+6F0568486B575062330EFA84DB10E6DE62974380305E4008041E2F52D16A0A13
+
+Live setup
+All six reloaded. Overwhelming's Shortcuts pipe initially failed to appear despite
+normal profession plugins loading; resending his unchanged plugin list through the
+existing host recovered it without another game relog. The cause is not established.
+All six subsequently reported the new SyncRefresh state and a matching team roster.
+Gather verified on the updated build, then Stop restored SyncMove=true on all six.
+Event-only and 5 Hz routes completed by the user. The baseline ended with all six
+together, but separation guard stops were recorded during the run. Native event
+gaps are not measurements of network latency or packet loss.
+At 5 Hz the source published 126 frames; followers applied 88-111 each, recorded
+2-3 supplemental stops each, and reported zero mailbox I/O errors. Wazoo and Fatale
+nevertheless ended about 12.8 m from the leader. This trial does not demonstrate
+improved sync. Extra updates were disabled on all six; 10 Hz was not attempted.
+Gather subsequently brought all five followers within 0.8 m; Stop restored sync.
+These were manual routes with different idle periods, not a controlled benchmark.
+Evidence snapshots: sync-baseline-finished, sync-5hz-finished, sync-off-after-trial,
+circle-regrouped. Trial journals are saved in logs/SyncRefreshBuild.
+
+Evidence: logs/SyncRefreshBuild and logs/FormationBuild/sync-*.json.
+Rollback: logs/SyncRefreshBuild/rollback. Defender settings were not changed.

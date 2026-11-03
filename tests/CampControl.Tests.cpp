@@ -5,6 +5,7 @@
 bool CreateCharacterMode = false;
 typedef unsigned int (__cdecl* Client_GetCharID_t)();
 bool TryCreatedCharacterName(const wchar_t*, std::wstring&) { return false; }
+namespace NexusFastStartup { bool Active() { return false; } bool Complete() { return false; } }
 #include "../src/Backend/LoginHandler/CampControl.h"
 static unsigned int characterId = 17;
 static bool zoning = false, allowCamp = true, engineAvailable = true;
@@ -34,6 +35,9 @@ int main(int argc, char** argv)
         campRequest = CreateEventW(nullptr, FALSE, FALSE, (prefix + L"request").c_str());
         campAccepted = CreateEventW(nullptr, FALSE, FALSE, (prefix + L"accepted").c_str());
         campRejected = CreateEventW(nullptr, FALSE, FALSE, (prefix + L"rejected").c_str());
+        pluginsRequest = CreateEventW(nullptr, FALSE, FALSE, (prefix + L"plugins.request").c_str());
+        pluginsReady = CreateEventW(nullptr, FALSE, FALSE, (prefix + L"plugins.ready").c_str());
+        pluginsWaiting = CreateEventW(nullptr, FALSE, FALSE, (prefix + L"plugins.waiting").c_str());
         WNDCLASSW wc = {}; wc.lpfnWndProc = DefWindowProcW; wc.lpszClassName = L"NexusCampFixture";
         RegisterClassW(&wc);
         HWND window = CreateWindowW(wc.lpszClassName, L"Anarchy Online - Fixture", WS_OVERLAPPEDWINDOW, 0, 0, 260, 100, nullptr, nullptr, nullptr, nullptr);
@@ -54,6 +58,15 @@ int main(int argc, char** argv)
     campRequest = CreateEventW(nullptr, FALSE, FALSE, nullptr);
     campAccepted = CreateEventW(nullptr, FALSE, FALSE, nullptr);
     campRejected = CreateEventW(nullptr, FALSE, FALSE, nullptr);
+    pluginsRequest = CreateEventW(nullptr, FALSE, FALSE, nullptr);
+    pluginsReady = CreateEventW(nullptr, FALSE, FALSE, nullptr);
+    pluginsWaiting = CreateEventW(nullptr, FALSE, FALSE, nullptr);
+    int beforeReady = calls;
+    SetEvent(pluginsRequest); CampTimer(nullptr, 0, 0, 0);
+    Check(WaitForSingleObject(pluginsReady, 0) == WAIT_OBJECT_0 && calls == beforeReady, "readiness does not camp");
+    zoning = true; SetEvent(pluginsRequest); CampTimer(nullptr, 0, 0, 0);
+    Check(WaitForSingleObject(pluginsWaiting, 0) == WAIT_OBJECT_0 && calls == beforeReady, "zoning readiness waits without camp");
+    zoning = false;
     WNDCLASSW wc = {}; wc.lpfnWndProc = DefWindowProcW; wc.lpszClassName = L"NexusCampFixture";
     RegisterClassW(&wc);
     HWND window = CreateWindowW(wc.lpszClassName, L"inert test window", 0, 0, 0, 1, 1, HWND_MESSAGE, nullptr, nullptr, nullptr);
@@ -72,5 +85,6 @@ int main(int argc, char** argv)
     Check(calls == before && WaitForSingleObject(campRejected, 0) == WAIT_OBJECT_0, "repeats must not reset countdown");
     KillTimer(window, 0xA04E1234); DestroyWindow(window);
     CloseHandle(campRequest); CloseHandle(campAccepted); CloseHandle(campRejected);
+    CloseHandle(pluginsRequest); CloseHandle(pluginsReady); CloseHandle(pluginsWaiting);
     std::cout << "PASS: native camp guards, normal logout status, UI-thread timer dispatch, duplicate suppression (8 checks)." << std::endl;
 }

@@ -34,7 +34,7 @@ function Preview($form,$name){
  }finally{$bitmap.Dispose()}
 }
 $frequency=[Diagnostics.Stopwatch]::Frequency;$now=[Diagnostics.Stopwatch]::GetTimestamp()
-$pulse=New ClientPulse;$pulse.Version=1;$pulse.Active=$true;$pulse.PublishedQpc=$now;$pulse.LastUpdateQpc=$now
+$pulse=New ClientPulse;$pulse.Version=2;$pulse.Active=$true;$pulse.PublishedQpc=$now;$pulse.LastUpdateQpc=$now
 $ping=New ClientPing;$ping.PublishedQpc=$now;$ping.LastReplyQpc=$now;$ping.LastMs=12
 function State($p,$r,$time=$now,$first=$now){(Static ClientMonitor Evaluate @($p,$r,[long]$time,[long]$first)).ToString()}
 Assert ((State $null $null) -eq 'Unmeasured') 'Missing plugin must never be healthy'
@@ -244,7 +244,7 @@ $temp=Join-Path ([IO.Path]::GetTempPath()) ('NexusMonitorTest-'+[Guid]::NewGuid(
 try {
  [IO.File]::WriteAllText((Join-Path $temp 'fixture.json'),'{"Client":"SECRET_NAME","ProcessId":70,"UnknownCredentials":"SECRET_PASSWORD","Samples":[]}')
  $zip=Join-Path $temp 'report.zip'
- Static ClientReport Export @($zip,'{"Clients":[]}',$evidence,$temp)|Out-Null
+ Static ClientReport Export @($zip,'{"Clients":[]}',$evidence,$temp,$null,$null,$null)|Out-Null
  $archive=[IO.Compression.ZipFile]::OpenRead($zip)
  try {
   Assert ($archive.Entries.Count -eq 5) 'ZIP has only README, summary, snapshot, Windows evidence and allowlisted exit report'

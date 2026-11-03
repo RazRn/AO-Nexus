@@ -1,0 +1,64 @@
+CONTROL PANEL COMBAT REPORT SCRIPTS
+
+Control Panel -> Export scripts... captures Team, All and NPC statistics.
+Choose the installation's scripts destination and Save scripts. The exporter
+discovers Prefs for running installations before offering saved account folders,
+which can still refer to another installation. Choose Prefs... is the fallback.
+Scripts live beside Prefs and are shared by characters in that installation.
+No plugin reload, client restart or extra AO# plugin is needed.
+
+In game:
+  /nexus                  local command list
+  /nexus-team             local list of Team reports
+  /nexus-all              local list of nearby player reports
+  /nexus-npc              local list of NPC reports
+
+Post commands (use the active chat channel, do not change it):
+  /nexus-team-dmg          total damage, includes nano and pets
+  /nexus-team-nano         nano damage
+  /nexus-team-pets         pet damage with individual named pets under owners
+  /nexus-team-healing      healing
+  /nexus-team-xp           XP
+  /nexus-team-axp          alien XP
+  /nexus-team-sk           shadowknowledge
+  /nexus-all-dmg           nearby player damage, including tracked pets
+  /nexus-all-nano          nearby nano damage
+  /nexus-all-pets          nearby named pets grouped under owners
+  /nexus-all-healing       nearby healing
+  /nexus-npc-dealt         damage dealt by monsters
+  /nexus-npc-taken         damage dealt TO monsters
+  /nexus-npc-nano          monster nano damage
+  /nexus-npc-healing       monster healing
+
+Append -preview to any post command for private /text output, for example:
+  /nexus-team-dmg-preview
+
+Each post contains self-contained clickable text:// pages. Recipients do not
+need Nexus, AO#, local scripts or an external website. Cyan identifies the
+report, gold the row total, green the ranked owners and violet their pets.
+Totals are ranked descending. Rates show /s, /m and /h. A snapshot timestamp,
+measurement coverage and scope distinguish the saved report from live data.
+Names cannot inject markup, chat commands or AO script substitutions.
+
+Whole rows are paginated within 1000 bytes per chat link. At most five links
+are posted by one command, with two seconds between links. Larger reports get
+continuation commands such as /nexus-all-pets-2, listed in /nexus and the export
+dialog. Numbered page labels identify the page within the complete report.
+This is multiple independent clickable pages, not a website with nested links.
+
+Refresh snapshot then Save scripts after a fight. Opening the export dialog
+also captures a new snapshot. Exporting does not post or reset anything.
+Existing scripts with the generated names are backed up through the regular
+Nexus Scripts / Macros backup system; a failed batch write rolls back.
+Earlier continuation files may remain on disk, timestamped with their original
+snapshot; /nexus lists only the newly saved report suite.
+
+Team follows the selected Control Panel character/preset filter. All and NPC
+use their selected single observer, include nearby observed events only and
+reset on zoning. XP/AXP/SK require native local measurements and are therefore
+only offered for Team. Unavailable measurements are labelled, not zero-filled.
+Row totals and the independently reset Control Panel total are labelled
+separately. DMG/m in the Panel total is the average across measured owners,
+matching Control Panel. Individual rates use the existing session clocks.
+Pet rows are breakdowns, never added again to the owner/team total. Same-name
+pet respawns under one owner are combined, with no pet IDs in the report.

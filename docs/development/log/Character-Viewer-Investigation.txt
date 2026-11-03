@@ -1,0 +1,89 @@
+Character-selection viewer reuse investigation — 2026-11-01
+
+Scope: investigate reuse of AO's existing character-selection appearance/viewer.
+No game/Nexus binaries, plugin configuration or running game processes changed.
+The separate glTF renderer prototype is not the chosen production approach.
+
+Confirmed on the local AORebirth-AOVK-Test installation:
+
+1. The client writes Prefs/CharacterViewer.xml below its Funcom LocalAppData
+   installation directory. This is appearance metadata, not a rendered image.
+   It has entries for all six requested characters: 166, 170, 171, 172, 173, 174.
+   Each contains ID, Time, MeshID, HeadID, Breed, Sex, Fatness, Side,
+   five Cloth layers, and two or three attached Mesh records.
+   Cloth records include BodyPart, TextureID, EnvTextureId, Priority, AlphaMode.
+   Mesh records include Attractor, Flags, MeshID, TextureID.
+   The final records inspected had timestamps between 11:16 and 11:38 UTC Nov 1.
+   Do not label these as live/current gear without validating cache freshness.
+
+2. GUI.dll exports CharacterViewerModule_c::LoadCache, SaveCache, UpdateCache,
+   GetData and GetList, plus CharacterViewer_c constructor, Update, Show, Hide,
+   GetVisualCATMesh and SlotProcessFrame.
+   CharacterViewer_c::Update calls CharacterViewerModule_c::GetData and then
+   builds a VisualCATMesh through the DisplaySystem pipeline.
+   GetVisualCATMesh returns an internal mesh pointer (GUI.dll RVA 0x574E).
+   It is not an HWND, image buffer, or standalone UI control.
+   SlotProcessFrame updates the visual object through a frame-time dependency.
+   SlotConfigurationSaved calls the load/update/save cache path in this build.
+   These findings come from static inspection; none of these native methods
+   have been called from Nexus or from a new injected plugin.
+
+3. GUI imports VisualCATMesh SetMesh, SetSkinData, SetShape, SetCATTexture,
+   SetAnimation and UpdateRandyAttractors, plus visual cameras. Thus a native
+   appearance assembly path exists. Reuse can avoid reimplementing equipment
+   appearance rules, but rendering into an independent Nexus target remains
+   unverified. No standalone portrait-export method was found in this scope.
+
+4. Existing AOSharp CharacterSelect only exposes character identity/selection.
+   The current AOSharp unmanaged wrappers do not expose CharacterViewer_c.
+   CharacterSelectionWindow.xml describes the selection controls/list, while
+   native GUI/DisplaySystem code owns the character visual.
+
+Consequences:
+
+- The user's proposed reuse has a real basis. Our earlier claim that obtaining
+  the appearance required reconstructing equipped gear was too broad.
+- Read the installation-specific character cache keyed by character ID, rather
+  than trying to infer gear from inventory or repeatedly capturing the game.
+- Reusing appearance data and reusing the actual native renderer are separate
+  steps. The latter still needs a proven offscreen rendering/capture path.
+- Do not call hidden viewer constructors in the live six-client session just
+  because they are exported. They depend on game runtime/graphics lifecycle.
+- A bounded next experiment is a separate test client using its native viewer
+  to draw one cached character into a small target once, with cleanup verified.
+  If that succeeds, cache the resulting portrait; consider local hover clips
+  only after correctness and performance are measured.
+- Do not resume a separate full asset renderer as an implicit substitute.
+- No performance improvement over the existing DWM thumbnails has been measured.
+- A cached still portrait does not require continued client rendering; a live
+  native animation might, so minimize behaviour must be tested before shipping.
+
+Reproducible read-only cache inspection:
+  tools/Inspect-CharacterViewerCache.ps1 -CachePath <Prefs/CharacterViewer.xml>
+  Optional: -CharacterId 166,170,171,172,173,174
+
+Existing prototype assets and third-party exporter remain local development
+artifacts; this investigation does not grant redistribution rights.
+
+Runtime probe, 2026-11-01 (no successful portrait yet):
+- Created .tools/research/AO-Portrait-Probe as a separate game directory with
+  copied runtime/configuration files and junctions to cd_image/locales/randy-vk.
+  Setupf is copied. This is a private research fixture, not a distribution.
+- Launched only this copy with IA16777343 IP1 DU (127.0.0.1:1), without account
+  credentials, login injection or plugins. No live client was logged out.
+- AO-VK initialization logged DirectDrawEnumerateExA, but the process did not
+  expose a usable login window. Repeating with the copied stock randy31_orig.dll
+  and version-stock-rebirth.dll also did not yield a visible login window.
+  These launches used WindowStyle Hidden; the absence of a visible window is
+  NOT proof that standalone rendering is impossible or of a renderer defect.
+  Further diagnosis must distinguish a hidden startup dialog from initialization
+  failing. No native viewer constructor or new hook was invoked.
+- All three probe processes were stopped after inspection, with exact executable
+  path checks. The later inventory contained no running game clients; no stop
+  operation targeted the user's game directory. Defender remained enabled; no
+  new detection appeared in the check covering the probe.
+- A follow-up launch of the copied Anarchy.exe through computer-use also failed
+  to expose a targetable window. No new native rendering integration was run.
+- Character showcase is NOT implemented in TeamWindow or in the deployed exe.
+  The deployed card changes only remove the nano-attempt and activity-history
+  text rows. There is no saved native portrait and no /rocky integration.

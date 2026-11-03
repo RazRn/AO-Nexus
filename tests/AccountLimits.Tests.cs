@@ -24,6 +24,8 @@ namespace NexusEngine
             internal string StatusPipe { get; set; }
             internal bool Quiet { get; set; }
             internal bool FastStartup { get; set; }
+            internal bool AllowExperimentalAovk { get; set; }
+            internal bool StartMinimized { get; set; }
             internal string LoginGate { get; set; }
         }
         internal static Process SpawnAOProcess(Options options, LaunchTarget target)
@@ -40,6 +42,27 @@ namespace NexusEngine
         public static int Main(string[] args)
         {
             gamePath = args.Single();
+            Pass(PresetLaunchWindows.SupportsMinimizedStart(StartupProfile.AOVKVerified),"Verified AO-VK supports minimized-start trial");
+            Pass(PresetLaunchWindows.SupportsMinimizedStart(StartupProfile.Stock),"Classic client supports minimized-start trial");
+            Pass(!PresetLaunchWindows.SupportsMinimizedStart(StartupProfile.None) && !PresetLaunchWindows.SupportsMinimizedStart(StartupProfile.AOVK),"Unknown and experimental renderers keep ordinary startup");
+            Pass(PresetLaunchWindows.MayRestoreLeader(2,10,1,new[]{1,2,3}),"Follower activation may return focus to leader");
+            Pass(!PresetLaunchWindows.MayRestoreLeader(77,10,1,new[]{1,2,3}),"Other applications are never displaced");
+            Pass(!PresetLaunchWindows.MayRestoreLeader(1,10,1,new[]{1,2,3}),"Already-active leader is not reactivated");
+            Pass(!PresetLaunchWindows.MayRestoreLeader(0,10,1,new[]{1,2,3}),"Missing foreground is left alone");
+            Pass(!PresetLaunchWindows.ShouldSuspendFocus(false,2,10,1,new[]{1,2,3}),"Follower activation keeps leader preference regardless of mouse input");
+            Pass(PresetLaunchWindows.ShouldSuspendFocus(false,77,10,1,new[]{1,2,3}),"Another application pauses focus management");
+            Pass(PresetLaunchWindows.ShouldSuspendFocus(true,2,10,1,new[]{1,2,3}),"Follower autoactivation cannot resume management after leaving Nexus");
+            Pass(!PresetLaunchWindows.ShouldSuspendFocus(true,1,10,1,new[]{1,2,3}),"Returning to leader resumes startup behavior");
+            Pass(!PresetLaunchWindows.ShouldSuspendFocus(true,10,10,1,new[]{1,2,3}),"Returning to Nexus resumes startup behavior");
+            Pass(PresetLaunchWindows.ShouldSuspendFocus(true,0,10,1,new[]{1,2,3}),"Transient missing foreground preserves pause");
+            Pass(!PresetLaunchWindows.ShouldSuspendFocus(false,0,10,1,new[]{1,2,3}),"Transient missing foreground does not cancel startup behavior");
+            var ordered = new[] { Char("alpha",3),Char("beta",2),Char("alpha",1) };
+            var sequence = new List<int>();
+            int orderedResult=LaunchQueue.RunAccountQueuesAsync(ordered,async entry=>{sequence.Add(entry.CharacterId);await Task.Delay(2);return true;},true).GetAwaiter().GetResult();
+            Pass(orderedResult==0 && sequence.SequenceEqual(new[]{3,2,1}),"Ordered preset starts preserve cross-account order");
+            sequence.Clear();
+            orderedResult=LaunchQueue.RunAccountQueuesAsync(ordered,entry=>{sequence.Add(entry.CharacterId);return Task.FromResult(false);},true).GetAwaiter().GetResult();
+            Pass(orderedResult==2 && sequence.SequenceEqual(new[]{3}),"Failed ordered startup stops later starts");
             Texts.SetLanguage("en");
             Pass(!FastStartup.IsSupported(gamePath), "Empty or unknown client files never enable private startup hooks");
             Pass(!FastStartup.IsSupported(Path.Combine(gamePath, "missing")), "Missing client directories safely fall back to normal loading");
@@ -296,6 +319,9 @@ namespace NexusEngine
         {
             var request = new LaunchRequest { FastStartup = true };
             var rebirth = LaunchTarget.Create(gamePath, "2.24.96.30", 7500);
+            Pass(LaunchQueue.PreloadLimit(request, StartupProfile.AOVK) == Math.Min(2, request.MaxConcurrentPreloads), "AO-VK preload cap is two");
+            Pass(LaunchQueue.PreloadLimit(request, StartupProfile.Stock) == request.MaxConcurrentPreloads, "Stock retains preload preference");
+            Pass(LaunchQueue.PreloadLimit(request, StartupProfile.AOVKVerified) == request.MaxConcurrentPreloads, "Verified repaired AO-VK retains the bounded six-client preload preference");
             Pass(LaunchQueue.CanPipeline(request, rebirth, true), "Verified Rebirth client enables acceptance pipeline");
             Pass(!LaunchQueue.CanPipeline(request, rebirth, false), "Unknown client retains serial queue");
             Pass(!LaunchQueue.CanPipeline(request, LaunchTarget.Create(gamePath, "37.18.192.41", 7500), true), "Funcom never inherits Rebirth admission assumptions");

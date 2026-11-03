@@ -1,0 +1,624 @@
+{
+ "comment": "Z suite (gitlab.com/Zzzzzzzzzzzzzzzzzzzzzz), built from source by build/build_z_suite.py. Commands and settings commands are read from the source.",
+ "Plugins": [
+  {
+   "Id": "Z.AttackBuddy",
+   "Name": "AttackBuddy",
+   "Group": "Bots",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Buddies/AttackBuddy.dll",
+   "Commands": [
+    "attackbuddy",
+    "buddy"
+   ],
+   "Settings": "attackbuddy",
+   "About": "Attacks mobs that attack the team or its helpers."
+  },
+  {
+   "Id": "Z.BSBuddy",
+   "Name": "BSBuddy",
+   "Group": "Bots",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Buddies/BSBuddy.dll",
+   "Commands": [
+    "bsbuddy",
+    "buddy",
+    "rep"
+   ],
+   "Settings": "bsbuddy",
+   "About": "Battlestation: caps points."
+  },
+  {
+   "Id": "Z.CityBuddy",
+   "Name": "CityBuddy",
+   "Group": "Bots",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Buddies/CityBuddy.dll",
+   "Commands": [
+    "buddy",
+    "citybuddy"
+   ],
+   "Settings": "citybuddy",
+   "About": "City raids: leader starts, the team fights."
+  },
+  {
+   "Id": "Z.DefendBuddy",
+   "Name": "DefendBuddy",
+   "Group": "Bots",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Buddies/DefendBuddy.dll",
+   "Commands": [
+    "buddy",
+    "defendbuddy"
+   ],
+   "Settings": "defendbuddy",
+   "About": "Holds a spot and fights what comes."
+  },
+  {
+   "Id": "Z.InfBuddy",
+   "Name": "InfBuddy",
+   "Group": "Bots",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Buddies/InfBuddy.dll",
+   "Commands": [
+    "buddy",
+    "infbuddy"
+   ],
+   "Settings": "infbuddy",
+   "About": "Runs Inferno missions with the team."
+  },
+  {
+   "Id": "Z.KHBuddy",
+   "Name": "KHBuddy",
+   "Group": "Bots",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Buddies/KHBuddy.dll",
+   "Commands": [
+    "buddy",
+    "khbuddy"
+   ],
+   "Settings": "khbuddy",
+   "About": "Kite Hill pulling (enforcer pulls, nukers kill)."
+  },
+  {
+   "Id": "Z.MitaarBuddy",
+   "Name": "MitaarBuddy",
+   "Group": "Bots",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Buddies/MitaarBuddy.dll",
+   "Commands": [
+    "buddy",
+    "mitaarbuddy"
+   ],
+   "Settings": "mitaarbuddy",
+   "About": "Runs Mitaar Hideout."
+  },
+  {
+   "Id": "Z.OSTBuddy",
+   "Name": "OSTBuddy",
+   "Group": "Bots",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Buddies/OSTBuddy.dll",
+   "Commands": [
+    "buddy",
+    "ostbuddy"
+   ],
+   "Settings": "ostbuddy",
+   "About": "Waypoint pulling with an enforcer (Mongo)."
+  },
+  {
+   "Id": "Z.RoamBuddy",
+   "Name": "RoamBuddy",
+   "Group": "Bots",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Buddies/RoamBuddy.dll",
+   "Commands": [
+    "buddy",
+    "roambuddy"
+   ],
+   "Settings": "roambuddy",
+   "About": "Follows saved waypoints, fights and loots."
+  },
+  {
+   "Id": "Z.S13Buddy",
+   "Name": "S13Buddy",
+   "Group": "Bots",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Buddies/S13Buddy.dll",
+   "Commands": [
+    "buddy",
+    "s13buddy"
+   ],
+   "Settings": "s13buddy",
+   "About": "Runs Sector 13 with the team."
+  },
+  {
+   "Id": "Z.TemplateBuddy",
+   "Name": "TemplateBuddy",
+   "Group": "Bots",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Buddies/TemplateBuddy.dll",
+   "Commands": [
+    "buddy",
+    "templatebuddy"
+   ],
+   "Settings": "templatebuddy",
+   "About": "Template for new bots."
+  },
+  {
+   "Id": "Z.VortBuddy",
+   "Name": "VortBuddy",
+   "Group": "Bots",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Buddies/VortBuddy.dll",
+   "Commands": [
+    "buddy",
+    "vortbuddy"
+   ],
+   "Settings": "vortbuddy",
+   "About": "Runs Vortexx."
+  },
+  {
+   "Id": "Z.Handler.Adv",
+   "Name": "Adv handler",
+   "Group": "Profession handlers",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Handlers/Handler.Adv.dll",
+   "Commands": [
+    "disbandall",
+    "handler",
+    "handlerchannel"
+   ],
+   "Settings": "handler"
+  },
+  {
+   "Id": "Z.Handler.Agent",
+   "Name": "Agent handler",
+   "Group": "Profession handlers",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Handlers/Handler.Agent.dll",
+   "Commands": [
+    "disbandall",
+    "handler",
+    "handlerchannel"
+   ],
+   "Settings": "handler"
+  },
+  {
+   "Id": "Z.Handler.Crat",
+   "Name": "Crat handler",
+   "Group": "Profession handlers",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Handlers/Handler.Crat.dll",
+   "Commands": [
+    "disbandall",
+    "handler",
+    "handlerchannel"
+   ],
+   "Settings": "handler"
+  },
+  {
+   "Id": "Z.Handler.Doc",
+   "Name": "Doc handler",
+   "Group": "Profession handlers",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Handlers/Handler.Doc.dll",
+   "Commands": [
+    "disbandall",
+    "handler",
+    "handlerchannel"
+   ],
+   "Settings": "handler"
+  },
+  {
+   "Id": "Z.Handler.Enf",
+   "Name": "Enf handler",
+   "Group": "Profession handlers",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Handlers/Handler.Enf.dll",
+   "Commands": [
+    "disbandall",
+    "handler",
+    "handlerchannel"
+   ],
+   "Settings": "handler"
+  },
+  {
+   "Id": "Z.Handler.Engi",
+   "Name": "Engi handler",
+   "Group": "Profession handlers",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Handlers/Handler.Engi.dll",
+   "Commands": [
+    "disbandall",
+    "handler",
+    "handlerchannel"
+   ],
+   "Settings": "handler"
+  },
+  {
+   "Id": "Z.Handler.Fixer",
+   "Name": "Fixer handler",
+   "Group": "Profession handlers",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Handlers/Handler.Fixer.dll",
+   "Commands": [
+    "disbandall",
+    "handler",
+    "handlerchannel"
+   ],
+   "Settings": "handler"
+  },
+  {
+   "Id": "Z.Handler.Keeper",
+   "Name": "Keeper handler",
+   "Group": "Profession handlers",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Handlers/Handler.Keeper.dll",
+   "Commands": [
+    "disbandall",
+    "handler",
+    "handlerchannel"
+   ],
+   "Settings": "handler"
+  },
+  {
+   "Id": "Z.Handler.MA",
+   "Name": "MA handler",
+   "Group": "Profession handlers",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Handlers/Handler.MA.dll",
+   "Commands": [
+    "disbandall",
+    "handler",
+    "handlerchannel"
+   ],
+   "Settings": "handler"
+  },
+  {
+   "Id": "Z.Handler.MP",
+   "Name": "MP handler",
+   "Group": "Profession handlers",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Handlers/Handler.MP.dll",
+   "Commands": [
+    "disbandall",
+    "handler",
+    "handlerchannel"
+   ],
+   "Settings": "handler"
+  },
+  {
+   "Id": "Z.Handler.NT",
+   "Name": "NT handler",
+   "Group": "Profession handlers",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Handlers/Handler.NT.dll",
+   "Commands": [
+    "disbandall",
+    "handler",
+    "handlerchannel"
+   ],
+   "Settings": "handler"
+  },
+  {
+   "Id": "Z.Handler.Shade",
+   "Name": "Shade handler",
+   "Group": "Profession handlers",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Handlers/Handler.Shade.dll",
+   "Commands": [
+    "disbandall",
+    "handler",
+    "handlerchannel"
+   ],
+   "Settings": "handler"
+  },
+  {
+   "Id": "Z.Handler.Soldier",
+   "Name": "Soldier handler",
+   "Group": "Profession handlers",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Handlers/Handler.Soldier.dll",
+   "Commands": [
+    "disbandall",
+    "handler",
+    "handlerchannel"
+   ],
+   "Settings": "handler"
+  },
+  {
+   "Id": "Z.Handler.Trader",
+   "Name": "Trader handler",
+   "Group": "Profession handlers",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Handlers/Handler.Trader.dll",
+   "Commands": [
+    "disbandall",
+    "handler",
+    "handlerchannel"
+   ],
+   "Settings": "handler"
+  },
+  {
+   "Id": "Z.AssistManager",
+   "Name": "AssistManager",
+   "Group": "Managers",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Managers/AssistManager.dll",
+   "Commands": [
+    "assistmanager"
+   ],
+   "Settings": "assistmanager",
+   "About": "Assists a chosen player."
+  },
+  {
+   "Id": "Z.BagManager",
+   "Name": "BagManager",
+   "Group": "Managers",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Managers/BagManager.dll",
+   "Commands": [
+    "bagmanager",
+    "manager"
+   ],
+   "Settings": "bagmanager",
+   "About": "Sorts items into bags."
+  },
+  {
+   "Id": "Z.GMIManager",
+   "Name": "GMIManager",
+   "Group": "Managers",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Managers/GMIManager.dll",
+   "Commands": [
+    "gmi",
+    "gmimanager"
+   ],
+   "Settings": "gmimanager",
+   "Note": "Withdraws GMI credits and adjusts your buy orders as set in its settings."
+  },
+  {
+   "Id": "Z.HelpManager",
+   "Name": "HelpManager",
+   "Group": "Managers",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Managers/HelpManager.dll",
+   "Commands": [
+    "allclose",
+    "autosit",
+    "bags",
+    "helpmanager",
+    "prof",
+    "rebuff",
+    "synctarget"
+   ],
+   "Settings": "helpmanager",
+   "About": "Team shortcuts: /form, /disband, /rebuff, /allfollow."
+  },
+  {
+   "Id": "Z.LootManager",
+   "Name": "LootManager",
+   "Group": "Managers",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Managers/LootManager.dll",
+   "Commands": [
+    "lootmanager"
+   ],
+   "Settings": "lootmanager",
+   "About": "Loots by rules."
+  },
+  {
+   "Id": "Z.MailManager",
+   "Name": "MailManager",
+   "Group": "Managers",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Managers/MailManager.dll",
+   "Commands": [
+    "mail",
+    "mailmanager"
+   ],
+   "Settings": "mailmanager",
+   "Note": "Can mail all credits except 200,000 to the character named in its settings. Leave it off unless you use that."
+  },
+  {
+   "Id": "Z.MovementManager",
+   "Name": "MovementManager",
+   "Group": "Managers",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Managers/MovementManager.dll",
+   "Commands": [
+    "movementmanager"
+   ],
+   "Settings": "movementmanager",
+   "About": "Follow and navigation (/allfollow, /navfollow)."
+  },
+  {
+   "Id": "Z.NCUManager",
+   "Name": "NCUManager",
+   "Group": "Managers",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Managers/NCUManager.dll",
+   "Commands": [
+    "manager",
+    "ncumanager"
+   ],
+   "Settings": "ncumanager",
+   "Note": "Shouts your buff timers in vicinity chat, so nearby players see them."
+  },
+  {
+   "Id": "Z.NPCManager",
+   "Name": "NPCManager",
+   "Group": "Managers",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Managers/NPCManager.dll",
+   "Commands": [
+    "npcmanager"
+   ],
+   "Settings": "npcmanager",
+   "About": "Syncs NPC dialogs and trades."
+  },
+  {
+   "Id": "Z.OSBManager",
+   "Name": "OSBManager",
+   "Group": "Managers",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Managers/OSBManager.dll",
+   "Commands": [
+    "manager",
+    "osbmanager"
+   ],
+   "Settings": "osbmanager",
+   "About": "Keeps one buff up."
+  },
+  {
+   "Id": "Z.ResearchManager",
+   "Name": "ResearchManager",
+   "Group": "Managers",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Managers/ResearchManager.dll",
+   "Commands": [
+    "research",
+    "researchmanager"
+   ],
+   "Settings": "researchmanager",
+   "About": "Switches research goals."
+  },
+  {
+   "Id": "Z.SyncManager",
+   "Name": "SyncManager",
+   "Group": "Managers",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Managers/SyncManager.dll",
+   "Commands": [
+    "openbags",
+    "synccombat",
+    "syncemote",
+    "syncequip",
+    "syncmanager",
+    "syncmove",
+    "syncnpcchat",
+    "syncnpctrade",
+    "syncsitting",
+    "synctarget",
+    "syncuse",
+    "syncyalm"
+   ],
+   "Settings": "syncmanager",
+   "About": "Followers copy the leader: target, moves, item use, NPC chat and trades."
+  },
+  {
+   "Id": "Z.BattleStationUtility",
+   "Name": "BattleStationUtility",
+   "Group": "Utilities",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Utilities/BattleStationUtility.dll",
+   "Commands": [
+    "battlestation"
+   ],
+   "Settings": null,
+   "Note": "Signs you up for Battlestation on both sides."
+  },
+  {
+   "Id": "Z.BloodPlasmaUtility",
+   "Name": "BloodPlasmaUtility",
+   "Group": "Utilities",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Utilities/BloodPlasmaUtility.dll",
+   "Commands": [
+    "plasma"
+   ],
+   "Settings": "plasma"
+  },
+  {
+   "Id": "Z.CloakUtility",
+   "Name": "CloakUtility",
+   "Group": "Utilities",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Utilities/CloakUtility.dll",
+   "Commands": [
+    "cloak"
+   ],
+   "Settings": "cloak"
+  },
+  {
+   "Id": "Z.CoffeeUtility",
+   "Name": "CoffeeUtility",
+   "Group": "Utilities",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Utilities/CoffeeUtility.dll",
+   "Commands": [
+    "Coffee"
+   ],
+   "Settings": "Coffee"
+  },
+  {
+   "Id": "Z.CookiesUtility",
+   "Name": "CookiesUtility",
+   "Group": "Utilities",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Utilities/CookiesUtility.dll",
+   "Commands": [
+    "cookies"
+   ],
+   "Settings": "cookies"
+  },
+  {
+   "Id": "Z.LookingForTeamInviteUtility",
+   "Name": "LookingForTeamInviteUtility",
+   "Group": "Utilities",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Utilities/LookingForTeamInviteUtility.dll",
+   "Commands": [
+    "lookingforteaminvite"
+   ],
+   "Settings": "lookingforteaminvite",
+   "Note": "Invites players from Looking for Team whose description contains your text."
+  },
+  {
+   "Id": "Z.MinersUtility",
+   "Name": "MinersUtility",
+   "Group": "Utilities",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Utilities/MinersUtility.dll",
+   "Commands": [
+    "miners"
+   ],
+   "Settings": "miners"
+  },
+  {
+   "Id": "Z.PearlsUtility",
+   "Name": "PearlsUtility",
+   "Group": "Utilities",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Utilities/PearlsUtility.dll",
+   "Commands": [
+    "pearls"
+   ],
+   "Settings": "pearls"
+  },
+  {
+   "Id": "Z.SellUtility",
+   "Name": "SellUtility",
+   "Group": "Utilities",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Utilities/SellUtility.dll",
+   "Commands": [
+    "sell",
+    "terminal reset"
+   ],
+   "Settings": "sell",
+   "Note": "Trades items from bags named \"Sell\" to the shop terminal you set."
+  },
+  {
+   "Id": "Z.TeamAcceptUtility",
+   "Name": "TeamAcceptUtility",
+   "Group": "Utilities",
+   "Suite": "Z",
+   "Path": "Plugins/Z/Utilities/TeamAcceptUtility.dll",
+   "Commands": [],
+   "Settings": null,
+   "Note": "Accepts every team invite from anyone while you are not in a team."
+  }
+ ]
+}

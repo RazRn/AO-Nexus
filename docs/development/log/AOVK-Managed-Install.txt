@@ -1,0 +1,165 @@
+AO NEXUS: AO-VK PER GAME FOLDER
+Local build 1.3.0-local-aovk.3, 28 October 2026
+
+1 NOVEMBER LOCAL 0.8.1 CANDIDATE
+An already-installed official 0.8.1 renderer with the matching private Rebirth
+2-aovk081.1 patch is recognized by exact hashes. Normal settings edits preserve
+this pair; the old Nexus in-game UI renderer switch is rejected for this profile.
+Disabling AO-VK restores the saved stock pair. This does not update the public
+download package or promise that disabling/re-enabling will reinstall 0.8.1.
+Use the saved local test installation for this evaluation. Do not restore the
+Defender-detected startup.2 binary or add exclusions. Protection stays enabled.
+Single-client startup, movement, F10 and zoning passed. Six clients then ran
+together; minimization and fresh health/nano were observed. Wazoo required one
+manual plugin reload: initial dispatch did not yield telemetry (cause unknown).
+Fast startup was disabled: five additional clients took 40.35 s. No new Defender
+detections through 11:35 on 1 November; this is not long-session validation or a
+guarantee against future detections. Native replacements and enhanced graphics
+were off for this baseline. See logs/aovk081-runtime-review.json.
+The user chose to keep the test session open; Nexus's main account temporarily
+targets the separate test folder. Normal live renderer/patch remain stock.
+Original settings backup: logs/aovk081-live-test-recovery.json.
+
+31 OCTOBER OPTIONAL-COMPONENT PREVIEW
+The bundled-install instructions below describe the older private build.
+Default builds now download only the renderer on demand; a matching Rebirth
+patch must be supplied separately. See Optional-Components.txt for the current
+packaging, licensing constraints and validation status.
+
+USE
+Close AO clients using the chosen folder. Open Settings > Graphics, select the
+account's game folder (or Choose another game folder), check Use AO-VK and Save.
+The first Save installs the bundled renderer and saves the original files.
+No prepared test folder, marker file or prior AO-VK installation is required.
+Clear Use AO-VK and Save to restore the exact original renderer and, for Rebirth,
+its matching original patch. Graphics preferences remain available for next time.
+Cancel writes nothing. All accounts using a folder share its graphics settings.
+Choosing a graphics folder does not change any account's game folder or server.
+Start the game through Nexus; the game's own patcher can restore its own files.
+
+SUPPORTED FILE SETS ON THIS PC
+- D:\Games\AORebirth-Live: known classic Rebirth client and version.dll pair.
+- D:\SteamLibrary\steamapps\common\Anarchy Online: known classic official client.
+- D:\Games\Project Rubi-ka: known classic PRK client.
+- The existing D:\Games\AORebirth-AOVK-Test remains supported.
+Detection uses file hashes, not the folder name or selected server. These file
+sets can therefore be used in another ordinary folder without preconfiguration.
+Unknown/mixed client builds, unknown version.dll patches and New Engine are
+blocked. In particular, AORebirth-Local has a different version.dll and needs
+its own compatible patch build; this version does not replace it.
+This feature does not convert one server's client into another server's client.
+
+GRAPHICS
+Available: enhanced graphics, per-pixel/nearby lighting, sun/contact/point-light
+shadows, HDR lighting, bump mapping, anisotropic filtering and performance HUD.
+First installation without an INI uses the conservative configuration exercised
+in Rebirth gameplay. Native renderer replacements remain off. Frame generation,
+TAA/upscaling, motion blur, DoF and the faulty sky/weather effects remain off.
+Unverified grass, foliage, water, particle and texture-pack options are not
+exposed. Existing unrelated INI choices are preserved during ordinary edits;
+Use tested lighting preset also disables these unverified options.
+AOSharp windows remain available with either renderer.
+
+FILES AND RECOVERY
+The original renderer is retained as randy31_orig.dll. Rebirth also retains
+version-stock-rebirth.dll. Official AO and PRK receive no version.dll.
+Each change also records its previous files and hashes under
+NexusGraphicsBackups\<transaction id>\recovery.json. Do not remove backups while
+AO-VK is installed. No Funcom renderer binary is bundled in Nexus.
+NexusGraphics.lock coordinates graphics changes between launcher instances.
+A pending transaction blocks Nexus launch and offers Restore interrupted
+graphics change in Settings > Graphics. Recovery checks hashes and preserves
+unrelated edits. Torn files or altered recovery records can require manual
+restoration from NexusGraphicsBackups; do not delete the pending marker before
+restoring the complete recorded file set. A normal write failure rolls back.
+
+VALIDATION LIMITS
+Automated installation and UI tests use isolated temporary client copies.
+They cover initial setup, exact restoration, retained settings, cancellation,
+failed writes, unsupported patches, locking and interrupted-change recovery.
+The latest gameplay acceptance was on the Rebirth test installation. Actual
+official AO/PRK gameplay and extended stability still need user testing.
+
+BUILD INPUTS
+Build-AovkPayload.ps1 verifies and embeds these files from runtime\AOVKPackage:
+  randy31.dll
+  SHA256 60759C61C7383EFA39AE4F09981ED3E42D7A25CE7C9D093E6791A5C4A98040C6
+  version-rebirth.dll
+  SHA256 BB7581048F77D3BD89D95F983BD472B5ABB7FDA8D0B920D2825E499998A25B2A
+AO-VK renderer: https://github.com/wannabuh/ao-vk/releases/tag/v0.7.1
+Its MIT license is embedded and copied to dist/Licenses/ao-vk/LICENSE.txt.
+The Rebirth compatibility patch is the local 2-aovk-startup.2 build from
+AO-Rebirth-AOVK-Patch, branch codex/aovk-renderer-repair, base 6a371f29 plus local
+changes. Initial provenance is recorded in AOVK-Startup-Test.txt; the startup
+repair and verification limits are recorded below. It is not the
+upstream AO-VK release's optional version.dll.
+The renderer input can be restored from verified randy31-aovk-test.dll in
+AORebirth-AOVK-Test. Do not restore its older version-aovk-test.dll as the current
+repair input. Build the current private patch with the patch repository's
+Tools\AOClientRoomSpaceGuard\ProxyDll\Build-Package.cmd --dll-only and verify
+the hash above. Both version-rebirth.dll and version-rebirth-ui.dll use this
+same repair, supporting AO-VK 0.7.1 and UI test 13/16 renderers.
+The build rejects any other bytes. Runtime dependencies are not in the Git bundle;
+keep this local dependency folder when moving/rebuilding the source package.
+
+LOCAL STARTUP REPAIR (2026-11-01)
+The failed six-character launch had a first process suspended before creating
+a window. Nine game threads already had suspend count 1. The compatibility
+patch worker remained in CreateToolhelp32Snapshot/NtQuerySystemInformation;
+the main thread was inside early NVIDIA/DirectDraw initialization. The second
+overlapping client waited at Nexus's admission gate. No character completed
+login; background minimization had no managed client to act on.
+
+The repair enumerates current-process kernel thread handles using NtGetNextThread
+instead of a system Toolhelp snapshot while other threads are paused. Entry
+point resolution occurs before suspension; bounded stable passes, paired
+resume counts and patch validation remain. Normal Nexus startup now opts out
+of experimental AO-VK startup hooks and overlapping preloads. Only the explicit
+--experimental-aovk-startup developer argument opts back in.
+
+Later 1 November update supersedes the blanket opt-out above: after successful
+live six-client tests at 9.26 s and 9.13 s, the exact UI13 renderer plus fixed
+2-aovk-startup.2 compatibility DLL is recognized automatically by Fast loading.
+Other AO-VK combinations remain restricted. All classic module and renderer hashes
+must match; missing/changed/older compatibility DLLs cannot enable the default
+preload path. See Admission-Pipeline.txt for measured runs and scope.
+
+build\Install-AovkStartupRepair.ps1 (x86 Windows PowerShell) installs only the
+hash-verified compatibility DLL using Nexus's existing lock, process checks,
+transaction and persistent recovery journal. It preserves renderer and INI
+bytes. All game clients using the folder must be closed first. Old verified
+pairs remain readable for rollback. No private patch is embedded in the normal
+public/optional-component build or uploaded by this workflow.
+
+Validation: native DLL-only build PASS; launcher build and smoke PASS; 112
+graphics checks PASS on disposable copies, including repair rollback and UI13
+renderer/INI preservation. Legacy UI15 was explicitly omitted after Defender
+quarantined that old fixture (Program:Win32/Contebrew.A!ml); no exclusion or
+restore was applied. The full unfiltered suite did not pass. Native patch
+automated suites were not run. Live six-client startup acceptance remains
+pending; compilation and file-transaction checks do not prove the hang resolved.
+
+Local installation completed with user approval at 08:54 Copenhagen: verified
+frozen PID 47380 closed, old Nexus closed normally, version.dll replaced in
+D:\Games\AORebirth-Live, renderer UI13 hash retained. Recovery backup:
+NexusGraphicsBackups\e04b885dc1994a1d81046d37c6f4a8f0. No pending transaction.
+dist\AONexus.exe updated and restarted; previous EXE retained under dist\Previous.
+No game launch was performed by the agent; six-character retest is still pending.
+
+FOLLOW-UP REPAIR (2026-11-01)
+Live startup.1 reached Wazoo's character window but failed all ten RoomSpace
+installation attempts with threadsResumed=true, then displayed the patch error
+dialog. This was not a successful crash-repair installation.
+An isolated native diagnostic using the actual suspension routine reproduced
+ERROR_ACCESS_DENIED when enumeration included a completed thread whose handle
+was still retained. Startup.2 skips only confirmed signalled (finished) threads,
+including completion races after SuspendThread fails. Other failures still
+abort and resume held threads. The native diagnostic then held/resumed all six
+active fixture threads successfully. No game was injected or run for that check.
+The resolved native function is retained for the second stable-pass check to
+avoid loader lookup while threads are held. Failure logs now record operation,
+error/status, thread ID and held count, after resuming threads.
+Current repair SHA256 is the BUILD INPUTS hash above. Startup.1 remains accepted
+for replacement/rollback. Native DLL-only build and launcher smoke PASS;
+114 graphics checks PASS with the same explicit UI15 fixture omission.
+Live startup.2 six-character verification is pending.

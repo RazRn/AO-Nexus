@@ -1,0 +1,462 @@
+AO NEXUS: CLIENT RESPONSIVENESS AND EXIT REPORTS
+AO Nexus 1.2.2, 27 October 2026.
+
+LOCAL TEST 7: BUILT-IN LOCAL MONITORING
+1 November follow-up: Sexologist's initial health-only load was dispatched by
+legacy AO# but produced no telemetry file. One targeted resend through the
+existing host recovered live health 199/199, nano 189/189 and Doctor profession
+without relogging. Legacy dispatch supplied no startup acknowledgement, so the
+initial failure's exact cause is unconfirmed.
+Nexus now permits one automatic retry after 30 seconds only when automatic
+loading and monitoring are enabled, the team allows plugins, the sole requested
+plugin is the exact bundled monitor, and no snapshot file exists. Other plugin
+suites, existing stale/inactive snapshots, external controllers and test sessions
+are excluded. Retry dispatch is logged and is not treated as startup success.
+174 Team Window/policy checks and launcher build passed. Live UI confirmed 6/6
+measured after recovery and Nexus restart; all six game processes were retained.
+
+The companion remains embedded in Nexus and starts hidden automatically.
+Its probes now use Windows session-local shared memory restricted to the current
+Windows user. Neither the helper nor the monitoring plugin opens a network socket
+for these probes. No firewall rule or administrator permission is needed.
+The separate process is retained so a stalled Nexus UI cannot freeze the observer.
+Restart Nexus and the game clients once after this update; an already loaded old
+monitor still uses the previous transport. Snapshot version 1 is rejected with an
+update-plugin explanation, instead of treating incompatible probes as a game hang.
+Other AO# plugins can still use their own network transports.
+Nexus-managed plugin sets already add the embedded monitor when Include Health
+Monitor is enabled (the default); these users do not need the manual AO#
+installation steps below. Those steps apply to external AO# profiles only.
+Validation: 75 mailbox checks, 24 production-plugin/helper fixture checks
+(including zero TCP/UDP endpoints), 176 launcher monitoring checks, 33 report
+checks and 17 embedded-payload checks passed. Live game validation still remains.
+Shared-memory API reference:
+https://learn.microsoft.com/en-us/dotnet/standard/io/memory-mapped-files
+
+READABLE CHARACTER STATUS (1.2.1)
+Click the header status or the tray's Characters · status and help action for a
+character/status list.
+Select a character to see a short explanation and the next useful step. Responding,
+Delayed, No response, Measurement unavailable, Not measured, Monitoring stopped
+and Game closed are separate states. A missing measurement does not prove a crash;
+Game closed can also mean normal logout.
+Show technical details reveals the underlying measurements. Monitoring setup help
+opens the AO# instructions and plugin-folder action. Both start collapsed.
+The measurements, opt-in choices and diagnostic ZIP privacy are unchanged.
+
+RECENT ACTION ISSUES
+The updated Nexus Health Monitor also reports nano casts attempted while the game
+marks the character as falling. The character list has a separate Recent action
+issue column: a responsive client can still be unable to perform an action.
+The header names the affected character. Select that character for an explanation
+and next step. An observed cast while falling is distinguished from the exact
+"You can't execute nanoprograms while falling!" rejection received as game feedback.
+Repeated reports are grouped, with one log entry per burst. Reports fade after
+30 seconds without another report; this is not evidence that a cast succeeded.
+No alert is raised merely for falling without a cast attempt. Zoning, stale data
+and unloaded plugins suppress the alert. Other failure reasons are not yet covered.
+Only the recognized issue code, timestamp, bounded count and confirmation flag
+are published; no chat text or character action commands are recorded or sent.
+This cannot identify the intended pet or prove it spawned. Verify the outcome in
+the game. Exact live error-message coverage still needs testing on each client.
+Existing injected plugins do not update automatically. Use Open measurement
+plugin folder in the updated Nexus to select the new NexusHealthPlugin.dll and
+reload it through AO# when it is safe to restart the character's plugins.
+
+TRY IT
+1. Open AONexus.exe. The monitoring companion is included in the executable.
+2. In the new-options wizard, enable "Show AO# responsiveness in header and
+   tray" and optionally "Keep local client exit reports". These are opt-in.
+   The same choices are in Settings > Accounts, and in the full setup wizard.
+3. In Character status and help, open "Monitoring setup help", then click
+   "Open measurement plugin folder".
+   Add NexusHealthPlugin.dll from that folder using AO#'s Add Plugin.
+   Select each character and tick "Nexus Health Monitor" alongside your usual
+   plugins, then Inject. Adding the DLL alone does not enable it per character.
+   If already injected, Eject first when it is safe to restart those plugins.
+   Keep NexusTelemetry.Protocol.dll next to it. Do not load the old lab probe.
+   Nexus does not inject another bootstrapper or unload your existing plugins.
+4. Launch a character through Nexus and load that AO# profile normally.
+   The header/tray status appears after a pulse is detected. Click the header
+   or right-click the tray > Characters · status and help for each character's
+   status and optional technical details.
+
+AO# being open is not enough: the plugin must run inside each measured
+game client. Clients without a plugin are "not measured", never "healthy".
+With monitoring off, unmeasured clients do not create a header indicator.
+With monitoring enabled and clients open, the header and tray show "monitoring
+not set up · click for help" until the plugin is enabled. An explicitly unloaded
+plugin is shown as "monitoring stopped". An unexplained silence
+remains visible. Explicit plugin teardown is distinguished from missing replies.
+Only verified, registered Nexus sessions are discovered. Nexus must remain open.
+Turning off monitoring stops the Nexus helper. Unload the measurement plugin
+through AO# as well to stop its in-client counters and heartbeat files.
+
+MEASUREMENTS
+The plugin observes Game.OnUpdate using Stopwatch timestamps. The game thread
+updates bounded in-memory counters and responds through the local mailbox;
+a worker publishes an atomic JSON
+snapshot twice per second. A recent maximum covers up to 10 seconds / 2048
+tick intervals. The all-session maximum and count over 100 ms are retained.
+No game actions, graphics changes, FPS changes or power-policy overrides.
+
+One external helper sends one targeted ping per second per measured process
+through a bounded shared-memory mailbox, identified by Windows user, session,
+target PID/start time, host ID/random epoch/sequence. The game-loop callback
+responds; the background snapshot writer cannot fabricate replies. A nonblocking
+mutex protects fields in both x86 processes. Contention skips a poll/frame.
+The helper pumps independently of the game and Nexus UI. No usernames,
+passwords or gameplay commands are sent. The monitor no longer uses AO#'s
+UDP multicast channel 238/opcode 32002, and does not change firewall settings.
+
+RTT includes helper scheduling/polling (~5 ms requested sleep); it is not pure
+wire latency. Timeout means no reply within 2 seconds, not proven packet loss.
+A late reply increments both the historical timeout and late counters. Pending
+requests are separate. Late replies are retained for up to 30 seconds.
+Counters reset when the helper restarts. This tests the monitor's IPC path,
+not delivery of every message sent by every other AO# plugin/channel.
+
+Thresholds in this preview: recent tick gap or reply >=100 ms is delayed;
+no game update for >=2 s in a fresh snapshot, or no IPC reply for >=3 s
+with a fresh helper report, is no response. Snapshot/helper data >=3 s old
+is measurement unavailable, not proof of a game stall. Initial measurement
+gets a 4 s grace period. Snapshot delivery age is shown separately from the
+observed gap between publication and the latest game update. Warning logs,
+details and diagnostic samples include the reason and separate ages.
+The reader allows atomic file replacement and samples its validation clock
+after reading, so a newly published file is not rejected as being in the future.
+Zoning may stall
+the game loop; the last observed zoning state is context, not proof of cause.
+Fresh IPC cannot hide a stopped OnUpdate callback, or vice versa.
+
+EXIT / CRASH DIAGNOSTICS
+Nexus retains the last 120 samples (~2 min) for each observed client while
+monitoring or report collection is on. A bounded summary also retains observed
+sample counts by state, plugin coverage, peak working set, longest update gap
+and largest reply time across the period observed by this Nexus session.
+It cannot reconstruct earlier history or periods when Nexus was not observing.
+Missing plugin measurements, including zoning, remain unknown.
+It holds the process handle to preserve exit status
+and guard against PID reuse. Every observed exit can create a report, including
+normal logout: an exit code alone cannot reliably distinguish logout and crash.
+Reports are saved under %LocalAppData%/AONexus/ClientReports, newest 20 retained.
+Disabling collection stops new reports; previously saved reports are retained.
+
+Save diagnostic ZIP from Character status and help. It includes current measurements,
+saved exit reports, basic OS/Nexus information, and matching Windows Application
+Error/Hang fields when available. Matching requires executable, process ID,
+process lifetime and an exit-time window. Only allowed event fields are copied;
+raw event XML, account names, paths, credentials, chat and full memory dumps
+are excluded. Names use aliases; process IDs and timestamps remain included.
+One alias map is shared by current data, historical files and Windows evidence.
+Each alias identifies a process ID and start time, not a permanent account.
+Saved exits already present with the same evidence are omitted; distinct
+historical evidence is retained under the same alias. Nothing is uploaded.
+
+Read report-summary.txt first. It explicitly states when there is no accepted
+monitoring-plugin evidence. New reports record whether monitoring was enabled
+and whether a snapshot was missing, unreadable, invalid, from an unsupported
+version, rejected for a process-identity mismatch, or accepted. An accepted file
+can still be stale: inspect the responsiveness state and ages separately.
+These reasons narrow the setup investigation; they do not establish root cause.
+For missing data, enable monitoring in Settings > Accounts and load Nexus
+Health Monitor into each affected character through AO# under the same
+Windows user. Then export again after the status changes from Not measured.
+Windows version/build is read from the registry instead of the compatibility
+version returned to an application without a modern Windows manifest.
+
+Regular process samples do not prove the game was responsive. Exit code zero
+and no matching Windows error do not exclude a crash or hang. A short, flat
+memory window cannot establish whether a leak exists. Older reports have no
+lifetime summary or snapshot failure reason; exporting them cannot restore it.
+
+Windows events may arrive late or be absent. The ZIP is a diagnostic evidence
+bundle, not a guaranteed root-cause determination. Faulting module/exception
+can guide further investigation; a stack/memory dump may still be necessary.
+Clients that start and exit between discovery polls, or exit while Nexus is
+closed, cannot have their pre-exit measurements recovered by this feature.
+
+NEW-OPTIONS WIZARD
+OptionsReviewVersion tracks reviewed feature groups independently of app version.
+Existing profiles receive only options introduced since their saved marker.
+Saving records the marker even if all options remain off. Later/cancel and save
+failure preserve the saved profile and do not mark review completed. The full
+setup wizard and Settings expose the same current choices. Existing selections
+are preserved; older binaries do not lower a newer marker.
+For future settings add a SetupNewOptions entry with a higher Introduced value
+and bump CurrentVersion. Do not reuse a version for newly introduced options.
+
+BUILD / TEST
+build/Build-Telemetry.ps1 restores a pinned AO# Framework 4.8 source build;
+pass -AOSharpRuntime for another compatible build. It creates dist/Monitoring
+without bundling the AO# injector, bootstrapper or game libraries.
+build/Build.ps1 -RebuildTelemetry rebuilds the companion. Build.ps1 embeds its
+allowlisted files in AONexus.exe. Package.ps1 verifies extraction from a lone
+executable, matching the automatic updater. Files are verified and extracted
+on demand beneath %LocalAppData%/AONexus/Monitoring in immutable folders named
+by payload checksum. Existing plugin files are never overwritten by an update.
+
+tests/Verify-ClientMonitoring.ps1: status, stale data, recovery, wizard migration,
+profile isolation, event correlation, export allowlisting and header UI.
+tests/Verify-TelemetrySnapshots.ps1: concurrent atomic publications against the
+production reader, complete monotonic snapshots and size limit.
+tests/Verify-EmbeddedMonitoring.ps1: portable extraction, per-file hashes,
+cache reuse and rejection of modified cache contents after single-file update.
+tests/Verify-TelemetryTransport.ps1: inert game-loop fixture using production
+plugin code and real local shared-memory IPC. No game injection or real gameplay. Tests
+healthy replies, pauses, late replies, recovery, independent failures, explicit
+unload and a deliberate non-zero exit of the fixture process only.
+Live game/plugin combinations still need local user validation before release.
+
+26 OCTOBER: FALSE WARNING INVESTIGATION
+A 50-second audit of six running clients reproduced Delayed warnings in five
+clients while their independent fresh snapshots were at most 506 ms old.
+At warning samples Nexus could retain a snapshot about 1.5 seconds old while
+the actual file was only 17-92 ms old. All six had zero IPC timeouts; their
+recorded all-session Game.OnUpdate maxima were below 100 ms. This proves a
+false-delay path, not the precise cause of every earlier log entry.
+The old reader validated against a timestamp taken before the read and did
+not allow File.Replace sharing. Both are corrected. Stale observer data is
+also distinguished from fresh evidence of a stalled update or missing reply.
+Validation: 73 status/UI/export/migration checks, 14 production-plugin and
+real-IPC fixture checks, and 1000 concurrent atomic publications/reads passed.
+The six game clients had closed before the corrected live audit, so there is
+no live after-fix comparison yet. No game/plugin changes are needed for this
+launcher-only correction; existing measurement plugins remain compatible.
+
+31 OCTOBER: RECENT SPIKE WORDING
+The supplied 10:46-11:00 log follows the existing threshold: any measured
+Game.OnUpdate gap of at least 100 ms in the retained last-10-second history
+causes Delayed. A 104.7 ms spike therefore qualifies even when the current
+snapshot gap is 15 ms and IPC round trip is 15.5 ms. The 10:48 group records
+roughly 467-539 ms peaks. Returning to Responding about ten seconds later
+usually means the peak left that history; it does not prove a ten-second freeze.
+The timing across multiple clients suggests a shared interruption but cannot
+identify CPU contention, disk activity, Defender, zoning or another cause.
+
+The launcher now distinguishes a recent historical spike from a currently
+stalled update and from slow IPC. Slow IPC takes precedence over an old spike.
+Thresholds are unchanged. The initial helper wait is described as waiting for
+the first IPC measurement; missing numeric fields say unavailable. Reply age
+is not RTT: the helper sends probes and publishes results about once per second,
+so an approximately one-second-old reply can coexist with a 16 ms round trip.
+Timeout counts are cumulative for the helper's target lifetime, not evidence of
+a timeout at every log line. These are local measurements, not server latency.
+
+TEAM WINDOW: NANO NAMES AND LOGOUT
+The monitor now publishes an optional CastNanoName resolved from the installed
+client's spell list on the game thread. Nexus shows that name for nano attempts;
+an unknown nano or an older monitor falls back to Unknown nano (#ID). This is
+still an attempted cast, not confirmation of success. The matching updated
+monitor and launcher are both needed to display names.
+
+Each card has Log out. Log out all targets only the currently selected view;
+choose All running characters to include every displayed team. These actions
+use the existing normal /quit handshake, process identity checks, confirmation
+preference and logout countdown. They do not require AO# to send /quit,
+but do require a client started with Nexus's supported login module. Buttons
+are unavailable for closed/unsupported clients and while another action runs.
+The target list is captured before confirmation; new clients are not added
+to an action already in progress. Card clicks still switch to the game window.
+
+BUILT-IN COMBAT AND EXPERIENCE STATISTICS
+Nexus Health Monitor now collects its own counters. Mali's Damage Meter and
+Mali's Toolkit are not required, loaded or included. Existing user-installed
+plugins remain supported. This adds no second plugin or extra game hook:
+the monitor subscribes to AO#'s existing inbound N3 and feedback events.
+Reload the updated Health Monitor, or restart clients through the new Nexus,
+to receive the new data. No live client was reloaded during development.
+
+Each client records only its own attacks and pets whose ownership it can
+resolve through AO#. The current LocalPlayer.Pets roster is checked first,
+so missing dynels, pet flags or owner stats do not suppress listed pets.
+Explicit pet-owner metadata remains a fallback. Roster ownership is not cached
+across zoning, release or replacement. Weapon hits, special attacks, nano damage, reflect,
+damage shields and reported healing are counted. HealthDamage's Target is
+the source/caster, whereas ordinary attacks use Identity as the attacker.
+Damage already includes nano and pet damage. Those overlapping breakdowns
+must not be added to it again. Reported healing is not an overheal-adjusted
+measurement. Unknown or unavailable pet ownership cannot be attributed.
+
+XP, AXP and SK are separate earned-award counters from exact English game
+feedback messages. Their formats were verified in the installed AORebirth
+client's cd_image/text/text.mdb and independently checked against the event
+formats and sample logs in https://github.com/nicgalehouse/AODamageMeter .
+No code or log content from that project is bundled. Only recognized numeric
+awards leave the client; chat text is not logged or transmitted. No normal
+chat subscription is added. Death losses, side-bonus notices, research, pool
+recovery breakdowns and PvP score messages are not separately added. These
+are observed earned awards, not net XP-bar progress or research totals.
+A zero counter means no matching award was received since the session began;
+this is called out in the summary until an award arrives. Live delivery of
+these events still requires in-game verification on the selected runtime.
+
+The Team Window compares characters in a sortable table above the client cards.
+Overview shows all totals and DMG/m; the metric selector shows total, /s, /m and /h for
+one metric, or every metric together with horizontal scrolling. Character
+names stay fixed while scrolling. Missing readings display a dash. Refreshes
+update existing rows and retain sorting and the selected character.
+Drag the horizontal divider to resize the table and cards on this single page.
+The cards retain previews, health/nano, activity and logout controls.
+Combat and experience statistics are no longer painted on character cards.
+
+Relog sits beside Log out on each card; Relog all targets only the selected view.
+Both relog actions always confirm. Passwords and launch settings are checked before
+normal /quit is sent. Nexus waits up to 90 seconds and only restarts characters
+whose captured original process has exited and has not already been restarted.
+Interrupted logouts are skipped; no clients are forcibly closed. Stop login cancels
+the relog wait and subsequent starts. Existing selection and plugin preset context
+are preserved. Cancelling leaves already-closed clients closed.
+
+Recovery for frozen clients
+--------------------------
+Recover… on each card offers Force close and Force restart. Both require a
+separate confirmation naming the character and warning about unsaved game/UI
+settings. Only the captured PID/start-time/executable identity may be terminated;
+no process tree, other characters, or automatic force-close fallback is used.
+Force restart prepares credentials first, confirms exit, then uses the normal
+login queue with the original plugin preset context. Normal logout/relog reports
+failure promptly if no client acknowledges /quit; only acknowledged requests
+wait for the normal countdown (up to 90 seconds).
+Three consecutive failed bounded Windows window probes show CLIENT FROZEN in
+the Team Window. Missing/denied window access is unknown, not proof of a freeze.
+AO# response measurements remain separate from these window probes.
+
+Local development recorder
+-------------------------
+Record diagnostics in the Team Window toggles a persistent opt-in on this PC.
+The marker is %LocalAppData%\AONexus\Diagnostics\development-recording.enabled;
+it is not shipped in release assets. Recording runs while Nexus is open.
+The recorder writes development.jsonl plus two rotated files in that directory,
+each capped at 16 MiB (48 MiB total). Oldest records are discarded. It captures
+one-second monitoring samples, process lifetimes, window responses, memory and
+CPU totals, IPC freshness/latency/timeouts, vitals and combat counter timing,
+redacted app/plugin/login events, and confirmed recovery actions. A separate
+two-second heartbeat reports time since the Nexus UI last ticked. This can show
+an app stall even while its UI is blocked; it cannot record after Nexus exits.
+These are structured measurements, not full memory dumps, keystrokes or chat.
+Account/character names, passwords, quit tokens and raw game text are excluded
+from samples; journal event text uses the existing diagnostic redactor.
+Diagnostics… opens character status, where Save diagnostic ZIP includes the
+rolling recorder, current snapshot, journal, available Windows/exit evidence,
+and redacted app/settings state. Nothing is uploaded automatically. A recorder
+write failure is shown in the Team Window summary. No recorder can capture every
+internal game detail or guarantee the cause of a freeze without deeper debugging.
+
+The team total stays fixed below the table. It sums each displayed
+character's own snapshot, never multiple observers of the same hit. Duplicate
+character identities on a server are counted once; other servers are separate.
+The measured/selected count identifies partial coverage; stale, zoning,
+missing or mismatched clients are excluded rather than presented as live zeroes.
+Older Mali observer snapshots remain readable for compatibility during upgrade,
+but they are never mixed into the new per-client totals.
+
+DPS, HPS, XP/hour, AXP/hour and SK/hour use wall-clock session time, including
+idle time. The DMG/m footer shows the average per measured character (marked avg);
+other footer values are summed. Clients may have different start times. These are
+session averages, not instantaneous or combat-only rates.
+Reset selected starts a new local reporting baseline for that character, including XP.
+Reset team totals does the same independently for the selected view; character rows
+are unaffected. A client unavailable at team reset starts from its next fresh
+sample. Reset baselines last while the Team Window is open. Plugin reload or
+character change creates a new epoch, preventing negative reset deltas.
+
+Validation uses the selected AO# runtime's packet classes, synthetic
+attacks/heals/pet attribution and awards, production-plugin event/JSON/IPC
+fixtures, independent card/team resets, stale and identity checks, and English
+and Danish UI renders. No actual combat or game actions were automated.
+
+Team and All damage tabs
+------------------------
+Team retains the selected Nexus clients' own counters and independent resets.
+All shows nearby players observed by ONE selected client, including players
+outside the selected team. It never adds several clients' observations of the
+same hit. Select an observer in the All toolbar; automatic selection picks one
+fresh observer and stays with it. A stale/zoning observer is labelled unavailable
+until it returns or you explicitly select another, rather than merging sessions.
+Only combat events received by that game client can be measured: this is not a
+server-wide meter, and missing/out-of-range events cannot be reconstructed.
+
+Known pet damage is included once in the owner's DMG and its Pets breakdown.
+Local pets also use the pet roster when Rebirth has not supplied pet flags yet.
+Other pets require explicit owner metadata and a visible player owner. Unknown
+owners appear as separate 'pet, owner unknown' rows; NPCs are otherwise excluded.
+Earlier unattributed hits remain separate rather than guessing ownership later.
+Other players' XP/AXP/SK are unavailable and shown as dashes. Their visible damage,
+nano damage and healing use observed events, including the existing rate views.
+
+Nearby history resets on zoning or monitor reload, keeping reused pet identities
+out of later zones. It is capped at 128 observed actors per zone/session; the All
+footer reports when that limit makes totals partial. Names are bounded and control
+characters removed. New nearby data uses a separate optional snapshot, so old
+monitors still provide Team statistics and the All view explains how to update.
+Reset selected and Reset all totals affect only the All view's respective baselines.
+The updated monitor must be loaded for nearby observation; a launcher restart
+alone cannot change an already running AO# plugin.
+
+Team Window card order and leadership (2026-11-01)
+Drag a card header to the left/right half of another card to place it before/after.
+Ctrl+Left/Right moves the focused card; right-click offers the same actions and
+Reset card order. Clicking still switches client; dragging does not. The saved
+order uses account + character identity, survives relogs/restarts, and applies
+across team filters without removing hidden characters. New characters follow
+saved characters alphabetically. Statistics table sorting stays independent.
+
+The amber LEADER badge is the game's actual local-player team leadership flag,
+not the first card, team preset, or sync-plugin leader. Nexus Health Monitor reads
+AO# Team.IsInTeam/IsLeader on the game update thread. Unknown, old, zoning,
+inactive or stale snapshots never show a leader. Older running monitors need a
+reload or client relog to publish the new optional telemetry fields. No game
+team/leadership commands are sent by this feature.
+
+Client resource measurements (2026-11-01)
+Each card shows client CPU usage, free virtual address space and the largest free
+block. CPU is the process CPU-time delta as a percentage of total logical-processor
+capacity. Address space is inspected read-only through VirtualQueryEx every five
+seconds on 32-bit clients running on 64-bit Windows. This is not available physical
+RAM or VRAM. Incomplete or stale measurements are shown as unavailable, not zero.
+Amber warns below 512 MiB free or a largest block below 64 MiB; red warns below
+256 MiB free or a largest block below 32 MiB. These are advisory thresholds, not
+predictions of a crash. A warning names affected clients above the team table and
+is recorded locally. Nexus does not automatically close or relog them.
+AO-VK's actual FPS, render/GPU timing and VRAM counters are not exposed by this
+measurement source. The official renderer is unchanged; game updates are not FPS.
+
+Automatic plugin startup (2026-11-01)
+With Health Monitor enabled, assigned multi-plugin sets first load only Nexus
+Health Monitor. Nexus waits for fresh, non-zoning game updates and vitals from
+the same process lifetime before dispatching the full set. A health-only load
+that has never published a snapshot may be retried once after 30 seconds. If no
+valid startup measurement arrives within 65 seconds, automatic startup stops
+with an actionable error; it does not repeatedly restart third-party handlers.
+Manual Load now remains an explicit full-set retry. Profession discovery keeps
+its existing Nexus Shortcuts probe. Existing running sets are not reloaded just
+because Nexus restarts. Legacy AO# cannot confirm individual third-party
+plugin startup: a healthy monitor does not claim that every plugin succeeded.
+
+NPC damage view (1 November 2026)
+--------------------------------
+Control Panel > NPC shows damage dealt BY each NPC and damage taken BY that NPC,
+side by side, with per-minute rates by default. The metric selector also offers
+per-second/minute/hour views, outgoing nano damage and outgoing healing.
+NPC damage taken includes all attacks visible to the observer, not just your team.
+The ID distinguishes same-name NPCs. The footer sums NPC totals and rates.
+Row resets and NPC-total resets have independent baselines; neither resets Team
+or All. One observer feed is used at a time to avoid counting a hit several times.
+NPC and player feeds are separate, each capped at 128 actors; the UI reports a
+partial feed when its cap is reached. They reset on zoning. Player-owned pets
+remain under their player; explicitly NPC-owned pets are grouped with the NPC.
+Unknown-owner pets remain explicitly unassigned in All instead of guessed NPCs.
+
+Requires the updated first-party Nexus Health Monitor on a fresh client start.
+Old monitor snapshots remain supported and the NPC tab explains when a relog
+is required. No additional third-party plugin is needed. The main snapshot
+reader accepts up to 512 KiB for the two bounded feeds and sizes its buffer to
+the actual file. Existing unrelated plugin binaries and startup settings do not
+change. This feature only observes received game events; it sends no actions.
+
+Validation: native event tests (24), Control Panel/UI tests (268), and a separate
+inert process running the production monitor/resolver/writer plus production
+launcher reader (9 checks), including full 128+128 actor payloads and the size
+limit. These are synthetic tests; live NPC combat accuracy still needs an in-game
+check after relogging a client with the updated monitor.

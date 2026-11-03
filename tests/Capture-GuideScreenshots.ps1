@@ -126,10 +126,8 @@ try {
     (Field $dashboard 'settings').HealthServerIds.Clear()
     (Field $dashboard 'settings').HealthServerIds.Add('rebirth')
     $dashboard.GetType().GetMethod('ConfigureSidebar',$flags).Invoke($dashboard,@()) | Out-Null
-    $tabs = $sidebar.GetType().GetProperty('Tabs',$flags).GetValue($sidebar)
-    $tabs.SelectedIndex=1
     Save-GuideScreenshot $dashboard 'server-health.png'
-    $tabs.SelectedIndex=0
+
     foreach ($editing in @($true, $false)) {
         $title = if ($editing) { 'Edit team preset' } else { 'Create team preset' }
         $editor = New-Dialog 'PresetNameDialog' ([object[]]@($title, $preset.Name, [string[]]@(), $preset.StartHotkey, $preset.CampHotkey, 3, $editing))
@@ -155,10 +153,10 @@ try {
 $settings = New-Model 'LauncherSettings'
 $settingsPreview = New-Dialog 'SettingsDialog' ([object[]]@($settings))
 try {
-    $settingsPreview.ClientSize = [Drawing.Size]::new(640, 580)
+    $settingsPreview.ClientSize = [Drawing.Size]::new(820, 760)
     Show-Fixture $settingsPreview
     Save-GuideScreenshot $settingsPreview 'settings.png'
-    foreach ($entry in @(@(1,'settings-accounts.png'),@(2,'settings-sidebar.png'),@(3,'settings-updates.png'))) {
+    foreach ($entry in @(@(1,'settings-accounts.png'),@(2,'settings-sidebar.png'),@(3,'settings-updates.png'),@(4,'settings-graphics.png'),@(5,'settings-advanced.png'),@(6,'settings-diagnostics.png'))) {
         (Field $settingsPreview 'settingsTabs').SelectedIndex=$entry[0]
         Save-GuideScreenshot $settingsPreview $entry[1]
     }
@@ -211,7 +209,7 @@ foreach($index in 0..2){
 $rowFactory=[scriptblock]{return ,$monitorRows} -as ([Func``1].MakeGenericType($monitorRows.GetType()))
 $monitorDialog=New-Dialog 'ClientStatusDialog' ([object[]]@([Func[string]]{return 'Offline monitoring example'},[Func[string]]{return '{}'},$rowFactory))
 try {
-    $monitorDialog.ClientSize=[Drawing.Size]::new(720,640)
+    $monitorDialog.ClientSize=[Drawing.Size]::new(720,740)
     Show-Fixture $monitorDialog
     Save-GuideScreenshot $monitorDialog 'character-status.png'
 } finally { $monitorDialog.Dispose() }
@@ -263,9 +261,10 @@ foreach ($fixture in @(
         Save-GuideScreenshot $dialog $fixture.File
     } finally { $dialog.Dispose(); [GuideScreenshotNative]::Pump() }
 }
+. (Join-Path $PSScriptRoot 'Capture-ControlPanelGuide.ps1')
 $guiCaptureHost = Join-Path $env:WINDIR 'SysWOW64\WindowsPowerShell\v1.0\powershell.exe'
 & $guiCaptureHost -NoProfile -ExecutionPolicy Bypass -STA -File (Join-Path $PSScriptRoot 'Verify-GameGuiUsability.ps1') -AssemblyPath $AssemblyPath
 if ($LASTEXITCODE -ne 0) { throw 'Game GUI screenshot verification failed.' }
-$version = $assembly.GetName().Version.ToString()
+$version = $assembly.GetType('AOLauncher.AppUpdates').GetProperty('DisplayVersion',$staticFlags).GetValue($null)
 & (Join-Path $PSScriptRoot 'Publish-GuideImages.ps1') -CaptureDirectory $OutputDirectory -Version $version
 Write-Output "PASS: $($GuideImagePlan.Count) distinct guide images captured from $version with example accounts and offline fixtures."

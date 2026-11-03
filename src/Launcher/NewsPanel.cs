@@ -16,7 +16,7 @@ namespace AOLauncher
         private readonly bool offlinePreview;
         private readonly CancellationTokenSource lifetime = new CancellationTokenSource();
         private readonly Label heading = new Label();
-        private readonly Label subtitle = new Label();
+        private readonly ToolTip tips=new ToolTip();
         private readonly Label status = new Label();
         private readonly Button refresh = new Button();
         private readonly FlowLayoutPanel cards = new FlowLayoutPanel();
@@ -45,17 +45,16 @@ namespace AOLauncher
             BackColor = Theme.Surface;
             ForeColor = Theme.Foreground;
             Font = new Font("Segoe UI", 9F);
-            Padding = new Padding(16, 14, 16, 10);
+            Padding = new Padding(10,6,10,8);
             Name = "serverNewsPanel";
             var layout = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 5, ColumnCount = 1, Margin = Padding.Empty, Padding = Padding.Empty, BackColor = BackColor };
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 27));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 0));
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 23));
             heading.Dock = DockStyle.Fill; heading.Font = headingFont; heading.ForeColor = Theme.Accent; heading.Margin = Padding.Empty;
             heading.TextAlign = ContentAlignment.MiddleLeft;
-            subtitle.Dock = DockStyle.Fill; subtitle.ForeColor = Theme.Muted; subtitle.Margin = Padding.Empty;
             var header = new TableLayoutPanel { Name = "newsHeader", Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Margin = Padding.Empty, Padding = new Padding(0, 0, 0, 4) };
             header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 78));
@@ -66,10 +65,10 @@ namespace AOLauncher
             cards.Dock = DockStyle.Fill; cards.AutoScroll = true; cards.FlowDirection = FlowDirection.TopDown; cards.WrapContents = false;
             cards.Margin = Padding.Empty; cards.Padding = Padding.Empty; cards.BackColor = Theme.Surface; cards.Name = "newsCards";
             cards.ClientSizeChanged += (sender, args) => ResizeCards();
-            status.Dock = DockStyle.Fill; status.ForeColor = Theme.Muted; status.TextAlign = ContentAlignment.MiddleLeft; status.Margin = new Padding(0, 3, 0, 0);
+            status.AutoSize=true;status.Dock = DockStyle.Fill; status.ForeColor = Theme.Muted; status.TextAlign = ContentAlignment.MiddleLeft; status.Margin = new Padding(0, 3, 0, 0);
             sourceLink.Dock = DockStyle.Fill; sourceLink.LinkColor = Theme.Accent; sourceLink.ActiveLinkColor = Theme.Amber; sourceLink.VisitedLinkColor = Theme.Accent;
             sourceLink.Margin = Padding.Empty; sourceLink.TextAlign = ContentAlignment.MiddleLeft; sourceLink.LinkClicked += (sender, args) => OpenSource();
-            layout.Controls.Add(header, 0, 0); layout.Controls.Add(subtitle, 0, 1);
+            layout.Controls.Add(header, 0, 0);
             layout.Controls.Add(SlimScrolling.Wrap(cards), 0, 2); layout.Controls.Add(status, 0, 3); layout.Controls.Add(sourceLink, 0, 4);
             Controls.Add(layout);
             automaticRefresh.Interval = 15 * 60 * 1000;
@@ -97,15 +96,14 @@ namespace AOLauncher
             started = true; automaticRefresh.Start();
             if (DateTime.UtcNow - lastRefreshUtc >= TimeSpan.FromMinutes(15)) _ = RefreshNewsAsync();
         }
-        private static string L(string english, string danish) => Texts.CurrentLanguage == "da" ? danish : english;
+
         private static CultureInfo Culture => CultureInfo.GetCultureInfo(Texts.CurrentLanguage == "da" ? "da-DK" : "en-GB");
 
         public void RefreshLanguage()
         {
-            heading.Text = L("SERVER NEWS", "SERVERNYHEDER");
-            subtitle.Text = L("News from the official server websites", "Nyheder fra servernes officielle hjemmesider");
-            refresh.Text = L("Refresh", "Opdater");
-            refresh.AccessibleName = L("Refresh server news", "Opdater servernyheder");
+            heading.Text = AOLauncher.Localization.Texts.Get("Text_SERVER_NEWS_45AA7C2C7ED5");
+            refresh.Text = AOLauncher.Localization.Texts.Get("Text_Refresh_92873B0EC430");
+            refresh.AccessibleName = AOLauncher.Localization.Texts.Get("Text_Refresh_server_news_E6DEA603A784");
             Render();
         }
 
@@ -186,7 +184,7 @@ namespace AOLauncher
             var visible = snapshots.Where(snapshot => selectedSources.Contains(snapshot.SourceId)).ToList();
             if (selectedSources.Count == 0)
             {
-                AddMessage(L("No news sources selected", "Ingen nyhedskilder valgt"), L("Choose news sources in Settings → Sidebar.", "Vælg nyhedskilder i Indstillinger → Sidepanel."));
+                AddMessage(AOLauncher.Localization.Texts.Get("Text_No_news_sources_selected_8B02D1B163C0"), AOLauncher.Localization.Texts.Get("Text_Choose_news_sources_in_Settings_Sidebar_418B6B549E36"));
             }
             else if (selected.Length > 0)
             {
@@ -198,14 +196,14 @@ namespace AOLauncher
                 {
                     var state = visible.FirstOrDefault(snapshot => snapshot.SourceId == source.Id);
                     if (state != null && state.Unavailable && state.Articles.Count == 0)
-                        AddMessage(source.Name, L("News is temporarily unavailable. Use the official website or try Refresh.", "Nyheder er midlertidigt utilgængelige. Brug den officielle hjemmeside, eller tryk Opdater."), source);
+                        AddMessage(source.Name, AOLauncher.Localization.Texts.Get("Text_News_is_temporarily_unavailable_Use_the_3ED628F55D3F"), source);
                 }
-                if (cards.Controls.Count == 0) AddMessage(L("Connecting to Rubi-Ka", "Forbinder til Rubi-Ka"), L("Fetching the latest published articles. You can use the launcher while news loads.", "Henter de senest udgivne artikler. Du kan bruge launcheren, mens nyhederne hentes."));
+                if (cards.Controls.Count == 0) AddMessage(AOLauncher.Localization.Texts.Get("Text_Connecting_to_Rubi_Ka_6A6D531185F9"), AOLauncher.Localization.Texts.Get("Text_Fetching_the_latest_published_articles_You_4912A2D2DBFF"));
             }
             if (selectedSources.Contains("custom"))
-                AddMessage(L("Your own corner of Rubi-Ka", "Dit eget hjørne af Rubi-Ka"), L("Local and custom servers do not have a public news source configured. Choose sources in Settings → Sidebar.", "Lokale og tilpassede servere har ingen offentlig nyhedskilde konfigureret. Vælg kilder i Indstillinger → Sidepanel."));
+                AddMessage(AOLauncher.Localization.Texts.Get("Text_Your_own_corner_of_Rubi_Ka_3F0AB8979B47"), AOLauncher.Localization.Texts.Get("Text_Local_and_custom_servers_do_not_D3AD91E6D7C7"));
             sourceLink.Visible = selected.Length > 0;
-            sourceLink.Text = selected.Length > 1 ? L("Open server websites  ↗", "Åbn servernes hjemmesider  ↗") : L("Visit official news  ↗", "Besøg officielle nyheder  ↗");
+            sourceLink.Text = selected.Length > 1 ? AOLauncher.Localization.Texts.Get("Text_Open_server_websites_DD5974FD1EAA") : AOLauncher.Localization.Texts.Get("Text_Visit_official_news_E5A4ED0D897A");
             refresh.Enabled = !refreshing && selected.Length > 0;
             ResizeCards();
             cards.ResumeLayout();
@@ -219,16 +217,16 @@ namespace AOLauncher
             var sourceLabel = new Label { Name = "articleSource", Text = source.Name.ToUpperInvariant(), UseMnemonic = false, ForeColor = SourceColor(source.Id), AutoEllipsis = true };
             var title = new LinkLabel { Text = article.Title, UseMnemonic = false, LinkBehavior = LinkBehavior.HoverUnderline, Font = titleFont, LinkColor = Theme.Foreground, ActiveLinkColor = Theme.Accent, VisitedLinkColor = Theme.Foreground, Location = new Point(12, 36), Height = 53, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
             title.LinkClicked += (sender, args) => OpenUrl(source, article.Url);
-            string date = article.PublishedUtc.HasValue ? article.PublishedUtc.Value.ToString("d MMM yyyy", Culture) : L("Date not supplied", "Dato ikke oplyst");
+            string date = article.PublishedUtc.HasValue ? article.PublishedUtc.Value.ToString("d MMM yyyy", Culture) : AOLauncher.Localization.Texts.Get("Text_Date_not_supplied_FF3BEBBF83A3");
             var publication = new Label { Name = "articleDate", Text = date, ForeColor = Theme.Muted, TextAlign = ContentAlignment.TopRight, AutoEllipsis = true };
             string summary = article.Summary;
             bool older = article.PublishedUtc.HasValue && article.PublishedUtc.Value < DateTime.UtcNow.AddMonths(-6);
             if (older && ReferenceEquals(article, snapshot.Articles.FirstOrDefault()))
                 summary = snapshot.IsCached || snapshot.Unavailable
-                    ? L("Latest saved article. Check the official website for newer updates.", "Senest gemte artikel. Tjek den officielle hjemmeside for nyere opdateringer.")
-                    : L("Latest published here. This source has not posted a newer article.", "Senest udgivet her. Denne kilde har ikke offentliggjort en nyere artikel.");
-            if (string.IsNullOrWhiteSpace(summary)) summary = L("Read the full announcement on the official website.", "Læs hele meddelelsen på den officielle hjemmeside.");
-            if (snapshot.IsCached) summary = L("Cached · ", "Gemt kopi · ") + summary;
+                    ? AOLauncher.Localization.Texts.Get("Text_Latest_saved_article_Check_the_official_6E700008C572")
+                    : AOLauncher.Localization.Texts.Get("Text_Latest_published_here_This_source_has_AACDE1CE3EC5");
+            if (string.IsNullOrWhiteSpace(summary)) summary = AOLauncher.Localization.Texts.Get("Text_Read_the_full_announcement_on_the_0733889992DF");
+            if (snapshot.IsCached) summary = AOLauncher.Localization.Texts.Get("Text_Cached_E95A2EE0EC1E") + summary;
             var excerpt = new Label { Text = summary, UseMnemonic = false, ForeColor = Theme.Muted, Location = new Point(12, 114), Height = 49, AutoEllipsis = true, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
             card.Controls.Add(sourceLabel); card.Controls.Add(title); card.Controls.Add(publication); card.Controls.Add(excerpt);
             title.Name = "articleTitle"; title.AutoEllipsis = true;
@@ -246,7 +244,7 @@ namespace AOLauncher
             card.Controls.Add(headingLabel); card.Controls.Add(body);
             if (source != null)
             {
-                var link = new LinkLabel { Text = L("Open website  ↗", "Åbn hjemmeside  ↗"), LinkColor = Theme.Accent, Location = new Point(12, 136), Height = 20 };
+                var link = new LinkLabel { Text = AOLauncher.Localization.Texts.Get("Text_Open_website_67E22946F3C9"), LinkColor = Theme.Accent, Location = new Point(12, 136), Height = 20 };
                 link.LinkClicked += (sender, args) => OpenUrl(source, source.SiteUrl);
                 card.Controls.Add(link);
             }
@@ -295,22 +293,23 @@ namespace AOLauncher
 
         private void UpdateStatus()
         {
+            status.Visible=true;
             int selectedCount = ServerNews.Sources.Count(source => selectedSources.Contains(source.Id));
             if (selectedCount == 0)
             {
-                status.Text = selectedSources.Contains("custom") ? L("No public news feed configured", "Ingen offentlig nyhedskilde konfigureret") : L("No news sources selected", "Ingen nyhedskilder valgt");
+                status.Text = selectedSources.Contains("custom") ? AOLauncher.Localization.Texts.Get("Text_No_public_news_feed_configured_F26DF34A6468") : AOLauncher.Localization.Texts.Get("Text_No_news_sources_selected_8B02D1B163C0");
                 return;
             }
-            string sourceCount = selectedCount.ToString(Culture) + (selectedCount == 1 ? L(" source", " kilde") : L(" sources", " kilder"));
-            if (offlinePreview) { status.Text = L("Preview · ", "Forhåndsvisning · ") + sourceCount + L(" · verified headlines", " · bekræftede overskrifter"); return; }
-            if (refreshing) { status.Text = L("Updating ", "Opdaterer ") + sourceCount + "…"; return; }
+            string sourceCount = selectedCount.ToString(Culture) + (selectedCount == 1 ? AOLauncher.Localization.Texts.Get("Text_source_F053A37709C2") : AOLauncher.Localization.Texts.Get("Text_sources_F09BD0006E5D"));
+            if (offlinePreview) { status.Text = AOLauncher.Localization.Texts.Get("News.SamplePreview"); return; }
+            if (refreshing) { status.Text = AOLauncher.Localization.Texts.Get("Text_Updating_7EF2A329326F") + sourceCount + "…"; return; }
             var visible = snapshots.Where(snapshot => selectedSources.Contains(snapshot.SourceId)).ToArray();
             int unavailable = visible.Count(snapshot => snapshot.Unavailable);
             var last = visible.Where(snapshot => snapshot.FetchedUtc != DateTime.MinValue).Select(snapshot => snapshot.FetchedUtc).DefaultIfEmpty(DateTime.MinValue).Max();
             if (unavailable > 0)
-                status.Text = L("Some sources offline. ", "Nogle kilder er offline. ") + (last == DateTime.MinValue ? L("Try Refresh.", "Prøv Opdater.") : L("Last saved update: ", "Sidst gemte opdatering: ") + last.ToLocalTime().ToString("d MMM · HH:mm", Culture));
-            else if (last == DateTime.MinValue) status.Text = sourceCount + L(" · Waiting for the first update", " · Venter på første opdatering");
-            else status.Text = sourceCount + L(" · Updated ", " · Opdateret ") + last.ToLocalTime().ToString("d MMM · HH:mm", Culture) + L(" · every 15 min", " · hvert 15. min");
+                status.Text = AOLauncher.Localization.Texts.Get("Text_Some_sources_offline_E8BC64AB7171") + (last == DateTime.MinValue ? AOLauncher.Localization.Texts.Get("Text_Try_Refresh_BFF8733D9F81") : AOLauncher.Localization.Texts.Get("Text_Last_saved_update_1068DD393F96") + last.ToLocalTime().ToString("d MMM · HH:mm", Culture));
+            else if (last == DateTime.MinValue) status.Text = sourceCount + AOLauncher.Localization.Texts.Get("Text_Waiting_for_the_first_update_8740E2D34976");
+            else { status.Visible=false;tips.SetToolTip(refresh,AOLauncher.Localization.Texts.Get("Text_Last_updated_0EFAD8B31642")+last.ToLocalTime().ToString("d MMM · HH:mm",Culture)); }
         }
 
         private void OpenSource()
@@ -443,7 +442,7 @@ namespace AOLauncher
             try { Process.Start(new ProcessStartInfo(safe) { UseShellExecute = true }); }
             catch (Exception error) when (error is System.ComponentModel.Win32Exception || error is InvalidOperationException)
             {
-                NexusMessageBox.Show(this, L("Windows could not open your browser. Visit: ", "Windows kunne ikke åbne din browser. Besøg: ") + safe, "AO Nexus", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                NexusMessageBox.Show(this, AOLauncher.Localization.Texts.Get("Text_Windows_could_not_open_your_browser_9F39318C9E63") + safe, "AO Nexus", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
@@ -451,7 +450,7 @@ namespace AOLauncher
         {
             if (disposing && !resourcesDisposed)
             {
-                lifetime.Cancel(); automaticRefresh.Stop(); automaticRefresh.Dispose(); interactionRefresh.Stop(); interactionRefresh.Dispose();
+                tips.Dispose();lifetime.Cancel(); automaticRefresh.Stop(); automaticRefresh.Dispose(); interactionRefresh.Stop(); interactionRefresh.Dispose();
                 foreach (var menu in ownedMenus.ToArray()) menu.Dispose();
             }
             base.Dispose(disposing);

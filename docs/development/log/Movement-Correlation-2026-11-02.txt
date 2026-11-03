@@ -1,0 +1,36 @@
+Movement separation versus timing — 2 November 2026
+
+Scope
+Offline analysis of the existing controlled-route attempts, run A with auto-minimization on and run B off. No changes to the running app, plugins, movement or network probes.
+
+Result
+562 follower observations retained in A, 520 in B (1,082 total).
+Same-observation Pearson r between local IPC reply time and observed separation/cutoff:
+             A          B
+Calm        +0.025     +0.095
+Wazoo       +0.245     +0.167
+Fatale      -0.058     -0.076
+Geek        +0.050     -0.105
+Sexologist  +0.068     -0.053
+Wazoo's reply measurement one second BEFORE separation: +0.091 in A, +0.130 in B.
+No strong, consistent relationship demonstrated. These are descriptive correlations with dependent observations, not significance tests or evidence of causation.
+
+Crucial limitation
+There are NO observations beyond the movement-sync cutoff in the retained sample. This cannot explain actual detachment. Samples near zoning, with excessive timestamp skew, or without a visible leader are excluded; those are precisely conditions which may require separate event-based investigation. An absence in this filtered analysis is not evidence that they never happened.
+
+Server timing
+The recordings contain local IPC round-trip times, not game-server reply times. ServerHealth.TcpAsync measures a new TCP connection, not a game movement acknowledgement. It cannot be relabelled as server response time or retroactively correlated from these files. Future server comparisons require a separately timestamped, explicitly identified network/application measurement. Existing low-frequency TCP checks would only provide coarse endpoint-reachability context.
+
+Method
+Leader 173, QPC frequency 10000000 (verified on this PC). Leader must be foreground, movement enabled, and move at least 0.2 world units between consecutive observations no more than 2.5 seconds apart. Followers must be active, visible, in the same area/channel, with movement positions no older than 3 seconds. Reject position timestamp differences over 250 ms. Exclude 15 seconds before and after observed zoning/area transitions for either participant. Discard IPC values whose reply/helper age exceeds 2.5 seconds. Correlations at lags 0, 1, 2 and 3 seconds use earlier timing observations, never future ones or another process/run. Even retained positions are asynchronous and approximate.
+Older diagnostics do not carry a server endpoint; use one known team/server recording at a time.
+
+Reproduce from repository root (Node.js, no packages):
+node --test tests/movement-correlation.test.cjs
+node tools/analyze-movement.cjs --leader 173 --frequency 10000000 --output logs/MovementCorrelation/A logs/MovementComparison/run-A.jsonl
+node tools/analyze-movement.cjs --leader 173 --frequency 10000000 --output logs/MovementCorrelation/B logs/MovementComparison/run-B.jsonl
+
+Artifacts: each output folder contains summary.json (method, exclusions, per-character coefficients and counts) and samples.csv (paired positions and timing measurements). Five synthetic tests passed, including stale replies, timestamp skew, zoning, constant/missing metrics and process boundaries.
+
+Next useful capture
+Record an actual separation, noting its local time and the driving character. Inspect the unfiltered seconds before and after the incident for zoning, focus changes, update stalls and loss of leader visibility, alongside this steady-running analysis. Do not increase the movement-sync cutoff based on these results.

@@ -1,0 +1,161 @@
+AO NEXUS: DEFENDER REVIEW — 31 OCTOBER 2026
+
+STATUS
+Unresolved; release blocked. This is a suspected false positive, not a confirmed
+one. Nothing has been submitted to Microsoft. No protection setting, exclusion,
+signing, installer layout or embedded-helper layout was changed for this review.
+Auto-login, optional AOSharp/plugin loading and live monitoring remain in scope.
+
+OBSERVED EVIDENCE
+Microsoft Defender Antivirus reports Behavior:Win32/DefenseEvasion.A!ml
+(ThreatID 2147738096). The 31 October 10:49:15 and 10:49:25 local detections
+identify AONexus.exe and its resource AOLauncher.NexusPluginHost.exe in build
+output and dist. The recorded process is the PowerShell build/copy host.
+The 11:07:38 record also identifies the standalone NexusPluginHost.exe.
+An earlier 28 October record includes the launcher's HKCU Windows startup entry.
+These records identify affected resources; they do not reveal Microsoft's rule
+logic or prove exactly which operation caused the behavioral classification.
+
+Platform 4.18.26100.4; engine 1.1.26100.4; intelligence 1.463.54.0.
+Antivirus, real-time protection and behavior monitoring were enabled.
+Ordinary hash reads of the flagged standalone helper and dist launcher were
+blocked by Defender. The latest bin/Release launcher was missing. No sample
+was restored or regenerated to get around this. Exact flagged-sample hashes
+and source-to-binary equivalence remain unverified.
+
+A separate Program:Win32/Contebrew.A!ml detection (ThreatID 251873) identifies
+the private AOLauncher.AOVK.version-rebirth-ui.dll resource. Do not conflate
+that patch with the AOSharp helper or the standard AO-VK renderer. The current
+public build path already excludes that private patch.
+
+SOURCE AND DEPENDENCY REVIEW
+Reviewed src/PluginHost/NexusPluginHost.cs, build/Build-PluginHost.ps1 and the
+PluginHostClient in src/Launcher/AOSharpPack.cs. The host is an x86 .NET
+Framework executable compiled against framework libraries. It dynamically
+loads EasyHook and AOSharp.Bootstrap from the user's selected AOSharp folder.
+The launcher extracts the embedded helper into a checksum-specific local
+folder and starts it without a shell. The helper keeps the bootstrap connection
+alive so restarting the Nexus window does not unload plugins in open games.
+
+Injection is explicit in the code: EasyHook.RemoteHooking.Inject loads the
+AOSharp bootstrap into the requested game process. The helper checks process
+name, PID/start time and the existence of selected DLL paths. Its Nexus-facing
+named pipe has a current-user ACL. These are useful constraints, not a security
+sandbox or binary publisher verification. Local plugins execute trusted code;
+the selected third-party runtime controls its own behavior.
+
+No Defender configuration changes, credential collection, HTTP client, service
+installation or Windows startup registration were found in this helper source.
+This statement is limited to the helper. The parent launcher implements the
+optional Windows startup setting in DesktopLifetime.cs; the login backend
+handles credentials and injects its separate LoginHandler using Reloaded.Injector.
+Third-party EasyHook includes a service executable, so a blanket claim that the
+whole application/dependency chain cannot use services would be incorrect.
+
+Accessible selected-runtime bootstrap IL was inspected without executing it:
+it references EasyHook, AOSharp.Common, Serilog, Serilog.Sinks.File, Newtonsoft.Json
+and framework libraries, and contains the expected assembly loading and IPC
+paths. This focused inspection is not a new exhaustive scan of the 64 plugins.
+
+The selected installation's four EasyHook files were independently compared,
+byte-for-byte by SHA-256, with NetFX4.0 entries in the official release archive:
+https://github.com/EasyHook/EasyHook/releases/tag/v2.7.6789.0
+All four matched:
+EasyHook.dll       8267EA2ACB222DAD150199A6C2A3280B4B6CF8A85D7208BF0134719743D47256
+EasyHook32.dll     1469B54D8C0B8ABF370C357D518B2BB68F51B7D49278E5EE2444AA2EA3180FDA
+EasyLoad32.dll     AD26B4DF8A73EBDBC526A6940C7A286965FDF4D4B2BE72D10BB73E7C88F55E68
+EasyHook32Svc.exe  39361867B97155B16FE6F16F77B50B97B00393E16E0C23FAD8D2E34ADB72C8DB
+Their Authenticode status is NotSigned; matching an official release is not
+equivalent to a guarantee of safety or confirmation of a false positive.
+
+Selected-runtime inventory (hashes, not redistributed files):
+AOSharp.Bootstrap.dll CF103FBCC45D4AA95FB8B9F86EB53B70F71B6A0D8131FD47ECA419CA28F76A7D
+AOSharp.Core.dll      7CF75C05ECC8373BA5FAC7A7FDFA259D868757D4790AAD713A25D00E11DCB7C7
+AOSharp and bundled-plugin redistribution rights remain unverified.
+
+MICROSOFT SUBMISSION DRAFT — NOT SENT
+Portal: https://www.microsoft.com/en-us/wdsi/filesubmission
+Choose Software developer; product Microsoft Defender Antivirus; request review
+of an incorrectly detected file. This describes our position, not a vendor verdict.
+
+Suggested description:
+"I maintain AO Nexus, a Windows launcher and multi-client management application
+for Anarchy Online. Please review the detection Behavior:Win32/DefenseEvasion.A!ml
+on AONexus.exe / embedded resource AOLauncher.NexusPluginHost.exe, also reported
+on the standalone NexusPluginHost.exe. Defender detected the resource during
+build/copy operations on 31 October 2026, with platform 4.18.26100.4, engine
+1.1.26100.4 and intelligence 1.463.54.0. An older record also names our optional
+per-user Windows startup entry.
+
+The helper intentionally uses EasyHook 2.7.6789.0 to load a user-selected
+AOSharp bootstrap and plugins into the user's AnarchyOnline process. The
+launcher extracts and starts this embedded helper locally. The helper uses
+a current-user named pipe, validates target PID/start time and process name,
+and stays alive while connected game clients remain open. This supports
+user-enabled plugin management and health monitoring. The parent application
+also supports automatic login through a separate LoginHandler and an optional
+Windows startup setting.
+
+Our focused source review found no code in NexusPluginHost that changes security
+settings or collects credentials. The selected EasyHook binaries match the
+official release. We do not claim this establishes a false positive. Please
+review the actual sample and advise whether the detection is incorrect or
+whether there is specific unwanted behavior we should address."
+
+Before sending: attach an exact, lawfully held sample using Microsoft's supported
+submission process and record its SHA-256 and submission ID. The current samples
+are blocked and have not been attached. Seek Microsoft's instructions if a sample
+cannot be supplied normally. Do not turn off protection or restore samples to
+complete this draft. Do not send account files, credentials, full support logs,
+the user's plugin pack, or a private AOSharp runtime. Local evidence under
+logs/defender-review-2026-10-31 contains personal paths/SIDs; review and redact
+before sharing. Submit the separate private AO-VK patch only in its own review
+with appropriate authorization. No automated upload is implemented here.
+
+RELEASE REQUIREMENT
+build/Package.ps1 first checks the exact launcher with Verify-DefenderRelease.ps1.
+It requires active antivirus/real-time/behavior monitoring, archive scanning,
+signatures no older than 24 hours, no matching active detection, a non-excluded
+artifact, a successful custom scan, and identical SHA-256 before/after scanning.
+New matching detections block even when the scanner reports successful remediation.
+The completed ZIP is scanned before replacing the named release archive.
+Failure leaves any previous named archive untouched; do not treat an older ZIP
+as approval for a newer build. Reports under logs are local evidence only.
+
+A clean static scan does not resolve a behavioral alert. Package.ps1 also
+requires -DefenderRuntimeReview pointing to a completed copy of
+docs/development/log/Defender-RuntimeReview.example.json. Record actual runtime observations
+for the exact executable hash, with Defender enabled on a test machine, covering
+launch/login, AOSharp plus monitoring, restart with clients open, and the optional
+Windows startup setting. Do not use real account secrets in submitted evidence.
+Record a reviewer, UTC test time within seven days, Defender intelligence version,
+and Microsoft's submission ID and FalsePositiveResolved verdict for this incident.
+This is a human attestation, not an automated verification of Microsoft's response.
+Do not mark unperformed tests Passed. The current template deliberately fails.
+
+Example after review and successful runtime testing:
+  .\build\Package.ps1 -DefenderRuntimeReview .\logs\approved-runtime-review.json
+Build.ps1 -Package accepts the same parameter. The scripts do not elevate
+themselves; use an elevated release shell for Microsoft's scanner if required.
+They never change Defender preferences, suppress findings, sign/repack the
+helper to evade detection, or execute the artifact as part of the static scan.
+Future builds and different plugin sets still need testing; no lasting exemption
+or guarantee of no future alerts is implied.
+
+Microsoft references:
+https://learn.microsoft.com/en-us/defender-xdr/developer-faq
+https://learn.microsoft.com/en-us/defender-endpoint/command-line-arguments-microsoft-defender-antivirus
+https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-antivirus-exclusions-configure
+
+VALIDATION OF THIS CHANGE
+26 synthetic release-policy checks passed, including remediation reported as
+success, changed/missing artifacts, nested-resource matching, stale signatures,
+incomplete runtime reviews and report/input collisions. The real gate on
+dist/AONexus.exe returned Blocked for the matching active detection. A harmless
+documentation-file check reached MpCmdRun's exclusion query, which returned
+0x80070005 (access denied) in this unelevated shell; the gate returned Blocked.
+Thus the scan-completion success path has not been verified live here. No new
+release was packaged or approved. PowerShell parsing and git diff --check passed.
+41 launcher/team checks passed, including nine regressions for the separate
+monitoring-log clarification. This test harness does not embed or run the
+flagged helper and is not a substitute replacement launcher.

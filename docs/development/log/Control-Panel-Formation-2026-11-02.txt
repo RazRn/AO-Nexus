@@ -1,0 +1,63 @@
+Control Panel formation experiment — 2026-11-02
+
+Scope
+Follow, Gather and Stop beside the Team heading, behind ExperimentalTeamAutomation.
+Leader and spacing persist; active movement does not. Spread is deferred.
+All participants must be local clients in the same team, area and SyncManager channel.
+The supported adapter is AOSP ManagerSync.ManagerSync in the selected 64-plugin installation.
+
+Movement ownership
+The AOSP OnMoveMessage receiver ignores the SyncMove checkbox. The temporary lease
+therefore disables movement sending AND removes only that exact movement receiver.
+Attack, target and guard callbacks remain attached. Stop restores the old movement
+setting and receiver. No transient setting is saved to the plugin's configuration.
+Game API calls and callback changes run on the game update thread.
+
+Follow records the leader's route and uses ordinary movement towards breadcrumb
+positions. It does not teleport or plan routes around obstacles. It stops on blocked
+line of sight, no progress, excessive distance/height, stale leader state, changes
+to the team/channel, manual follower input, zoning/death, or expired Nexus contact.
+Zoning requires an explicit fresh Start. Closing the Control Panel stops the session.
+
+Implementation findings
+- The first live Gather encountered an IOException during shared snapshot exchange.
+  A per-path named mutex now serializes background reads/writes across the six clients.
+  A FileShare.Delete-only experiment did not reliably avoid a missing-path interval
+  during File.Replace; it was reverted. The mailbox has a six-reader stress regression.
+- A fresh roster is read through the existing exported team-list API and AO# TeamMember
+  decoder because the managed Team.IsInTeam query can be false after zoning. No new
+  team-member memory offsets were introduced. Post-zone live validation remains pending.
+- WinForms focus restoration could scroll the Team header out of view. The sections
+  container now preserves its scroll position when a child receives focus.
+
+Validation
+- Release build succeeded.
+- Verify-FormationLease: 17 passed (callback isolation/restoration, channel changes,
+  route interpolation and request validation).
+- Verify-PlayTools: 53 passed (including concurrent mailbox regression).
+- Verify-TeamWindow: 348 passed (including header layout at 1160 and 760 pixels).
+- Installed and reloaded all six clients with user approval. Final reload took 9.71s;
+  team formation completed approximately 5.25s later.
+- Corrected Gather stayed active on all six for over a minute, with movement sync
+  suspended and SyncManager still enabled.
+- Explicit Stop button verified: all six became inactive and movement sync restored.
+- Follow Start verified: all five followers moved to separate positions in line behind
+  Overwhelming. User then completed the short route/turn test. End-of-run snapshot
+  follow-user-route.json shows all five followers In position, session still active,
+  with no formation-stop record found for that run. Continuous route sampling was
+  not captured, so this does not prove every turn was smooth.
+- Attack callback preservation was tested in the adapter fixture, not in live combat.
+- Zoning and five-second lost-Nexus watchdog are implemented but not yet live-tested.
+
+Installed SHA-256
+AONexus.exe: 88ADE3FD457D3F433C478F1C84ABDF83663C0340E4978136F436DD0A9F91356A
+NexusShortcuts.dll: C077EA0DDDCE21F2B2347039A2E9BCEEF317BFFB1890C7670A2B1FDFF9F657E5
+
+Local evidence (ignored, machine-specific)
+logs/FormationBuild/gather-held.json
+logs/FormationBuild/explicit-stop.json
+logs/FormationBuild/follow-started.json
+logs/FormationBuild/route-1.json through route-6.json (stationary baseline)
+logs/team-previews/formation-1160.png and formation-760.png
+Rollback copies are in logs/FormationBuild and dist/Previous.
+Windows Defender configuration was not changed.

@@ -1,0 +1,100 @@
+SYNC GUARD, TEAM STARTUP AND RALLY VERIFICATION - 2026-11-02
+
+Incident
+At 18:13:12 local, Wazoo and Geek exceeded the AOSP correction limits. The
+leader stopped around 18:13:16, but these two kept moving at about 5.1 m/s,
+reached roughly 65 m separation and zoned from 655 to 1186 at 18:13:28.
+Their local replies remained around 15-17 ms. This does not establish the
+initial cause, but matches Receiver.OnMoveMessage rejecting distant messages,
+including FullStop, without clearing the previous movement action.
+Evidence snapshot: logs/MovementIncident-20261102-1815/development.jsonl.
+
+Guard
+The monitor observes accepted movement on the existing AOSP channel. It
+does not increase correction range or change ManagerSync settings. A fresh,
+accepted move from a visible sender arms the follower. Same-frame game
+positions are checked every 200 ms, avoiding cross-client snapshot skew.
+Warning: separation >= max(8 m, sync limit + 3 m) for 2 seconds.
+Stop: continuous separation for 4 seconds, distance >= max(15 m, limit + 8 m),
+and still moving. Ordinary FullStop is queued once, followed by one rally
+message after the client confirms it stopped. Alarm events reach Nexus even
+with Control Panel closed; Windows notification/sound settings still apply.
+Foreground/manual control, zoning, combat/casting, navigation, death, disabled
+sync, channel changes and absent visible sender disarm the guard. A new
+accepted movement is needed after a 3-second grace. Thus this is protection
+for confirmed AOSP movement run-off, not a universal movement watchdog.
+A sample gap above one second starts a new observation interval; a stalled
+game loop is not evidence of continuous separation. Episode latches prevent
+duplicate warnings/stops. No promise of zero false positives is made.
+
+Rally
+/nexus-rally sends a location popup to the confirmed Team channel. The leader
+and followers can use it. Automatic messages are once per stop episode, and
+all messages have a 10-second per-client limit. Missing channel information
+is explicit; no fallback to Global/Vicinity. Clicking Mark location on map
+runs the ordinary /waypoint command, not automatic walking or navigation.
+Live verification: Team message received, popup showed Overwhelming,
+Andromeda and 3256 874, and the client confirmed map/compass upload. Unicode
+separators appeared as '?' in AO chat and were replaced with ASCII.
+
+Formation
+Dedicated 250 ms startup polling, short bounded pipe-connect retries and a
+3-second process-bound follower-ready cache remove avoidable scheduling gaps.
+Confirmed joins release the next invitation; different invites are spaced
+one second apart. Same-target retry remains 10 seconds, maximum 3 attempts.
+Live six-client relog at 18:43: all clients loaded in 9.18 s (backend timing).
+All six were formed at about 18:43:21, about five seconds after the final
+client-ready log. TEAMVIEW confirmed leader 173 and all six expected members.
+All six published Andromeda and the new guard state; a short leader movement
+armed all five followers. Sustained separation/stop verification is pending.
+
+Presentation and service measurements
+Zone replaces Largest block on cards; memory fragmentation remains diagnostic.
+Two five-minute graphs display slowest fresh local reply and service TCP
+connection times using existing checks. They do not measure backend execution.
+AO# exposes PingMessageReceived, but matching semantics/timing are not yet
+verified. Its queued inbound/outbound event order prevents treating naive
+event timestamps as server RTT. No synthetic login or game requests added.
+
+Validation
+26 startup and 23 team-recovery state checks; 17 startup/safety unit tests;
+10 production guard adapter checks against inert game fixtures; 38 production
+monitor/IPC transport checks; 335 Control Panel checks; Release build passed.
+The fixture and unit tests verify stop behavior. Live arming and rally are
+verified separately; they do not prove a real run-off has been stopped.
+
+Final deployment and repeat run
+Installed EXE SHA-256:
+A006E0A4603B44CB3A5AF18B6174A87887A348399A5ECE01C15E56E8976649CB
+Restarted Nexus and relogged all six again after the sampling-gap/ASCII fixes.
+18:50:35.572 local: all six loaded, backend total 9.54 seconds.
+18:50:41.475 local: team formed, 5.903 seconds after the final load report.
+TEAMVIEW again confirmed all six and Overwhelming leading. All clients healthy
+with Andromeda zone data. Extracted monitor hash matches the final build.
+
+User movement test, 19:02:51-19:04:17 local
+Recording: logs/SyncGuardLive-20261102-1905/recording.jsonl
+Filtered analysis: logs/SyncGuardLive-20261102-1905/route-summary.json
+All six stayed live. User entered Subway and returned twice, around 19:03:15
+and 19:03:40. Guards disarmed during zoning and resumed Watching afterwards.
+No GuardEvent or sync-guard-alert appeared. Five followers ended at the same
+reported position as Overwhelming in Andromeda. Fresh same-zone snapshots
+with <=250 ms position skew showed maximum observed separation about 1.01 m;
+the stricter moving-only analysis excluding zone transitions peaked at 0.83 m.
+These are sampled approximate distances, not a continuous upper bound.
+Median local replies about 15.8-15.9 ms. Transient reply/update spikes occurred
+around the run/zoning, including a 377 ms leader reply; no sustained separation.
+This validates normal movement/zoning without alarms on this route. It does
+not exercise the emergency stop path, which remains fixture-tested only.
+
+Separate post-zone discrepancy discovered (not repaired in this test)
+TEAMVIEW from all six says Ready=true, Leader=0, Members=[], while the actual
+Overwhelming Team window visibly contains all six and the monitor's native
+GUI query says IsTeamLeader=true. NexusAutoTeam still relies on Team.IsInTeam,
+Team.IsLeader and Team.Members, whose member-list implementation returns an
+empty list when the engine IsInTeam query is false. This can affect future
+leader recovery after zoning. The sync guard uses accepted AOSP movement and
+visible characters independently, so its Watching state remains valid.
+Do not interpret this false empty report as a real team disband or issue
+automatic invites based on it. A consistent native-backed roster read is
+needed; changing only the leader boolean would leave Members incomplete.

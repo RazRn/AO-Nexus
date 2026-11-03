@@ -1,0 +1,93 @@
+NEXUS TEST 16 - SYNCMANAGER FORMATIONS AND LOCAL TIMERS
+
+INSTALL
+Close game clients. Start-Merged-Test.cmd starts the local launcher. For the
+modern window, Settings > Graphics: select your game folder, keep AO-VK and
+Modern plugin windows enabled, then Save to update recognized test 11-15
+renderer/repair pairs. Restart clients with Z SyncManager and Nexus Shortcuts.
+Classic AOSharp is supported and does not require AO-VK.
+
+FORMATION - IN SYNCMANAGER'S MOVEMENT SECTION
+Open /syncmanager on the character you want to lead. Below Movement, choose
+Column, Line, Wedge, Echelon left/right or Ring and enter Spacing (metres,
+1-20). Tick Formation. Local characters in the same in-game team and on the
+same SyncManager channel receive places automatically. No IDs, slot numbers
+or commands are needed. /nexusformation is now a shortcut to /syncmanager.
+When changing pattern or distance while active, press Apply formation.
+Untick Formation on the leader to stop the group, or on a follower to stop
+that follower. A stopped follower does not rejoin the same request. Apply on
+the leader sends a new explicit request. Load the plugins and form the team
+before enabling; newly loaded clients do not join an old request.
+
+Spacing sets the side/row/leader offsets together, in AO world units labelled
+metres. Actual distance between neighbours depends on the chosen geometry;
+metre calibration and movement in terrain still require in-game testing.
+Start with two characters on flat open ground. This is direct steering, not
+obstacle pathfinding. Manual movement, blocking, zoning, death, another
+navigation task, missing leader or leaving the team stops following. Combat
+and nano casting pause movement. Normal movement sync is temporarily disabled
+and restored on stop. A safety stop never automatically restarts the same
+formation request. Multiple PCs/other players are not controlled.
+
+Classic controls extend the loaded Z SyncManager XML in the character's
+AOSharp preferences. Original plugin files remain intact. The runtime path
+is restored on unload. AO-VK uses the same formation actions inside Movement.
+Legacy advanced chat commands remain compatible but are no longer the normal
+UI. Timer commands are unchanged.
+
+TEAM WINDOW
+In Nexus's top navigation, next to Plugins: Team Window (Danish: Holdvindue).
+It opens a separate desktop window with client previews, responsiveness and
+available health/nano/target information. Keep client monitoring on; health
+and nano require the in-game Health Monitor. Minimized previews may pause.
+This is not yet an in-game team overlay; exact cast/recharge bars are absent.
+
+LOCAL TIMERS
+Open Timers in Nexus, or /nexustimers in game. Create fixed-respawn estimates,
+chance windows, personal cooldowns or reset timers. Choose your own duration;
+no unverified server-specific boss durations are supplied. In Nexus select
+server, New, then Start now, Killed at or Set due time. Edit reminder minutes,
+optional sound, character restriction and repeating resets there.
+The in-game board provides creation, start, sighting and stop; its HUD can
+remain pinned while the board is closed and does not capture input.
+The modern list shows up to eight timers; the launcher shows the full list.
+
+Timers are saved under %LOCALAPPDATA%\AONexus\PlayTools\timers.json. They are
+local to the Windows user, shared between that user's clients using the same
+server Prefs root. There is no organization sharing, bot, network listener or
+server. The absolute UTC deadline persists through logout, closing the game,
+restarting Nexus and reboot. Tray alerts require Nexus running; after a gap,
+a due alert is handled once when Nexus resumes. Windows notification settings
+may suppress its display. Repeating resets use fixed UTC intervals, not DST-
+adjusted calendar schedules. Closing Nexus does not create a background task.
+
+Expired boss timers say expected/unconfirmed or possibly up, never a verified
+spawn. A sighting is manual; it does not prove the boss is attackable. Optional
+death observation is experimental: an exact-name NPC must be observed alive
+and then dead nearby. Disappearance/zoning is not a kill. Polling can miss
+a death; no kill ownership is inferred. Manual controls remain available.
+
+LOGIN EXPERIMENT
+On the recognized Rebirth endpoint, AO-VK can use admission-gated overlap
+with at most two pending clients per account queue when existing fast-startup and admission
+pipeline options allow it. Same-account admission remains gated; missing
+telemetry waits for full confirmation. Disable fast startup to opt out.
+There is no measured live speedup yet. Compare the same team and conditions.
+
+VALIDATION
+Isolated tests cover persistence/restart, alerts and deduplication, scopes,
+concurrent edits, formation geometry/rotation, ABI, UI rendering, focus loss,
+input release, device recreation, classic fallback and renderer upgrades.
+No game clients were launched by automation. Live movement, death observation,
+mouse behavior in AO and team-login timing remain acceptance tests for Mike.
+Exact attack/cast/recharge progress bars and organization sharing are absent.
+
+2026-11-01: Preset formation owns its roster while it is active. Starting a
+fresh automatic preset forgets overlapping recovery episodes on that server,
+cancels previously issued recovery sessions (including discarded tracker
+entries), and prevents recovery from learning partial startup teams. Once
+formation completes or expires, ordinary recovery learns the actual new team.
+The selected preset's first character remains the sole startup inviter.
+Validated with the old-leader-exit / conflicting-roster / returning-client
+regression, plus existing team formation and leader-transfer tests. Launcher
+change only; no in-game helper update required. Live startup not yet retested.

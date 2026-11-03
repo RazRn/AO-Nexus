@@ -7,8 +7,10 @@ $testDirectory = Join-Path ([IO.Path]::GetTempPath()) ('AOLauncher-EmbeddedBacke
 [IO.Directory]::CreateDirectory($testDirectory) | Out-Null
 $exePath = Join-Path $testDirectory 'EmbeddedBackendTests.exe'
 $framework = 'C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8'
-$references = @('mscorlib', 'System', 'System.Core', 'System.IO.Compression', 'System.IO.Compression.FileSystem', 'System.Web.Extensions') | ForEach-Object { "/reference:$framework\$_.dll" }
-& $Compiler /nologo /langversion:7.3 /target:exe /platform:x86 /nostdlib+ "/out:$exePath" @references (Join-Path $PSScriptRoot '..\src\Launcher\EmbeddedBackend.cs') (Join-Path $PSScriptRoot 'EmbeddedBackend.Tests.cs') (Join-Path $PSScriptRoot '..\src\Common\Texts.cs')
+$references = @('mscorlib', 'System', 'System.Xml', 'System.Core', 'System.IO.Compression', 'System.IO.Compression.FileSystem', 'System.Web.Extensions') | ForEach-Object { "/reference:$framework\$_.dll" }
+. (Join-Path $PSScriptRoot 'CompilerInputs.ps1')
+$nexusCompilerInputs = @(Get-NexusCompilerInputs)
+& $Compiler @nexusCompilerInputs /nologo /langversion:7.3 /target:exe /platform:x86 /nostdlib+ "/out:$exePath" @references (Join-Path $PSScriptRoot '..\src\Launcher\EmbeddedBackend.cs') (Join-Path $PSScriptRoot 'EmbeddedBackend.Tests.cs') (Join-Path $PSScriptRoot '..\src\Common\Texts.cs')
 if ($LASTEXITCODE -ne 0) { throw 'Embedded backend harness compilation failed.' }
 & $exePath (Join-Path $testDirectory 'synthetic')
 if ($LASTEXITCODE -ne 0) { throw 'Embedded backend regression failed.' }

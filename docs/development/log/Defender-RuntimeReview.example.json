@@ -1,0 +1,16 @@
+{
+  "Result": "NotTested",
+  "ExecutableSha256": "REPLACE_WITH_EXACT_RELEASE_EXE_SHA256",
+  "Reviewer": "",
+  "TestedUtc": "",
+  "DefenderSignatureVersion": "",
+  "MicrosoftSubmissionId": "",
+  "MicrosoftVerdict": "Pending",
+  "Scenarios": {
+    "LaunchAndLogin": "NotTested",
+    "AOSharpAndMonitoring": "NotTested",
+    "NexusRestartWithClients": "NotTested",
+    "OptionalWindowsStartup": "NotTested"
+  },
+  "Notes": "Record actual observations on a test machine with Defender enabled. This template is not release approval."
+}

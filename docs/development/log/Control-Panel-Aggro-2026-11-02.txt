@@ -1,0 +1,104 @@
+Control Panel aggro, tooltips and leadership — 2026-11-02
+
+Aggro is sampled on the existing half-second game-thread pass. It counts unique
+living non-player characters whose current FightingTarget is the local player
+and whose attack state is active. Local pet roster, explicit pet type/family,
+pet flags and a verified player owner exclude pets. No extra network requests.
+Only count, timestamp and three bounded names leave the client. Names are
+alphabetical, not a threat ranking. Launcher rejects old, future, stale, zoned
+or mismatched-process observations. Card reserves a separate panel below attack.
+
+Formation controls explain behavior and trade-offs in English and Danish.
+Tooltips wrap to 76 characters; Windows otherwise displayed them wider than
+the screen. Sync trials do not change server tick rate.
+
+Leader selection sends a process-bound, expiring, exact-roster TEAMLEADER request
+to the current leader. Game-thread validation precedes transfer. Launcher waits
+for the target's fresh team view before resuming formation. Existing recovery
+episodes are cancelled and temporarily reserved against restoring the old leader.
+
+Funny business picks a bounded clear destination away from a blocked route;
+an enclosed follower waits/retries. Other formation modes and separation/zoning
+checks retain their previous stop policy.
+
+Relog all previously built an isolated selection without preset metadata, which
+omitted OrderedStarts/KeepLeaderActive. A full matching preset relog now reapplies
+its order and window policy after confirmed exits. Partial relogs do not invent
+a replacement leader. Initial panel selection prefers the observed team leader;
+explicit client switches remain authoritative.
+
+Validation: 44 formation checks, 26 team-plan + 29 recovery checks, 8 game fixture
+checks including aggro filters, 38 production-plugin IPC/transport checks.
+Control Panel checks passed at 370 after adding full/partial relog and default
+selection cases.
+All six live clients loaded the new monitor and published fresh zero-aggro
+observations out of combat. Positive real-combat observation remains to verify.
+
+Live follow-up — 2026-11-03
+Installed AONexus SHA256:
+B37FBE01619E878E0152B05BF2F3EA3BA3FF219625CF17D10348898F934E665C
+
+Live testing found that Rebirth followers report a complete roster but Leader=0.
+The launcher now permits this unknown value and asks same-server roster peers
+for exactly one fresh self-leader claim with the identical roster. It still
+requires the target to confirm leadership before resuming formation.
+At 13:46:55 UTC, Overwhelming transferred leadership to Sexologist; Funny business
+resumed with her as leader. At 13:47:33 UTC, transfer back to Overwhelming and
+formation resumption both succeeded. The badge moved to the actual leader.
+
+The first focus test exposed an iconic follower remaining the foreground window.
+PresetLaunchWindows now uses SW_MINIMIZE for an active batch follower so Windows
+passes activation to the leader placed next in the normal window stack.
+Background followers still use SW_SHOWMINNOACTIVE.
+
+The final six-client relog passed: Overwhelming PID 49564 stayed foreground and
+not minimized; PIDs 16892, 7392, 35464, 48012 and 29612 were minimized. Captured
+the visible leader game window and complete six-member roster. Backend reported
+all six loaded in 10.24 s; launcher run took 14.9 s including its preparation.
+Team formed at 13:48:36 UTC, all plugin startups observed by 13:48:37 UTC.
+Formation was stopped before relog and remains stopped.
+
+Re-ran 370 Control Panel checks and 8 game fixture checks successfully on the
+installed source. Six launch unit tests passed. Verify-TrackedAccountLimits
+has a pre-existing compile failure: its Program.Options fixture lacks
+AllowExperimentalAovk; this check did not pass.
+Positive real-combat aggro and a deliberately blocked-route rerouting test
+remain unverified in-game; the corresponding isolated checks passed.
+
+Additional live tests — 2026-11-03, 15:00–15:07 Copenhagen
+Repaired the tracked-account test Options fixture by adding its missing
+AllowExperimentalAovk property. All 131 synthetic tracked-session checks pass.
+Two further six-client relogs reported 10.09 s and 10.44 s backend load times.
+Both formed the team and observed all six plugin startups. Final live window
+state: Overwhelming foreground/not minimized; all five followers minimized.
+
+Funny business: 30 s at 5 m produced no obstacle encounter. At 10 m, a 40 s
+capture recorded Fatale's Turning away from obstacle state, followed by resumed
+Funny business. All six controllers remained active across 232 samples per
+client, with no stop. Five followers performed 12–21 emotes; leader performed 0.
+Evidence: logs/LeaderAvoidanceBuild/obstacle-ten-metre-samples.json.
+Gather returned all five followers within approximately one metre; Stop
+released formation and restored movement sync. Restored preferred radius 5 m.
+
+New unresolved finding before these relogs: after the user's recent zoning,
+TEAMVIEW returned Ready=true with Members=[] and Leader=0 on all six clients;
+FORMATIONSTATUS also had an empty roster and Ready=false. Health telemetry still
+showed the leader badge. Formation refused to start. Relog restored the roster.
+The exact cause needs reproduction; do not classify as fixed by relogging.
+
+Combat/zoning reproduction — 2026-11-03, approximately 15:09 Copenhagen
+User took the team from Andromeda (655) into Subway (127) and fought Filth Fleas.
+Raw half-second telemetry reported a maximum of three attackers on Overwhelming
+with three Filth Flea names. Sexologist and Wazoo each briefly reported one;
+Calm, Fatale and Geek reported zero. Counts returned to zero after the fight.
+Overwhelming's observed health minimum was 574/593. No pet names appeared.
+Evidence: logs/LeaderAvoidanceBuild/aggro-combat-live.jsonl.
+
+The roster failure reproduced on all six at 14:09:01 UTC: TEAMVIEW Members=[]
+remained empty after zoning completed while the actual game Team window still
+showed all six and Overwhelming as leader. This is an unresolved post-zoning
+roster-source defect, not a team disband. Formation correctly refuses stale/
+missing rosters. Evidence: logs/LeaderAvoidanceBuild/zoning-team-views.jsonl.
+Leave formation stopped; do not replace missing roster data with a guessed
+preset roster. Both launch validation and health/aggro observations passed,
+but the overall formation/zoning validation is not green.

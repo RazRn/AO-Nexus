@@ -37,7 +37,7 @@ public static class SnapshotRaceTest {
         var final = read.Invoke(null, new object[] { path });
         if ((long)final.GetType().GetProperty("Updates").GetValue(final, null) != 1000)
             throw new Exception("Reader did not see final publication");
-        File.WriteAllText(path, new string(' ', 8192));
+        File.WriteAllText(path, new string(' ', 512 * 1024));
         if (read.Invoke(null, new object[] { path }) != null) throw new Exception("Oversize snapshot accepted");
         return reads;
     }

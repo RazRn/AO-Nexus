@@ -28,13 +28,10 @@ namespace AOLauncher
         internal static HealthEndpoints Defaults(LoginServerProfile server)
         {
             var result = new HealthEndpoints { Login = new HealthEndpoint { Enabled = true, Host = server.Server, Port = server.Port } };
-            string kind = ServerHealth.Kind(server);
-            if (kind == "rebirth")
-            {
-                result.Zone = new HealthEndpoint { Enabled = true, Host = server.Server, Port = 7501 };
-                result.Chat = new HealthEndpoint { Enabled = true, Host = server.Server, Port = 7012 };
-            }
-            else if (kind == "live") result.Chat = new HealthEndpoint { Enabled = true, Host = "chat.d1.funcom.com", Port = server.Port == 7506 ? 7106 : 7105 };
+            // Zone and chat endpoints come from the server list (config/servers.json).
+            var health = ServerRules.Find(server.Server, server.Port)?.Health;
+            if (health?.Zone != null) result.Zone = new HealthEndpoint { Enabled = true, Host = health.Zone.Host ?? server.Server, Port = health.Zone.Port };
+            if (health?.Chat != null) result.Chat = new HealthEndpoint { Enabled = true, Host = health.Chat.Host ?? server.Server, Port = health.Chat.Port };
             return result;
         }
         internal static HealthEndpoints Resolve(LoginServerProfile server, IDictionary<string, HealthEndpoints> overrides)
@@ -49,7 +46,7 @@ namespace AOLauncher
         private readonly List<LoginServerProfile> profiles;
         public Dictionary<string, HealthEndpoints> Endpoints { get; private set; }
         internal HealthEndpointsDialog(IEnumerable<LoginServerProfile> profiles, IDictionary<string, HealthEndpoints> values)
-            : base(L("Health check endpoints", "Adresser til statustjek"), 600)
+            : base(AOLauncher.Localization.Texts.Get("Text_Health_check_endpoints_448035EFD74E"), 600)
         {
             this.profiles = profiles.ToList();
             ClientSize = new Size(940, 620);
@@ -57,18 +54,16 @@ namespace AOLauncher
             Fields.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             Fields.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             Fields.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            var note = new Label { AutoSize = true, Dock = DockStyle.Fill, ForeColor = Theme.Muted, Margin = new Padding(0, 0, 0, 12), Text = L(
-                "Connection checks only; account login settings are separate. Enter an IP address or hostname and port. Unverified services start disabled. Public reports use their existing verified sources.",
-                "Kun forbindelsestjek; kontoens loginindstillinger er separate. Angiv IP-adresse eller værtsnavn og port. Ikke-verificerede tjenester er slået fra. Offentlige rapporter bruger de eksisterende verificerede kilder.") };
+            var note = new Label { AutoSize = true, Dock = DockStyle.Fill, ForeColor = Theme.Muted, Margin = new Padding(0, 0, 0, 12), Text = AOLauncher.Localization.Texts.Get("Text_Connection_checks_only_account_login_settings_5FF90809E248") };
             note.MaximumSize = new Size(850, 0); Fields.Controls.Add(note, 0, 0);
             Fields.SizeChanged += (sender, e) => note.MaximumSize = new Size(Math.Max(100, Fields.ClientSize.Width), 0);
             grid = new DataGridView { Name = "healthEndpointsGrid", Dock = DockStyle.Fill, AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                 AllowUserToAddRows = false, AllowUserToDeleteRows = false, RowHeadersVisible = false, BackgroundColor = Theme.Surface,
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect, MultiSelect = false, ShowCellToolTips = false };
-            grid.Columns.Add("Server", L("Server", "Server")); grid.Columns[0].ReadOnly = true; grid.Columns[0].FillWeight = 150;
-            grid.Columns.Add("Service", L("Connection", "Forbindelse")); grid.Columns[1].ReadOnly = true;
-            grid.Columns.Add(new DataGridViewCheckBoxColumn { Name = "Enabled", HeaderText = L("Enabled", "Aktiv"), FillWeight = 50 });
-            grid.Columns.Add("Host", L("IP address / hostname", "IP-adresse / værtsnavn")); grid.Columns[3].FillWeight = 150;
+            grid.Columns.Add("Server", AOLauncher.Localization.Texts.Get("Text_Server_E6A66483234C")); grid.Columns[0].ReadOnly = true; grid.Columns[0].FillWeight = 150;
+            grid.Columns.Add("Service", AOLauncher.Localization.Texts.Get("Text_Connection_17C0C7986AD4")); grid.Columns[1].ReadOnly = true;
+            grid.Columns.Add(new DataGridViewCheckBoxColumn { Name = "Enabled", HeaderText = AOLauncher.Localization.Texts.Get("Text_Enabled_161CB563B85D"), FillWeight = 50 });
+            grid.Columns.Add("Host", AOLauncher.Localization.Texts.Get("Text_IP_address_hostname_FD70671EA2D9")); grid.Columns[3].FillWeight = 150;
             grid.Columns.Add("Port", "Port"); grid.Columns[4].FillWeight = 50;
             grid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             grid.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
@@ -76,12 +71,12 @@ namespace AOLauncher
             foreach (var profile in this.profiles)
             {
                 var endpoints = HealthEndpoints.Resolve(profile, values);
-                Add(profile, L("Login", "Login"), endpoints.Login);
-                Add(profile, L("World / zone", "Verden / zone"), endpoints.Zone);
-                Add(profile, L("Chat", "Chat"), endpoints.Chat);
+                Add(profile, AOLauncher.Localization.Texts.Get("Text_Login_D54208190619"), endpoints.Login);
+                Add(profile, AOLauncher.Localization.Texts.Get("Text_World_zone_8210E875436B"), endpoints.Zone);
+                Add(profile, AOLauncher.Localization.Texts.Get("Text_Chat_0565C77EEB6E"), endpoints.Chat);
             }
             Fields.Controls.Add(SlimScrolling.Wrap(grid), 0, 1);
-            var reset = Theme.Button(L("Restore selected server defaults", "Gendan valgt servers standarder"));
+            var reset = Theme.Button(AOLauncher.Localization.Texts.Get("Text_Restore_selected_server_defaults_15AF565B3F5C"));
             reset.AutoSize = true; reset.Margin = new Padding(0, 12, 0, 0);
             reset.Click += (sender, e) =>
             {
@@ -116,7 +111,7 @@ namespace AOLauncher
                     if ((text.Length > 0 && (!numeric || port < 1 || port > 65535)) || (endpoint.Host.Length > 0 && (endpoint.Host.Length > 253 || Uri.CheckHostName(endpoint.Host) == UriHostNameType.Unknown)) || (endpoint.Enabled && !endpoint.Valid))
                     {
                         grid.CurrentCell = row.Cells[3];
-                        ErrorLabel.Text = L("Enter a valid IP address or hostname and a port from 1 to 65535 for enabled checks.", "Angiv en gyldig IP-adresse eller et værtsnavn og en port fra 1 til 65535 for aktive tjek."); return false;
+                        ErrorLabel.Text = AOLauncher.Localization.Texts.Get("Text_Enter_a_valid_IP_address_or_AF9F34895B05"); return false;
                     }
                     entries.Add(endpoint);
                 }

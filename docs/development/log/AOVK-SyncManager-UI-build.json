@@ -1,0 +1,14 @@
+{
+  "repair_base": "6a371f29730172f8af6f445ef2ed1a0721fd1943",
+  "repair_local_patch": "ao-rebirth-nexus-ui-local.patch",
+  "repair_patch_sha256": "C72B789A3CA28F48EB9A6C9CF1F864250AB6B7897F7A91A7CEA4DC620DF4A42D",
+  "renderer_source": "AO-VK-Rebirth-Test, codex/nexus-sync-ui",
+  "renderer_base": "22f2506",
+  "imgui_revision": "f5befd2d29e66809cd1110a152e375a7f1981f06",
+  "payloads": {
+    "randy31-ui.dll": "FAF0E6811B6766FEB5B1EFBED65EE41DB7DB523E89428645205446C358851BD8",
+    "version-rebirth-ui.dll": "FCA74BD19DBC6D19496FF671259F1D4BA2A4920EC9C9A9C861A60D110FED9407"
+  },
+  "renderer_commit": "cb0b88b4a8558a567a0876f94f70006d1a9c5c71",
+  "launcher_sha256": "92F8A5C97F0C9E3A1E71DF83DB872C692D3E4AD66480528B06D3361C57489CC3"
+}

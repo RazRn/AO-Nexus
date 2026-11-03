@@ -100,8 +100,8 @@ try{
                         $targetRect=$dialog.RectangleToClient($target.RectangleToScreen($target.ClientRectangle))
                         $applyRect=$dialog.RectangleToClient($apply.RectangleToScreen($apply.ClientRectangle))
                         $listRect=$dialog.RectangleToClient($skinList.RectangleToScreen($skinList.ClientRectangle))
-                        Assert ($targetRect.Bottom -lt $listRect.Top) 'Installation scope is chosen before selecting an installed skin'
-                        Assert ($applyRect.Top - $listRect.Bottom -ge 6*$scale) 'Skin review actions remain separate below the installed list'
+                        Assert ($targetRect.Right -lt $listRect.Left) 'Installation selection precedes the skin list in the three-column workflow'
+                        Assert ($applyRect.Left - $listRect.Right -ge 6*$scale) 'Skin review actions remain separate to the right of the installed list'
                     }
                     if($i -eq 2){
                         $page=$tabs.TabPages[2]

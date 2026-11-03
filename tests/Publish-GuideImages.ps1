@@ -2,12 +2,12 @@ param([Parameter(Mandatory=$true)][string]$CaptureDirectory,[Parameter(Mandatory
 $ErrorActionPreference='Stop'
 . (Join-Path $PSScriptRoot 'Guide-ImagePlan.ps1')
 $repo=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$images=[IO.Path]::GetFullPath((Join-Path $repo 'docs/images'))
+$images=[IO.Path]::GetFullPath((Join-Path $repo 'docs/user/images'))
 $published=[IO.Path]::GetFullPath((Join-Path $images 'published'))
 [IO.Directory]::CreateDirectory($published)|Out-Null
-$documents=@('README.md','docs/Player-Guide.md','docs/Game-GUI.md')
+$documents=@('README.md','docs/user/Player-Guide.md','docs/user/Game-GUI.md')
 $text=@{};foreach($document in $documents){$text[$document]=[IO.File]::ReadAllText((Join-Path $repo $document))}
-$manifest=@('# Guide screenshot provenance','',('Captured from AO Nexus '+$Version+' using real WinForms controls and offline fixtures.'),'','One overview and sixteen task-specific illustrations. Red boxes and numbers highlight selected launcher tasks; search, confirmation and monitoring views use the actual controls without annotations. The five Game GUI 1.2 images are full client areas from Verify-GameGuiUsability. Accounts, paths, news, action issues and health/update results are examples.','','| Image | Source size | Crop (x, y, width, height) | Callouts | QA source | SHA-256 |','| --- | --- | --- | --- | --- | --- |')
+$manifest=@('# Guide screenshot provenance','',('Captured from AO Nexus '+$Version+' using real WinForms controls and offline fixtures.'),'','Full client-area captures from the Beta. All controls are real; accounts, paths, combat, timer, news, health and update data are offline examples. No live account profile or game capture is published.','','| Image | Source size | Crop (x, y, width, height) | Callouts | QA source | SHA-256 |','| --- | --- | --- | --- | --- | --- |')
 $keep=@()
 foreach($name in $GuideImagePlan.Keys){
     $plan=$GuideImagePlan[$name]

@@ -39,7 +39,18 @@ namespace AOLauncher
         internal static void Update(LauncherSettings settings, LaunchPreset preset)
         {
             RequirePreset(settings, preset);
+            var previous = preset.Characters ?? new List<PresetCharacter>();
             preset.Characters = CaptureSelection(settings);
+            // Keep the saved login order; new selections are appended.
+            preset.Characters = preset.Characters.OrderBy(item => {
+                int index = previous.FindIndex(old => old.CharacterId == item.CharacterId
+                    && string.Equals(old.AccountId, item.AccountId, StringComparison.OrdinalIgnoreCase));
+                return index < 0 ? int.MaxValue : index;
+            }).ToList();
+            // Keep per-preset plugin sets for characters that remain in the team.
+            foreach (var reference in preset.Characters)
+                reference.PluginSetId = previous.FirstOrDefault(item => item.CharacterId == reference.CharacterId
+                    && string.Equals(item.AccountId, reference.AccountId, StringComparison.OrdinalIgnoreCase))?.PluginSetId;
             settings.SelectedPresetId = preset.Id;
         }
 
@@ -128,7 +139,7 @@ namespace AOLauncher
                     if (reference == null || string.IsNullOrWhiteSpace(reference.AccountId) || reference.CharacterId <= 0)
                         continue;
                     if (seen.Add(Key(reference.AccountId, reference.CharacterId)))
-                        references.Add(new PresetCharacter { AccountId = reference.AccountId, CharacterId = reference.CharacterId });
+                        references.Add(new PresetCharacter { AccountId = reference.AccountId, CharacterId = reference.CharacterId, PluginSetId = reference.PluginSetId });
                 }
                 preset.Characters = references;
                 valid.Add(preset);

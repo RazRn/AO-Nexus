@@ -3,11 +3,11 @@ $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.Drawing
 . (Join-Path $PSScriptRoot 'Guide-ImagePlan.ps1')
 $repo=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$images=Join-Path $repo 'docs\images'
+$images=Join-Path $repo 'docs\user\images'
 $provenance=Join-Path $images 'SCREENSHOTS.md'
 $legacyRows=@([IO.File]::ReadAllLines($provenance)|Where-Object {$_ -match '^\| \[' -and $_ -notmatch '^\| \[gui-'})
 if($legacyRows.Count -ne @($GuideImagePlan.Values|Where-Object {!$_.Versioned}).Count){throw 'Expected all non-GUI provenance rows to be retained'}
-$documents=@('README.md','docs/Player-Guide.md','docs/Game-GUI.md')
+$documents=@('README.md','docs/user/Player-Guide.md','docs/user/Game-GUI.md')
 $body=($documents|ForEach-Object {[IO.File]::ReadAllText((Join-Path $repo $_))}) -join "`n"
 $entries=@(foreach($name in $GuideImagePlan.Keys){
  $plan=$GuideImagePlan[$name];if(!$plan.Versioned){continue}

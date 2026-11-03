@@ -1,0 +1,680 @@
+[
+  {
+    "Id": "pack:Automaton.City",
+    "Sha256": "2214DB881845B48D04F98883E37C527D8F0AB4C93743674BFEBB8B7258C2F21F",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Automaton.DB1",
+    "Sha256": "164F58B5C9FA9D4289BFF91A0672E8DAD440C738EE680E8D01F2982DAE22F4BC",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Automaton.DB2",
+    "Sha256": "6B88C8EF3A1AE1A18226ABB56E6469732675DB1157EC63436CBD74F6C1246B14",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Automaton.Inf",
+    "Sha256": "56BDD09F3035C0759EB686AEB98967F04E405FD8E1D96235DABFA7B070BEECF9",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Automaton.KiteHill",
+    "Sha256": "567527B17A51FEB467798D1CE72F687ABFFFF5239E9B7D8E6F2FB66301315F0E",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Automaton.Mitaar",
+    "Sha256": "A2BD496341BA195FD5F24B97E7A81066846FCEE2F31990C63D57659900731FD1",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Automaton.Roamba",
+    "Sha256": "54E0E9A1AE5172011CFD28B513005D7E7D50BDA479D557A8A53CBC57675FC452",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Automaton.Vortexx",
+    "Sha256": "634D3B128BC22D787809661C5D7DD9454E591D2FA50F5358022103DA590E8134",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Manager.Assist",
+    "Sha256": "663E55CAFF40BC604B0E3227B76DD837C3F9EC55335B2228686A6B2E6ACD4344",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Manager.Attack",
+    "Sha256": "53F6DFB74ACDDFB6C31775E032075EB23800035D479348E7C8079167FE3B4682",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Manager.Bag",
+    "Sha256": "577C241D788BF095313963E86ABEEEEDAAFFB3A873A2FD3CA8967D01A07E203A",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Manager.Follow",
+    "Sha256": "029F3DB3A7B2E3930B8FEC38C363098B58C80FE05867E8C2A942A0024CCF6131",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Manager.GMI",
+    "Sha256": "752FC98E5571D7EBF4370F2C376BECAB9534051FC2474B852F604F6652AECE07",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Manager.Help",
+    "Sha256": "8A59B726E29BACE1901B9D4765CA74E5EE8B627A795021192057EBC010A4F1D9",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Manager.Inventory",
+    "Sha256": "1E994845970947E0AAF1FB02624656527F0DBA5BC92F7F3610031724696E17AF",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Manager.Loot",
+    "Sha256": "83227A44F1802ADAF60ECD2409C7F76FACB97A5D01E7B7810A3D01087099C236",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Manager.Mail",
+    "Sha256": "6498444D4949BBA040B26B4B381B8190FC761089A53C846D80E54ABE6058BF91",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Manager.OST",
+    "Sha256": "94E8FAE8BEFC294D5EC641913A238914061E21413BF974D4633C72A312996E0B",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Manager.POH",
+    "Sha256": "8E007F0CF94444C22CF93E48E0DD748087E30BA870BDF46020F33E05D99CBBBA",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Manager.Pet",
+    "Sha256": "616E3CCBDFD61FEAA5B9BBC1D6843EE78027C7D690E995A7FB8B876DD1B4AF4B",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Manager.PetHunt",
+    "Sha256": "5320B39124263A066BB58D98A562D72C92ACBD789E5A25EE773CA5C1D7B21763",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Manager.Raid",
+    "Sha256": "9959306E1C63F3A0CDDD90E1414A3E6F8B9C531CED11515C6F5892643CA5AA5B",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Manager.Research",
+    "Sha256": "E08C6ACE0C6E22E549133D83B7FDCD8C1BD9B02D5C9CAD5C98D79CA6CB7ECD88",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Manager.SocialPet",
+    "Sha256": "A416CB0C566C83EB01EA56724BC1C0B3347CCB2B5975989027F8D131C578E9B3",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Manager.Sync",
+    "Sha256": "CC66CCC0506C8A556B9D96D138E045A8BC65A9A2BE4FE95206BE7384EE330D3C",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:ProfessionHandler.Adv",
+    "Sha256": "4AFC76FA3EAB30482CF885FA5F9279F725A2B7905764F75825045F60618F85CF",
+    "Class": "Scenario",
+    "Profession": "Adv"
+  },
+  {
+    "Id": "pack:ProfessionHandler.Agent",
+    "Sha256": "D157E0BF62AB695CF8881FE8003EF19541D7D94168C72B23D60D82E08B7E83C9",
+    "Class": "Scenario",
+    "Profession": "Agent"
+  },
+  {
+    "Id": "pack:ProfessionHandler.Crat",
+    "Sha256": "595EA7D77224965DAEDD4EBD9C72B6775826F580D4E985D68390BDFA09401BD8",
+    "Class": "Scenario",
+    "Profession": "Crat"
+  },
+  {
+    "Id": "pack:ProfessionHandler.Doc",
+    "Sha256": "8DF34301F9DC827E9A346F5EE44110E89A5CBACAD7E73DD4352F1EFBDBF2D3A6",
+    "Class": "Scenario",
+    "Profession": "Doc"
+  },
+  {
+    "Id": "pack:ProfessionHandler.Enf",
+    "Sha256": "7156E140B84A70545D21D0F37AC67DA9344B94C0D8262D0031AEA8B05AE68F21",
+    "Class": "Scenario",
+    "Profession": "Enf"
+  },
+  {
+    "Id": "pack:ProfessionHandler.Engi",
+    "Sha256": "BBA5A50763C86D028987D970332EEB83D7B40365ED530EA886037A405CA07135",
+    "Class": "Scenario",
+    "Profession": "Engi"
+  },
+  {
+    "Id": "pack:ProfessionHandler.Fixer",
+    "Sha256": "30B579CA5DF7F6A31B9C985C8DD4BFDDAAF950C56C6841F3A4099CDEE3A98599",
+    "Class": "Scenario",
+    "Profession": "Fixer"
+  },
+  {
+    "Id": "pack:ProfessionHandler.Keeper",
+    "Sha256": "6D4E29F2D59D0EF257C24D016DFD03C32111B7BDFEF11CD94D1D92026C0063E3",
+    "Class": "Scenario",
+    "Profession": "Keeper"
+  },
+  {
+    "Id": "pack:ProfessionHandler.MA",
+    "Sha256": "D5062F330C90A63487B82CDE3F3D5057C8166E42FABB65242B3BD847330CE798",
+    "Class": "Scenario",
+    "Profession": "MA"
+  },
+  {
+    "Id": "pack:ProfessionHandler.MP",
+    "Sha256": "0CBC9A41F1D6606927D3735B65584DFA19CC4E6E67A0A45D6F4F6AB001256D2E",
+    "Class": "Scenario",
+    "Profession": "MP"
+  },
+  {
+    "Id": "pack:ProfessionHandler.NT",
+    "Sha256": "26DBCEBBAA2F950CB7C2637266F8EA99E8C35ACE5BF4ABEAB4AAFB6B5019DF12",
+    "Class": "Scenario",
+    "Profession": "NT"
+  },
+  {
+    "Id": "pack:ProfessionHandler.Shade",
+    "Sha256": "210EB22E467F3358BC9F20C884B51B7A4D6EBF74D2CCED66998F7E3032D66C39",
+    "Class": "Scenario",
+    "Profession": "Shade"
+  },
+  {
+    "Id": "pack:ProfessionHandler.Soldier",
+    "Sha256": "6C13EE4085EC563712DB16687956AD290940F4041DD436C6ABF9A79B7C724C08",
+    "Class": "Scenario",
+    "Profession": "Soldier"
+  },
+  {
+    "Id": "pack:ProfessionHandler.Trader",
+    "Sha256": "3C21724AC1776C0DD9F5795D37FE72CAB3BEC1F3A80B667E0FFC5E3540BB87B5",
+    "Class": "Scenario",
+    "Profession": "Trader"
+  },
+  {
+    "Id": "pack:Utility.AOIABankManager",
+    "Sha256": "5D80A6E0A0693D2A2D9BCA7FD4252C87465873F8E4E3A6DD44E2A258FD376259",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Utility.AutoItemLevel",
+    "Sha256": "628A441DCD1EB0CBCE50C7A74AB94AFBC5255A80F3896D2D216FDA5A9AA324F6",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Utility.BossLogger",
+    "Sha256": "BA18845DF716204F4F78986BE51E60EE7D5E126ADA3AA868D8C526F5588934D0",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Utility.Coffee",
+    "Sha256": "1B5E78F226A7244E875B6A344B6F18747DFA5A04A10E5F77DB8F30A04D62555A",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Utility.CombineNSplit",
+    "Sha256": "806232B7ADAB50549842569EAAC0E52FD1C75C394DAB7DF57BB8C39D8AA6DF08",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Utility.Cookies",
+    "Sha256": "C32A9B6068B9E14837DF118DF8806595E9F32B04430E105DF943F33D1EAF31BA",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Utility.CrystalFilledByTheSource",
+    "Sha256": "1F576C6A5E725E539B5C7953C21E0C01B51CE3C4FE257D7D8A4D984A0F6FB1BC",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Utility.DefendTheGrove",
+    "Sha256": "57C72FD6C010A6C8F79D0133367B6644CB1052801BB6E81103192CF6F53EEC9E",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Utility.ICE",
+    "Sha256": "C8CAE4F0DA1C42F859374AC0C6BAD492295B7D3FEF1DF2DAC018F751A1C145FE",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Utility.InventoryPrinter",
+    "Sha256": "A70768BE1EE7AE250DEBB264C6DEEAB7E8D11AF202DBFEB2E88A67CCD97B450E",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Utility.MonsterTracker",
+    "Sha256": "F877F66CC69B46F0DFD07EE082CD609B7EDDBB8753FAB10593D3B1F14E0D225E",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Utility.Pearls",
+    "Sha256": "0168A6BCDDC42D91D57A37F83A928256B7BF0CFAE6450200702C9808D20EA8FE",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Utility.Plasma",
+    "Sha256": "ED0160D8D350178180B31D7E234025FB6B7229679E7C88946C80F3EF0B4EEA64",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Utility.Relay",
+    "Sha256": "3525F2362B4BA819329D955455A468A97B97AD10A9EC7EDADDD1920FE5042B07",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Utility.SimpleAutoSeller",
+    "Sha256": "77797E3273318A3E335ED1AF72777C31A8735BCF863DE7F7BF4042DCA516136E",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Utility.TradeskillAndSell",
+    "Sha256": "0E7FEF92B6D01C41184FD188DEC87116BE083FDCF24D8719DCB0E1672CC1E301",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Backstabber",
+    "Sha256": "3ACF2306C6B2E83C8ECC11B0756849E6B9E973298D79A84A4979E89FCB76E13D",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:GraceBot9000",
+    "Sha256": "71A184B34C38B2B51485CF487B0E266DB0B823FC65B9206A11B524C80DD09BE7",
+    "Class": "Blocked",
+    "Profession": null
+  },
+  {
+    "Id": "pack:GraceBot9001",
+    "Sha256": "F43DBFE7B632CAE730DB50756E28337353A935B6ABEC59BB6BF45E26F0074513",
+    "Class": "Blocked",
+    "Profession": null
+  },
+  {
+    "Id": "pack:MissionHelper",
+    "Sha256": "65635FBF6081A9FC7B95D3A3F34EBA60D45F755B989AE42F158ADC0A8327719C",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:NavGen",
+    "Sha256": "5C3939246F1DCB79745829ED424DC6984337AA7E225AA7B5A7B923A0A5942B71",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Neko",
+    "Sha256": "7F6E2B0F97768FF741BA28B64E964080870F616F190FC58B5EACBE888AC12C94",
+    "Class": "Blocked",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Qubit",
+    "Sha256": "2A5D9BC70160F0B087CBCBA9E896EF62BD0BED9FBD226CAD44DE3C2C5C043E67",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:StackDetector",
+    "Sha256": "0D00AC7D1C19776E3B59ECBE91B77ED6ECC3EEEB2BB33194806A5609E13CD920",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:TradeskillLeveler",
+    "Sha256": "72AE45AF6D89F7F09754814123C881EB66AD4EEFCF2389B92CA48D2982BA8D3C",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Nexus.Shortcuts",
+    "Sha256": "D4577352A6DFD8D6CC11FE5E4737DCAFA6EF6ED321A730035A33F34AECB3C8E1",
+    "Class": "Instrument",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.AttackBuddy",
+    "Sha256": "24DF6C399973ABEE683EF16E9C4748CA6BA1C11E5BE31D6FA216E8CC3DBECE20",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.BSBuddy",
+    "Sha256": "195B683F89A8E49B0CFBB9076D5DF18B6B024E21DB257FB2AB22F12581E4828E",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.CityBuddy",
+    "Sha256": "999C343F86CEC5488C804AD2590D6C293806BD2D8799C23B6603DD49DD9113EA",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.DefendBuddy",
+    "Sha256": "CD4B7F031B877963E701A3F79477B315EEC92B15EF8EEAB3A160EBA1C0F56105",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.InfBuddy",
+    "Sha256": "2E64C38D4E4A7E976E611FF60E0FE931C61B4EAA3131BFE81E4E4AD4DD16B330",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.KHBuddy",
+    "Sha256": "F9B76749C25B2E0BBDA5CAB73040369CA4E41F3EEB8F3C60CFFE0D8564238D35",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.MitaarBuddy",
+    "Sha256": "412A1B0210876316B87849A3771D327C96598CD17A4090E06B6DB23FAC6E03F9",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.OSTBuddy",
+    "Sha256": "E1BB7B8EFB0FDB01670AAB3B4E494863D7319302ADC99485CBFE2E1209A70F4D",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.RoamBuddy",
+    "Sha256": "9D0EA8846671029D91AF1DEDC58F7F9BD0CDDE201D5D944531281BC523D0F0DA",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.S13Buddy",
+    "Sha256": "1ABF46BA307C36DA068E40ECD8C48243EA637E7451856EAB43EE32F2CD11824E",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.TemplateBuddy",
+    "Sha256": "8BDE93A0C0B220F43BC5B433AE06EAC6B59606A764CB10A544975E8737C5F838",
+    "Class": "Blocked",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.VortBuddy",
+    "Sha256": "900EF7DAF42DB0C88D61F3962ECDA4EB405A0FC730FEC14CFA989FE34BCEBA84",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.AssistManager",
+    "Sha256": "ABFD3052ABD64F15EAF074F896D73BC2600E85EB72D0AA03D74AD36B7928AC77",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.BagManager",
+    "Sha256": "113554380DD19D6FC6536BE0CC7F2511E8344AC46863A0DAC547CDDA6404EF48",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.GMIManager",
+    "Sha256": "B8C0BC92FC71EA532DE36B4F2D91157BF88BD60DB703E679577A4B2D542D07C5",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.HelpManager",
+    "Sha256": "F8CC5D8E7933F06DABBE05A2DB5635A8D4CBC4619075083B9B86A07269C9F2C8",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.LootManager",
+    "Sha256": "A2EB03FC7FAB62CF3C37F51665DB0B67602D03B100A67EDBC77FD83FBFC358A9",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.MailManager",
+    "Sha256": "9135FDFC7009EFAE24B584CB9E5B4D9784DFFAD2E525D2FD31F484B2C8F3CF80",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.MovementManager",
+    "Sha256": "20FC1DCBF6E853F02E4A544541C38EBF809698E27CC4434151AEBAC731BA1D30",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.NCUManager",
+    "Sha256": "6E988E4887518823EB072F3AFD5ECEBD2FC6EFE5D13CE1A3389EA956FB597662",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.NPCManager",
+    "Sha256": "0F53F59622600475178E0A97C08291BAC7867B712DEA39DEB96324FDBAFDFFB3",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.OSBManager",
+    "Sha256": "F44DF6736BDFD9666D3B70141654BD355CD135703CD8ECBF3114A92A972D4A29",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.ResearchManager",
+    "Sha256": "903438DB3A8E25AC85B2BCE05F8A184293D17DE1A61CCADBA3ECE910AF90EA45",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.SyncManager",
+    "Sha256": "4B916A150016E5E3357FCC1ADB3F16A650EC61F003275F8E855378056736667B",
+    "Class": "Candidate",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.Handler.Adv",
+    "Sha256": "52F8B6FCC351975191A3751644F89D11463DE1EDB3C85A685E701ABE3651591D",
+    "Class": "Candidate",
+    "Profession": "Adv"
+  },
+  {
+    "Id": "pack:Z.Handler.Agent",
+    "Sha256": "9AA3C32BDF1A562F91D1D702656EB02073B4425EB8FADA17A81EE6FA6F53E342",
+    "Class": "Candidate",
+    "Profession": "Agent"
+  },
+  {
+    "Id": "pack:Z.Handler.Crat",
+    "Sha256": "CAFE85A93638F53883215D79EE6E99983913C20C13210F3BF99BB152067925F3",
+    "Class": "Candidate",
+    "Profession": "Crat"
+  },
+  {
+    "Id": "pack:Z.Handler.Doc",
+    "Sha256": "C621C89A5BB753BB226C93BBEED70247A1A2DA47B96F1392F507BF892D527868",
+    "Class": "Candidate",
+    "Profession": "Doc"
+  },
+  {
+    "Id": "pack:Z.Handler.Enf",
+    "Sha256": "61053761F29F3FF747E5A18D30D60604115BDEDCC48F784531C60B646E3C2E0A",
+    "Class": "Candidate",
+    "Profession": "Enf"
+  },
+  {
+    "Id": "pack:Z.Handler.Engi",
+    "Sha256": "79FB1F2A5A1C4E265ECAF01623CF3EA5C9B2FEF2A5B791340860948494F687CD",
+    "Class": "Candidate",
+    "Profession": "Engi"
+  },
+  {
+    "Id": "pack:Z.Handler.Fixer",
+    "Sha256": "4878851F2746ABEC8D78953A61932A18DC80F24DE6665A35CF3CFFDD9FF464BB",
+    "Class": "Candidate",
+    "Profession": "Fixer"
+  },
+  {
+    "Id": "pack:Z.Handler.Keeper",
+    "Sha256": "1FFD2D7F28D86ECAA9176CC74AC8AB3FD4D593A41F8B40A8A549291C67591385",
+    "Class": "Candidate",
+    "Profession": "Keeper"
+  },
+  {
+    "Id": "pack:Z.Handler.MA",
+    "Sha256": "B5D29E39CAEBF207DD953F660AE2EC10FC5FBED3374CEA78FDA226D579090962",
+    "Class": "Candidate",
+    "Profession": "MA"
+  },
+  {
+    "Id": "pack:Z.Handler.MP",
+    "Sha256": "455C26D27D1ADFF90D2C074F35D98931A5D2113A5C968B5BA7994FB420B3936F",
+    "Class": "Candidate",
+    "Profession": "MP"
+  },
+  {
+    "Id": "pack:Z.Handler.NT",
+    "Sha256": "A3FA3335F491CC494681A5E6EA3ECFE20ADA9D683B5A5E872D4C34BC4DF6D57C",
+    "Class": "Candidate",
+    "Profession": "NT"
+  },
+  {
+    "Id": "pack:Z.Handler.Shade",
+    "Sha256": "B62EB13C4754634CB1F0DE6CBCDDE65164BB296AC37429C421FC64B0E78BE3DE",
+    "Class": "Candidate",
+    "Profession": "Shade"
+  },
+  {
+    "Id": "pack:Z.Handler.Soldier",
+    "Sha256": "ADFE28963A01E07D1EF743A2324E8B343265622973EE8E0A8B128505D5861680",
+    "Class": "Candidate",
+    "Profession": "Soldier"
+  },
+  {
+    "Id": "pack:Z.Handler.Trader",
+    "Sha256": "85E3643528412CA768DF91FC277C8308D6201E963D30B75C49BAF1484ED60A9E",
+    "Class": "Candidate",
+    "Profession": "Trader"
+  },
+  {
+    "Id": "pack:Z.BattleStationUtility",
+    "Sha256": "430EB634E2B5E3C8D85F378B53741DB464C9D07F7B5DF30379CE954A8040165B",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.BloodPlasmaUtility",
+    "Sha256": "3EEC9CF242B3E295641AAE55CC97442A9768FFBD3208F687FA3A098E72CE5909",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.CloakUtility",
+    "Sha256": "EF7731CEEED69F48BDC21EA1933833E987B91EF75B7587B093C97B9BBA54AC5A",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.CoffeeUtility",
+    "Sha256": "15F8BDCF3147AF8A40EE8EDB515CA2EF967F0D080478706BE4885088B31D2EDC",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.CookiesUtility",
+    "Sha256": "E9ADC43F048589E8DCBF76FC4218972480A69C7A60487E31F06EC9140E3A2DD7",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.LookingForTeamInviteUtility",
+    "Sha256": "174497B4C877EB0D869C0C87A5ED9E51E758B940A3978578E3E4230AB463935D",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.MinersUtility",
+    "Sha256": "C72814EE2D01705E0847E019A88BCEA2A214FEA4BB96DE731CA2CF3A9D083AF4",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.PearlsUtility",
+    "Sha256": "7F03FBD8160D5874FA5FB7319C043DEA728466B3A7FFDB8939B6C5AEBEB4DDC5",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.SellUtility",
+    "Sha256": "1F3483F267EAD5130CCADD14B509DBFA85F217D9A3D80BA4AE0E047F33E0430E",
+    "Class": "Scenario",
+    "Profession": null
+  },
+  {
+    "Id": "pack:Z.TeamAcceptUtility",
+    "Sha256": "3CC4FBE1B216D01D4EFB787E29A04993EA64DA892D4524B87F74EF5554106FD1",
+    "Class": "Scenario",
+    "Profession": null
+  }
+]

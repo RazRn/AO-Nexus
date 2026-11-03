@@ -1,25 +1,21 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using AOSharp.Core.IPC;
-using SmokeLounge.AOtomation.Messaging.Serialization.MappingAttributes;
 
 namespace NexusTelemetry
 {
-    [AoContract(32002)]
-    public sealed class HealthPing : IPCMessage
+    public sealed class HealthPing
     {
-        public override short Opcode => 32002;
-        [AoMember(0)] public int Origin { get; set; }
-        [AoMember(1)] public int Epoch { get; set; }
-        [AoMember(2)] public int Sequence { get; set; }
-        [AoMember(3)] public int Target { get; set; }
-        [AoMember(4)] public int Reply { get; set; }
-        [AoMember(5)] public long StartTicks { get; set; }
+        public int Origin { get; set; }
+        public int Epoch { get; set; }
+        public int Sequence { get; set; }
+        public int Target { get; set; }
+        public int Reply { get; set; }
+        public long StartTicks { get; set; }
     }
     public sealed class Pulse
     {
-        public int Version { get; set; } = 1;
+        public int Version { get; set; } = 2;
         public int Pid { get; set; }
         public long StartTicks { get; set; }
         public string Instance { get; set; }
@@ -35,6 +31,29 @@ namespace NexusTelemetry
         public long ActionIssueQpc { get; set; }
         public int ActionIssueCount { get; set; }
         public bool ActionIssueConfirmed { get; set; }
+        public long VitalsQpc { get; set; }
+        public int Health { get; set; }
+        public int MaxHealth { get; set; }
+        public int Nano { get; set; }
+        public int MaxNano { get; set; }
+        public string Profession { get; set; }
+        public bool? IsTeamLeader { get; set; }
+        public long TeamStateQpc { get; set; }
+        public string FightingTarget { get; set; }
+        public bool Attacking { get; set; }
+        public long AggroQpc { get; set; }
+        public int AggroCount { get; set; }
+        public string[] AggroNames { get; set; }
+        public long CastAttemptQpc { get; set; }
+        public int CastNanoId { get; set; }
+        public string CastNanoName { get; set; }
+        public CombatMeterSnapshot CombatMeter { get; set; }
+        public CombatMeterSnapshot ObservedCombatMeter { get; set; }
+        public CombatMeterSnapshot NpcCombatMeter { get; set; }
+        public int PlayfieldId { get; set; }
+        public MovementSnapshot Movement { get; set; }
+        // Bounded numeric evidence for pet/NPC classification troubleshooting.
+        public string[] CombatClassification { get; set; }
     }
     // Only structured, recognized action issues leave the game; never chat text.
     public sealed class ActionIssueTracker

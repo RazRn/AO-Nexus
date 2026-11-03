@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -56,7 +56,7 @@ namespace AOLauncher
         private string ScriptBackupRoot => Path.Combine(libraryRoot, "ScriptBackups");
 
         internal GuiManagerDialog(LauncherSettings settings, string libraryRoot, bool preview = false)
-            : base(L("Game GUI", "Spillets GUI"), 700)
+            : base(AOLauncher.Localization.Texts.Get("Text_Game_GUI_5C886CDBA7F3"), 700)
         {
             this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
             this.libraryRoot = libraryRoot ?? throw new ArgumentNullException(nameof(libraryRoot)); this.preview = preview;
@@ -67,7 +67,7 @@ namespace AOLauncher
             DialogLayout.ColumnStyles.Clear(); DialogLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             DialogLayout.Controls.Remove(FieldsViewport); FieldsViewport.Dispose();
             tabs.Name = "gameGuiTabs"; tabs.Dock = DockStyle.Fill; DialogLayout.Controls.Add(tabs, 0, 0);
-            SaveButton.Visible = false; CancelAction.Text = L("Close", "Luk"); CancelAction.DialogResult = DialogResult.None;
+            SaveButton.Visible = false; CancelAction.Text = AOLauncher.Localization.Texts.Get("Text_Close_B182D0987175"); CancelAction.DialogResult = DialogResult.None;
             CancelAction.Click += (sender, e) => { if (busy) CancelOperation(); else Close(); };
             AcceptButton = null; CancelButton = CancelAction;
             ErrorLabel.ForeColor = Theme.Muted;
@@ -135,10 +135,10 @@ namespace AOLauncher
                     foreach (var item in items) scriptList.Items.Add(item);
                     for (int i = 0; i < scriptList.Items.Count; i++) if (keep.Contains(((GuiScriptInfo)scriptList.Items[i]).Name)) scriptList.SetSelected(i, true);
                     if (scriptList.SelectedIndex < 0 && scriptList.Items.Count > 0) scriptList.SetSelected(0, true);
-                    scriptInfo.Text = items.Count + (items.Count == 1 ? L(" script in ", " script i ") : L(" scripts in ", " scripts i ")) + target.Name
-                        + " · " + L("shared by: ", "deles af: ") + string.Join(", ", target.Characters.Select(choice => choice.Account.Label).Distinct());
+                    scriptInfo.Text = items.Count + (items.Count == 1 ? AOLauncher.Localization.Texts.Get("Text_script_in_86E6D0ACB5B3") : AOLauncher.Localization.Texts.Get("Text_scripts_in_ECD9315FBBE5")) + target.Name
+                        + " · " + AOLauncher.Localization.Texts.Get("Text_shared_by_7A3FA688E0A1") + string.Join(", ", target.Characters.Select(choice => choice.Account.Label).Distinct());
                 }
-                else scriptInfo.Text = L("Choose an account Prefs folder first in Edit account.", "Vælg først kontoens Prefs-mappe under Rediger konto.");
+                else scriptInfo.Text = AOLauncher.Localization.Texts.Get("Text_Choose_an_account_Prefs_folder_first_8A048792514A");
             }
             catch (Exception error) { scriptInfo.Text = error.Message; }
             ShowScript();
@@ -149,7 +149,7 @@ namespace AOLauncher
             {
                 if (scriptTarget.SelectedItem is SkinTargetChoice target && scriptList.SelectedItems.Count == 1 && scriptList.SelectedItem is GuiScriptInfo item)
                     scriptPreview.Text = GuiScripts.Preview(GuiScripts.ReadScript(target.Root, item.Name)).Replace("\r\n", "\n").Replace("\n", "\r\n");
-                else scriptPreview.Text = scriptList.SelectedItems.Count > 1 ? scriptList.SelectedItems.Count + L(" scripts selected.", " scripts valgt.") : "";
+                else scriptPreview.Text = scriptList.SelectedItems.Count > 1 ? scriptList.SelectedItems.Count + AOLauncher.Localization.Texts.Get("Text_scripts_selected_A56BB8A052A3") : "";
             }
             catch (Exception error) { scriptPreview.Text = error.Message; }
             UpdateSelection();
@@ -163,9 +163,9 @@ namespace AOLauncher
                 {
                     var macros = TextMacros.Read(choice.CharacterPath);
                     foreach (var macro in macros) macroList.Items.Add(macro);
-                    macroInfo.Text = macros.Count + (macros.Count == 1 ? L(" macro", " makro") : L(" macros", " makroer")) + L(". AO saves macro changes on normal logout.", ". AO gemmer makroændringer ved normalt logout.");
+                    macroInfo.Text = macros.Count + (macros.Count == 1 ? AOLauncher.Localization.Texts.Get("Text_macro_C2BA82980A9E") : AOLauncher.Localization.Texts.Get("Text_macros_EB0F5D5A7DF7")) + AOLauncher.Localization.Texts.Get("Text_AO_saves_macro_changes_on_normal_720A3AF83A9A");
                 }
-                else macroInfo.Text = L("Prefs missing: log in once, then choose the account folder in Edit account.", "Prefs mangler: log ind én gang, og vælg derefter kontomappen under Rediger konto.");
+                else macroInfo.Text = AOLauncher.Localization.Texts.Get("Text_Prefs_missing_log_in_once_then_1344141B5AA9");
             }
             catch (Exception error) { macroInfo.Text = error.Message; }
             UpdateSelection();
@@ -173,19 +173,19 @@ namespace AOLauncher
         private async Task CopyScripts(bool all)
         {
             if (!(scriptTarget.SelectedItem is SkinTargetChoice source)) return;
-            var names = SelectedScripts(); if (names.Count == 0) { Status(L("Select one or more scripts first.", "Vælg et eller flere scripts først.")); return; }
+            var names = SelectedScripts(); if (names.Count == 0) { Status(AOLauncher.Localization.Texts.Get("Text_Select_one_or_more_scripts_first_27CF17CF470A")); return; }
             var destinations = (all ? scriptTarget.Items.Cast<SkinTargetChoice>() : new[] { scriptCopyTarget.SelectedItem as SkinTargetChoice })
                 .Where(item => item != null && !string.Equals(item.Root, source.Root, StringComparison.OrdinalIgnoreCase)).ToList();
-            if (destinations.Count == 0) { Status(L("Choose another installation to copy to.", "Vælg en anden installation at kopiere til.")); return; }
+            if (destinations.Count == 0) { Status(AOLauncher.Localization.Texts.Get("Text_Choose_another_installation_to_copy_to_2B5DD14816F5")); return; }
             var overwritten = new List<string>();
             var sourceHashes = GuiScripts.List(source.Root).ToDictionary(item => item.Name, item => item.Hash, StringComparer.OrdinalIgnoreCase);
             foreach (var target in destinations)
                 foreach (var existing in GuiScripts.List(target.Root).Where(item => names.Contains(item.Name, StringComparer.OrdinalIgnoreCase) && sourceHashes.TryGetValue(item.Name, out string hash) && hash != item.Hash))
                     overwritten.Add(existing.Name + " — " + target.Name);
-            string question = L("Copy these scripts?", "Kopiér disse scripts?") + "\r\n" + string.Join("\r\n", names.Take(15).Select(name => "• " + name)) + (names.Count > 15 ? "\r\n+ " + (names.Count - 15) : "")
-                + "\r\n\r\n" + L("To: ", "Til: ") + string.Join(", ", destinations.Select(item => item.Name))
-                + (overwritten.Count == 0 ? "" : "\r\n\r\n" + L("Different scripts with the same name are replaced (a backup is kept):", "Andre scripts med samme navn erstattes (der gemmes en sikkerhedskopi):") + "\r\n" + string.Join("\r\n", overwritten.Take(10).Select(name => "• " + name)));
-            if (NexusMessageBox.Show(this, question, L("Scripts", "Scripts"), MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.OK) return;
+            string question = AOLauncher.Localization.Texts.Get("Text_Copy_these_scripts_95D714B13932") + "\r\n" + string.Join("\r\n", names.Take(15).Select(name => "• " + name)) + (names.Count > 15 ? "\r\n+ " + (names.Count - 15) : "")
+                + "\r\n\r\n" + AOLauncher.Localization.Texts.Get("Text_To_CB4936612D9A") + string.Join(", ", destinations.Select(item => item.Name))
+                + (overwritten.Count == 0 ? "" : "\r\n\r\n" + AOLauncher.Localization.Texts.Get("Text_Different_scripts_with_the_same_name_E1F422E58994") + "\r\n" + string.Join("\r\n", overwritten.Take(10).Select(name => "• " + name)));
+            if (NexusMessageBox.Show(this, question, AOLauncher.Localization.Texts.Get("Text_Scripts_DF361AC73944"), MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.OK) return;
             await RunScripts(() =>
             {
                 var applied = new List<Tuple<SkinTargetChoice, GuiScriptBackup>>();
@@ -195,37 +195,37 @@ namespace AOLauncher
                     var errors = new List<string>();
                     foreach (var item in applied.AsEnumerable().Reverse().Where(pair => !string.IsNullOrEmpty(pair.Item2.Id)))
                         try { GuiScripts.Restore(item.Item1.Root, item.Item2.Id, ScriptBackupRoot); } catch (Exception rollback) { errors.Add(item.Item1.Name + ": " + rollback.Message); }
-                    throw new IOException(failure.Message + "\r\n" + (errors.Count == 0 ? L("Earlier installations in this copy were restored.", "Tidligere installationer i denne kopiering blev gendannet.")
-                        : L("Some installations need manual backup restoration:\r\n", "Nogle installationer kræver manuel gendannelse fra sikkerhedskopi:\r\n") + string.Join("\r\n", errors)), failure);
+                    throw new IOException(failure.Message + "\r\n" + (errors.Count == 0 ? AOLauncher.Localization.Texts.Get("Text_Earlier_installations_in_this_copy_were_70B4E5771454")
+                        : AOLauncher.Localization.Texts.Get("Text_Some_installations_need_manual_backup_restoration_F345282521CD") + string.Join("\r\n", errors)), failure);
                 }
-            }, L("Scripts copied. Use them in game with /name.", "Scripts kopieret. Brug dem i spillet med /navn."));
+            }, AOLauncher.Localization.Texts.Get("Text_Scripts_copied_Use_them_in_game_B0C3C4D9C2C3"));
         }
         private async Task ImportScript()
         {
             if (!(scriptTarget.SelectedItem is SkinTargetChoice target)) return;
-            using (var picker = new OpenFileDialog { Filter = L("Script files (*.*)|*.*", "Script-filer (*.*)|*.*"), CheckFileExists = true, Multiselect = true })
+            using (var picker = new OpenFileDialog { Filter = AOLauncher.Localization.Texts.Get("Text_Script_files_8F7AA9FD65BA"), CheckFileExists = true, Multiselect = true })
             {
                 if (picker.ShowDialog(this) != DialogResult.OK) return;
                 var files = picker.FileNames.ToList();
                 var invalid = files.Where(file => !GuiScripts.ValidName(Path.GetFileName(file))).ToList();
-                if (invalid.Count > 0) { Status(L("Not imported: ", "Ikke importeret: ") + string.Join(", ", invalid.Select(Path.GetFileName)) + L(". Use letters, digits, '-', '_' or '.', and no program files.", ". Brug bogstaver, tal, '-', '_' eller '.', og ingen programfiler."), true); return; }
+                if (invalid.Count > 0) { Status(AOLauncher.Localization.Texts.Get("Text_Not_imported_4BE2FB8F768E") + string.Join(", ", invalid.Select(Path.GetFileName)) + AOLauncher.Localization.Texts.Get("Text_Use_letters_digits_or_and_no_BF3E8725B923"), true); return; }
                 var existing = GuiScripts.List(target.Root).Select(item => item.Name).ToList();
                 var replaced = files.Select(Path.GetFileName).Where(name => existing.Contains(name, StringComparer.OrdinalIgnoreCase)).ToList();
-                if (replaced.Count > 0 && NexusMessageBox.Show(this, L("Replace these scripts? A backup is kept.", "Erstat disse scripts? Der gemmes en sikkerhedskopi.") + "\r\n" + string.Join("\r\n", replaced.Select(name => "• " + name)), L("Scripts", "Scripts"), MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.OK) return;
+                if (replaced.Count > 0 && NexusMessageBox.Show(this, AOLauncher.Localization.Texts.Get("Text_Replace_these_scripts_A_backup_is_FD5E292EBA63") + "\r\n" + string.Join("\r\n", replaced.Select(name => "• " + name)), AOLauncher.Localization.Texts.Get("Text_Scripts_DF361AC73944"), MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.OK) return;
                 await RunScripts(() =>
                 {
                     var applied = new List<GuiScriptBackup>();
                     try { foreach (string file in files) applied.Add(GuiScripts.Import(target.Root, file, ScriptBackupRoot)); }
                     catch { foreach (var backup in applied.AsEnumerable().Reverse().Where(item => !string.IsNullOrEmpty(item.Id))) try { GuiScripts.Restore(target.Root, backup.Id, ScriptBackupRoot); } catch { } throw; }
-                }, L("Script imported.", "Script importeret."), files.Select(Path.GetFileName));
+                }, AOLauncher.Localization.Texts.Get("Text_Script_imported_86A0A4754394"), files.Select(Path.GetFileName));
             }
         }
         private async Task DeleteScripts()
         {
             if (!(scriptTarget.SelectedItem is SkinTargetChoice target)) return;
             var names = SelectedScripts(); if (names.Count == 0) return;
-            if (NexusMessageBox.Show(this, L("Delete these scripts from this installation? A backup is kept.", "Slet disse scripts fra installationen? Der gemmes en sikkerhedskopi.") + "\r\n" + string.Join("\r\n", names.Take(15).Select(name => "• " + name)), target.Name, MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.OK) return;
-            await RunScripts(() => GuiScripts.Delete(target.Root, names, ScriptBackupRoot), L("Scripts deleted. Restore them under Backups.", "Scripts slettet. Gendan dem under Sikkerhedskopier."));
+            if (NexusMessageBox.Show(this, AOLauncher.Localization.Texts.Get("Text_Delete_these_scripts_from_this_installation_AE1E8931EA50") + "\r\n" + string.Join("\r\n", names.Take(15).Select(name => "• " + name)), target.Name, MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.OK) return;
+            await RunScripts(() => GuiScripts.Delete(target.Root, names, ScriptBackupRoot), AOLauncher.Localization.Texts.Get("Text_Scripts_deleted_Restore_them_under_Backups_3D9A2D64669E"));
         }
         private Task OpenScriptFolder()
         {
@@ -236,7 +236,7 @@ namespace AOLauncher
         }
         private async Task RunScripts(Action action, string done, IEnumerable<string> select = null)
         {
-            SetBusy(true); Status(L("Updating scripts…", "Opdaterer scripts…"));
+            SetBusy(true); Status(AOLauncher.Localization.Texts.Get("Text_Updating_scripts_06E4631190C6"));
             try { await Task.Run(action); Status(done); }
             finally { SetBusy(false); RefreshScripts(select); RefreshBackups(); }
         }
@@ -244,7 +244,7 @@ namespace AOLauncher
         private async Task Safe(Func<Task> action)
         {
             if (busy) return;
-            try { if (preview) { Status(L("Preview: no game files are changed.", "Forhåndsvisning: spilfiler ændres ikke.")); return; } await action(); }
+            try { if (preview) { Status(AOLauncher.Localization.Texts.Get("Text_Preview_no_game_files_are_changed_4CF8D5CAEAD7")); return; } await action(); }
             catch (Exception error) { Fail(error); }
         }
         private void SetBusy(bool value)
@@ -262,14 +262,14 @@ namespace AOLauncher
                 }
                 else if (control is ButtonBase || control is ComboBox || control is ListBox || control is TreeView) control.Enabled = !value;
             }
-            CancelAction.Text = value ? L("Cancel operation", "Annuller handling") : L("Close", "Luk");
+            CancelAction.Text = value ? AOLauncher.Localization.Texts.Get("Text_Cancel_operation_C2811A7A23D4") : AOLauncher.Localization.Texts.Get("Text_Close_B182D0987175");
             UpdateSelection();
         }
         private static IEnumerable<Control> ChildControls(Control parent)
         {
             foreach (Control child in parent.Controls) { yield return child; foreach (var descendant in ChildControls(child)) yield return descendant; }
         }
-        private void CancelOperation() { downloadCancellation?.Cancel(); RequestCancelOperation?.Invoke(); Status(L("Cancellation requested. Waiting for the current safe step.", "Annullering anmodet. Afventer det aktuelle sikre trin.")); }
+        private void CancelOperation() { downloadCancellation?.Cancel(); RequestCancelOperation?.Invoke(); Status(AOLauncher.Localization.Texts.Get("Text_Cancellation_requested_Waiting_for_the_current_A9FF4F4F2EDF")); }
         private void Status(string message, bool error = false)
         {
             ErrorLabel.Text = message; ErrorLabel.ForeColor = error ? Theme.Warning : Theme.Muted;
@@ -282,21 +282,21 @@ namespace AOLauncher
         }
         private async Task<bool> Run(string description, List<GuiCharacterChoice> choices, bool installationWide, Action action)
         {
-            if (ExecuteOperation == null) { Status(L("This operation is unavailable in preview.", "Handlingen er ikke tilgængelig i forhåndsvisning.")); return false; }
+            if (ExecuteOperation == null) { Status(AOLauncher.Localization.Texts.Get("Text_This_operation_is_unavailable_in_preview_795DCA5E7CF1")); return false; }
             SetBusy(true); Status(description.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)[0]);
-            try { bool result = await ExecuteOperation(description, choices, installationWide, action); if (result) Status(L("Operation completed.", "Handlingen er udført.")); return result; }
+            try { bool result = await ExecuteOperation(description, choices, installationWide, action); if (result) Status(AOLauncher.Localization.Texts.Get("Text_Operation_completed_FC17A8656338")); return result; }
             finally { SetBusy(false); }
         }
         private async Task CaptureLayout(bool copy, GuiLayoutComponents initial = GuiLayoutComponents.Layout, GuiCharacterChoice initialSource = null)
         {
-            var selected = UniqueTargets(SelectedCharacters()); if (copy && selected.Count == 0) { Status(L("Select target chars first.", "Vælg mål-chars først.")); return; }
+            var selected = UniqueTargets(SelectedCharacters()); if (copy && selected.Count == 0) { Status(AOLauncher.Localization.Texts.Get("Text_Select_target_chars_first_687B5400CEF3")); return; }
             using (var dialog = new GuiCaptureDialog(characters, copy, initial, initialSource))
             {
                 if (dialog.ShowDialog(this) != DialogResult.OK) return;
                 var source = dialog.Source; if (source == null) return;
                 string name = dialog.TemplateName; var components = dialog.Components;
                 selected = selected.Where(choice => !string.Equals(choice.CharacterPath, source.CharacterPath, StringComparison.OrdinalIgnoreCase)).ToList();
-                if (copy && selected.Count == 0) { Status(L("Select at least one target other than the source char.", "Vælg mindst ét mål ud over kilde-char.")); return; }
+                if (copy && selected.Count == 0) { Status(AOLauncher.Localization.Texts.Get("Text_Select_at_least_one_target_other_F1AE232DBBC1")); return; }
                 string signature = ""; try { signature = FileVersionInfo.GetVersionInfo(Path.Combine(source.Account.GamePath, "AnarchyOnline.exe")).FileVersion ?? ""; } catch { }
                 GuiLayoutTemplate captured = null;
                 var involved = new List<GuiCharacterChoice> { source }; if (copy) involved.AddRange(selected.Where(choice => choice != source));
@@ -304,7 +304,7 @@ namespace AOLauncher
                 CaptureSource = source;
                 try
                 {
-                    success = await Run((copy ? L("Copy character layout", "Kopiér char-layout") : L("Capture character layout", "Gem char-layout")) + GuiComponentChoices.Describe(components), involved, false, () =>
+                    success = await Run((copy ? AOLauncher.Localization.Texts.Get("Text_Copy_character_layout_32FC10A62BD1") : AOLauncher.Localization.Texts.Get("Text_Capture_character_layout_6A6A9A5A09F6")) + GuiComponentChoices.Describe(components), involved, false, () =>
                     {
                         captured = GuiLayouts.CaptureWithOptions(libraryRoot, name, source.CharacterPath, source.Character.Name, signature, components);
                         if (copy) try { ApplyLayoutBatch(captured.Id, selected, components); }
@@ -322,10 +322,10 @@ namespace AOLauncher
             var selected = UniqueTargets(all ? characters.ToList() : SelectedCharacters()); if (string.IsNullOrEmpty(id) || selected.Count == 0) return;
             var template = id == GuiLayouts.GameDefaultId ? GameDefaultTemplate() : GuiLayouts.ListTemplates(libraryRoot).FirstOrDefault(item => item.Id == id); if (template == null) return;
             var components = (templates.SelectedItem as TemplateChoice)?.Value.Id == id ? GuiComponentChoices.Selected(componentChecks) : template.Components;
-            if (components == 0) { Status(L("Choose at least one component to apply.", "Vælg mindst én del at anvende.")); return; }
+            if (components == 0) { Status(AOLauncher.Localization.Texts.Get("Text_Choose_at_least_one_component_to_4D90AA540FC4")); return; }
             string description = id == GuiLayouts.GameDefaultId
-                ? L("Reset supported window layout using each character's game installation defaults. Hotbar actions/count, key bindings, pet names, chat channels and the current skin are kept. Previous layouts are backed up.", "Nulstil understøttet vindueslayout med standarder fra hver chars spilinstallation. Hotbar-handlinger/antal, taster, kæledyrsnavne, chatkanaler og aktuelt skin bevares. Tidligere layouts sikkerhedskopieres.")
-                : (all ? L("Roll out GUI template to all chars", "Udrul GUI-skabelon til alle chars") : L("Apply GUI template to selected chars", "Anvend GUI-skabelon på valgte chars")) + GuiComponentChoices.Describe(components);
+                ? AOLauncher.Localization.Texts.Get("Text_Reset_supported_window_layout_using_each_FADA708DC9D7")
+                : (all ? AOLauncher.Localization.Texts.Get("Text_Roll_out_GUI_template_to_all_92B385C0C847") : AOLauncher.Localization.Texts.Get("Text_Apply_GUI_template_to_selected_chars_3C67DC857455")) + GuiComponentChoices.Describe(components);
             if (await Run(description, selected, false,
                 () => ApplyLayoutBatch(id, selected, components)))
             { foreach (var target in selected) target.Character.PendingGuiTemplateId = null; SaveProfile?.Invoke(); }
@@ -343,8 +343,8 @@ namespace AOLauncher
             {
                 var errors = new List<string>();
                 foreach (var backup in applied.AsEnumerable().Reverse()) try { GuiLayouts.Restore(libraryRoot, backup.Id, backup.TargetPath); } catch (Exception rollback) { errors.Add(backup.TargetPath + ": " + rollback.Message); }
-                throw new IOException(failure.Message + "\r\n" + (errors.Count == 0 ? L("Earlier targets in this batch were restored.", "Tidligere mål i denne gruppe blev gendannet.")
-                    : L("Some targets need manual backup restoration:\r\n", "Nogle mål kræver manuel gendannelse fra sikkerhedskopi:\r\n") + string.Join("\r\n", errors)), failure);
+                throw new IOException(failure.Message + "\r\n" + (errors.Count == 0 ? AOLauncher.Localization.Texts.Get("Text_Earlier_targets_in_this_batch_were_4A1D6F634B1D")
+                    : AOLauncher.Localization.Texts.Get("Text_Some_targets_need_manual_backup_restoration_33D50643EEA2") + string.Join("\r\n", errors)), failure);
             }
         }
         private static List<GuiCharacterChoice> UniqueTargets(IEnumerable<GuiCharacterChoice> targets)
@@ -359,7 +359,7 @@ namespace AOLauncher
         private Task DeleteTemplate()
         {
             if (!(templates.SelectedItem is TemplateChoice choice)) return Task.CompletedTask;
-            if (NexusMessageBox.Show(this, L("Delete this saved template? Existing game layouts and backups are kept.", "Slet denne gemte skabelon? Eksisterende spillayouts og sikkerhedskopier bevares."), choice.Value.Name, MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.OK)
+            if (NexusMessageBox.Show(this, AOLauncher.Localization.Texts.Get("Text_Delete_this_saved_template_Existing_game_9B970E91BF9A"), choice.Value.Name, MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.OK)
             {
                 GuiLayouts.DeleteTemplate(libraryRoot, choice.Value.Id);
                 if (DefaultTemplateId == choice.Value.Id) { SaveDefaultTemplate?.Invoke(null); DefaultTemplateId = null; }
@@ -372,16 +372,16 @@ namespace AOLauncher
         {
             if (!(skinTarget.SelectedItem is SkinTargetChoice target) || !(catalog.SelectedItem is CatalogChoice source)) return;
             SetBusy(true); downloadCancellation = new CancellationTokenSource();
-            try { Status(L("Downloading skin from its author…", "Henter skin fra forfatteren…")); var result = await GuiSkins.InstallNdGuiAsync(target.Root, source.Value.Id, clientEngine.SelectedIndex == 1, downloadCancellation.Token); RefreshSkins(result.SkinName); Status(L("Skin installed. Choose Apply skin to activate it.", "Skin installeret. Vælg Anvend skin for at aktivere det.")); }
+            try { Status(AOLauncher.Localization.Texts.Get("Text_Downloading_skin_from_its_author_2B5DBE98A946")); var result = await GuiSkins.InstallNdGuiAsync(target.Root, source.Value.Id, clientEngine.SelectedIndex == 1, downloadCancellation.Token); RefreshSkins(result.SkinName); Status(AOLauncher.Localization.Texts.Get("Text_Skin_installed_Choose_Apply_skin_to_86741F79D8BF")); }
             finally { downloadCancellation.Dispose(); downloadCancellation = null; SetBusy(false); }
         }
         private async Task ImportSkin()
         {
             if (!(skinTarget.SelectedItem is SkinTargetChoice target)) return;
-            using (var picker = new OpenFileDialog { Filter = L("Skin ZIP files (*.zip)|*.zip", "Skin ZIP-filer (*.zip)|*.zip"), CheckFileExists = true })
+            using (var picker = new OpenFileDialog { Filter = AOLauncher.Localization.Texts.Get("Text_Skin_ZIP_files_zip_zip_A16E8AABE5A0"), CheckFileExists = true })
             {
                 if (picker.ShowDialog(this) != DialogResult.OK) return; SetBusy(true);
-                try { var result = await Task.Run(() => GuiSkins.ImportZip(target.Root, picker.FileName)); RefreshSkins(result.SkinName); Status(L("Skin imported. Choose Apply skin to activate it.", "Skin importeret. Vælg Anvend skin for at aktivere det.")); }
+                try { var result = await Task.Run(() => GuiSkins.ImportZip(target.Root, picker.FileName)); RefreshSkins(result.SkinName); Status(AOLauncher.Localization.Texts.Get("Text_Skin_imported_Choose_Apply_skin_to_8CB67B0005F0")); }
                 finally { SetBusy(false); }
             }
         }
@@ -390,8 +390,8 @@ namespace AOLauncher
         {
             if (!(skinTarget.SelectedItem is SkinTargetChoice source) || !(skins.SelectedItem is string name)) return;
             var destinations = skinTarget.Items.Cast<SkinTargetChoice>().Where(item => !string.Equals(GuiSkins.CurrentSkin(item.Root), name, StringComparison.OrdinalIgnoreCase)).ToList();
-            if (destinations.Count == 0) { Status(L("All installations already use this skin.", "Alle installationer bruger allerede dette skin.")); return; }
-            await Run(L("Roll out skin to all configured Prefs installations. The same skin variant is copied; verify Classic/new-engine compatibility for each installation.", "Udrul skin til alle konfigurerede Prefs-installationer. Samme skin-variant kopieres; kontrollér klassisk/ny grafikmotor-kompatibilitet for hver installation."), destinations.SelectMany(item => item.Characters).ToList(), true, () =>
+            if (destinations.Count == 0) { Status(AOLauncher.Localization.Texts.Get("Text_All_installations_already_use_this_skin_6141298949D5")); return; }
+            await Run(AOLauncher.Localization.Texts.Get("Text_Roll_out_skin_to_all_configured_C5A8FEA2C43B"), destinations.SelectMany(item => item.Characters).ToList(), true, () =>
             {
                 var applied = new List<Tuple<string, string>>();
                 try
@@ -407,8 +407,8 @@ namespace AOLauncher
                 {
                     var errors = new List<string>();
                     foreach (var item in applied.AsEnumerable().Reverse()) try { GuiSkins.RestoreSelection(item.Item1, item.Item2); } catch (Exception rollback) { errors.Add(item.Item1 + ": " + rollback.Message); }
-                    throw new IOException(failure.Message + "\r\n" + (errors.Count == 0 ? L("Earlier skin selections were restored.", "Tidligere skin-valg blev gendannet.")
-                        : L("Some installations need manual backup restoration:\r\n", "Nogle installationer kræver manuel gendannelse fra sikkerhedskopi:\r\n") + string.Join("\r\n", errors)), failure);
+                    throw new IOException(failure.Message + "\r\n" + (errors.Count == 0 ? AOLauncher.Localization.Texts.Get("Text_Earlier_skin_selections_were_restored_E631C9A9CE62")
+                        : AOLauncher.Localization.Texts.Get("Text_Some_installations_need_manual_backup_restoration_F345282521CD") + string.Join("\r\n", errors)), failure);
                 }
             });
             RefreshSkins(); RefreshBackups();
@@ -416,21 +416,21 @@ namespace AOLauncher
         private async Task ApplySkinName(string name)
         {
             if (!(skinTarget.SelectedItem is SkinTargetChoice target) || string.IsNullOrEmpty(name)) return;
-            if (string.Equals(GuiSkins.CurrentSkin(target.Root), name, StringComparison.OrdinalIgnoreCase)) { Status(L("This skin is already selected.", "Dette skin er allerede valgt.")); return; }
-            await Run(L("Change GUI skin", "Skift GUI-skin"), target.Characters.ToList(), true, () => GuiSkins.SelectSkin(target.Root, name, SkinBackupRoot));
+            if (string.Equals(GuiSkins.CurrentSkin(target.Root), name, StringComparison.OrdinalIgnoreCase)) { Status(AOLauncher.Localization.Texts.Get("Text_This_skin_is_already_selected_066724D5D5D0")); return; }
+            await Run(AOLauncher.Localization.Texts.Get("Text_Change_GUI_skin_D38B3F170D72"), target.Characters.ToList(), true, () => GuiSkins.SelectSkin(target.Root, name, SkinBackupRoot));
             RefreshSkins(name); RefreshBackups();
         }
         private async Task RestoreBackup()
         {
             if (!(backups.SelectedItem is BackupChoice choice)) return;
             if (choice.Layout != null)
-                await Run(L("Restore character GUI backup", "Gendan char-GUI"), new List<GuiCharacterChoice> { choice.Character }, false, () => GuiLayouts.Restore(libraryRoot, choice.Layout.Id, choice.Character.CharacterPath));
+                await Run(AOLauncher.Localization.Texts.Get("Text_Restore_character_GUI_backup_EB9103BA78A7"), new List<GuiCharacterChoice> { choice.Character }, false, () => GuiLayouts.Restore(libraryRoot, choice.Layout.Id, choice.Character.CharacterPath));
             else if (choice.Script != null)
             {
-                if (NexusMessageBox.Show(this, L("Restore the scripts changed by this backup? Current versions are backed up first.", "Gendan de scripts, som denne sikkerhedskopi ændrede? De nuværende udgaver sikkerhedskopieres først.") + "\r\n" + string.Join("\r\n", choice.Script.Changes.Take(15).Select(change => "• " + change.Name)), choice.SkinTarget.Name, MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.OK) return;
-                await RunScripts(() => GuiScripts.Restore(choice.SkinTarget.Root, choice.Script.Id, ScriptBackupRoot), L("Scripts restored.", "Scripts gendannet."));
+                if (NexusMessageBox.Show(this, AOLauncher.Localization.Texts.Get("Text_Restore_the_scripts_changed_by_this_58B0E5AAF17F") + "\r\n" + string.Join("\r\n", choice.Script.Changes.Take(15).Select(change => "• " + change.Name)), choice.SkinTarget.Name, MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.OK) return;
+                await RunScripts(() => GuiScripts.Restore(choice.SkinTarget.Root, choice.Script.Id, ScriptBackupRoot), AOLauncher.Localization.Texts.Get("Text_Scripts_restored_A953D7C85C40"));
             }
-            else await Run(L("Restore skin selection", "Gendan skin-valg"), choice.SkinTarget.Characters.ToList(), true, () => GuiSkins.RestoreSelection(choice.SkinTarget.Root, choice.Skin.Directory));
+            else await Run(AOLauncher.Localization.Texts.Get("Text_Restore_skin_selection_3F67C5AB9C44"), choice.SkinTarget.Characters.ToList(), true, () => GuiSkins.RestoreSelection(choice.SkinTarget.Root, choice.Skin.Directory));
             RefreshSkins(); RefreshBackups(); RefreshMacros();
         }
         internal void RefreshLibrary(string selectedId = null)
@@ -443,7 +443,7 @@ namespace AOLauncher
                 templates.SelectedItem = templates.Items.Cast<TemplateChoice>().FirstOrDefault(item => item.Value.Id == selectedId);
                 if (templates.SelectedIndex < 0 && templates.Items.Count > 0) templates.SelectedIndex = 0;
                 RefreshSkins(); RefreshScripts(); RefreshMacros(); RefreshBackups(); UpdateSelection();
-                if (preview) Status(L("Preview uses example accounts. No game files will be changed.", "Forhåndsvisning bruger eksempelkontoer. Spilfiler ændres ikke."));
+                if (preview) Status(AOLauncher.Localization.Texts.Get("Text_Preview_uses_example_accounts_No_game_9C46FB6CD825"));
             }
             catch (Exception error) { Fail(error); }
         }
@@ -459,11 +459,11 @@ namespace AOLauncher
                     activeSkinName = GuiSkins.CurrentSkin(target.Root);
                     skins.SelectedItem = selectedName ?? activeSkinName;
                     if (skins.SelectedIndex < 0 && skins.Items.Count > 0) skins.SelectedIndex = 0;
-                    skinInfo.Text = L("Active skin: ", "Aktivt skin: ") + activeSkinName
-                        + "\r\n" + L("Select a different skin, then review the change below.", "Vælg et andet skin, og gennemse ændringen nedenfor.");
-                    if (unavailableSkinAccounts > 0) skinInfo.Text += "\r\n" + unavailableSkinAccounts + L(" account(s) need an initialized Prefs folder. Choose it under Edit account.", " konti mangler en initialiseret Prefs-mappe. Vælg den under Rediger konto.");
+                    skinInfo.Text = AOLauncher.Localization.Texts.Get("Text_Active_skin_7DB045DEEB47") + activeSkinName
+                        + "\r\n" + AOLauncher.Localization.Texts.Get("Text_Select_a_different_skin_then_review_03BF921018DB");
+                    if (unavailableSkinAccounts > 0) skinInfo.Text += "\r\n" + unavailableSkinAccounts + AOLauncher.Localization.Texts.Get("Text_account_s_need_an_initialized_Prefs_507ADAA771FD");
                 }
-                else skinInfo.Text = L("Choose an account Prefs folder first in Edit account. No valid Prefs installation is available.", "Vælg først kontoens Prefs-mappe under Rediger konto. Ingen gyldig Prefs-installation er tilgængelig.");
+                else skinInfo.Text = AOLauncher.Localization.Texts.Get("Text_Choose_an_account_Prefs_folder_first_0E5F9E8C0BE1");
             }
             catch (Exception error) { skinInfo.Text = error.Message; }
             UpdateSelection();
@@ -488,15 +488,15 @@ namespace AOLauncher
             foreach (var leaf in Leaves())
             {
                 var choice = (GuiCharacterChoice)leaf.Tag;
-                string suffix = !string.IsNullOrEmpty(choice.Character.PendingGuiTemplateId) ? L(" · default pending", " · afventer standard") : "";
-                if (string.IsNullOrEmpty(choice.CharacterPath) || !Directory.Exists(choice.CharacterPath)) suffix += L(" · Prefs missing", " · Prefs mangler");
+                string suffix = !string.IsNullOrEmpty(choice.Character.PendingGuiTemplateId) ? AOLauncher.Localization.Texts.Get("Text_default_pending_DF6BF8E12B03") : "";
+                if (string.IsNullOrEmpty(choice.CharacterPath) || !Directory.Exists(choice.CharacterPath)) suffix += AOLauncher.Localization.Texts.Get("Text_Prefs_missing_DFAF7AA369FD");
                 string text = choice.Character.Name + suffix;
                 if (leaf.Text != text) leaf.Text = text;
             }
             bool builtIn = template?.Id == GuiLayouts.GameDefaultId;
-            templateInfo.Text = builtIn ? L("Reset window positions and visibility to AO defaults. Hotbars, keys, macros and skin stay unchanged.", "Nulstil vinduesplaceringer og synlighed til AO-standard. Hotbars, taster, makroer og skin bevares.") : template == null ? L("Save a character's layout to create your first reusable setup.", "Gem en karakters layout for at oprette din første genbrugelige opsætning.")
-                : L("Saved from: ", "Gemt fra: ") + template.SourceCharacter + " · " + template.CreatedUtc.ToLocalTime().ToString("g")
-                    + "\r\n" + L("Only settings included in this layout can be selected.", "Kun indstillinger gemt i dette layout kan vælges.");
+            templateInfo.Text = builtIn ? AOLauncher.Localization.Texts.Get("Text_Reset_window_positions_and_visibility_to_C9A3B20B4938") : template == null ? AOLauncher.Localization.Texts.Get("Text_Save_a_character_s_layout_to_1DD1106B7622")
+                : AOLauncher.Localization.Texts.Get("Text_Saved_from_2E9CF4A52AAD") + template.SourceCharacter + " · " + template.CreatedUtc.ToLocalTime().ToString("g")
+                    + "\r\n" + AOLauncher.Localization.Texts.Get("Text_Only_settings_included_in_this_layout_EAFDAB778A63");
             bool previousUpdating = updating; updating = true;
             foreach (var pair in componentChecks)
             {
@@ -505,13 +505,13 @@ namespace AOLauncher
             }
             componentTemplateId = template?.Id; defaultTemplate.Checked = template != null && template.Id == DefaultTemplateId; updating = previousUpdating;
             defaultTemplate.Enabled = !busy && !preview && template != null && !builtIn;
-            selectedSummary.Text = selected.Count == 0 ? L("Choose the characters you want to change. Your login selection stays separate.", "Vælg de karakterer, du vil ændre. Dine loginvalg holdes adskilt.")
-                : selected.Count + L(" characters will receive: ", " karakterer modtager: ") + (template?.Name ?? L("no layout selected", "intet layout valgt"));
+            selectedSummary.Text = selected.Count == 0 ? AOLauncher.Localization.Texts.Get("Text_Choose_the_characters_you_want_to_1F6CEF96CA45")
+                : selected.Count + AOLauncher.Localization.Texts.Get("Text_characters_will_receive_93CC7D5917C2") + (template?.Name ?? AOLauncher.Localization.Texts.Get("Text_no_layout_selected_27AE22576C34"));
             selectedSummary.Text += "\r\n" + (selected.Any(choice => string.IsNullOrEmpty(choice.CharacterPath) || !Directory.Exists(choice.CharacterPath))
-                    ? L("Missing Prefs: log in once, then choose the account folder in Edit account.", "Manglende Prefs: log ind én gang, og vælg derefter kontomappen under Rediger konto.")
-                    : L("Review affected characters before applying. Previous settings are backed up automatically.", "Gennemse berørte karakterer før ændringen. Tidligere indstillinger sikkerhedskopieres automatisk."));
+                    ? AOLauncher.Localization.Texts.Get("Text_Missing_Prefs_log_in_once_then_BCD9C99CAD12")
+                    : AOLauncher.Localization.Texts.Get("Text_Review_affected_characters_before_applying_Previous_FF7DB77886C5"));
             if (selected.Count > 0 && GuiComponentChoices.Selected(componentChecks) == 0)
-                selectedSummary.Text = L("Choose at least one part to replace in step 3.", "Vælg mindst én del, der skal erstattes, i trin 3.");
+                selectedSummary.Text = AOLauncher.Localization.Texts.Get("Text_Choose_at_least_one_part_to_7C8879FBBA13");
             applyLayout.Enabled = !busy && template != null && selected.Count > 0 && GuiComponentChoices.Selected(componentChecks) != 0;
             applyDefault.Enabled = !busy && !string.IsNullOrEmpty(DefaultTemplateId) && selected.Count > 0;
             foreach (var button in selectionActions) button.Enabled = !busy && template != null && !builtIn;
@@ -521,15 +521,15 @@ namespace AOLauncher
             if (copyMacros != null) copyMacros.Enabled = !busy && macroSource.SelectedItem != null && macroList.Items.Count > 0;
             if (restoreBackup != null) restoreBackup.Enabled = !busy && backups.SelectedItem != null;
             var backup = backups.SelectedItem as BackupChoice;
-            backupInfo.Text = backup == null ? L("Backups appear after your first change.", "Sikkerhedskopier vises efter din første ændring.")
+            backupInfo.Text = backup == null ? AOLauncher.Localization.Texts.Get("Text_Backups_appear_after_your_first_change_01DA0ED89A74")
                 : backup.Layout != null ? backup.Character.Label + "\r\n" + backup.Layout.TargetPath + "\r\n" + backup.Layout.State
                 : backup.Script != null ? backup.Script.ScriptsRoot + "\r\n" + ScriptAction(backup.Script.Action) + ": " + string.Join(", ", backup.Script.Changes.Take(8).Select(change => change.Name)) + (backup.Script.Changes.Count > 8 ? " …" : "") + "\r\n" + backup.Script.State
-                : backup.SkinTarget.Root + "\r\n" + L("Previous skin: ", "Tidligere skin: ") + backup.Skin.SkinName;
+                : backup.SkinTarget.Root + "\r\n" + AOLauncher.Localization.Texts.Get("Text_Previous_skin_0080508EBB3F") + backup.Skin.SkinName;
             DesignSelectionUpdate(); ScriptWorkflowUpdate(); BackupWorkflowUpdate();
         }
         private static string ScriptAction(string action)
-            => action == "Copy" ? L("Copied", "Kopieret") : action == "Import" ? L("Imported", "Importeret") : action == "Delete" ? L("Deleted", "Slettet") : action == "Restore" ? L("Restored", "Gendannet") : action;
-        private static GuiLayoutTemplate GameDefaultTemplate() => new GuiLayoutTemplate { Id = GuiLayouts.GameDefaultId, Name = L("AO default layout", "AO-standardlayout"), Components = GuiLayoutComponents.Layout };
+            => action == "Copy" ? AOLauncher.Localization.Texts.Get("Text_Copied_1BA523214825") : action == "Import" ? AOLauncher.Localization.Texts.Get("Text_Imported_2E9A80945C9B") : action == "Delete" ? AOLauncher.Localization.Texts.Get("Text_Deleted_F1D2BCD834B4") : action == "Restore" ? AOLauncher.Localization.Texts.Get("Text_Restored_3D6FAE4D351F") : action;
+        private static GuiLayoutTemplate GameDefaultTemplate() => new GuiLayoutTemplate { Id = GuiLayouts.GameDefaultId, Name = AOLauncher.Localization.Texts.Get("Text_AO_default_layout_8ECDA80849FB"), Components = GuiLayoutComponents.Layout };
         private sealed class TemplateChoice { internal GuiLayoutTemplate Value; public override string ToString() => Value.Name; }
         private sealed class CatalogChoice { internal GuiSkinCatalogEntry Value; public override string ToString() => Value.Name; }
         private sealed class SkinTargetChoice
@@ -540,7 +540,7 @@ namespace AOLauncher
         private sealed class BackupChoice
         {
             internal GuiLayoutBackup Layout; internal GuiSkinBackup Skin; internal GuiScriptBackup Script; internal GuiCharacterChoice Character; internal SkinTargetChoice SkinTarget; internal DateTime When;
-            public override string ToString() => When.ToLocalTime().ToString("g") + " · " + (Layout != null ? L("Layout — ", "Layout — ") + Character.Label : Script != null ? L("Scripts — ", "Scripts — ") + SkinTarget.Name : L("Skin — ", "Skin — ") + SkinTarget.Name);
+            public override string ToString() => When.ToLocalTime().ToString("g") + " · " + (Layout != null ? AOLauncher.Localization.Texts.Get("Text_Layout_82A71708F8B8") + Character.Label : Script != null ? AOLauncher.Localization.Texts.Get("Text_Scripts_D3E88CECF4E2") + SkinTarget.Name : AOLauncher.Localization.Texts.Get("Text_Skin_12C0176A7DCF") + SkinTarget.Name);
         }
     }
 
@@ -555,29 +555,29 @@ namespace AOLauncher
         internal bool UseForNewCharacters => useDefault.Checked;
         internal GuiLayoutComponents Components => GuiComponentChoices.Selected(components);
         internal GuiCaptureDialog(IEnumerable<GuiCharacterChoice> characters, bool copy) : this(characters, copy, GuiLayoutComponents.Layout, null) { }
-        internal GuiCaptureDialog(IEnumerable<GuiCharacterChoice> characters, bool copy, GuiLayoutComponents initial, GuiCharacterChoice initialSource) : base(copy ? L("Copy a character's setup", "Kopiér en karakters opsætning") : L("Save a character's layout", "Gem en karakters layout"), 520)
+        internal GuiCaptureDialog(IEnumerable<GuiCharacterChoice> characters, bool copy, GuiLayoutComponents initial, GuiCharacterChoice initialSource) : base(copy ? AOLauncher.Localization.Texts.Get("Text_Copy_a_character_s_setup_8859CFB24BB3") : AOLauncher.Localization.Texts.Get("Text_Save_a_character_s_layout_72EE7A5174D1"), 520)
         {
             ClientSize = new Size(620, 600);
-            AddWrappedNote(L("Choose the character whose setup you want to reuse. AO saves changes on normal logout; Nexus will review any required logout with you before copying.", "Vælg den karakter, hvis opsætning du vil genbruge. AO gemmer ved normalt logout; Nexus gennemgår eventuelt logout med dig før kopiering."), "captureGuiGuide");
-            Fields.Controls.Add(new Label { Text = L("Source character", "Kildekarakter"), AutoSize = true, Dock = DockStyle.Top, ForeColor = Theme.Accent, Margin = new Padding(0, 8, 0, 6) });
+            AddWrappedNote(AOLauncher.Localization.Texts.Get("Text_Choose_the_character_whose_setup_you_F5A1AA8294D0"), "captureGuiGuide");
+            Fields.Controls.Add(new Label { Text = AOLauncher.Localization.Texts.Get("Text_Source_character_6CD2FCF4CA1F"), AutoSize = true, Dock = DockStyle.Top, ForeColor = Theme.Accent, Margin = new Padding(0, 8, 0, 6) });
             source = new NexusComboBox { Name = "guiCaptureSource", Dock = DockStyle.Top, DropDownStyle = ComboBoxStyle.DropDownList };
             foreach (var character in characters) source.Items.Add(character); Fields.Controls.Add(source);
             if (initialSource != null && source.Items.Contains(initialSource)) source.SelectedItem = initialSource;
-            name = AddTextField(L("Name for this saved layout", "Navn på dette gemte layout"), copy ? "Character copy" : ""); name.MaxLength = 80;
+            name = AddTextField(AOLauncher.Localization.Texts.Get("Text_Name_for_this_saved_layout_B302787E4D34"), copy ? "Character copy" : ""); name.MaxLength = 80;
             if (copy) name.Parent.Visible = false;
-            Fields.Controls.Add(new Label { Text = L("Include in the copy", "Medtag i kopien"), AutoSize = true, Dock = DockStyle.Top, ForeColor = Theme.Accent, Margin = new Padding(0, 8, 0, 6) });
+            Fields.Controls.Add(new Label { Text = AOLauncher.Localization.Texts.Get("Text_Include_in_the_copy_A30A77767849"), AutoSize = true, Dock = DockStyle.Top, ForeColor = Theme.Accent, Margin = new Padding(0, 8, 0, 6) });
             Fields.Controls.Add(GuiComponentChoices.Create(components, "captureGuiComponent", null));
             foreach (var pair in components) pair.Value.Checked = (initial & pair.Key) != 0;
             // Hotbar macro buttons point at macro numbers; keep both together by default.
             components[GuiLayoutComponents.Hotbars].CheckedChanged += (sender, e) => { if (components[GuiLayoutComponents.Hotbars].Checked) components[GuiLayoutComponents.Macros].Checked = true; };
-            AddWrappedNote(L("Hotbars can refer to nanos or items that another char does not have. Macros replace the target's macros, so hotbar buttons keep working. Include these only when you want to replace them.", "Hotbars kan henvise til nanoer eller genstande, som en anden char ikke har. Makroer erstatter målets makroer, så hotbar-knapper bliver ved med at virke. Medtag dem kun, når du vil erstatte dem."), "captureGuiComponentsGuide");
-            useDefault = new NexusCheckBox { Name = "newGuiTemplateDefault", Text = L("Use for new characters", "Brug til nye karakterer"), AutoSize = false, Height = 28, Dock = DockStyle.Top, Visible = !copy };
+            AddWrappedNote(AOLauncher.Localization.Texts.Get("Text_Hotbars_can_refer_to_nanos_or_405CB6F313B7"), "captureGuiComponentsGuide");
+            useDefault = new NexusCheckBox { Name = "newGuiTemplateDefault", Text = AOLauncher.Localization.Texts.Get("Text_Use_for_new_characters_260A66B42A63"), AutoSize = false, Height = 28, Dock = DockStyle.Top, Visible = !copy };
             Fields.Controls.Add(useDefault);
-            AddWrappedNote(L("Only supported interface settings are copied. Existing characters are changed only when you select them as targets.", "Kun understøttede interfaceindstillinger kopieres. Eksisterende chars ændres kun, når du vælger dem som mål."), "captureGuiScope");
-            SaveButton.Text = copy ? L("Review copy…", "Gennemse kopi…") : L("Save layout…", "Gem layout…");
+            AddWrappedNote(AOLauncher.Localization.Texts.Get("Text_Only_supported_interface_settings_are_copied_DD9B1348F01D"), "captureGuiScope");
+            SaveButton.Text = copy ? AOLauncher.Localization.Texts.Get("Text_Review_copy_5A6D810BEE5C") : AOLauncher.Localization.Texts.Get("Text_Save_layout_657B7360AB11");
             SaveButton.Click += (sender, e) =>
             {
-                if (Source == null || string.IsNullOrWhiteSpace(TemplateName) || Components == 0) { ErrorLabel.Text = L("Choose a source, template name and at least one component.", "Vælg kilde, skabelonnavn og mindst én del."); return; }
+                if (Source == null || string.IsNullOrWhiteSpace(TemplateName) || Components == 0) { ErrorLabel.Text = AOLauncher.Localization.Texts.Get("Text_Choose_a_source_template_name_and_2C503829AF91"); return; }
                 DialogResult = DialogResult.OK;
             };
         }
@@ -589,7 +589,7 @@ namespace AOLauncher
             var panel = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 2, RowCount = 3, Margin = new Padding(0, 6, 0, 8) };
             panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50)); panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
             var values = new[] { GuiLayoutComponents.Layout, GuiLayoutComponents.Hotbars, GuiLayoutComponents.Keybindings, GuiLayoutComponents.PetNames, GuiLayoutComponents.Macros };
-            var labels = new[] { L("Window layout", "Vindueslayout"), L("Hotbars", "Hotbars"), L("Key bindings", "Tastaturgenveje"), L("Pet names", "Kæledyrsnavne"), L("Macros", "Makroer") };
+            var labels = new[] { AOLauncher.Localization.Texts.Get("Text_Window_layout_D912ADE70090"), AOLauncher.Localization.Texts.Get("Text_Hotbars_30F12DFEB4E9"), AOLauncher.Localization.Texts.Get("Text_Key_bindings_A62156F442FB"), AOLauncher.Localization.Texts.Get("Text_Pet_names_70D1D733B326"), AOLauncher.Localization.Texts.Get("Text_Macros_38AD5680493D") };
             for (int i = 0; i < values.Length; i++)
             {
                 var box = new NexusCheckBox { Name = prefix + values[i], Text = labels[i], AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 3, 8, 3) };
@@ -602,25 +602,25 @@ namespace AOLauncher
         internal static string Describe(GuiLayoutComponents components)
         {
             var names = new List<string>();
-            if ((components & GuiLayoutComponents.Layout) != 0) names.Add(L("window layout", "vindueslayout"));
-            if ((components & GuiLayoutComponents.Hotbars) != 0) names.Add(L("hotbars", "hotbars"));
-            if ((components & GuiLayoutComponents.Keybindings) != 0) names.Add(L("key bindings", "tastaturgenveje"));
-            if ((components & GuiLayoutComponents.PetNames) != 0) names.Add(L("pet names", "kæledyrsnavne"));
-            if ((components & GuiLayoutComponents.Macros) != 0) names.Add(L("macros", "makroer"));
+            if ((components & GuiLayoutComponents.Layout) != 0) names.Add(AOLauncher.Localization.Texts.Get("Text_window_layout_82E0D0888E0B"));
+            if ((components & GuiLayoutComponents.Hotbars) != 0) names.Add(AOLauncher.Localization.Texts.Get("Text_hotbars_E025A5090EA0"));
+            if ((components & GuiLayoutComponents.Keybindings) != 0) names.Add(AOLauncher.Localization.Texts.Get("Text_key_bindings_8CD27B4F4464"));
+            if ((components & GuiLayoutComponents.PetNames) != 0) names.Add(AOLauncher.Localization.Texts.Get("Text_pet_names_2B102749323C"));
+            if ((components & GuiLayoutComponents.Macros) != 0) names.Add(AOLauncher.Localization.Texts.Get("Text_macros_9E10020D4608"));
             bool hotbars = (components & GuiLayoutComponents.Hotbars) != 0, macros = (components & GuiLayoutComponents.Macros) != 0;
-            return "\r\n" + L("Components: ", "Dele: ") + string.Join(", ", names)
-                + (hotbars ? "\r\n" + L("Hotbar actions may refer to nanos or items unavailable on another char.", "Hotbar-handlinger kan henvise til nanoer eller genstande, som en anden char ikke har.") : "")
-                + (hotbars && !macros ? "\r\n" + L("Macros are not included, so macro buttons may point at other macros.", "Makroer er ikke med, så makroknapper kan pege på andre makroer.") : "")
-                + (macros ? "\r\n" + L("The targets' macros are replaced (a backup is kept).", "Målenes makroer erstattes (der gemmes en sikkerhedskopi).") : "");
+            return "\r\n" + AOLauncher.Localization.Texts.Get("Text_Components_853F8F212662") + string.Join(", ", names)
+                + (hotbars ? "\r\n" + AOLauncher.Localization.Texts.Get("Text_Hotbar_actions_may_refer_to_nanos_659DF91BCFBB") : "")
+                + (hotbars && !macros ? "\r\n" + AOLauncher.Localization.Texts.Get("Text_Macros_are_not_included_so_macro_05A8BF184AFD") : "")
+                + (macros ? "\r\n" + AOLauncher.Localization.Texts.Get("Text_The_targets_macros_are_replaced_a_36015FEE9BD7") : "");
         }
     }
     internal sealed class GuiTemplateNameDialog : EditorDialog
     {
         private readonly TextBox name;
         internal string Value => name.Text.Trim();
-        internal GuiTemplateNameDialog(string initial) : base(L("Rename template", "Omdøb skabelon"), 220)
+        internal GuiTemplateNameDialog(string initial) : base(AOLauncher.Localization.Texts.Get("Text_Rename_template_FB05AD0AD84F"), 220)
         {
-            name = AddTextField(L("Template name", "Skabelonnavn"), initial); name.MaxLength = 80;
+            name = AddTextField(AOLauncher.Localization.Texts.Get("Text_Template_name_639F5488DF8D"), initial); name.MaxLength = 80;
             SaveButton.Click += (sender, e) => { if (Value.Length > 0) DialogResult = DialogResult.OK; };
         }
     }

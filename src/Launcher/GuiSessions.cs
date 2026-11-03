@@ -19,11 +19,9 @@ namespace AOLauncher
     internal static class GuiSessions
     {
         internal static string CaptureNotice(string source, bool running)
-            => L("Source character: ", "Kilde-char: ") + source + "\r\n" + (running
-                ? L("The source is running. Nexus will send /quit and wait for it to exit before reading its newly saved layout, then log it back in. Capture/copy is cancelled if logout does not finish. Continue with relog and capture?",
-                    "Kilden er aktiv. Nexus sender /quit og venter på fuld lukning, før det nyligt gemte layout læses, og logger derefter ind igen. Kopiering afbrydes, hvis logout ikke fuldføres. Fortsæt med genlogin og kopiering?")
-                : L("The source is already closed. Has it logged out normally since the last layout changes? Continue only if its latest changes were saved. Otherwise cancel, log that character in, arrange its layout and try again; Nexus can handle the logout and relog.",
-                    "Kilden er allerede lukket. Er den logget normalt ud siden de sidste layoutændringer? Fortsæt kun, hvis ændringerne er gemt. Ellers annuller, log charen ind, tilpas layoutet og prøv igen; Nexus kan håndtere logout og genlogin."));
+            => AOLauncher.Localization.Texts.Get("Text_Source_character_1FB5F6FF7634") + source + "\r\n" + (running
+                ? AOLauncher.Localization.Texts.Get("Text_The_source_is_running_Nexus_will_206DB631781F")
+                : AOLauncher.Localization.Texts.Get("Text_The_source_is_already_closed_Has_38D389CDAA51"));
         // The snapshot is deliberately broader than the target selection so external clients
         // cannot be mistaken for offline characters. No command line or credential is read.
         internal static GuiSessionInspection Inspect(LauncherSettings settings, IList<GuiCharacterChoice> targets, bool installationWide)
@@ -34,10 +32,10 @@ namespace AOLauncher
                 if (string.IsNullOrWhiteSpace(target.Account.PrefsPath) || !Path.IsPathRooted(target.Account.PrefsPath)
                     || !string.Equals(Path.GetFileName(target.Account.PrefsPath.TrimEnd('\\', '/')), target.Account.Username?.Trim(), StringComparison.OrdinalIgnoreCase))
                 {
-                    result.BlockReason = L("The account Prefs folder must match its login username. Check Edit account → Account and Prefs before changing GUI files.", "Kontoens Prefs-mappe skal matche loginbrugernavnet. Kontroller Rediger konto → Konto og Prefs, før GUI-filer ændres."); return result;
+                    result.BlockReason = AOLauncher.Localization.Texts.Get("Text_The_account_Prefs_folder_must_match_20C608B89E39"); return result;
                 }
                 if (target.Character != null && !PresetCamping.SamePath(target.CharacterPath, MainForm.GuiCharacterPath(target.Account, target.Character)))
-                { result.BlockReason = L("The character Prefs path changed. Reopen Game GUI.", "Charens Prefs-sti er ændret. Åbn Spil-GUI igen."); return result; }
+                { result.BlockReason = AOLauncher.Localization.Texts.Get("Text_The_character_Prefs_path_changed_Reopen_4DFBDD97A3C0"); return result; }
             }
             var preset = new LaunchPreset { Characters = settings.Accounts.SelectMany(account => account.Characters.Select(character => new PresetCharacter { AccountId = account.Id, CharacterId = character.CharacterId })).ToList() };
             var known = PresetCamping.Find(settings, preset);
@@ -60,7 +58,7 @@ namespace AOLauncher
                     if (tracked == null)
                     {
                         if (narrowScope && !targets.Any(target => PresetCamping.SamePath(target.Account.GamePath, path))) continue;
-                        result.BlockReason = L("A game client in an affected installation cannot be identified safely. Close it normally, then try again.", "En spilklient i en berørt installation kan ikke identificeres sikkert. Luk den normalt, og prøv igen.");
+                        result.BlockReason = UnidentifiedClientReason(process.MainWindowTitle, path);
                         return result;
                     }
                     var account = settings.Accounts.First(item => string.Equals(tracked.AccountIdentity, "id:" + item.Id, StringComparison.OrdinalIgnoreCase));
@@ -70,10 +68,27 @@ namespace AOLauncher
                 catch (InvalidOperationException) { }
                 catch (Exception error) when (error is System.ComponentModel.Win32Exception || error is UnauthorizedAccessException)
                 {
-                    result.BlockReason = L("Nexus cannot inspect a running game client. Close the game clients normally before changing GUI files.", "Nexus kan ikke kontrollere en kørende spilklient. Luk spilklienterne normalt, før GUI-filer ændres."); return result;
+                    result.BlockReason = AOLauncher.Localization.Texts.Get("Text_Nexus_can_t_check_one_of_6078CF56CFC2"); return result;
                 }
             }
             return result;
+        }
+
+        // Shown when an AnarchyOnline.exe is open that Nexus did not log in (or cannot match to a
+        // character yet). Names the window and folder and says exactly how to fix it.
+        internal static string UnidentifiedClientReason(string windowTitle, string folder)
+        {
+            string title = string.IsNullOrWhiteSpace(windowTitle) || !windowTitle.StartsWith("Anarchy Online - ", StringComparison.OrdinalIgnoreCase)
+                ? AOLauncher.Localization.Texts.Get("Text_Anarchy_Online_at_the_login_or_74FC2B2B20CC")
+                : windowTitle.Trim();
+            return AOLauncher.Localization.Texts.Get("Text_Nexus_can_t_change_GUI_files_E7C8EDC0BF88")
+                + "\r\n\r\n   • " + title + "\r\n     " + folder + "\r\n\r\n"
+                + AOLauncher.Localization.Texts.Get("Text_The_game_saves_its_GUI_files_D9354DAD76F2")
+                + "\r\n\r\n" + AOLauncher.Localization.Texts.Get("Text_How_to_fix_it_D4115B6D9D31") + "\r\n"
+                + AOLauncher.Localization.Texts.Get("Text_1_Find_the_window_with_Alt_331C95DD55FE") + "\r\n"
+                + AOLauncher.Localization.Texts.Get("Text_2_If_you_just_logged_in_9B89805B9B12") + "\r\n"
+                + AOLauncher.Localization.Texts.Get("Text_3_Otherwise_log_out_normally_type_CEDDB8493154") + "\r\n"
+                + AOLauncher.Localization.Texts.Get("Text_4_Open_Game_GUI_again_Characters_7E9C94574284");
         }
 
         internal static bool AffectsClient(IEnumerable<GuiCharacterChoice> targets, bool installationWide, bool verifiedScope,
@@ -103,7 +118,7 @@ namespace AOLauncher
                 // Acquiring the handle pins the process object; a later reused PID cannot satisfy this wait.
                 var handle = process.Handle;
                 if (process.HasExited || !MatchesProcess(client.ProcessId, client.StartTimeUtcTicks, Path.Combine(client.GamePath, "AnarchyOnline.exe"),
-                    process.Id, process.StartTime.ToUniversalTime().Ticks, process.MainModule.FileName)) throw new IOException(L("The game process changed. No GUI files were written.", "Spilprocessen er ændret. Ingen GUI-filer blev skrevet."));
+                    process.Id, process.StartTime.ToUniversalTime().Ticks, process.MainModule.FileName)) throw new IOException(AOLauncher.Localization.Texts.Get("Text_The_game_process_changed_No_GUI_973A26A59BA1"));
                 return process;
             }
             catch { process.Dispose(); throw; }

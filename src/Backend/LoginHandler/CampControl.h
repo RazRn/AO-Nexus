@@ -1,4 +1,5 @@
 #pragma once
+#include "PluginReadiness.h"
 
 // Fixed timed /quit operation on the game's window thread. This does not require AOSharp,
 // synthesize keystrokes, execute arbitrary text, or force the game to exit.
@@ -11,6 +12,7 @@ static CampSetLogout campLogout = nullptr;
 static Client_GetCharID_t campCharacter = nullptr;
 static bool* campTeleporting = nullptr;
 static HANDLE campRequest = nullptr, campAccepted = nullptr, campRejected = nullptr;
+static HANDLE pluginsRequest = nullptr, pluginsReady = nullptr, pluginsWaiting = nullptr;
 static unsigned int campExpectedCharacter = 0;
 static ULONGLONG campLastAttempt = 0;
 
@@ -29,8 +31,19 @@ static bool ExecuteNormalCamp()
     __except (EXCEPTION_EXECUTE_HANDLER) { return false; }
 }
 
+static bool ReadPluginReadiness()
+{
+    __try {
+        return PluginsCanStart(campCharacter() == campExpectedCharacter, *campTeleporting,
+            campEngine() != nullptr, NexusFastStartup::Active(), NexusFastStartup::Complete());
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER) { return false; }
+}
+
 static void CALLBACK CampTimer(HWND window, UINT, UINT_PTR timer, DWORD)
 {
+    if (pluginsRequest && WaitForSingleObject(pluginsRequest, 0) == WAIT_OBJECT_0)
+        SetEvent(ReadPluginReadiness() ? pluginsReady : pluginsWaiting);
     if (WaitForSingleObject(campRequest, 0) != WAIT_OBJECT_0) return;
     ULONGLONG now = GetTickCount64();
     bool accepted = false;
@@ -90,10 +103,23 @@ static bool InstallCampControl()
     campRequest = CreateEventW(nullptr, FALSE, FALSE, (prefix + L"request").c_str());
     campAccepted = CreateEventW(nullptr, FALSE, FALSE, (prefix + L"accepted").c_str());
     campRejected = CreateEventW(nullptr, FALSE, FALSE, (prefix + L"rejected").c_str());
+    pluginsRequest = CreateEventW(nullptr, FALSE, FALSE, (prefix + L"plugins.request").c_str());
+    pluginsReady = CreateEventW(nullptr, FALSE, FALSE, (prefix + L"plugins.ready").c_str());
+    pluginsWaiting = CreateEventW(nullptr, FALSE, FALSE, (prefix + L"plugins.waiting").c_str());
+    // A missing readiness channel must not disable normal /quit support.
+    if (!pluginsRequest || !pluginsReady || !pluginsWaiting) {
+        if (pluginsRequest) CloseHandle(pluginsRequest);
+        if (pluginsReady) CloseHandle(pluginsReady);
+        if (pluginsWaiting) CloseHandle(pluginsWaiting);
+        pluginsRequest = pluginsReady = pluginsWaiting = nullptr;
+    }
     UINT_PTR timerId = 0xA04E0000u | (wcstoul(token + 28, nullptr, 16) & 0xffffu);
     if (campRequest && campAccepted && campRejected && SetTimer(window, timerId, 250, CampTimer)) return true;
     if (campRequest) CloseHandle(campRequest);
     if (campAccepted) CloseHandle(campAccepted);
     if (campRejected) CloseHandle(campRejected);
+    if (pluginsRequest) CloseHandle(pluginsRequest);
+    if (pluginsReady) CloseHandle(pluginsReady);
+    if (pluginsWaiting) CloseHandle(pluginsWaiting);
     return false;
 }

@@ -1,4 +1,4 @@
-param([string]$AssemblyPath=(Join-Path $PSScriptRoot '../dist/AONexus.exe'))
+param([string]$AssemblyPath=(Join-Path $PSScriptRoot '../dist/AONexus.exe'),[string]$AovkFolder)
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.Web.Extensions,System.Windows.Forms,System.Drawing
 $assembly=[Reflection.Assembly]::LoadFrom((Resolve-Path -LiteralPath $AssemblyPath).Path)
@@ -37,4 +37,48 @@ foreach($language in @('en','da')) {
         if($form.MinimizeInactiveClients){throw 'Disabling option was ignored.'}
     } finally {$form.Dispose()}
 }
-Write-Output 'PASS: default-off migration, persisted opt-in, focus/minimized/hidden guards, and English/Danish settings binding.'
+$background=$assembly.GetType('AOLauncher.BackgroundClients',$true)
+$graphics=$assembly.GetType('AOLauncher.AovkGraphics',$true)
+$known=$background.GetMethod('KnownVkRenderer',$static)
+foreach($name in @('VkRenderer','Release081Renderer','UiRenderer','PreviousUiRenderer','PreviousUi13Renderer','PreviousUi14Renderer','PreviousUi15Renderer')) {
+    if(!$known.Invoke($null,@($graphics.GetField($name,$static).GetRawConstantValue()))){throw "Recognized AO-VK build rejected: $name"}
+}
+if($known.Invoke($null,@(('F'*64)))){throw 'Unknown renderer admitted'}
+$inspect=$background.GetMethod('Inspect',$static)
+function Allowed($mode){$mode.GetType().GetField('Allowed',$instance).GetValue($mode)}
+function Description($mode){$mode.GetType().GetField('Description',$instance).GetValue($mode)}
+[string]$temporary=Join-Path ([IO.Path]::GetTempPath()) ('NexusBackgroundTests-'+[guid]::NewGuid().ToString('N'))
+[IO.Directory]::CreateDirectory($temporary)|Out-Null
+try {
+    $missing=$inspect.Invoke($null,@($temporary))
+    if((Allowed $missing) -or !(Description $missing)){throw 'Missing renderer needs an explicit skip reason'}
+    [IO.File]::WriteAllText((Join-Path $temporary 'randy31.dll'),'unknown renderer')
+    if(Allowed ($inspect.Invoke($null,@($temporary)))){throw 'Unknown renderer admitted'}
+    if($AovkFolder) {
+        $live=$inspect.Invoke($null,@([IO.Path]::GetFullPath($AovkFolder)))
+        if(!(Allowed $live)){throw ('Selected AO-VK installation was rejected: '+(Description $live))}
+        # Read-only source. Mutations below affect copies in the checked temporary directory only.
+        foreach($name in @('randy31.dll','version.dll','randy31_orig.dll','version-stock-rebirth.dll','AnarchyOnline.exe','GUI.dll','Interfaces.dll','N3.dll','randy-vk.ini')) {
+            $source=Join-Path $AovkFolder $name
+            if(Test-Path -LiteralPath $source){Copy-Item -LiteralPath $source -Destination (Join-Path $temporary $name) -Force}
+        }
+        if(!(Allowed ($inspect.Invoke($null,@($temporary))))){throw 'Valid copied AO-VK installation was rejected'}
+        $patch=Join-Path $temporary 'version.dll'
+        if(Test-Path -LiteralPath $patch) {
+            $original=[IO.File]::ReadAllBytes($patch);$bad=[byte[]]$original.Clone();$bad[0]=$bad[0] -bxor 1;[IO.File]::WriteAllBytes($patch,$bad)
+            if(Allowed ($inspect.Invoke($null,@($temporary)))){throw 'Mismatched/unverified AO-VK patch was admitted'}
+            [IO.File]::WriteAllBytes($patch,$original)
+        }
+        $pending=Join-Path $temporary 'NexusGraphics.pending.json';[IO.File]::WriteAllText($pending,'{}')
+        if(Allowed ($inspect.Invoke($null,@($temporary)))){throw 'Pending graphics repair was admitted'}
+        [IO.File]::Delete($pending)
+        [IO.File]::WriteAllText((Join-Path $temporary 'Cheetah.dll'),'new engine fixture')
+        if(Allowed ($inspect.Invoke($null,@($temporary)))){throw 'New engine was admitted'}
+        Write-Output 'PASS: selected AO-VK installation and isolated copy accepted; mismatched patch, pending repair and new engine rejected.'
+    }
+} finally {
+    $resolved=[IO.Path]::GetFullPath($temporary);$tempRoot=[IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\')+'\'
+    if(!$resolved.StartsWith($tempRoot,[StringComparison]::OrdinalIgnoreCase) -or ![IO.Path]::GetFileName($resolved).StartsWith('NexusBackgroundTests-')){throw 'Unsafe fixture cleanup path'}
+    Remove-Item -LiteralPath $resolved -Recurse -Force
+}
+Write-Output 'PASS: default-off migration, persisted opt-in, focus/minimized/hidden guards, supported AO-VK builds, skip reasons and English/Danish settings binding.'
