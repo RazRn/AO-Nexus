@@ -1,4 +1,4 @@
-# Experimental features in 1.3.0 Beta
+# Experimental features in 1.3.0
 
 Open **Settings → Advanced** to enable AO-VK management/tuning, automatic team formation and leader recovery, or nearby combat reports (All/NPC). These new switches start off, including after upgrading an older profile.
 

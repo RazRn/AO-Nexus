@@ -1,4 +1,4 @@
-param([string]$ExecutablePath, [string]$DefenderRuntimeReview)
+param([string]$ExecutablePath, [string]$DefenderRuntimeReview, [switch]$DeferRuntimeReview, [string]$RuntimeReviewDeferralReason, [string]$BackendDirectory)
 $ErrorActionPreference = 'Stop'
 $projectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $distRoot = Join-Path $projectRoot 'dist'
@@ -6,8 +6,10 @@ $distRoot = Join-Path $projectRoot 'dist'
 $executable = if ($ExecutablePath) { [IO.Path]::GetFullPath($ExecutablePath) } else { Join-Path $distRoot 'AONexus.exe' }
 & (Join-Path $PSScriptRoot 'Verify-DefenderRelease.ps1') -ArtifactPath $executable
 . (Join-Path $PSScriptRoot 'DefenderRelease.Policy.ps1')
-Assert-DefenderRuntimeReview $DefenderRuntimeReview (Get-FileHash -LiteralPath $executable -Algorithm SHA256).Hash
-& (Join-Path $PSScriptRoot 'Build-Payload.ps1') -ValidateOnly -VerifyExecutable $executable
+Assert-ReleaseRuntimeReview $DefenderRuntimeReview (Get-FileHash -LiteralPath $executable -Algorithm SHA256).Hash -Deferred:$DeferRuntimeReview -Reason $RuntimeReviewDeferralReason
+$payloadArgs = @{ ValidateOnly=$true; VerifyExecutable=$executable }
+if ($BackendDirectory) { $payloadArgs.BackendDirectory=$BackendDirectory }
+& (Join-Path $PSScriptRoot 'Build-Payload.ps1') @payloadArgs
 & (Join-Path $env:WINDIR 'SysWOW64\WindowsPowerShell\v1.0\powershell.exe') -NoProfile -ExecutionPolicy Bypass -File (Join-Path $projectRoot 'tests\Verify-EmbeddedMonitoring.ps1') -AssemblyPath $executable
 if ($LASTEXITCODE -ne 0) { throw 'The release must include a verified monitoring companion for single-file upgrades.' }
 Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -52,9 +54,10 @@ try {
     }
 } finally { $reader.Dispose() }
 $destination = Join-Path $projectRoot 'AO-Nexus-Luckyspawn.zip'
-Assert-DefenderRuntimeReview $DefenderRuntimeReview $hashes['AONexus.exe']
+Assert-ReleaseRuntimeReview $DefenderRuntimeReview $hashes['AONexus.exe'] -Deferred:$DeferRuntimeReview -Reason $RuntimeReviewDeferralReason
 & (Join-Path $PSScriptRoot 'Verify-DefenderRelease.ps1') -ArtifactPath $temporary
 Move-Item -LiteralPath $temporary -Destination $destination -Force
 $archiveHash = (Get-FileHash -LiteralPath $destination -Algorithm SHA256).Hash.ToLowerInvariant()
 [IO.File]::WriteAllText($destination + '.sha256.txt', $archiveHash + '  ' + [IO.Path]::GetFileName($destination) + "`r`n", [Text.Encoding]::ASCII)
+[ordered]@{ ExecutableSha256=$hashes['AONexus.exe']; ArchiveSha256=$archiveHash; RuntimeReviewDeferred=[bool]$DeferRuntimeReview; DeferralReason=$RuntimeReviewDeferralReason; PackagedUtc=[datetime]::UtcNow } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $projectRoot 'logs/release-package-review.json') -Encoding UTF8
 Write-Host "Verified release: $destination ($($inputs.Count) public files; no personal settings or passwords)."

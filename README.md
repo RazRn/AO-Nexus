@@ -1,16 +1,16 @@
-# AO Nexus 1.3.0 Beta
+# AO Nexus 1.3.0
 
 **A Windows launcher and Control Panel for your Anarchy Online accounts, characters and teams.**
 
 Keep separate game folders and login servers, launch a saved team in your chosen order, and compare your characters in one Control Panel.
 
-**[Published downloads](https://github.com/RazRn/AO-Nexus/releases)** · [Player guide](docs/user/Player-Guide.md) · [1.3.0 Beta notes](docs/user/releases/Whats-New-1.3.0.md)
+**[Published downloads](https://github.com/RazRn/AO-Nexus/releases)** · [Player guide](docs/user/Player-Guide.md) · [1.3.0 notes](docs/user/releases/Whats-New-1.3.0.md)
 
-This branch contains **1.3.0 Beta 1**. The Beta label reflects ongoing compatibility and live-game testing. A source update does not publish a new download: check the version on the Releases page. Binary distribution still has outstanding licensing and runtime-validation gates.
+This branch contains **1.3.0**. Download the packaged application from Releases. Experimental features remain opt-in; see the known limitations below.
 
-![AO Nexus Beta with example accounts, team presets and server information](docs/user/images/published/launcher-overview-30d37baf26af28af.png)
+![AO Nexus with example accounts, team presets and server information](docs/user/images/published/launcher-overview-915ae76b8b2425e6.png)
 
-*Captured from the Beta with example accounts and offline results. [Screenshot provenance](docs/user/images/SCREENSHOTS.md).*
+*Captured from 1.3.0 with example accounts and offline results. [Screenshot provenance](docs/user/images/SCREENSHOTS.md).*
 
 ## Quick start
 
@@ -22,7 +22,7 @@ This branch contains **1.3.0 Beta 1**. The Beta label reflects ongoing compatibi
 
 Requires Windows 10/11, .NET Framework 4.8 or 4.8.1, and a separately installed compatible game client. [Installation, passwords and download verification](docs/user/Player-Guide.md#install-and-first-launch).
 
-## What is new in the Beta
+## What is new in 1.3.0
 
 | Area | What you can do |
 | --- | --- |
@@ -46,12 +46,12 @@ Nexus does not bundle AO# or third-party plugin packs. The retired AO-VK 0.7.1 d
 
 ## Known limitations
 
-- A reproduced Engineer startup issue can repeatedly say “You must be standing up to execute a nano program” while the character looks standing. Detection/recovery is not yet reliable; it remains an open Beta issue.
+- A reproduced Engineer startup issue can repeatedly say “You must be standing up to execute a nano program” while the character looks standing. Detection/recovery is not yet reliable; it remains an open issue.
 - Minimized windows may stop drawing while health and other telemetry continue. On the tested AO-VK setup, disabling Offscreen surface technology resolved one character's white ICC scene; this is not a universal renderer fix.
 - Formations and regrouping require fresh team state. Zoning, obstacles, stale data and unsupported clients can stop automation. Auto regroup is bounded, not obstacle-aware navigation.
 - Service graphs measure connection response, not server simulation or backend processing. Aggro is observed targeting, not a server threat list.
 
-See [Beta compatibility and update notes](docs/user/releases/Whats-New-1.3.0.md) for details. New helper code requires a client relog; restarting Nexus alone cannot replace code already loaded into the game.
+See [Compatibility and update notes](docs/user/releases/Whats-New-1.3.0.md) for details. New helper code requires a client relog; restarting Nexus alone cannot replace code already loaded into the game.
 
 ## Help and development
 
@@ -63,6 +63,6 @@ User documentation is in [docs/user](docs/user/README.md); implementation notes 
 
 **Developed and maintained by [Luckyspawn (RazRn)](https://github.com/RazRn).** NexusEngine and LoginHandler retain code derived from [AOQuickLauncher](https://gitlab.com/never-knows-best/aoquicklauncher), by never-knows-best and contributors. The optional monitor uses AOSharp.Common. [Full credits](dist/CREDITS.txt) · [Artwork](assets/ARTWORK.txt).
 
-**Upstream licensing remains unresolved.** Public source/download availability does not grant redistribution rights. See [LICENSE-NOTICE.txt](LICENSE-NOTICE.txt) and [dependency notices](dist/Licenses) before redistributing derived work. Beta branding does not clear these restrictions.
+**Upstream licensing remains unresolved.** Public source/download availability does not grant redistribution rights. See [LICENSE-NOTICE.txt](LICENSE-NOTICE.txt) and [dependency notices](dist/Licenses) before redistributing derived work.
 
 AO Nexus is an independent community project, not an official Funcom, Project Rubi-Ka or AO Rebirth product.

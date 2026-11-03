@@ -13,7 +13,7 @@ $isBeta = $updates.GetProperty('IsPrerelease',$flags).GetValue($null)
 Assert ((Call $updates 'IsNewer' @($current)) -eq $isBeta) 'Stable same-version release supersedes Beta only'
 Assert (!(Call $updates 'IsNewer' @([version]'1.0.0.0'))) 'Beta does not downgrade to an older stable release'
 Assert (Call $updates 'IsNewer' @([version]'99.0.0.0')) 'Newer stable release remains eligible'
-Assert ($updates.GetProperty('DisplayVersion',$flags).GetValue($null).Contains('Beta')) 'Beta is visible in the display version'
+Assert ($updates.GetProperty('DisplayVersion',$flags).GetValue($null) -eq '1.3.0') 'Release display version is 1.3.0'
 $serializer = New-Object Web.Script.Serialization.JavaScriptSerializer
 $notes=[Activator]::CreateInstance($assembly.GetType('AOLauncher.ReleaseNotesBox'),$true)
 try {

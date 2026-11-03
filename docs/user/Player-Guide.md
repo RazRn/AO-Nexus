@@ -1,6 +1,6 @@
-# AO Nexus 1.3.0 Beta player guide
+# AO Nexus 1.3.0 player guide
 
-Set up your accounts once, choose the characters you want to play, and save reusable teams. This guide covers Beta 1. Screenshots use example data. Check the Releases page for available downloads; the source branch may be newer than the published executable.
+Set up your accounts once, choose the characters you want to play, and save reusable teams. This guide covers 1.3.0. Screenshots use example data. Check the Releases page for available downloads; the source branch may be newer than the published executable.
 
 [Project overview and download](../../README.md) · [Game GUI guide](Game-GUI.md) · [Privacy and security](Privacy-and-Security.md)
 
@@ -30,7 +30,7 @@ You need Windows 10/11, **.NET Framework 4.8 or 4.8.1**, and a separately instal
 
 The login engine and its runtime are bundled inside Nexus. Players do not need a .NET SDK or a separate launcher installation.
 
-1. Open [published releases](https://github.com/RazRn/AO-Nexus/releases) and check the version. A commit on main does not mean a Beta download has been published.
+1. Open [published releases](https://github.com/RazRn/AO-Nexus/releases) and check the version. Download the packaged executable from the release assets.
 2. Under **Assets**, download **AO-Nexus-Luckyspawn.zip**. The automatically generated **Source code** archives are for developers, not ready-to-run downloads.
 3. Extract the whole ZIP to a folder you can write to, such as `%LOCALAPPDATA%\Programs\AO Nexus`. Avoid protected locations such as Program Files if you want Nexus to update itself without administrator access.
 4. Open the extracted folder and run **AONexus.exe**. You can create a normal Windows shortcut to it.
@@ -143,7 +143,7 @@ The account tree groups **server → account → character**. Expand or collapse
 
 Use **Search** above the account tree to find a name, character ID, account or server. Search is case-insensitive. Searching changes what is displayed, not the saved team or current selection. The selected count includes characters hidden by the search, and a separate count shows how many selected characters are hidden. With a search active, parent checkboxes and **Select matches / Clear matches** affect only matching characters. **Clear** or **Esc** restores the full roster and its previous collapsed groups.
 
-![Character search showing one match and a warning about selected characters outside the search](images/published/character-search-6aad833c6bea9621.png)
+![Character search showing one match and a warning about selected characters outside the search](images/published/character-search-630fbb711584fe24.png)
 
 *The amber note shows that two selected characters are hidden by this search and will still log in. Clear the search to review the whole team.*
 
@@ -191,7 +191,7 @@ By default the game client skips drawing the login and character screens and goe
 
 Recognized characters already open are skipped. If an account fails, its remaining queue stops while other account queues can continue. Check the log and game window rather than repeatedly starting the same failed selection.
 
-![Header progress line during a launch](images/published/launch-progress-61d85bd0fc2df3b4.png)
+![Header progress line during a launch](images/published/launch-progress-e1c9c1e95a67e87f.png)
 
 *The red outline marks the header progress line. Confirmed logins or actual client exits advance it; moving activity shows waiting. It is not an estimate of seconds remaining.*
 
@@ -227,7 +227,7 @@ Under **Settings → Sidebar**, enable **Server news**, **Server health**, or bo
 
 News refreshes every 15 minutes while visible, or when you choose **Refresh**. Hiding the panel, switching to health, or minimizing pauses news refresh. Cached stories can remain available when fetching fails. Dates belong to the articles, not to the most recent check; an old headline does not necessarily mean refresh failed. Click a headline to open its source website.
 
-![Server health with local checks and official report separately](images/published/server-health-9bde8d6d617004f7.png)
+![Server health with local checks and official report separately](images/published/server-health-d890cded990c6463.png)
 
 
 By default, health checks run every **60 seconds for the visible server**. Enable **Check selected servers in the background** to check selected servers while Nexus runs, including on the news tab or in the tray. The health panel has no manual Refresh button; if only one server is enabled, its name replaces the dropdown.
@@ -256,7 +256,7 @@ Monitoring is optional. Enable **Settings → Login → Show AO# responsiveness 
 
 Choose **Plugins** in the main window and select your own compatible AO# folder. Nexus does not supply AO# or third-party plugin bundles. Keep the game client's architecture and plugin dependencies compatible with that installation.
 
-![Shared and profession plugin sets in the Beta](images/published/plugins-25d5f4b0bd56391d.png)
+![Shared and profession plugin sets in 1.3.0](images/published/plugins-25d5f4b0bd56391d.png)
 
 - **ALL** contains shared plugins for every profession, so you can add or remove common utilities once. Profession sets add their own choices.
 - Assign a set to a character or saved team. Enable **Auto-load plugins in game** if you want them loaded during startup.
@@ -270,7 +270,7 @@ Use one profession handler at a time. Independent movement plugins can conflict 
 
 Open **Control Panel ↗** at the far right of the main navigation. It is a separate window. **Always on top** controls whether it stays above other windows; it can be turned off independently of the main app.
 
-![Beta Control Panel with example character cards and combat statistics](images/published/control-panel-968a926e1e48de5c.png)
+![Control Panel with example character cards and combat statistics](images/published/control-panel-968a926e1e48de5c.png)
 
 Click a character card to restore and view its game window. The border marks the selected/viewed client; selection does not change the card size. **Team Leader** identifies observed in-game leadership. Health is red and nano is blue, matching the game's bars.
 
@@ -296,7 +296,7 @@ Follow follows the leader; Circle places followers around the leader; Funny busi
 
 Choose **Team** for your locally monitored characters, **All** for nearby observed players and their pets, or **NPC** for monsters' damage dealt and taken. All/NPC require the nearby-reports experiment and an updated observer. Player pets belong beneath their owners, not in the NPC table.
 
-![Sortable combat statistics in the Beta](images/published/damage-dumper-f03a332f5bc373ef.png)
+![Sortable combat statistics in 1.3.0](images/published/damage-dumper-f03a332f5bc373ef.png)
 
 Click a heading to sort. The default overview uses **DMG/m**; other views show totals and rates per second, minute or hour. DMG includes nano and pet damage. Pet entries break down the owner's total and are not added twice. Names reflect observed pet names; respawns are grouped where identity/type evidence allows. Unknown professions or unavailable measurements remain blank rather than guessed.
 
@@ -344,7 +344,7 @@ It preserves your language, Windows startup, sidebar, graphics, auto-minimize an
 
 **Settings → Updates → Check for updates…** checks manually. If enabled, automatic checking happens **once when Nexus starts**, not repeatedly on a background timer. An available version also appears as a link in the header. Checks look for newer stable GitHub releases, not prereleases or downgrades.
 
-![Update dialog with release notes and installation action](images/published/update-available-270dd0aaee2678a8.png)
+![Update dialog with release notes and installation action](images/published/update-available-551880325a8dcd3a.png)
 
 
 1. Save pending settings and finish or stop active launcher/Game GUI operations, including character-creation detection.
@@ -406,7 +406,7 @@ The diagnostics log is stored in `%LOCALAPPDATA%\AONexus\Diagnostics` (at most 2
 
 ## Troubleshooting
 
-**Engineer standing-required spam after login:** this is a reproduced open Beta issue, even when the model appears standing. Current automatic detection did not catch the reproduced case. Capture diagnostics and pause the offending auto-cast handler if it continues; do not treat the message as proof that the character is visually seated.
+**Engineer standing-required spam after login:** this is a reproduced open issue, even when the model appears standing. Current automatic detection did not catch the reproduced case. Capture diagnostics and pause the offending auto-cast handler if it continues; do not treat the message as proof that the character is visually seated.
 
 
 | Problem | What to check |

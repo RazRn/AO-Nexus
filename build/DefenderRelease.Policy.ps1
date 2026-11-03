@@ -35,3 +35,13 @@ function Assert-DefenderRuntimeReview([string]$Path, [string]$ExecutableHash) {
         throw 'The known Defender incident needs a recorded Microsoft resolution before release.'
     }
 }
+
+# Deferral is explicit and recorded by Package.ps1; it is not a passed review.
+function Assert-ReleaseRuntimeReview([string]$Path, [string]$ExecutableHash, [switch]$Deferred, [string]$Reason) {
+    if ($Deferred) {
+        if ([string]::IsNullOrWhiteSpace($Reason)) { throw 'Runtime-review deferral requires a recorded reason.' }
+        Write-Warning ('Runtime review and Microsoft resolution deferred: ' + $Reason)
+        return
+    }
+    Assert-DefenderRuntimeReview $Path $ExecutableHash
+}

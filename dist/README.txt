@@ -1,4 +1,4 @@
-AO NEXUS 1.3.0 BETA 1 — OFFLINE QUICK GUIDE
+AO NEXUS 1.3.0 — OFFLINE QUICK GUIDE
 Developed and maintained by Luckyspawn (RazRn).
 
 GET STARTED
@@ -166,7 +166,7 @@ Independent community project; not an official Funcom, Project Rubi-Ka or AO
 Rebirth product. See CREDITS.txt, Licenses and LICENSE-NOTICE.txt for attribution,
 dependency terms and the unresolved upstream redistribution-license status.
 
-BETA CONTROL PANEL
+CONTROL PANEL
 Open Control Panel at the right of the main navigation. Reorder cards and collapse
 or reorder Team, Damage Dumper and Timers. Choices are remembered. Health is red,
 nano blue; attack targets and observed aggro have separate bars.
@@ -180,10 +180,10 @@ and confirmations. Save applies the draft; Cancel discards it. Existing graphics
 auto-minimize and experimental choices are preserved. Auto-minimize stays off on
 a fresh profile. Minimized windows may stop drawing while telemetry continues.
 
-BETA LIMITATIONS
+KNOWN LIMITATIONS
 Use your own compatible AO# installation; plugin bundles are not distributed.
 New helper code requires client relog. Automatic teams, formations, sync refresh,
 nearby reports, auto regroup and AO-VK management are opt-in experiments.
 Engineer standing-required cast spam after login remains an open issue.
-Keep Defender enabled. Beta branding does not clear licensing or release gates.
-See the online 1.3.0 Beta player guide and release notes for full details.
+Keep Defender enabled. Read the known limitations and dependency notices.
+See the online 1.3.0 player guide and release notes for full details.

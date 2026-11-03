@@ -1,4 +1,4 @@
-NYT I 1.3.0 BETA 1
+NYT I 1.3.0
 
 • Kontrolpanel: sorterbare kamprapporter, individuelle pets, helbred/nano, angrebsmål, observeret aggro, zoner og klientmålinger.
 • Flyt karakterkort og fold Hold, Damage Dumper og Timere sammen eller skift deres rækkefølge. Dine valg huskes.
@@ -10,4 +10,4 @@ NYT I 1.3.0 BETA 1
 
 Automatiske hold, formationer, sync-opdateringer, automatisk samling, nærliggende kamprapporter og AO-VK-styring er fortsat frivillige eksperimenter. Minimerede klienter kan holde op med at tegne; kortets tooltip forklarer pausen.
 
-Kendt fejl: En Engineer kan efter login gentage beskeden om at stå op for at caste, selv om karakteren ser stående ud. Fejlen er ikke løst. Opdaterede hjælpere kræver relog af spilklienten. Se Beta-noterne og vejledningen for begrænsninger. Behold Defender slået til.
+Kendt fejl: En Engineer kan efter login gentage beskeden om at stå op for at caste, selv om karakteren ser stående ud. Fejlen er ikke løst. Opdaterede hjælpere kræver relog af spilklienten. Se udgivelsesnoterne og vejledningen for begrænsninger. Behold Defender slået til.

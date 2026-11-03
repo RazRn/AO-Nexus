@@ -1,6 +1,6 @@
-# AO Nexus 1.3.0 Beta 1
+# AO Nexus 1.3.0
 
-Beta 1 identifies the current development build. This source update does not publish a binary release; redistribution permission and runtime-release checks remain outstanding.
+Version 1.3.0 is published through the existing update channel. Experimental features remain opt-in. Known limitations are listed below.
 
 - **Control Panel:** sortable combat statistics, individual pets grouped beneath their owners, compact character cards, health and nano bars, attack targets, observed aggro, zones and client response/memory status.
 - **Stable cards:** selecting or restoring a character keeps card sizes and action buttons aligned. Previews preserve their proportions inside a fixed frame.
@@ -18,7 +18,7 @@ Beta 1 identifies the current development build. This source update does not pub
 
 Use your own compatible AO# installation. Nexus does not distribute AO# or third-party plugin bundles. Already-loaded helpers need a client relog after updates; restarting Nexus alone cannot replace them.
 
-The old AO-VK 0.7.1 download is retired. This Beta preserves an already-installed renderer but does not offer an automatic replacement download. AO-VK 0.8.1 has been tested locally; that is not a guarantee for every graphics card or future Defender definitions.
+The old AO-VK 0.7.1 download is retired. This version preserves an already-installed renderer but does not offer an automatic replacement download. AO-VK 0.8.1 has been tested locally; that is not a guarantee for every graphics card or future Defender definitions.
 
 If a client shows a white scene after returning to ICC while its interface remains visible, try disabling **Offscreen surface technology** in that client's Rendering settings. This resolved the reported Wazoo case. The underlying renderer fault has not been isolated.
 

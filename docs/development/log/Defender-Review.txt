@@ -159,3 +159,11 @@ release was packaged or approved. PowerShell parsing and git diff --check passed
 41 launcher/team checks passed, including nine regressions for the separate
 monitoring-log clarification. This test harness does not embed or run the
 flagged helper and is not a substitute replacement launcher.
+
+2026-11-03 RELEASE POLICY UPDATE
+The owner explicitly deferred the runtime-review and Microsoft-resolution gate
+for the 1.3.0 publication. Package.ps1 accepts -DeferRuntimeReview together with
+a nonempty -RuntimeReviewDeferralReason, records the deferral separately and
+does not claim a passed review or resolved incident. Default packaging remains
+strict. Enabled protection, current signatures, exclusion checks, artifact
+scans, detection checks and byte-integrity checks remain mandatory.

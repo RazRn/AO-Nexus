@@ -9,7 +9,7 @@
 - [Privacy and security](Privacy-and-Security.md)
 - [Starter layouts](Starter-GUI-Layouts.md)
 - [Camp control](Camp-Control.md)
-- [1.3.0 Beta notes and limitations](releases/Whats-New-1.3.0.md)
+- [1.3.0 notes and limitations](releases/Whats-New-1.3.0.md)
 - [Earlier release notes](releases)
 
 Experimental build notes and measurements belong in the [development log](../development/log/README.md).

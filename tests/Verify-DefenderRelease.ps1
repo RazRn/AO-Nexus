@@ -54,6 +54,10 @@ try {
     $review.Scenarios.AOSharpAndMonitoring='Passed';$review.TestedUtc=$now.AddDays(-8).ToString('o')
     $review | ConvertTo-Json | Set-Content -LiteralPath $temp
     Reject { Assert-DefenderRuntimeReview $temp $hash } 'Old runtime review blocks release'
+    Reject { Assert-ReleaseRuntimeReview '' $hash } 'Release remains strict without explicit deferral'
+    Reject { Assert-ReleaseRuntimeReview '' $hash -Deferred } 'Unexplained deferral is rejected'
+    Assert-ReleaseRuntimeReview '' $hash -Deferred -Reason 'Synthetic user-authorized deferral'
+    $script:checks++
     # The evidence writer must never overwrite its input, even on a failed scan.
     $before = Get-Content -LiteralPath $temp -Raw
     Reject { & (Join-Path $PSScriptRoot '../build/Verify-DefenderRelease.ps1') -ArtifactPath $temp -ReportPath $temp } 'Report/input collision is rejected'
